@@ -1,7 +1,9 @@
-//actual url
-const BASE_URL = "https://jajufc.in/api/public";
 
-//testing url 
-// const BASE_URL = "https://test.dfclogistics.online/public";
-export default BASE_URL;
  
+
+const BASE_URL = "https://agsrb.online/api1/public";
+// const BASE_URL = "https://ftschamp.com/crmapi/public";
+
+
+export default BASE_URL;
+

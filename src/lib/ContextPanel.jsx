@@ -10,12 +10,16 @@ const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const checkPanelStatus = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/web-check-status`);
+      try { 
+        // check-status
+        const response = await fetch(`${BASE_URL}/api/check-status`);
         const data = await response.json();
 
         if (data.success === "ok") {
           setStatusCheck("ok");
+          if (location.pathname === "/maintenance") {
+            navigate("/");
+          }
         } else {
           navigate("/maintenance");
         }
