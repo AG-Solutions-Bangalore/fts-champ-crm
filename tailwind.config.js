@@ -62,10 +62,7 @@ export default {
   			}
   		},
   		fontFamily: {
-  			sans: [
-  				'Noto Sans Georgian',
-  				'sans-serif'
-  			]
+  			sans: ["Noto Sans Georgian", "sans-serif"]
   		},
   		keyframes: {
   			'accordion-down': {

@@ -26,7 +26,7 @@ export function NavMainUser({ projects }) {
   }
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>User Management</SidebarGroupLabel>
+      <SidebarGroupLabel>School Management</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => {
           const isActive = location.pathname === item.url;
