@@ -82,36 +82,39 @@ export function AppSidebar({ ...props }) {
             title: "Chapter",
             url: "/master/chapter",
           },
-          {
-            title: "States",
-            url: "/master/states",
-          },
-          {
-            title: "Designation",
-            url: "/master/designation",
-          },
-          {
-            title: "OTS Expensive Type",
-            url: "/master/ots-expensive-type",
-          },
-          {
-            title: "Data Source",
-            url: "/master/data-source",
-          },
+        
           {
             title: "Viewer",
-            url: "/donor/viewer",
+            url: "/master/viewer",
+          },
+         
+        ],
+      },
+      {
+        title: "MemberShip",
+        url: "#",
+        isActive: false,
+        icon: ShoppingBag,
+        items: [
+          {
+            title: "Dashboard",
+            url: "/membership/dashboard",
+          },
+        
+          {
+            title: "Active Membership",
+            url: "/membership/active",
+          },
+        
+          {
+            title: "InActive Membership",
+            url: "/membership/inactive",
           },
          
         ],
       },
      
-      {
-        title: "MemberShip",
-        url: "/membership",
-        icon: ShoppingBag,
-        isActive: false,
-      },
+     
       {
         title: "Donor",
         url: "#",
@@ -148,20 +151,20 @@ export function AppSidebar({ ...props }) {
         items: [
           {
             title: "School List",
-            url: "/school/donors",
+            url: "/school/list",
           },
           
           {
             title: "School Allotment",
-            url: "/school/duplicate",
+            url: "/school/allotment",
           },
           {
             title: "School Alloted",
-            url: "/school/duplicate",
+            url: "/school/alloted",
           },
           {
             title: "Repeated Donor",
-            url: "/school/duplicate",
+            url: "/school/repeated",
           },
         
           
@@ -201,27 +204,27 @@ export function AppSidebar({ ...props }) {
         items: [
           {
             title: "Donor",
-            url: "/report/donor",
+            url: "/report/donor-summary",
           },
           {
             title: "Promoter",
-            url: "/report/promoter",
+            url: "/report/promoter-summary",
           },
           {
             title: "Receipt",
-            url: "/report/receipt",
+            url: "/report/receipt-summary",
           },
           {
             title: "School",
-            url: "/report/school",
+            url: "/report/school-summary",
           },
           {
             title: "10DB Statement",
-            url: "/report/10db-statement",
+            url: "/report/10db-statement-summary",
           },
           {
             title: "Suspense",
-            url: "/report/suspense",
+            url: "/report/suspense-summary",
           },
          
          
@@ -284,8 +287,8 @@ export function AppSidebar({ ...props }) {
         ],
       },
       {
-        title: "Setting",
-        url: "/setting",
+        title: "Settings",
+        url: "/settings",
         icon: Blocks,
         isActive: false,
       },

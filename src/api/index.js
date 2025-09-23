@@ -1,5 +1,5 @@
 import { decryptId, encryptId } from "@/components/common/Encryption";
-import BASE_URL from "@/config/BaseUrl";
+import BASE_URL from "@/config/base-url";
 
 import axios from "axios";
 import Cookies from "js-cookie";

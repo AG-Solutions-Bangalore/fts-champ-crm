@@ -69,7 +69,7 @@ export function NavMainReport({ items }) {
                       tooltip={item.title}
                       className={`rounded-md transition-colors duration-200 ${
                         location.pathname.startsWith(item.url)
-                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200"
+                          ? "bg-[var(--color-light)] text-[var(--color)] dark:bg-[var(--color-dark)] dark:text-[var(--color-dark-text)]"
                           : "hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -98,7 +98,7 @@ export function NavMainReport({ items }) {
                       tooltip={item.title}
                       className={`rounded-md transition-colors duration-200 ${
                         isParentActive
-                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200"
+                          ? "bg-[var(--color-light)] text-[var(--color)] dark:bg-[var(--color-dark)] dark:text-[var(--color-dark-text)]"
                           : "hover:bg-gray-100 dark:hover:bg-gray-800"
                       }`}
                     >
@@ -116,7 +116,7 @@ export function NavMainReport({ items }) {
                   initial="closed"
                   animate={isParentActive ? "open" : "closed"}
                 >
-                  <SidebarMenuSub className="border-l border-blue-200 dark:border-blue-800 ml-4 pl-2">
+                  <SidebarMenuSub className="border-l ml-4 pl-2 border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
                     {item.items?.map((subItem) => {
                       const isSubItemActive = location.pathname.startsWith(subItem.url);
                       return (
@@ -127,8 +127,8 @@ export function NavMainReport({ items }) {
                                 whileHover={{ scale: 1.05 }}
                                 className={`px-3 py-2 rounded-md transition-colors duration-200 ${
                                   isSubItemActive
-                                    ? "bg-blue-100 text-blue-600 w-full  rounded-xl dark:bg-blue-900 dark:text-blue-200"
-                                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    ? "bg-[var(--color-light)] text-[var(--color)] w-full rounded-xl dark:bg-[var(--color-dark)] dark:text-[var(--color-dark-text)]"
+                                    : ""
                                 }`}
                               >
                                 {subItem.title}

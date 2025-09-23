@@ -23,19 +23,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, ChevronsUpDown, Key, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ChangePassword from "../auth/ChangePassword";
+import ChangePassword from "../auth/change-password";
 import { useState } from "react";
 import logo from "../../assets/el.png"
 import Cookies from "js-cookie";
 import { Breadcrumbs } from "@/components/new/breadcrumbs";
 
 
-// eslint-disable-next-line react/prop-types
+
 export default function Page({ children }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  // Get user data from cookies
+
   const nameL = Cookies.get("name");
   const emailL = Cookies.get("email");
   const user_position = Cookies.get("user_position");
@@ -70,7 +70,7 @@ export default function Page({ children }) {
 
       <SidebarInset>
         {/* Header that appears on all screens */}
-        <header className="hidden sm:flex flex-row justify-between h-16 shrink-0   items-center gap-2 transition-[width,height] ease-linear">
+        <header className="sticky  top-0 z-10 flex h-16 shrink-0 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-2 px-4">
 
             <SidebarTrigger className="-ml-1 hover:bg-blue-100" />
@@ -163,12 +163,21 @@ export default function Page({ children }) {
 
 
         {/* Main content area - adjusted for mobile bottom nav */}
-        <div className="flex flex-1 flex-col gap-4 p-0 md:p-4 pt-0">
-          <div className="min-h-[calc(100vh-8rem)] md:min-h-[100vh] flex-1 rounded-xl p-2 pb-16  md:pb-2">
+        <main className="flex flex-1 flex-col gap-4  pt-0 ">
+          <div className="min-h-[calc(100vh-8rem)] md:min-h-[100vh] flex-1 rounded-xl p-2">
             {children}
           </div>
-        </div>
+        </main>
+<footer className="hidden sm:block sticky bottom-0 z-10  h-8 shrink-0 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ">
+<div className="flex items-center justify-between gap-2 p-2 text-xs rounded-md border-t-2 border-[var(--color-border)]">
+<span>© 2025-26 All Rights Reserved</span>
+<span>Crafted with ❤️ by AG Solutions</span>
 
+
+
+   
+</div>
+</footer>
         {/* Mobile bottom navigation */}
         <div className="sm:hidden ">
           <AppBottombar />
