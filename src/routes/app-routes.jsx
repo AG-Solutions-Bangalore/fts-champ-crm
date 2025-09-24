@@ -87,8 +87,8 @@ function AppRoutes() {
 
         {/* others  */}
         <Route path="/other/faq" element={<FaqOther />} />
-        <Route path="/other/team" element={<Notification />} />
-        <Route path="/other/notification" element={<Team />} />
+        <Route path="/other/team" element={<Team />} />
+        <Route path="/other/notification" element={<Notification />} />
 
         {/* settings  */}
         <Route path="/settings" element={<Settings />} />

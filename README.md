@@ -1,1 +1,1 @@
-# jaju-new-crm
+fts pic 200 * 200

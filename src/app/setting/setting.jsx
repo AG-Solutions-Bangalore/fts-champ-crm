@@ -150,7 +150,7 @@ const Settings = () => {
 
   return (
     <div className="p-2 max-w-6xl mx-auto ">
-      <span className="text-2xl font-medium ">Settings</span>
+    
 
       <Tabs defaultValue="profile" className="w-full mt-2">
         <TabsList className="grid w-full grid-cols-2 mb-2">
