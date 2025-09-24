@@ -24,11 +24,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/use-numeric-input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DonorList = () => {
   const queryClient = useQueryClient();
@@ -159,7 +160,9 @@ const DonorList = () => {
   }, [pagination.pageIndex, debouncedSearchTerm, queryClient, donorsData?.last_page]);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState({
+    "Fts Id": false,
+  });
   const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
@@ -189,6 +192,14 @@ const DonorList = () => {
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Full Name")}</div>,
       size: 120,
     },
+    
+    {
+      accessorKey: "indicomp_fts_id",
+      id: "Fts Id", 
+      header: "Fts Id",
+      cell: ({ row }) => <div className="text-xs">{row.getValue("Fts Id")}</div>,
+      size: 120,
+    },
     {
       id: "Contact Info",
       header: "Contact Info",
@@ -214,10 +225,10 @@ const DonorList = () => {
           </div>
           <div className="text-xs">
             {row.original.indicomp_type === 'Individual' ? (
- <span className="font-medium">Spouse:{row.original.indicomp_spouse_name || '-'}</span> 
+ <span> <span className="text-xs text-gray-500">Spouse :</span>  <span  className="font-medium">{row.original.indicomp_spouse_name || '-'}</span></span> 
             ):(
            
-              <span className="font-medium">Contact:{row.original.indicomp_com_contact_name || '-'}</span> 
+              <span ><span className="text-xs text-gray-500"> Contact :</span> <span className="font-medium">{row.original.indicomp_com_contact_name || '-'}</span></span> 
               
             )}
             
@@ -235,11 +246,52 @@ const DonorList = () => {
     //   size: 120,
     // },
     {
-      accessorKey: "indicomp_fts_id",
-      id: "Fts Id",
-      header: "Fts Id",
-      cell: ({ row }) => <div className="text-xs">{row.getValue("Fts Id")}</div>,
-      size: 120,
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => {
+    
+
+        return (
+          <div className="flex flex-row">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                  
+                  >
+                    <ReceiptText />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Receipt Creation</p>
+                </TooltipContent>
+              </Tooltip>
+
+             
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+              
+                  >
+                    <Eye />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Donor Dashboard</p>
+                </TooltipContent>
+              </Tooltip>
+
+             
+            </TooltipProvider>
+          </div>
+        );
+      },
     },
     
   ];
@@ -269,14 +321,12 @@ const DonorList = () => {
       pagination: {
         pageSize: 10,
       },
-      columnVisibility: {
-        "Fts Id": false, 
-      },
+      
     },
     
   });
 
-  console.log(table.getState().columnVisibility);
+
   const handlePageChange = (newPageIndex) => {
 
     const targetPage = newPageIndex + 1;
@@ -362,22 +412,23 @@ const DonorList = () => {
   };
 
   const TableShimmer = () => {
+    
     return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse">
-        {columns.map((column, colIndex) => (
-          <TableCell key={colIndex} className="py-1">
-            <div className="h-6 bg-gray-200 rounded w-full"></div>
+      <TableRow key={index} className="animate-pulse h-11"> 
+        {table.getVisibleFlatColumns().map((column) => (
+          <TableCell key={column.id} className="py-1">
+            <div className="h-8 bg-gray-200 rounded w-full"></div> 
           </TableCell>
         ))}
       </TableRow>
     ));
   };
-
+  
   if (isError) {
     return (
-      <div className="w-full p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
+      <div className="w-full p-4  ">
+        <div className="flex items-center justify-center h-64 ">
+          <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
               Error Fetching Donors List Data
             </div>
@@ -435,10 +486,11 @@ const DonorList = () => {
           </DropdownMenu>
        
       </div>
+      
 
       {/* Table */}
-      <div className="rounded-none border">
-        <Table>
+      <div className="rounded-none border min-h-[31rem] flex flex-col">
+      <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -459,6 +511,7 @@ const DonorList = () => {
               </TableRow>
             ))}
           </TableHeader>
+          
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
               <TableShimmer />
@@ -480,17 +533,17 @@ const DonorList = () => {
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                  No donors found.
-                </TableCell>
-              </TableRow>
+              <TableRow className="h-12"> 
+              <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                No donors found.
+              </TableCell>
+            </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Advanced Pagination */}
+      {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
           Showing {donorsData?.from || 0} to {donorsData?.to || 0} of{" "}

@@ -1,3 +1,7 @@
+
+
+
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -25,28 +29,28 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const Viewer = () => {
-  const queryClient = useQueryClient();
+const OtsList = () => {
+
   
   const {
-    data: viewersData,
+    data: otsData,
     isLoading,
     isError,
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["viewers"],
+    queryKey: ["otsList"],
     queryFn: async () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/superadmin-get-all-viewers`,
+        `${BASE_URL}/api/fetch-ots-exptypes`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -54,7 +58,7 @@ const Viewer = () => {
           },
         }
       );
-      return response.data.viewerUsers;
+      return response.data.otsexptype;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -77,8 +81,8 @@ const Viewer = () => {
       size: 60,
     },
     {
-      accessorKey: "name",
-      id: "Name",
+      accessorKey: "ots_exp_type",
+      id: "Expensive Type",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -86,82 +90,27 @@ const Viewer = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Name
+          Expensive Type
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Name")}</div>,
+      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Expensive Type")}</div>,
       size: 150,
     },
+    
+   
     {
-      accessorKey: "email",
-      id: "Email",
-      header: "Email",
-      cell: ({ row }) => <div className="text-xs text-blue-600">{row.getValue("Email")}</div>,
-      size: 200,
-    },
-    {
-      accessorKey: "phone",
-      id: "Phone",
-      header: "Phone",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Phone") || "-"}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: "user_position",
-      id: "Position",
-      header: "Position",
+      accessorKey: "id",
+      id: "Id",
+      header: "Id",
       cell: ({ row }) => (
         <div className="text-xs">
-          {row.getValue("Position") || "Viewer"}
+          {row.getValue("Id") || "-"}
         </div>
       ),
       size: 120,
     },
-    {
-      accessorKey: "user_status",
-      id: "Status",
-      header: "Status",
-      cell: ({ row }) => (
-        <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-          row.getValue("Status") === "Active" 
-            ? "bg-green-100 text-green-800" 
-            : "bg-red-100 text-red-800"
-        }`}>
-          {row.getValue("Status")}
-        </div>
-      ),
-      size: 100,
-    },
-    {
-      accessorKey: "viewer_chapter_ids",
-      id: "Chapter ID",
-      header: "Chapter ID",
-      cell: ({ row }) => <div className="text-xs font-mono w-32 break-words">{row.getValue("Chapter ID") || "-"}</div>,
-      size: 150,
-    },
-    {
-      accessorKey: "viewer_start_date",
-      id: "Start Date",
-      header: "Start Date",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          {row.getValue("Start Date") ? new Date(row.getValue("Start Date")).toLocaleDateString() : "-"}
-        </div>
-      ),
-      size: 120,
-    },
-    {
-      accessorKey: "viewer_end_date",
-      id: "Last Date",
-      header: "Last Date",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          {row.getValue("Last Date") ? new Date(row.getValue("Last Date")).toLocaleDateString() : "-"}
-        </div>
-      ),
-      size: 120,
-    },
+   
     {
       id: "actions",
       header: "Action",
@@ -180,19 +129,18 @@ const Viewer = () => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Edit Viewer</p>
+                  <p>Edit Ots</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         );
       },
-      size: 100,
     },
   ];
 
   const table = useReactTable({
-    data: viewersData || [],
+    data: otsData || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -235,7 +183,7 @@ const Viewer = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching Viewers Data
+              Error Fetching Ots Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -252,12 +200,13 @@ const Viewer = () => {
         <div className="relative w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search viewers..."
+            placeholder="Search ots..."
             value={table.getState().globalFilter || ""}
             onChange={(event) => table.setGlobalFilter(event.target.value)}
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
+        <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
@@ -280,6 +229,14 @@ const Viewer = () => {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button
+                        variant="default"
+                        
+                       
+                      >
+                        <SquarePlus className="h-4 w-4" /> OTS
+                      </Button>
+                      </div>
       </div>
 
       {/* Table */}
@@ -329,7 +286,7 @@ const Viewer = () => {
             ) : (
               <TableRow className="h-12">
                 <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                  No viewers found.
+                  No ots found.
                 </TableCell>
               </TableRow>
             )}
@@ -340,7 +297,7 @@ const Viewer = () => {
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 py-1">
         <div className="flex-1 text-sm text-muted-foreground">
-          Total Viewers : &nbsp;
+          Total Ots : &nbsp;
           {table.getFilteredRowModel().rows.length}
         </div>
         <div className="space-x-2">
@@ -366,4 +323,4 @@ const Viewer = () => {
   );
 };
 
-export default Viewer;
+export default OtsList;

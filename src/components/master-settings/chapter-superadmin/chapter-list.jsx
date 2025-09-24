@@ -25,28 +25,28 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const Viewer = () => {
+const ChapterList = () => {
   const queryClient = useQueryClient();
   
   const {
-    data: viewersData,
+    data: chaptersData,
     isLoading,
     isError,
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["viewers"],
+    queryKey: ["chapters"],
     queryFn: async () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/superadmin-get-all-viewers`,
+        `${BASE_URL}/api/fetch-chapters`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -54,7 +54,7 @@ const Viewer = () => {
           },
         }
       );
-      return response.data.viewerUsers;
+      return response.data.chapters;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -77,8 +77,8 @@ const Viewer = () => {
       size: 60,
     },
     {
-      accessorKey: "name",
-      id: "Name",
+      accessorKey: "chapter_name",
+      id: "Chapter Name",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -86,81 +86,44 @@ const Viewer = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Name
+          Chapter Name
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Name")}</div>,
+      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Chapter Name")}</div>,
       size: 150,
     },
     {
-      accessorKey: "email",
+      accessorKey: "chapter_email",
       id: "Email",
       header: "Email",
       cell: ({ row }) => <div className="text-xs text-blue-600">{row.getValue("Email")}</div>,
       size: 200,
     },
     {
-      accessorKey: "phone",
-      id: "Phone",
-      header: "Phone",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Phone") || "-"}</div>,
+      accessorKey: "chapter_state",
+      id: "State",
+      header: "State",
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("State")}</div>,
       size: 120,
     },
     {
-      accessorKey: "user_position",
-      id: "Position",
-      header: "Position",
+      accessorKey: "chapter_whatsapp",
+      id: "WhatsApp",
+      header: "WhatsApp",
       cell: ({ row }) => (
         <div className="text-xs">
-          {row.getValue("Position") || "Viewer"}
+          {row.getValue("WhatsApp") || "-"}
         </div>
       ),
       size: 120,
     },
     {
-      accessorKey: "user_status",
-      id: "Status",
-      header: "Status",
-      cell: ({ row }) => (
-        <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-          row.getValue("Status") === "Active" 
-            ? "bg-green-100 text-green-800" 
-            : "bg-red-100 text-red-800"
-        }`}>
-          {row.getValue("Status")}
-        </div>
-      ),
-      size: 100,
-    },
-    {
-      accessorKey: "viewer_chapter_ids",
+      accessorKey: "id",
       id: "Chapter ID",
       header: "Chapter ID",
-      cell: ({ row }) => <div className="text-xs font-mono w-32 break-words">{row.getValue("Chapter ID") || "-"}</div>,
-      size: 150,
-    },
-    {
-      accessorKey: "viewer_start_date",
-      id: "Start Date",
-      header: "Start Date",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          {row.getValue("Start Date") ? new Date(row.getValue("Start Date")).toLocaleDateString() : "-"}
-        </div>
-      ),
-      size: 120,
-    },
-    {
-      accessorKey: "viewer_end_date",
-      id: "Last Date",
-      header: "Last Date",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          {row.getValue("Last Date") ? new Date(row.getValue("Last Date")).toLocaleDateString() : "-"}
-        </div>
-      ),
-      size: 120,
+      cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter ID")}</div>,
+      size: 100,
     },
     {
       id: "actions",
@@ -168,7 +131,6 @@ const Viewer = () => {
       cell: ({ row }) => {
         return (
           <div className="flex flex-row">
-            
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -176,23 +138,23 @@ const Viewer = () => {
                     variant="ghost"
                     size="icon"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Edit Viewer</p>
+                  <p>View Chapter</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
           </div>
         );
       },
-      size: 100,
     },
   ];
 
   const table = useReactTable({
-    data: viewersData || [],
+    data: chaptersData || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -235,7 +197,7 @@ const Viewer = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching Viewers Data
+              Error Fetching Chapters Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -252,12 +214,13 @@ const Viewer = () => {
         <div className="relative w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search viewers..."
+            placeholder="Search chapters..."
             value={table.getState().globalFilter || ""}
             onChange={(event) => table.setGlobalFilter(event.target.value)}
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
+        <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
@@ -280,6 +243,14 @@ const Viewer = () => {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button
+                variant="default"
+                
+               
+              >
+                <SquarePlus className="h-4 w-4" /> Chapter
+              </Button>
+              </div>
       </div>
 
       {/* Table */}
@@ -329,7 +300,7 @@ const Viewer = () => {
             ) : (
               <TableRow className="h-12">
                 <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                  No viewers found.
+                  No chapters found.
                 </TableCell>
               </TableRow>
             )}
@@ -340,7 +311,7 @@ const Viewer = () => {
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 py-1">
         <div className="flex-1 text-sm text-muted-foreground">
-          Total Viewers : &nbsp;
+          Total Chapters : &nbsp;
           {table.getFilteredRowModel().rows.length}
         </div>
         <div className="space-x-2">
@@ -366,4 +337,4 @@ const Viewer = () => {
   );
 };
 
-export default Viewer;
+export default ChapterList;
