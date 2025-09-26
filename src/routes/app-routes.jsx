@@ -32,6 +32,7 @@ import Team from "@/app/other/team/team";
 import Notification from "@/app/other/notification/notification";
 import FaqOther from "@/app/other/faq/faq";
 import Settings from "@/app/setting/setting";
+import ReceiptView from "@/app/receipt/receipt-view";
 
 
 function AppRoutes() {
@@ -65,6 +66,7 @@ function AppRoutes() {
 
           {/* receipt  */}
           <Route path="/receipt" element={<Receipt />} />
+          <Route path="/receipt-view/:id" element={<ReceiptView />} />
 
           {/* school  */}
 

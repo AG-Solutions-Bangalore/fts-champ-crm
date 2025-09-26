@@ -31,6 +31,7 @@ import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import FaqCreate from "./faq-create";
 
 const FaqList = () => {
 
@@ -226,13 +227,7 @@ const FaqList = () => {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
-         <Button
-                        variant="default"
-                        
-                       
-                      >
-                        <SquarePlus className="h-4 w-4" /> Faq
-                      </Button>
+     <FaqCreate/>
                       </div>
       </div>
 
