@@ -31,6 +31,7 @@ import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import StateCreate from "./state-create";
 
 const StateList = () => {
 
@@ -240,13 +241,7 @@ const StateList = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-          <Button
-                        variant="default"
-                        
-                       
-                      >
-                        <SquarePlus className="h-4 w-4" /> State
-                      </Button>
+        <StateCreate/>
                       </div>
       </div>
 

@@ -31,6 +31,7 @@ import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import moment from "moment";
+import { Link } from "react-router-dom";
 
 
 const Receipt = () => {
@@ -301,7 +302,7 @@ const Receipt = () => {
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
-      
+          const receiptId = row.original.id
   
           return (
             <div className="flex flex-row">
@@ -313,13 +314,11 @@ const Receipt = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                
-                    >
-                      <Eye />
-                    </Button>
+                    <Link to={`/receipt-view/${receiptId}`}>
+                <Button variant="ghost" size="icon">
+                  <Eye />
+                </Button>
+              </Link>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Receipt Dashboard</p>
