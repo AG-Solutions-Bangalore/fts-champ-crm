@@ -1,152 +1,335 @@
 "use client";
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import moment from "moment";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DONOR_SUMMARY_DOWNLOAD,
+  DONOR_SUMMARY_FETCH_DONOR,
+  DONOR_SUMMARY_GROUP_DOWNLOAD,
+} from "@/api";
+import { MemoizedSelect } from "@/components/common/memoized-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Calendar } from "@/components/ui/calendar";
-
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useApiMutation } from "@/hooks/use-mutation";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { Download, FileType, Loader2, Printer } from "lucide-react";
+import moment from "moment";
+import { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
+import DonorGroupView from "./donor-group-view";
+import DonorIndividualView from "./donor-individual-view";
+import { toast } from "sonner";
 const Donor = () => {
-  const navigate = useNavigate();
   const today = moment().format("YYYY-MM-DD");
   const firstOfMonth = moment().startOf("month").format("YYYY-MM-DD");
-
+  const [viewType, setViewType] = useState(null); // "individual" | "group"
   const [donorSummary, setDonorSummary] = useState({
     indicomp_full_name: "",
     receipt_from_date: firstOfMonth,
     receipt_to_date: today,
   });
 
-  // Handle input change
-  const onInputChange = (e) => {
-    const { name, value } = e.target;
-    setDonorSummary({
-      ...donorSummary,
-      [name]: value,
-    });
+  const { trigger, loading } = useApiMutation();
+  const componentRef = useRef();
+
+  const handleInputChange = (e, field) => {
+    const value = e.target ? e.target.value : e;
+    setDonorSummary({ ...donorSummary, [field]: value });
   };
 
-  const onReportIndividualView = (e) => {
+  const { data: donorsData } = useGetMutation(
+    "donors",
+    DONOR_SUMMARY_FETCH_DONOR
+  );
+
+  const handleIndividualViewClick = (e) => {
     e.preventDefault();
-    const { receipt_from_date, receipt_to_date, indicomp_full_name } =
-      donorSummary;
-
-    localStorage.setItem("receipt_from_date_indv", receipt_from_date);
-    localStorage.setItem("receipt_to_date_indv", receipt_to_date);
-    localStorage.setItem("indicomp_full_name_indv", indicomp_full_name);
-
-    navigate("/report/donor-view");
+    if (donorSummary.indicomp_full_name) {
+      setViewType("individual");
+    }
   };
 
-  const onReportGroupView = (e) => {
+  const handleGroupViewClick = (e) => {
     e.preventDefault();
-    const { receipt_from_date, receipt_to_date, indicomp_full_name } =
-      donorSummary;
+    if (donorSummary.indicomp_full_name) {
+      setViewType("group");
+    }
+  };
 
-    localStorage.setItem("receipt_from_date_grp", receipt_from_date);
-    localStorage.setItem("receipt_to_date_grp", receipt_to_date);
-    localStorage.setItem("indicomp_full_name_grp", indicomp_full_name);
+  const handlePrintPdf = useReactToPrint({
+    content: () => {
+      if (!donorSummary.indicomp_full_name || !viewType) {
+        toast.warning("Please select a donor and view type before printing!");
+        return null;
+      }
+      return componentRef.current;
+    },
+    documentTitle:
+      viewType === "group" ? "Donor_Group_Report" : "Donor_Individual_Report",
+    pageStyle: `
+    @page { size: A4 portrait; margin: 5mm; }
+    @media print {
+      body { font-size: 10px; margin: 0; padding: 0; }
+      table { font-size: 11px; }
+      .print-hide { display: none; }
+    }
+  `,
+  });
 
-    navigate("/report/donorgroup-view");
+  const handleSavePDF = () => {
+    if (!donorSummary.indicomp_full_name || !viewType) {
+      toast.warning("Please select a donor and view type before saving PDF.");
+      return;
+    }
+
+    const input = componentRef.current;
+    if (!input) {
+      toast.warning("No data available to generate PDF.");
+      return;
+    }
+
+    html2canvas(input, { scale: 2 })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+
+        const margin = 20;
+        const availableWidth = pdfWidth - 2 * margin;
+        const ratio = Math.min(
+          availableWidth / imgWidth,
+          pdfHeight / imgHeight
+        );
+
+        pdf.addImage(
+          imgData,
+          "PNG",
+          margin,
+          margin,
+          imgWidth * ratio,
+          imgHeight * ratio
+        );
+
+        pdf.save(
+          viewType === "group"
+            ? "Donor_Group_Summary.pdf"
+            : "Donor_Individual_Summary.pdf"
+        );
+      })
+      .catch((error) => {
+        console.error("Error generating PDF: ", error);
+      });
+  };
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+
+    if (!donorSummary.indicomp_full_name || !viewType) {
+      toast.warning("Please select a donor and view type before downloading.");
+      return;
+    }
+
+    try {
+      const payload = {
+        indicomp_fts_id: donorSummary.indicomp_full_name,
+        receipt_from_date: donorSummary.receipt_from_date,
+        receipt_to_date: donorSummary.receipt_to_date,
+      };
+
+      const url =
+        viewType === "group"
+          ? DONOR_SUMMARY_GROUP_DOWNLOAD
+          : DONOR_SUMMARY_DOWNLOAD;
+
+      const res = await trigger({
+        url,
+        method: "post",
+        data: payload,
+        responseType: "blob",
+      });
+
+      if (!res) {
+        toast.warning("No data found for the selected donor.");
+        return;
+      }
+
+      const blob = new Blob([res], { type: "text/csv" });
+      const urlObj = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlObj;
+      link.setAttribute(
+        "download",
+        viewType === "group"
+          ? "donor_group_summary.csv"
+          : "donor_individual_summary.csv"
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Error downloading donor summary:", err);
+    }
   };
 
   return (
-    <Card className="bg-white shadow-md border border-blue-200">
-      <CardHeader className="bg-blue-50 border-b border-blue-200 rounded-t-lg">
-        <CardTitle className="text-blue-600 text-lg font-semibold">
-          Download Receipts
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <p className="text-sm text-red-500 mb-6">
-          Please fill all fields to view the report.
-        </p>
+    <>
+      <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
+        <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
+          <CardTitle className="text-lg font-medium">
+            <div className="flex justify-between ">
+              <h2> Download Receipts</h2>
+              <div className="space-x-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrintPdf}
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Printer className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Print Receipt</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleSavePDF}
+                        className=" transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download PDF</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-        <form id="dowRecp" className="space-y-6" autoComplete="off">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {/* Donor Name */}
-            <div className="flex flex-col space-y-2">
-              <Label
-                className="text-blue-600 font-medium"
-                htmlFor="indicomp_full_name"
-              >
-                Donor Name
-              </Label>
-              <Input
-                id="indicomp_full_name"
-                name="indicomp_full_name"
-                value={donorSummary.indicomp_full_name}
-                onChange={onInputChange}
-                required
-              />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDownload}
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        {loading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <FileType className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download Excel</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
+          </CardTitle>
+        </CardHeader>
 
-            {/* From Date */}
-            <div className="flex flex-col space-y-2">
-              <Label
-                className="text-blue-600 font-medium"
-                htmlFor="receipt_from_date"
-              >
-                From Date
-              </Label>
-              <Input
-                type="date"
-                id="receipt_from_date"
-                name="receipt_from_date"
-                value={donorSummary.receipt_from_date}
-                onChange={onInputChange}
-                required
-              />
-              {/* <Calendar
-                mode="single"
-                selected={donorSummary.receipt_from_date}
-                onSelect={onInputChange}
-                className="rounded-md border shadow"
-                disabled={(d) => d > new Date() || d < new Date("1900-01-01")}
-                captionLayout="dropdown" 
-              /> */}
+        <CardContent className="p-6">
+          <form id="dowRecp" className="space-y-6" autoComplete="off">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
+                <Label className="font-medium" htmlFor="indicomp_full_name">
+                  Donor Name <span className="text-red-500">*</span>
+                </Label>
+                <MemoizedSelect
+                  name="indicomp_full_name"
+                  value={donorSummary?.indicomp_full_name}
+                  onChange={(e) => handleInputChange(e, "indicomp_full_name")}
+                  options={
+                    donorsData?.individualCompanies?.map((item) => ({
+                      label: item.indicomp_full_name,
+                      value: item.indicomp_fts_id,
+                    })) || []
+                  }
+                  placeholder="Select Donor Name"
+                />
+              </div>
+              <div>
+                <Label className="font-medium" htmlFor="receipt_from_date">
+                  From Date
+                </Label>
+                <Input
+                  type="date"
+                  name="receipt_from_date"
+                  value={donorSummary.receipt_from_date}
+                  onChange={(e) => handleInputChange(e, "receipt_from_date")}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label className="font-medium" htmlFor="receipt_to_date">
+                  To Date
+                </Label>
+                <Input
+                  type="date"
+                  id="receipt_to_date"
+                  name="receipt_to_date"
+                  value={donorSummary.receipt_to_date}
+                  onChange={(e) => handleInputChange(e, "receipt_to_date")}
+                  required
+                />
+              </div>
+              <div className="flex gap-4 pt-6">
+                <Button
+                  className="text-white"
+                  onClick={handleIndividualViewClick}
+                >
+                  Individual View
+                </Button>
+                <Button className="text-white" onClick={handleGroupViewClick}>
+                  Group View
+                </Button>
+              </div>
             </div>
+          </form>
+        </CardContent>
+      </Card>
 
-            {/* To Date */}
-            <div className="flex flex-col space-y-2">
-              <Label
-                className="text-blue-600 font-medium"
-                htmlFor="receipt_to_date"
-              >
-                To Date
-              </Label>
-              <Input
-                type="date"
-                id="receipt_to_date"
-                name="receipt_to_date"
-                value={donorSummary.receipt_to_date}
-                onChange={onInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={onReportIndividualView}
-            >
-              Individual View
-            </Button>
-            <Button
-              className="bg-blue-600 hover:bg-green-700 text-white"
-              onClick={onReportGroupView}
-            >
-              Group View
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      {viewType == "individual" && (
+        <div className="mt-4">
+          <DonorIndividualView
+            receiptFromDate={donorSummary?.receipt_from_date}
+            receiptToDate={donorSummary?.receipt_to_date}
+            indicompFullName={donorSummary?.indicomp_full_name}
+            componentRef={componentRef}
+          />
+        </div>
+      )}
+      {viewType == "group" && (
+        <div className="mt-4">
+          <DonorGroupView
+            receiptFromDate={donorSummary?.receipt_from_date}
+            receiptToDate={donorSummary?.receipt_to_date}
+            indicompFullName={donorSummary?.indicomp_full_name}
+            componentRef={componentRef}
+          />
+        </div>
+      )}
+    </>
   );
 };
 
