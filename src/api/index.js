@@ -212,11 +212,11 @@ export const DONATION_SUMMARY_VIEW = `${BASE_URL}/api/fetch-donationsummary-by-i
 
 
 //DONOR SUMMARY
-export const DONOR_SUMMARY_VIEW = `${BASE_URL}/api/fetch-donorsummary-by-id`;
-export const DONOR_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-donor-summary`;
-export const DONOR_SUMMARY_GROUP_VIEW = `${BASE_URL}/api/fetch-donorgroupsummary-by-id`;
-export const DONOR_SUMMARY_GROUP_DOWNLOAD = `${BASE_URL}/api/download-donor-groupsummary`;
-export const DONOR_SUMMARY_FETCH_DONOR = `${BASE_URL}/api/fetch-donors`;
+export const DONOR_SUMMARY_VIEW = `/api/fetch-donorsummary-by-id`;
+export const DONOR_SUMMARY_DOWNLOAD = `/api/download-donor-summary`;
+export const DONOR_SUMMARY_GROUP_VIEW = `/api/fetch-donorgroupsummary-by-id`;
+export const DONOR_SUMMARY_GROUP_DOWNLOAD = `/api/download-donor-groupsummary`;
+export const DONOR_SUMMARY_FETCH_DONOR = `/api/fetch-donors`;
 
 
 
@@ -343,6 +343,7 @@ export const ADMIN_DATASOURCE_LIST = `${BASE_URL}/api/fetch-datasource`;
 export const ADMIN_DATASOURCE_UPDATE = `${BASE_URL}/api/update-datasource`;
 
 /*--------------------------Datasource-end(admin)----------------------------------- */
+/*--------------------------Report-end(admin)----------------------------------- */
 
 
 

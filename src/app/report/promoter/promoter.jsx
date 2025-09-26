@@ -12,6 +12,14 @@ import {
 import moment from "moment";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Download, Printer } from "lucide-react";
+import { MemoizedSelect } from "@/components/common/memoized-select";
 const Promoter = () => {
   const navigate = useNavigate();
   const todayback = moment().format("YYYY-MM-DD");
@@ -26,13 +34,10 @@ const Promoter = () => {
 
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
-  const onInputChange = (e) => {
-    const { name, value } = e.target;
-    const updatedDonor = { ...downloadDonor, [name]: value };
-    setDonorDownload(updatedDonor);
-    checkIfButtonShouldBeEnabled(updatedDonor);
+  const handleInputChange = (e, field) => {
+    const value = e.target ? e.target.value : e;
+    setDonorDownload({ ...downloadDonor, [field]: value });
   };
-
   const checkIfButtonShouldBeEnabled = (data) => {
     const { receipt_from_date, receipt_to_date, indicomp_promoter } = data;
     setIsButtonEnabled(
@@ -54,23 +59,52 @@ const Promoter = () => {
 
   return (
     <>
-      <Card className="bg-white shadow-md border border-blue-200">
-        <CardHeader className="bg-blue-50 border-b border-blue-200 rounded-t-lg">
-          <CardTitle className="text-blue-600 text-lg font-semibold">
-            Download Promoters
+      <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
+        <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
+          <CardTitle className="text-lg font-medium">
+            <div className="flex justify-between ">
+              <h2> Download Promoters</h2>
+              <div className="space-x-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        // onClick={handlePrintPdf}
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Printer className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Print Receipt</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        // onClick={handleSavePDF}
+                        className=" transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download PDF</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <p className="text-sm text-red-500 mb-6">
-            Please fill all fields to view the report.
-          </p>
           <form id="dowRecp" autoComplete="off" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {/* Promoter Select */}
-
-              <div className="flex flex-col space-y-2">
+              <div>
                 <Label htmlFor="indicomp_promoter">Notice Title</Label>
-                <Select
+                {/* <Select
                   value={downloadDonor.indicomp_promoter}
                   onValueChange={(value) =>
                     setDonorDownload({
@@ -93,56 +127,51 @@ const Promoter = () => {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select> */}
+                <MemoizedSelect
+                  name="indicomp_promoter"
+                  value={downloadDonor?.indicomp_promoter}
+                  onChange={(e) => handleInputChange(e, "indicomp_promoter")}
+                  options={
+                    promoter?.map((item) => ({
+                      label: item.indicomp_promoter,
+                      value: item.indicomp_promoter,
+                    })) || []
+                  }
+                  placeholder="Select Notice Title"
+                />
               </div>
 
               {/* From Date */}
-              <div className="flex flex-col space-y-2">
+              <div>
                 <Label htmlFor="receipt_from_date">From Date</Label>
                 <Input
                   id="receipt_from_date"
                   name="receipt_from_date"
                   type="date"
                   value={downloadDonor.receipt_from_date}
-                  onChange={onInputChange}
-                  required
+                  onChange={(e) => handleInputChange(e, "receipt_from_date")}
+                  
                 />
               </div>
 
               {/* To Date */}
-              <div className="flex flex-col space-y-2">
+              <div>
                 <Label htmlFor="receipt_to_date">To Date</Label>
                 <Input
                   id="receipt_to_date"
                   name="receipt_to_date"
                   type="date"
                   value={downloadDonor.receipt_to_date}
-                  onChange={onInputChange}
+                  onChange={(e) => handleInputChange(e, "receipt_to_date")}
                   required
                 />
               </div>
-            </div>
+              <div className="flex gap-4 pt-6">
+                <Button>View</Button>
 
-            {/* Buttons */}
-            <div className="flex gap-4 pt-4">
-              <Button
-                onClick={onReportView}
-                disabled={!isButtonEnabled}
-                className={`bg-blue-600 hover:bg-blue-700 text-white ${
-                  !isButtonEnabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                View
-              </Button>
-
-              <Button
-                disabled={!isButtonEnabled}
-                className={`bg-blue-600 hover:bg-green-700 text-white ${
-                  !isButtonEnabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                Download
-              </Button>
+                <Button>Download</Button>
+              </div>
             </div>
           </form>
         </CardContent>
