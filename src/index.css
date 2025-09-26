@@ -48,6 +48,7 @@
     --color-dark: hsl(215, 28%, 17%);    /* dark:bg-blue-900 */
     --colordark-text: hsl(213, 94%, 82%); /* dark:text-blue-200 */
     --color-border: hsl(210, 100%, 90%); /* border-blue-200 */
+    --color-border: hsl(217, 91%, 60%);/* border-blue-400 */
     --color-border-dark: hsl(215, 28%, 25%); /* dark:border-blue-800 */
   }
   
@@ -130,6 +131,7 @@
     --color-dark: hsl(45, 28%, 17%);    /* dark:bg-yellow-900 */
     --color-dark-text: hsl(45, 90%, 80%); /* dark:text-yellow-200 */
     --color-border: hsl(50, 100%, 85%);    /* border-yellow-200 */
+    --color-border: hsl(48, 100%, 50%); /* border-yellow-400 */
     --color-border-dark: hsl(45, 28%, 25%); /* dark:border-yellow-800 */
   }
 
@@ -175,6 +177,7 @@
     --color-dark: hsl(142, 28%, 15%);  /* dark:bg-green-900 */
     --color-dark-text: hsl(142, 70%, 80%); /* dark:text-green-200 */
     --color-border: hsl(142, 77%, 85%);    /* border-green-200 */
+    --color-border: hsl(145, 63%, 53%); /* border-green-400 */
     --color-border-dark: hsl(142, 28%, 25%); /* dark:border-green-800 */
   
   }
@@ -220,6 +223,7 @@
   --color-dark: hsl(270, 28%, 15%);
   --color-dark-text: hsl(270, 70%, 80%);
   --color-border: hsl(270, 77%, 85%);
+  --color-border: hsl(259, 85%, 70%); /* border-purple-400 */
   --color-border-dark: hsl(270, 28%, 25%);
 }
 
@@ -265,6 +269,7 @@
   --color-dark: hsl(180, 28%, 15%);
   --color-dark-text: hsl(180, 70%, 80%);
   --color-border: hsl(180, 77%, 85%);
+  --color-border: hsl(174, 77%, 44%); /* border-teal-400 */
   --color-border-dark: hsl(180, 28%, 25%);
 }
 
@@ -310,6 +315,7 @@
   --color-dark: hsl(210, 10%, 20%);
   --color-dark-text: hsl(210, 10%, 60%);
   --color-border: hsl(0, 0%, 85%);
+  --color-border: hsl(210, 5%, 63%); /* border-gray-400 */
   --color-border-dark: hsl(210, 10%, 25%);
 }
 

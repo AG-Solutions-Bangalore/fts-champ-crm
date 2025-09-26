@@ -25,7 +25,8 @@ import {
   FileText, 
   Loader2, 
   MailPlus,
-  X
+  X,
+  History
 } from "lucide-react";
 
 // Assets
@@ -35,15 +36,11 @@ import Logo3 from "../../assets/receipt/ekal.png";
 import tallyImg from "../../assets/tally.svg";
 import mailSentGif from "../../assets/mail-sent.gif";
 
-// API functions
-import {
-  fetchReceiptOneSendMail,
-  fetchReceiptViewById,
-  RECEIPT_VIEW_SUMBIT,
-} from "../../api";
+
 import axios from "axios";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
+import TimelineReceipt from "./timeline-receipt";
 
 const ReceiptOne = () => {
   const tableRef = useRef(null);
@@ -51,7 +48,7 @@ const ReceiptOne = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
-
+  const token = Cookies.get("token");
   const [donor1, setDonor1] = useState({ indicomp_email: "" });
   const [open, setOpen] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -61,9 +58,23 @@ const ReceiptOne = () => {
 
   // Fetch receipt data
   const { data: receiptData, isLoading } = useQuery({
-    queryKey: ['receipt', id],
-    queryFn: () => fetchReceiptViewById(id),
+    queryKey: ['receiptView', id],
+    queryFn: async () => {
+      const { data } = await axios.get(
+        `${BASE_URL}/api/fetch-receipt-by-id/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return data;
+    },
     enabled: !!id,
+    refetchOnWindowFocus: false,  
+  refetchOnReconnect: false,     
+  refetchOnMount: false,        
+  staleTime: 1000 * 60 * 5, 
   });
 
   const receipts = receiptData?.receipt || {};
@@ -72,7 +83,7 @@ const ReceiptOne = () => {
   const country = receiptData?.country || [];
   const amountInWords = numWords(receipts.receipt_total_amount || 0);
 
-  // Fetch receipt control data
+  
   const { data: receiptControl } = useQuery({
     queryKey: ['receiptControl'],
     queryFn: async () => {
@@ -85,34 +96,47 @@ const ReceiptOne = () => {
     },
   });
 
-  // Send email mutation
+ 
   const sendEmailMutation = useMutation({
-    mutationFn: () => fetchReceiptOneSendMail(id),
-    onSuccess: (response) => {
-      if (response.code === 200) {
-        queryClient.invalidateQueries(['receipt', id]);
-        toast.success(response.msg);
-      } else {
-        toast.error(response.msg);
+  mutationFn: async () => {
+    const response = await axios.get(
+      `${BASE_URL}/api/send-receipt/${id}?id=${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${Cookies.get("token")}`,
+        },
       }
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || "Sent mail error");
-    },
-  });
+    );
+    return response.data; 
+  },
 
-  // Update email mutation
+  onSuccess: (response) => {
+    if (response?.code === 200) {
+      queryClient.invalidateQueries(["receiptView", id]);
+      toast.success(response.msg);
+    } else {
+      toast.error(response.msg);
+    }
+  },
+
+  onError: (error) => {
+    toast.error(error.response?.data?.message || "Sent mail error");
+  },
+});
+
+
+  
   const updateEmailMutation = useMutation({
     mutationFn: (formData) => 
-      axios.put(`${RECEIPT_VIEW_SUMBIT}/${Cookies.get("ftsid")}`, formData, {
+      axios.put(`${BASE_URL}/api/update-donor-email/${Cookies.get("ftsid")}`, formData, {
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
         },
       }),
     onSuccess: (response) => {
-      if (response?.data.code === 200) {
+      if (response?.data.code == 200) {
         handleClose();
-        queryClient.invalidateQueries(['receipt', id]);
+        queryClient.invalidateQueries(['receiptView', id]);
         toast.success(response?.data.msg);
         setDonor1({ indicomp_email: "" });
       } else {
@@ -193,7 +217,7 @@ const ReceiptOne = () => {
 
   const handleClickOpen = () => {
     setOpen(true);
-    localStorage.setItem("ftsid", receipts.indicomp_fts_id + "");
+    Cookies.set("ftsid", receipts.indicomp_fts_id + "");
   };
 
   const handleClose = () => {
@@ -288,27 +312,29 @@ const ReceiptOne = () => {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 p-4">
+      <div className=" ">
       
 
 
-{receiptControl?.download_open === "Yes" && Cookies.get("user_type_id") != 4 && (
-  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-    <Card className="p-3 shadow-lg">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center">
-          {tallyReceipt == "True" && (
-            <img src={tallyImg} alt="tallyImg" className="h-6 mr-2" />
-          )}
-        </div>
+      {receiptControl?.download_open === "Yes" && Cookies.get("user_type_id") != 4 && (
+  <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
+    <Card className="p-3 shadow-2xl border border-white/30 backdrop-blur-lg bg-white/80 rounded-2xl hover:bg-white/90 transition-all duration-300">
+      <div className="flex items-center gap-2">
+      {tallyReceipt == "True" && (
+        <div className="flex items-center pr-2  border-r border-gray-300/50 mr-1">
+    
+            <img src={tallyImg} alt="tallyImg" className="h-6 mr-1 opacity-90" />
         
+        </div>
+      )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={handleSavePDF}
               disabled={isSavingPDF}
+              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
             >
               {isSavingPDF ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -324,14 +350,14 @@ const ReceiptOne = () => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={sendEmail}
                 disabled={sendEmailMutation.isPending}
-                className="relative"
+                className=" rounded-md relative transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
               >
                 {!sendEmailMutation.isPending && (
-                  <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-xs w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
                     {receipts.receipt_email_count || 0}
                   </span>
                 )}
@@ -347,7 +373,12 @@ const ReceiptOne = () => {
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={handleClickOpen}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleClickOpen}
+                className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+              >
                 <MailPlus className="h-5 w-5 text-red-500" />
               </Button>
             </TooltipTrigger>
@@ -358,10 +389,11 @@ const ReceiptOne = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={handlReceiptPdf}
               disabled={isPrintingReceipt}
+              className="h-11 w-11 rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
             >
               {isPrintingReceipt ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -376,10 +408,11 @@ const ReceiptOne = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={handlPrintPdf}
               disabled={isPrintingLetter}
+              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
             >
               {isPrintingLetter ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -390,15 +423,18 @@ const ReceiptOne = () => {
           </TooltipTrigger>
           <TooltipContent>Print Letter</TooltipContent>
         </Tooltip>
+
+
+        <TimelineReceipt />
       </div>
     </Card>
   </div>
 )}
 
-        {/* Main Content - 50/50 Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Main Content - 66/33 Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
           {/* Receipt Section - Left Side */}
-          <Card className="p-6">
+          <Card className="p-4 col-span-1 lg:col-span-2 rounded-md">
             <div ref={tableRef} className="relative">
               <img
                 src={Logo1}
@@ -609,7 +645,184 @@ const ReceiptOne = () => {
           </Card>
 
           {/* Letter Section - Right Side */}
-          <Card className="p-6">
+          <Card className="p-4 rounded-md">
+  <div>
+    <div className="flex justify-between">
+      <div className="text-[#464D69] md:text-base text-sm">
+        <p className="font-serif text-base">
+          Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
+        </p>
+
+        {Object.keys(receipts).length !== 0 && (
+          <div className="mt-1 space-y-1">
+            {receipts.receipt_donation_type !== "Membership" &&
+              receipts.individual_company.indicomp_type !== "Individual" && (
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.title}{" "}
+                  {receipts.individual_company.indicomp_com_contact_name}
+                </p>
+              )}
+
+            {receipts.individual_company.indicomp_type !== "Individual" && (
+              <p className="font-serif text-sm">
+                M/s {receipts.individual_company.indicomp_full_name}
+              </p>
+            )}
+
+            {receipts.individual_company.indicomp_type === "Individual" && (
+              <p className="font-serif text-sm">
+                {receipts.individual_company.title}{" "}
+                {receipts.individual_company.indicomp_full_name}
+              </p>
+            )}
+
+            {receipts.individual_company.indicomp_off_branch_address && (
+              <div className="space-y-0.5">
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_off_branch_address}
+                </p>
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_off_branch_area}
+                </p>
+                <p className="text-sm">
+                  {receipts.individual_company.indicomp_off_branch_ladmark}
+                </p>
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_off_branch_city} -{" "}
+                  {receipts.individual_company.indicomp_off_branch_pin_code},{" "}
+                  {receipts.individual_company.indicomp_off_branch_state}
+                </p>
+              </div>
+            )}
+
+            {receipts.individual_company.indicomp_res_reg_address && (
+              <div className="space-y-0.5">
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_res_reg_address}
+                </p>
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_res_reg_area}
+                </p>
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_res_reg_ladmark}
+                </p>
+                <p className="font-serif text-sm">
+                  {receipts.individual_company.indicomp_res_reg_city} -{" "}
+                  {receipts.individual_company.indicomp_res_reg_pin_code},{" "}
+                  {receipts.individual_company.indicomp_res_reg_state}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="my-2 font-serif text-sm">
+          {receipts.individual_company?.indicomp_gender === "Female" &&
+            "Respected Madam,"}
+          {receipts.individual_company?.indicomp_gender === "Male" &&
+            "Respected Sir,"}
+          {receipts.individual_company?.indicomp_gender === null &&
+            "Respected Sir,"}
+        </p>
+
+        {/* One Teacher School */}
+        {receipts.receipt_donation_type === "One Teacher School" && (
+          <div className="mt-1 text-justify space-y-2">
+            <p className="font-serif text-sm text-center">
+              Sub: Adoption of One Teacher School
+            </p>
+            <p className="font-serif text-sm leading-tight">
+              We acknowledge with thanks the receipt of Rs.
+              {receipts.receipt_total_amount}/- Rupees {amountInWords} Only via{" "}
+              {receipts.receipt_tran_pay_mode == "Cash" ? (
+                <>Cash for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
+              ) : (
+                <>{receipts.receipt_tran_pay_details} being for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
+              )}
+            </p>
+            <p className="font-serif text-sm leading-tight">
+              We convey our sincere thanks and gratitude for your kind support towards
+              the need of our tribals...
+            </p>
+            <p className="font-serif text-sm leading-tight">
+              We would like to state that our efforts are not only for mitigating the
+              hardship...
+            </p>
+            <p className="font-serif text-sm leading-tight">
+              We are pleased to enclose herewith our money receipt no.{" "}
+              {receipts.receipt_ref_no} dated{" "}
+              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
+            </p>
+          </div>
+        )}
+
+        {/* General Donation */}
+        {receipts.receipt_donation_type === "General" && (
+          <div className="mt-1 space-y-2">
+            <p className="font-serif text-sm leading-tight">
+              We thankfully acknowledge the receipt of Rs.
+              {receipts.receipt_total_amount}/- via your{" "}
+              {receipts.receipt_tran_pay_mode === "Cash"
+                ? "Cash"
+                : receipts.receipt_tran_pay_details}{" "}
+              being Donation for Education.
+            </p>
+            <p className="font-serif text-sm leading-tight">
+              We are pleased to enclose herewith our money receipt no.{" "}
+              {receipts.receipt_ref_no} dated{" "}
+              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
+            </p>
+          </div>
+        )}
+
+        {/* Membership */}
+        {receipts.receipt_donation_type === "Membership" && (
+          <div>
+            <p className="font-serif text-sm leading-tight">
+              We acknowledge with thanks receipt of your membership subscription upto{" "}
+              {receipts?.m_ship_vailidity}.
+            </p>
+          </div>
+        )}
+
+        {/* Closing Lines */}
+        {receipts.receipt_donation_type !== "Membership" && (
+          <div className="space-y-1 mt-2">
+            <p className="font-serif text-sm">Thanking you once again</p>
+            <p className="font-serif text-sm">Yours faithfully,</p>
+            <p className="font-serif text-sm">For Friends of Tribals Society</p>
+            <p className="font-serif text-sm mt-4">
+              {authsign.map((sig, key) => (
+                <span key={key}>{sig.indicomp_full_name}</span>
+              ))}
+            </p>
+            <p className="font-serif text-sm">{chapter.auth_sign}</p>
+            <p className="font-serif text-sm">Encl: As stated above</p>
+          </div>
+        )}
+
+        {receipts.receipt_donation_type === "Membership" && (
+          <div className="space-y-1 mt-2">
+            <p className="font-serif text-sm">With Best regards</p>
+            <p className="font-serif text-sm">Yours sincerely</p>
+            <p className="font-serif text-sm">
+              {authsign.map((sig, key) => (
+                <span key={key}>{sig.indicomp_full_name}</span>
+              ))}
+            </p>
+            <p className="font-serif text-sm">{chapter.auth_sign}</p>
+            <p className="font-serif text-sm">Encl: As stated above</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</Card>
+
+
+
+          {/* only for print  */}
+          <Card className="p-6 hidden ">
             <div ref={containerRef}>
               <div className="flex justify-between p-6 mt-44">
                 <div className="text-[#464D69] md:text-xl text-sm">
@@ -776,7 +989,7 @@ const ReceiptOne = () => {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Donor Email</DialogTitle>
+              <DialogTitle>Add Donor Email</DialogTitle>
             </DialogHeader>
             <form onSubmit={onSubmit} autoComplete="off">
               <CardContent className="space-y-4">

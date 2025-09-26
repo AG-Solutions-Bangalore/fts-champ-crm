@@ -231,41 +231,46 @@ export function AppSidebar({ ...props }) {
         ],
       },
      
-     
       {
-        title: "Download",
-        url: "#",
+        title: "Downloads",
+        url: "/download",
+        icon: Blocks,
         isActive: false,
-        icon: Package,
-        items: [
-          {
-            title: "Receipt",
-            url: "/download/receipt",
-          },
-          {
-            title: "Donor",
-            url: "/download/donor",
-          },
-          {
-            title: "School",
-            url: "/download/school",
-          },
-          {
-            title: "OTS",
-            url: "/download/ots",
-          },
-          {
-            title: "Team",
-            url: "/download/team",
-          },
-          {
-            title: "All Receipt",
-            url: "/download/all-receipt",
-          },
-         
-         
-        ],
       },
+      // {
+      //   title: "Download",
+      //   url: "#",
+      //   isActive: false,
+      //   icon: Package,
+      //   items: [
+      //     {
+      //       title: "Receipt",
+      //       url: "/download/receipt",
+      //     },
+      //     {
+      //       title: "Donor",
+      //       url: "/download/donor",
+      //     },
+      //     {
+      //       title: "School",
+      //       url: "/download/school",
+      //     },
+      //     {
+      //       title: "OTS",
+      //       url: "/download/ots",
+      //     },
+      //     {
+      //       title: "Team",
+      //       url: "/download/team",
+      //     },
+      //     {
+      //       title: "All Receipt",
+      //       url: "/download/all-receipt",
+      //     },
+         
+         
+      //   ],
+      // },
       {
         title: "Other",
         url: "#",

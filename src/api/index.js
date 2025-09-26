@@ -1,7 +1,8 @@
 import axios from "axios";
 
-import { decryptId, encryptId } from "../utils/encyrption/Encyrption";
+
 import BASE_URL from "@/config/base-url";
+import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
 
 
 

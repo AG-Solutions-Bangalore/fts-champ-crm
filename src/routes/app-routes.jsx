@@ -33,6 +33,7 @@ import Notification from "@/app/other/notification/notification";
 import FaqOther from "@/app/other/faq/faq";
 import Settings from "@/app/setting/setting";
 import ReceiptView from "@/app/receipt/receipt-view";
+import AllDownload from "@/app/download/all-download";
 
 
 function AppRoutes() {
@@ -84,6 +85,10 @@ function AppRoutes() {
         <Route path="/report/promoter-summary" element={<Promoter />} />
         <Route path="/report/donor-summary" element={<Donor />} />
         <Route path="/report/10db-statement-summary" element={<DBStatement />} />
+
+
+        {/* download  */}
+        <Route path="/download" element={<AllDownload />} />
 
 
 
