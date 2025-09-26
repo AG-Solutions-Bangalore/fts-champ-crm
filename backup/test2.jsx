@@ -1,1 +1,0 @@
-ots_exp_type
