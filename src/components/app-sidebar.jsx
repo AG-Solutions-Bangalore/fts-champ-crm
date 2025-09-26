@@ -232,7 +232,7 @@ export function AppSidebar({ ...props }) {
       },
      
       {
-        title: "Download",
+        title: "Downloads",
         url: "/download",
         icon: Blocks,
         isActive: false,
