@@ -1,69 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
-import PageTitleBar from "../../../components/common/PageTitle";
-import BASE_URL from "../../../base/BaseUrl";
-import { Button, Spinner } from "@material-tailwind/react";
-import Layout from "../../../layout/Layout";
-import image1 from "../../../assets/receipt/fts.png";
-import image2 from "../../../assets/receipt/top.png";
-import image3 from "../../../assets/receipt/ekal.png";
-import { NumericFormat } from "react-number-format";
-import { FaArrowLeft } from "react-icons/fa6";
-import { IoIosPrint } from "react-icons/io";
-import { LuDownload } from "react-icons/lu";
 import { RECEIPT_SUMMARY_VIEW } from "@/api";
+import ReportHeader from "@/components/common/report-header";
+import { Card } from "@/components/ui/card";
+import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useEffect } from "react";
+import { NumericFormat } from "react-number-format";
 
-const RecepitView = ({
-  componentRef,
-  receiptFromDate,
-  receiptToDate,
-  indicompFullName,
-}) => {
-  const [donorsummary, setSummary] = useState([]);
-  const [receiptsummary, setReceiptSummary] = useState({});
-  const [grandtotal, setGrandtotal] = useState({});
-
-  const [grandots, setGrandots] = useState([]);
-  const [receiptTotalOTS, setReceiptTotalOTS] = useState([]);
-
-  const [totalsummarygeneral, setTotalGeneral] = useState({});
-
-  const [receiptTotalMembership, setReceiptTotalMembership] = useState([]);
-  const [receiptsummaryfootertotal, setReceiptSummaryFooterTotal] = useState(
-    []
-  );
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const receiptFromDate = localStorage.getItem("receipt_from_date_recp");
-      const receiptToDate = localStorage.getItem("receipt_to_date_recp");
-      try {
-        const response = await axios.get(
-          `${BASE_URL}/api/fetch-receiptsummary-by-id/${receiptFromDate}/${receiptToDate}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        // setSummary(response.data.receipt);
-        setReceiptSummary(response.data.receiptTotal);
-        setGrandots(response.data.receipt_grand_total_ots);
-        setTotalGeneral(response.data.recveiptTotalGeneral);
-        setReceiptSummaryFooterTotal(response.data.receipt_grand_total_amount);
-        setReceiptTotalOTS(response.data.receiptTotalOTS);
-        setReceiptTotalMembership(response.data.receiptTotalMembership);
-        setGrandtotal(response.data.receipt_grand_total_count);
-        console.log(response.data.receipt_grand_total_count);
-      } catch (error) {
-        setError("Error fetching promoter summary. Please try again.");
-        console.error("Error fetching promoter summary:", error);
-      } finally {
-      }
-    };
-
-    fetchData();
-  }, []);
+const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
   const {
     data,
     isLoading: loader,
@@ -85,14 +27,12 @@ const RecepitView = ({
   const receiptsummary = data?.receiptTotal || [];
   const grandots = data?.receipt_grand_total_ots || [];
   const totalsummarygeneral = data?.recveiptTotalGeneral || [];
-  const receiptsummaryfootertotal = data?.receipt_grand_;
+  const receiptsummaryfootertotal = data?.receipt_grand_total_amount;
+  const grandtotal = data?.receipt_grand_total_count;
+  const receiptTotalMembership = data?.receiptTotalMembership;
+  const receiptTotalOTS = data?.receiptTotalOTS;
   return (
-    <Layout>
-      {loader && (
-        <div className="flex justify-center items-center h-screen">
-          <Spinner />
-        </div>
-      )}
+    <>
       {!loader && error && (
         <div className="text-red-600 text-center">{error}</div>
       )}
@@ -100,61 +40,10 @@ const RecepitView = ({
         <div className="invoice-wrapper">
           <div className="flex flex-col items-center">
             <div className="w-full mx-auto ">
-              <div className="bg-white shadow-md rounded-lg p-6 overflow-x-auto  grid sm:grid-cols-1 1fr">
-                <div className="flex items-center space-y-4 self-end md:flex-row md:justify-between sm:space-y-0 md:space-x-4">
-                  <PageTitleBar
-                    title="Recepit Summary"
-                    icon={FaArrowLeft}
-                    match={props.match}
-                    backLink="/report/recepit"
-                  />
-                  <div className="flex">
-                    <Button
-                      variant="text"
-                      className="flex items-center space-x-2"
-                    >
-                      <LuDownload className="text-lg" />
-                      <span>PDF</span>
-                    </Button>
-
-                    <Button
-                      variant="text"
-                      className="flex items-center space-x-2"
-                    >
-                      <IoIosPrint className="text-lg" />
-                      <span>Print Letter</span>
-                    </Button>
-                  </div>
-                </div>
-                <hr className="mb-6"></hr>
-                <div className="flex justify-between items-center mb-4 ">
-                  <div className="invoice-logo">
-                    <img
-                      src={image1}
-                      alt="session-logo"
-                      width="80"
-                      height="80"
-                    />
-                  </div>
-                  <div className="address text-center">
-                    <img src={image2} alt="session-logo" width="320px" />
-                    <h2 className="pt-3">
-                      <strong>
-                        <b className="text-lg text-gray-600">RECPIT SUMMARY</b>
-                      </strong>
-                    </h2>
-                  </div>
-                  <div className="invoice-logo text-right">
-                    <img
-                      src={image3}
-                      alt="session-logo"
-                      width="80"
-                      height="80"
-                    />
-                  </div>
-                </div>
-
+              <Card className="p-6 overflow-x-auto grid md:grid-cols-1 1fr">
                 <div ref={componentRef} className="my-5">
+                  <ReportHeader title="RECEPIT SUMMARY" />
+
                   <table className="min-w-full border-collapse border border-black">
                     <thead>
                       <tr className="bg-gray-200">
@@ -299,12 +188,12 @@ const RecepitView = ({
                     ))}
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 };
 
