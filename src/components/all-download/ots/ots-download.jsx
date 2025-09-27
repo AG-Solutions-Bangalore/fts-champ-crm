@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import Moment from 'moment';
 import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -30,14 +31,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { DOWNLOAD_DONOR } from '@/api';
+import { DOWNLOAD_PURCHASE_OTS } from '@/api';
 import Cookies from 'js-cookie';
 
-const DonorDownload = () => {
-  const token = Cookies.get('token');
+const OtsDownload = () => {
+  const token = Cookies.get('token') || localStorage.getItem('token');
   const [formData, setFormData] = useState({
-    indicomp_type: '',
-    indicomp_donor_type: ''
+    receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
+    receipt_to_date: Moment().format('YYYY-MM-DD')
   });
 
   const [jsonData, setJsonData] = useState(null);
@@ -46,26 +47,9 @@ const DonorDownload = () => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const donorTypes = [
-    { value: 'Member', label: 'Member' },
-    { value: 'Donor', label: 'Donor' },
-    { value: 'Member+Donor', label: 'Member+Donor' },
-    { value: 'None', label: 'None' }
-  ];
-
-  const donorCategories = [
-    { value: 'Member', label: 'Member' },
-    { value: 'Donor', label: 'Donor' },
-    { value: 'Member+Donor', label: 'Member+Donor' },
-    { value: 'None', label: 'PSU' },
-    { value: 'Trust', label: 'Trust' },
-    { value: 'Society', label: 'Society' },
-    { value: 'Others', label: 'Others' }
-  ];
-
   const downloadMutation = useMutation({
     mutationFn: async (downloadData) => {
-      const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
+      const response = await axios.post(DOWNLOAD_PURCHASE_OTS, downloadData, {
         headers: { 'Authorization': `Bearer ${token}` },
         responseType: 'blob'
       });
@@ -75,26 +59,26 @@ const DonorDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'donor_list.csv');
+      link.setAttribute('download', 'ots_list.csv');
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Donor list downloaded successfully!');
+      toast.success('OTS downloaded successfully!');
       setFormData({
-        indicomp_type: '',
-        indicomp_donor_type: ''
+        receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
+        receipt_to_date: Moment().format('YYYY-MM-DD')
       });
     },
     onError: (error) => {
-      toast.error('Failed to download donor list');
+      toast.error('Failed to download OTS');
       console.error('Download error:', error);
     }
   });
 
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
-      const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
+      const response = await axios.post(DOWNLOAD_PURCHASE_OTS, downloadData, {
         headers: { 'Authorization': `Bearer ${token}` },
         responseType: 'blob'
       });
@@ -117,21 +101,30 @@ const DonorDownload = () => {
       setJsonData(data);
     },
     onError: () => {
-      toast.error('Failed to fetch donor data');
+      toast.error('Failed to fetch OTS data');
     }
   });
 
-  const handleSelectChange = (name, value) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitDownload = (e) => {
     e.preventDefault();
+    if (!formData.receipt_from_date || !formData.receipt_to_date) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
     downloadMutation.mutate(formData);
   };
 
   const handleSubmitView = (e) => {
     e.preventDefault();
+    if (!formData.receipt_from_date || !formData.receipt_to_date) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
     viewMutation.mutate(formData);
   };
 
@@ -143,11 +136,11 @@ const DonorDownload = () => {
         const globalIndex = row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
       },
-  
+      size: 60,
     },
     {
-      accessorKey: 'FTS Id',
-      id: 'FTS Id',
+      accessorKey: 'Chapter',
+      id: 'Chapter',
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -155,247 +148,118 @@ const DonorDownload = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="px-2 h-8 text-xs"
         >
-          FTS Id
+          Chapter
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('FTS Id')}</div>,
-     
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Chapter')}</div>,
+      size: 120,
     },
     {
-      accessorKey: 'Title',
-      id: 'Title',
-      header: 'Title',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Title')}</div>,
-  
+      accessorKey: 'Receipt Date',
+      id: 'Receipt Date',
+      header: 'Receipt Date',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt Date')}</div>,
+      size: 120,
     },
     {
-      accessorKey: 'Name',
-      id: 'Name',
-      header: 'Name',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Name')}</div>,
-     
+      accessorKey: 'Receipt No',
+      id: 'Receipt No',
+      header: 'Receipt No',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt No')}</div>,
+      size: 100,
     },
     {
-      accessorKey: 'Type',
-      id: 'Type',
-      header: 'Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Type')}</div>,
-     
+      accessorKey: 'Amount',
+      id: 'Amount',
+      header: 'Amount',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Amount')}</div>,
+      size: 100,
     },
     {
-      accessorKey: 'Contact Name',
-      id: 'Contact Name',
-      header: 'Contact Name',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Contact Name')}</div>,
-  
+      accessorKey: 'OTS Donated',
+      id: 'OTS Donated',
+      header: 'OTS Donated',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('OTS Donated')}</div>,
+      size: 100,
     },
     {
-      accessorKey: 'Designation',
-      id: 'Designation',
-      header: 'Designation',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Designation')}</div>,
-   
+      accessorKey: 'Pay Mode',
+      id: 'Pay Mode',
+      header: 'Pay Mode',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pay Mode')}</div>,
+      size: 100,
     },
     {
-      accessorKey: 'Father Name',
-      id: 'Father Name',
-      header: 'Father Name',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Father Name')}</div>,
- 
-    },
-    {
-      accessorKey: 'Mother Name',
-      id: 'Mother Name',
-      header: 'Mother Name',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Mother Name')}</div>,
-     
-    },
-    {
-      accessorKey: 'Gender',
-      id: 'Gender',
-      header: 'Gender',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Gender')}</div>,
-   
-    },
-    {
-      accessorKey: 'Spouse',
-      id: 'Spouse',
-      header: 'Spouse',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Spouse')}</div>,
-  
-    },
-    // {
-    //   accessorKey: 'DOB',
-    //   id: 'DOB',
-    //   header: 'DOB',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('DOB')}</div>,
-    //   size: 100,
-    // },
-    // {
-    //   accessorKey: 'DOA',
-    //   id: 'DOA',
-    //   header: 'DOA',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('DOA')}</div>,
-    //   size: 100,
-    // },
-    {
-      accessorKey: 'PAN No',
-      id: 'PAN No',
-      header: 'PAN No',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('PAN No')}</div>,
-   
-    },
-    {
-      accessorKey: 'Mobile',
-      id: 'Mobile',
-      header: 'Mobile',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Mobile')}</div>,
-  
-    },
-    {
-      accessorKey: 'Whatsapp',
-      id: 'Whatsapp',
-      header: 'Whatsapp',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Whatsapp')}</div>,
-  
-    },
-    // {
-    //   accessorKey: 'Email',
-    //   id: 'Email',
-    //   header: 'Email',
-    //   cell: ({ row }) => {
-    //     const email = row.getValue('Email') || '';
-    //     const shortEmail = email.length > 25 ? email.slice(0, 25) + '…' : email;
-    //     return <div className="text-xs font-medium">{shortEmail}</div>;
-    //   },
-    //   size: 150,
-    // },
-    // {
-    //   accessorKey: 'Website',
-    //   id: 'Website',
-    //   header: 'Website',
-    //   cell: ({ row }) => {
-    //     const website = row.getValue('Website') || '';
-    //     const shortWebsite = website.length > 20 ? website.slice(0, 20) + '…' : website;
-    //     return <div className="text-xs font-medium">{shortWebsite}</div>;
-    //   },
-    //   size: 120,
-    // },
-    {
-      accessorKey: '1st Address',
-      id: '1st Address',
-      header: '1st Address',
+      accessorKey: 'Pay Details',
+      id: 'Pay Details',
+      header: 'Pay Details',
       cell: ({ row }) => {
-        const address = row.getValue('1st Address') || '';
-        const shortAddress = address.length > 30 ? address.slice(0, 30) + '…' : address;
-        return <div className="text-xs font-medium">{shortAddress}</div>;
+        const payDetails = row.getValue('Pay Details') || '';
+        const shortPayDetails = payDetails.length > 50 ? payDetails.slice(0, 50) + '…' : payDetails;
+        return <div className="text-xs font-medium">{shortPayDetails}</div>;
       },
-    
-    },
-    // {
-    //   accessorKey: 'Area',
-    //   id: 'Area',
-    //   header: 'Area',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Area')}</div>,
-    //   size: 120,
-    // },
-    // {
-    //   accessorKey: 'Landmark',
-    //   id: 'Landmark',
-    //   header: 'Landmark',
-    //   cell: ({ row }) => {
-    //     const landmark = row.getValue('Landmark') || '';
-    //     const shortLandmark = landmark.length > 20 ? landmark.slice(0, 20) + '…' : landmark;
-    //     return <div className="text-xs font-medium">{shortLandmark}</div>;
-    //   },
-    //   size: 120,
-    // },
-    {
-      accessorKey: 'City',
-      id: 'City',
-      header: 'City',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('City')}</div>,
-    
-    },
-    // {
-    //   accessorKey: 'State',
-    //   id: 'State',
-    //   header: 'State',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('State')}</div>,
-    //   size: 100,
-    // },
-    // {
-    //   accessorKey: 'Pincode',
-    //   id: 'Pincode',
-    //   header: 'Pincode',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pincode')}</div>,
-    //   size: 80,
-    // },
-    // {
-    //   accessorKey: '2nd Address',
-    //   id: '2nd Address',
-    //   header: '2nd Address',
-    //   cell: ({ row }) => {
-    //     const address = row.getValue('2nd Address') || '';
-    //     const shortAddress = address.length > 30 ? address.slice(0, 30) + '…' : address;
-    //     return <div className="text-xs font-medium">{shortAddress}</div>;
-    //   },
-    //   size: 200,
-    // },
-    // {
-    //   accessorKey: 'Corr. Preffer',
-    //   id: 'Corr. Preffer',
-    //   header: 'Corr. Preffer',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Corr. Preffer')}</div>,
-    //   size: 100,
-    // },
-    {
-      accessorKey: 'CSR',
-      id: 'CSR',
-      header: 'CSR',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('CSR')}</div>,
-    
+      size: 150,
     },
     {
-      accessorKey: 'Belongs To',
-      id: 'Belongs To',
-      header: 'Belongs To',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Belongs To')}</div>,
+      accessorKey: 'FTS ID',
+      id: 'FTS ID',
+      header: 'FTS ID',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('FTS ID')}</div>,
+      size: 100,
+    },
+    {
+      accessorKey: 'Donor Name',
+      id: 'Donor Name',
+      header: 'Donor Name',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Name')}</div>,
+      size: 150,
+    },
    
+    {
+      accessorKey: 'Reg City',
+      id: 'Reg City',
+      header: 'Reg City',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Reg City')}</div>,
+      size: 100,
     },
+   
+    {
+      accessorKey: 'Correspondence Preference',
+      id: 'Correspondence Preference',
+      header: 'Correspondence Preference',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Correspondence Preference')}</div>,
+      size: 150,
+    },
+    {
+      accessorKey: 'Email',
+      id: 'Email',
+      header: 'Email',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Email')}</div>,
+      size: 150,
+    },
+    {
+      accessorKey: 'Contact Number',
+      id: 'Contact Number',
+      header: 'Contact Number',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Contact Number')}</div>,
+      size: 120,
+    },
+    {
+      accessorKey: 'Prompter',
+      id: 'Prompter',
+      header: 'Prompter',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Prompter')}</div>,
+      size: 100,
+    },
+    
     {
       accessorKey: 'Donor Type',
       id: 'Donor Type',
       header: 'Donor Type',
       cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Type')}</div>,
-   
+      size: 100,
     },
-    {
-      accessorKey: 'Promoter',
-      id: 'Promoter',
-      header: 'Promoter',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Promoter')}</div>,
-   
-    },
-    {
-      accessorKey: 'Source',
-      id: 'Source',
-      header: 'Source',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Source')}</div>,
-    
-    },
-    // {
-    //   accessorKey: 'Remarks',
-    //   id: 'Remarks',
-    //   header: 'Remarks',
-    //   cell: ({ row }) => {
-    //     const remarks = row.getValue('Remarks') || '';
-    //     const shortRemarks = remarks.length > 50 ? remarks.slice(0, 50) + '…' : remarks;
-    //     return <div className="text-xs font-medium">{shortRemarks}</div>;
-    //   },
-    //   size: 200,
-    // },
   ];
 
   const table = useReactTable({
@@ -435,11 +299,11 @@ const DonorDownload = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto border rounded-md shadow-sm">
+    <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
       <div className="p-4 border-b bg-muted/50">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <Download className="w-5 h-5" />
-          Download Donors
+          Download OTS
         </div>
         <div className="text-sm text-muted-foreground mt-0.5">
           Leave fields blank to get all records
@@ -448,39 +312,51 @@ const DonorDownload = () => {
 
       <div className="p-4">
         <form className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="indicomp_donor_type" className="text-sm">Category</Label>
-              <Select value={formData.indicomp_donor_type} onValueChange={(value) => handleSelectChange('indicomp_donor_type', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {donorTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
+              <Input 
+                id="receipt_from_date" 
+                name="receipt_from_date" 
+                type="date" 
+                value={formData.receipt_from_date} 
+                onChange={handleInputChange} 
+                required 
+                className="h-9" 
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="indicomp_type" className="text-sm">Source</Label>
-              <Select value={formData.indicomp_type} onValueChange={(value) => handleSelectChange('indicomp_type', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  {donorCategories.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="receipt_to_date" className="text-sm">To Date *</Label>
+              <Input 
+                id="receipt_to_date" 
+                name="receipt_to_date" 
+                type="date" 
+                value={formData.receipt_to_date} 
+                onChange={handleInputChange} 
+                required 
+                className="h-9" 
+              />
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" onClick={handleSubmitDownload} disabled={downloadMutation.isPending} className="flex items-center gap-2 h-9">
+            <Button 
+              type="button" 
+              onClick={handleSubmitDownload} 
+              disabled={downloadMutation.isPending} 
+              className="flex items-center gap-2 h-9"
+            >
               <Download className="w-4 h-4" />
               {downloadMutation.isPending ? 'Downloading...' : 'Download'}
             </Button>
 
-            <Button type="button" onClick={handleSubmitView} disabled={viewMutation.isPending} className="flex items-center gap-2 h-9">
+            <Button 
+              type="button" 
+              onClick={handleSubmitView} 
+              disabled={viewMutation.isPending} 
+              className="flex items-center gap-2 h-9"
+            >
               <Eye className="w-4 h-4" />
               {viewMutation.isPending ? 'Loading...' : 'View'}
             </Button>
@@ -494,7 +370,7 @@ const DonorDownload = () => {
               <div className="relative w-72">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search donors..."
+                  placeholder="Search OTS..."
                   value={table.getState().globalFilter || ''}
                   onChange={(event) => table.setGlobalFilter(event.target.value)}
                   className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
@@ -525,8 +401,8 @@ const DonorDownload = () => {
             </div>
 
             {/* Table */}
-            <div className="rounded-none border min-h-[20rem] flex flex-col overflow-x-auto">
-              <Table className="flex-1 ">
+            <div className="rounded-none border min-h-[20rem] flex flex-col">
+              <Table className="flex-1">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
@@ -571,7 +447,7 @@ const DonorDownload = () => {
                   ) : (
                     <TableRow className="h-12">
                       <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                        No donors found.
+                        No OTS records found.
                       </TableCell>
                     </TableRow>
                   )}
@@ -582,7 +458,7 @@ const DonorDownload = () => {
             {/* Pagination */}
             <div className="flex items-center justify-end space-x-2 py-4">
               <div className="flex-1 text-sm text-muted-foreground">
-                Total Donors: {table.getFilteredRowModel().rows.length}
+                Total OTS Records: {table.getFilteredRowModel().rows.length}
               </div>
               <div className="space-x-2">
                 <Button
@@ -610,4 +486,4 @@ const DonorDownload = () => {
   );
 };
 
-export default DonorDownload;
+export default OtsDownload;

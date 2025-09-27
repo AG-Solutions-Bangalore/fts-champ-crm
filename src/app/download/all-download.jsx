@@ -2,6 +2,9 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReceiptDownload from "@/components/all-download/receipt/receipt-download";
 import DonorDownload from "@/components/all-download/donor/donor-download";
+import TeamDownload from "@/components/all-download/team/team-download";
+import OtsDownload from "@/components/all-download/ots/ots-download";
+import SchoolDownload from "@/components/all-download/school/school-download";
 
 const AllDownload = () => {
   return (
@@ -26,15 +29,15 @@ const AllDownload = () => {
         </TabsContent>
 
         <TabsContent value="school" className="space-y-2">
-          <p>School content goes here</p>
+    <SchoolDownload/>
         </TabsContent>
 
         <TabsContent value="ots" className="space-y-2">
-          <p>OTS content goes here</p>
+      <OtsDownload/>
         </TabsContent>
 
         <TabsContent value="team" className="space-y-2">
-          <p>Team content goes here</p>
+        <TeamDownload/>
         </TabsContent>
 
         <TabsContent value="all-receipt" className="space-y-2">
