@@ -228,25 +228,25 @@ export const PAYMENT_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-teacher-paymen
 
 
 //PROMOTER SUMMARY
-export const PROMOTER_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-promoter-summary`;
-export const PROMOTER_SUMMARY_DROPDOWN = `${BASE_URL}/api/fetch-promoter`;
-export const PROMOTER_SUMMARY_VIEW = `${BASE_URL}/api/fetch-promotersummary-by-id`;
+export const PROMOTER_SUMMARY_DOWNLOAD = `/api/download-promoter-summary`;
+export const PROMOTER_SUMMARY_DROPDOWN = `/api/fetch-promoter`;
+export const PROMOTER_SUMMARY_VIEW = `/api/fetch-promotersummary-by-id`;
 
 
 
 //RECEIPT SUMMARY
-export const RECEIPT_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-receipt-summary`;
-export const RECEIPT_SUMMARY_VIEW = `${BASE_URL}/api/fetch-receiptsummary-by-id`;
+export const RECEIPT_SUMMARY_DOWNLOAD = `/api/download-receipt-summary`;
+export const RECEIPT_SUMMARY_VIEW = `/api/fetch-receiptsummary-by-id`;
 
 
 //SCHOOL SUMMARY
-export const SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-school-summary`;
-export const SUMMARY_SOURCE_DROPDOWN = `${BASE_URL}/api/fetch-school-allot-year-donor`;
-export const SUMMARY_VIEW = `${BASE_URL}/api/fetch-schoolsallot-receipt-by-id`;
+export const SUMMARY_DOWNLOAD = `/api/download-school-summary`;
+export const SUMMARY_SOURCE_DROPDOWN = `/api/fetch-school-allot-year-donor`;
+export const SUMMARY_VIEW = `/api/fetch-schoolsallot-receipt-by-id`;
 
 //SUSPENSE SUMMARY
-export const SUSPENSE_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-receipt-suspense-summary`;
-export const SUSPENSE_SUMMARY_VIEW = `${BASE_URL}/api/fetch-receipt-suspense-summary`;
+export const SUSPENSE_SUMMARY_DOWNLOAD = `/api/download-receipt-suspense-summary`;
+export const SUSPENSE_SUMMARY_VIEW = `/api/fetch-receipt-suspense-summary`;
 
 
 /*--------------------------Report-end----------------------------------- */

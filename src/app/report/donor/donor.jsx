@@ -7,7 +7,7 @@ import {
 } from "@/api";
 import { MemoizedSelect } from "@/components/common/memoized-select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,13 +20,13 @@ import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { Download, FileType, Loader2, Printer } from "lucide-react";
+import { Download, FileType, Loader, Printer } from "lucide-react";
 import moment from "moment";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import { toast } from "sonner";
 import DonorGroupView from "./donor-group-view";
 import DonorIndividualView from "./donor-individual-view";
-import { toast } from "sonner";
 const Donor = () => {
   const today = moment().format("YYYY-MM-DD");
   const firstOfMonth = moment().startOf("month").format("YYYY-MM-DD");
@@ -187,69 +187,19 @@ const Donor = () => {
   return (
     <>
       <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
-        <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
+        {/* <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
           <CardTitle className="text-lg font-medium">
             <div className="flex justify-between ">
               <h2> Download Receipts</h2>
-              <div className="space-x-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handlePrintPdf}
-                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        <Printer className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Print Receipt</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleSavePDF}
-                        className=" transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        <Download className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Download PDF</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleDownload}
-                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        {loading ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <FileType className="h-5 w-5" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Download Excel</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+          
             </div>
           </CardTitle>
-        </CardHeader>
+        </CardHeader> */}
 
         <CardContent className="p-6">
           <form id="dowRecp" className="space-y-6" autoComplete="off">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
+              {/* Donor Name */}
               <div>
                 <Label className="font-medium" htmlFor="indicomp_full_name">
                   Donor Name <span className="text-red-500">*</span>
@@ -267,6 +217,8 @@ const Donor = () => {
                   placeholder="Select Donor Name"
                 />
               </div>
+
+              {/* From Date */}
               <div>
                 <Label className="font-medium" htmlFor="receipt_from_date">
                   From Date
@@ -280,6 +232,7 @@ const Donor = () => {
                 />
               </div>
 
+              {/* To Date */}
               <div>
                 <Label className="font-medium" htmlFor="receipt_to_date">
                   To Date
@@ -293,7 +246,9 @@ const Donor = () => {
                   required
                 />
               </div>
-              <div className="flex gap-4 pt-6">
+
+              {/* View Buttons */}
+              <div className="flex gap-4">
                 <Button
                   className="text-white"
                   onClick={handleIndividualViewClick}
@@ -303,6 +258,79 @@ const Donor = () => {
                 <Button className="text-white" onClick={handleGroupViewClick}>
                   Group View
                 </Button>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-start lg:justify-center">
+                {/* Print */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrintPdf}
+                        disabled={
+                          !donorSummary?.indicomp_full_name ||
+                          !donorSummary?.receipt_from_date ||
+                          !donorSummary?.receipt_to_date
+                        }
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Printer className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Print Receipt</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* PDF */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleSavePDF}
+                        disabled={
+                          !donorSummary?.indicomp_full_name ||
+                          !donorSummary?.receipt_from_date ||
+                          !donorSummary?.receipt_to_date
+                        }
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download PDF</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Excel */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDownload}
+                        disabled={
+                          !donorSummary?.indicomp_full_name ||
+                          !donorSummary?.receipt_from_date ||
+                          !donorSummary?.receipt_to_date
+                        }
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        {loading ? (
+                          <Loader className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <FileType className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download Excel</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </form>
