@@ -198,16 +198,16 @@ export const DASHBOARD_MARK_NOTICE_AS_READ = `${BASE_URL}/api/user-mark-a-notice
 
 /*--------------------------Report-start----------------------------------- */
 //10DBDOCUMENTS
-export const DB_DOCUMENT_DOWNLOAD = `${BASE_URL}/api/download-receipt-year`;
-export const DB_DOCUMENT_VIEW = `${BASE_URL}/api/fetch-donor-receipt-by-year`;
-export const DB_DOCUMENT_DOWNLOAD_NO_PAN = `${BASE_URL}/api/download-receipt-year-no-pan`;
-export const DB_DOCUMENT_VIEW_NO_PAN = `${BASE_URL}/api/fetch-donor-receipt-by-year-no-pan`;
-export const DB_DOCUMENT_DOWNLOAD_GROUP = `${BASE_URL}/api/download-receipt-year-group`;
-export const DB_DOCUMENT_VIEW_GROUP = `${BASE_URL}/api/fetch-donor-receipt-group-by-year`;
+export const DB_DOCUMENT_DOWNLOAD = `/api/download-receipt-year`;
+export const DB_DOCUMENT_VIEW = `/api/fetch-donor-receipt-by-year`;
+export const DB_DOCUMENT_DOWNLOAD_NO_PAN = `/api/download-receipt-year-no-pan`;
+export const DB_DOCUMENT_VIEW_NO_PAN = `/api/fetch-donor-receipt-by-year-no-pan`;
+export const DB_DOCUMENT_DOWNLOAD_GROUP = `/api/download-receipt-year-group`;
+export const DB_DOCUMENT_VIEW_GROUP = `/api/fetch-donor-receipt-group-by-year`;
 
 //DONATION SUMMARY
-export const DONATION_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-donation-summary`;
-export const DONATION_SUMMARY_VIEW = `${BASE_URL}/api/fetch-donationsummary-by-id`;
+export const DONATION_SUMMARY_DOWNLOAD = `/api/download-donation-summary`;
+export const DONATION_SUMMARY_VIEW = `/api/fetch-donationsummary-by-id`;
 
 
 

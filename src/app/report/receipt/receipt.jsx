@@ -1,5 +1,3 @@
-"use client";
-
 import { RECEIPT_SUMMARY_DOWNLOAD } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,11 +13,12 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Download, FileType, Loader, Printer } from "lucide-react";
 import moment from "moment";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import RecepitView from "./receipt-view";
 import { useApiMutation } from "@/hooks/use-mutation";
+import ReceiptLoading from "./loading";
 const Recepit = () => {
   const todayback = moment().format("YYYY-MM-DD");
   const firstdate = moment().startOf("month").format("YYYY-MM-DD");
@@ -28,6 +27,7 @@ const Recepit = () => {
     receipt_from_date: firstdate,
     receipt_to_date: todayback,
   });
+   const [isLoading, setIsLoading] = useState(true)
   const [viewType, setViewType] = useState(false);
   const { trigger, loading } = useApiMutation();
   const handleInputChange = (e, field) => {
@@ -153,12 +153,22 @@ const Recepit = () => {
       toast.error("Recepit Summary could not be downloaded.");
     }
   };
+    useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1000) 
+
+    return () => clearTimeout(timer)
+  }, [])
+  if (isLoading) {
+    return <ReceiptLoading />;
+  }
   return (
     <>
       <Card className="mt-4">
         <CardContent className="p-6">
           <form id="dowRecp" autoComplete="off" className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
               {/* From Date */}
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="receipt_from_date" required>
@@ -190,7 +200,7 @@ const Recepit = () => {
               </div>
 
               {/* Action Icons (Print, PDF, Excel) */}
-              <div className="flex gap-2 justify-start items-center">
+              <div className="flex gap-2 justify-start items-center lg:col-span-2">
                 <Button onClick={handleClick}>View</Button>
 
                 <TooltipProvider>

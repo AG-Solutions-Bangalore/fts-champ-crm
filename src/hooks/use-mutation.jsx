@@ -7,7 +7,6 @@ export function useApiMutation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const token = Cookies.get("token");
-  console.log("mainmutation");
 
   const trigger = async ({
     url,

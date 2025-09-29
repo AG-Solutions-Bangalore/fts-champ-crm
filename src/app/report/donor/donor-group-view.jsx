@@ -33,44 +33,13 @@ const DonorGroupView = ({
     if (indicompFullName && receiptFromDate && receiptToDate) {
       refetch();
     }
-  }, []);
+  }, [indicompFullName, receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.receipt || [];
   const individual = data?.individual_Company || [];
   const receiptsummary = data?.receipt_total || [];
   const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || [];
   const receiptsummaryfootertotal = data?.receipt_grand_total_amount || [];
-
-  const onSubmit = (e) => {
-    const receiptFromDate = localStorage.getItem("receipt_from_date_grp");
-    const receiptToDate = localStorage.getItem("receipt_to_date_grp");
-    const indicompFullName = localStorage.getItem("indicomp_full_name_grp");
-    e.preventDefault();
-    let data = {
-      indicomp_fts_id: indicompFullName,
-      receipt_from_date: receiptFromDate,
-      receipt_to_date: receiptToDate,
-    };
-
-    axios({
-      url: DONOR_SUMMARY_GROUP_DOWNLOAD,
-      method: "POST",
-      data,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => {
-        // console.log("data : ", res.data);
-        const url = window.URL.createObjectURL(new Blob([res.data]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", "donor_summary.csv");
-        document.body.appendChild(link);
-        link.click();
-      })
-      .catch((err) => {});
-  };
 
   return (
     <>

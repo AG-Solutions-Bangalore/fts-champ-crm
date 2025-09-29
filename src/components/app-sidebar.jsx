@@ -1,27 +1,12 @@
-import * as React from "react";
 import {
   AudioWaveform,
-  
+  Blocks,
   Command,
-
+  Frame,
   GalleryVerticalEnd,
-
-  LayoutDashboard,  
-    FileText,        
-    BookOpen,       
-    Book,          
-    Scale,            
-    Box,            
-    Mountain,        
-    SquareStack,     
-    ShoppingCart,    
-    Warehouse,
-    Frame,
-    ShoppingBag,
-    Package,
-    Settings2,
-    Settings,
-    Blocks,  
+  Package,
+  Settings2,
+  ShoppingBag,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -34,7 +19,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import {  NavMainUser } from "./nav-main-user";
 import Cookies from "js-cookie";
 import { NavMainReport } from "./nav-main-report";
 
@@ -82,12 +66,11 @@ export function AppSidebar({ ...props }) {
             title: "Chapter",
             url: "/master/chapter",
           },
-        
+
           {
             title: "Viewer",
             url: "/master/viewer",
           },
-         
         ],
       },
       {
@@ -100,21 +83,19 @@ export function AppSidebar({ ...props }) {
             title: "Dashboard",
             url: "/membership/dashboard",
           },
-        
+
           {
             title: "Active Membership",
             url: "/membership/active",
           },
-        
+
           {
             title: "InActive Membership",
             url: "/membership/inactive",
           },
-         
         ],
       },
-     
-     
+
       {
         title: "Donor",
         url: "#",
@@ -125,14 +106,11 @@ export function AppSidebar({ ...props }) {
             title: "Donor List",
             url: "/donor/donors",
           },
-          
+
           {
             title: "Duplicate",
             url: "/donor/duplicate",
           },
-        
-          
-         
         ],
       },
       {
@@ -141,7 +119,6 @@ export function AppSidebar({ ...props }) {
         isActive: false,
         icon: Package,
         // create  create receipt inside receipt list
-        
       },
       {
         title: "School",
@@ -153,7 +130,7 @@ export function AppSidebar({ ...props }) {
             title: "School List",
             url: "/school/list",
           },
-          
+
           {
             title: "School Allotment",
             url: "/school/allotment",
@@ -166,9 +143,6 @@ export function AppSidebar({ ...props }) {
             title: "Repeated Donor",
             url: "/school/repeated",
           },
-        
-          
-         
         ],
       },
     ],
@@ -195,7 +169,6 @@ export function AppSidebar({ ...props }) {
     //   },
     // ],
     navMainReport: [
-    
       {
         title: "Report",
         url: "#",
@@ -214,6 +187,11 @@ export function AppSidebar({ ...props }) {
             title: "Receipt",
             url: "/report/receipt-summary",
           },
+
+          {
+            title: "Donation",
+            url: "/report/donation-summary",
+          },
           {
             title: "School",
             url: "/report/school-summary",
@@ -226,11 +204,9 @@ export function AppSidebar({ ...props }) {
             title: "Suspense",
             url: "/report/suspense-summary",
           },
-         
-         
         ],
       },
-     
+
       {
         title: "Downloads",
         url: "/download",
@@ -267,8 +243,7 @@ export function AppSidebar({ ...props }) {
       //       title: "All Receipt",
       //       url: "/download/all-receipt",
       //     },
-         
-         
+
       //   ],
       // },
       {
@@ -297,12 +272,8 @@ export function AppSidebar({ ...props }) {
         icon: Blocks,
         isActive: false,
       },
-     
-    
-     
     ],
   };
-  
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -310,9 +281,8 @@ export function AppSidebar({ ...props }) {
         <TeamSwitcher teams={initialData.teams} />
       </SidebarHeader>
       <SidebarContent className="sidebar-content">
-      
         <NavMain items={initialData.navMain} />
-   
+
         {/* <NavMainUser projects={initialData.schoolManagement} /> */}
         <NavMainReport items={initialData.navMainReport} />
         {/* <NavMainUser projects={initialData.schoolManagement} /> */}
@@ -325,5 +295,4 @@ export function AppSidebar({ ...props }) {
   );
 }
 
-
-//changes 
+//changes

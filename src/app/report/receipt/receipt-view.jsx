@@ -128,64 +128,67 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                       </tr>
                     </tfoot>
                   </table>
-                </div>
-                <div className="grid grid-cols-4 mt-6">
-                  <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
-                    <b className="items-center text-center">
-                      One Teacher School
-                    </b>
-                    {receiptTotalOTS.map((grandcount, key) => (
-                      <NumericFormat
-                        thousandSeparator={true}
-                        thousandsGroupStyle="lakh"
-                        displayType={"text"}
-                        prefix={"₹ "}
-                        value={grandcount.total_ots_donation}
-                        className="mt-2"
-                      />
-                    ))}
-                  </div>
 
-                  <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
-                    <b className="items-center text-center">Membership Fees</b>
-                    {receiptTotalMembership.map((grandcount, key) => (
-                      <NumericFormat
-                        thousandSeparator={true}
-                        thousandsGroupStyle="lakh"
-                        displayType={"text"}
-                        prefix={"₹ "}
-                        value={grandcount.total_membership_donation}
-                        className="mt-2"
-                      />
-                    ))}
-                  </div>
+                  <div className="grid grid-cols-4 mt-6">
+                    <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
+                      <b className="items-center text-center">
+                        One Teacher School
+                      </b>
+                      {receiptTotalOTS.map((grandcount, key) => (
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={grandcount.total_ots_donation}
+                          className="mt-2"
+                        />
+                      ))}
+                    </div>
 
-                  <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
-                    <b className="items-center text-center">Gn. Donation</b>
-                    {totalsummarygeneral.map((grandcount, key) => (
-                      <NumericFormat
-                        thousandSeparator={true}
-                        thousandsGroupStyle="lakh"
-                        displayType={"text"}
-                        prefix={"₹ "}
-                        value={grandcount.total_general_donation}
-                        className="mt-2"
-                      />
-                    ))}
-                  </div>
+                    <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
+                      <b className="items-center text-center">
+                        Membership Fees
+                      </b>
+                      {receiptTotalMembership.map((grandcount, key) => (
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={grandcount.total_membership_donation}
+                          className="mt-2"
+                        />
+                      ))}
+                    </div>
 
-                  <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
-                    <b className="items-center text-center">Total</b>
-                    {receiptsummary.map((grandcount, key) => (
-                      <NumericFormat
-                        thousandSeparator={true}
-                        thousandsGroupStyle="lakh"
-                        displayType={"text"}
-                        prefix={"₹ "}
-                        value={grandcount.total_donation}
-                        className="mt-2"
-                      />
-                    ))}
+                    <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
+                      <b className="items-center text-center">Gn. Donation</b>
+                      {totalsummarygeneral.map((grandcount, key) => (
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={grandcount.total_general_donation}
+                          className="mt-2"
+                        />
+                      ))}
+                    </div>
+
+                    <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
+                      <b className="items-center text-center">Total</b>
+                      {receiptsummary.map((grandcount, key) => (
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={grandcount.total_donation}
+                          className="mt-2"
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </Card>

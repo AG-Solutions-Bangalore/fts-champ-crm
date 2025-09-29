@@ -10,6 +10,7 @@ const PromoterView = ({
   receiptFromDate,
   receiptToDate,
   indicompFullName,
+  onLoadingChange,
 }) => {
   const {
     data,
@@ -28,7 +29,11 @@ const PromoterView = ({
       refetch();
     }
   }, [indicompFullName, receiptFromDate, receiptToDate]);
-
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loader);
+    }
+  }, [loader, onLoadingChange]);
   const donorsummary = data?.receipt || [];
   const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || [];
   const receiptsummaryfootertotal = data?.receipt_grand_total_amount || [];

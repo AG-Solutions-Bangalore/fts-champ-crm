@@ -34,6 +34,7 @@ import FaqOther from "@/app/other/faq/faq";
 import Settings from "@/app/setting/setting";
 import ReceiptView from "@/app/receipt/receipt-view";
 import AllDownload from "@/app/download/all-download";
+import DonationSummary from "@/app/report/donation/donation";
 
 
 function AppRoutes() {
@@ -82,6 +83,7 @@ function AppRoutes() {
         <Route path="/report/suspense-summary" element={<SuspenseSummary />} />
         <Route path="/report/school-summary" element={<SchoolSummary />} />
         <Route path="/report/receipt-summary" element={<ReceiptSummary />} />
+        <Route path="/report/donation-summary" element={<DonationSummary />} />
         <Route path="/report/promoter-summary" element={<Promoter />} />
         <Route path="/report/donor-summary" element={<Donor />} />
         <Route path="/report/10db-statement-summary" element={<DBStatement />} />
