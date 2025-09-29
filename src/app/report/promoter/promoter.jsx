@@ -1,5 +1,5 @@
 import { PROMOTER_SUMMARY_DOWNLOAD, PROMOTER_SUMMARY_DROPDOWN } from "@/api";
-import { MemoizedSelect } from "@/components/common/memoized-select";
+import { MemoizedProductSelect } from "@/components/common/memoized-product-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,10 @@ import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import PromoterView from "./promoter-view";
+import PromoterLoading from "./loading";
 const Promoter = () => {
+  const [childLoading, setChildLoading] = useState(false);
+
   const todayback = moment().format("YYYY-MM-DD");
   const firstdate = moment().startOf("month").format("YYYY-MM-DD");
   const [viewType, setViewType] = useState(false);
@@ -31,7 +34,7 @@ const Promoter = () => {
   });
   const componentRef = useRef();
   const { trigger, loading } = useApiMutation();
-  const { data: PromoterData } = useGetMutation(
+  const { data: PromoterData,isLoading } = useGetMutation(
     "promter-summary-dropdown",
     PROMOTER_SUMMARY_DROPDOWN
   );
@@ -45,6 +48,10 @@ const Promoter = () => {
   };
   const handleClick = (e) => {
     e.preventDefault();
+    if (!downloadDonor.indicomp_promoter) {
+      toast.warning("Please select a promoter.");
+      return;
+    }
     if (downloadDonor.indicomp_promoter) {
       setViewType(true);
     }
@@ -71,7 +78,8 @@ const Promoter = () => {
   `,
   });
 
-  const handleSavePDF = () => {
+  const handleSavePDF = (e) => {
+    e.preventDefault();
     if (!downloadDonor.indicomp_promoter || !viewType) {
       toast.warning(
         "Please select a promoter and view type before saving PDF."
@@ -164,89 +172,19 @@ const Promoter = () => {
       toast.error("Promoter Summary could not be downloaded.");
     }
   };
+  if (isLoading) {
+  return <PromoterLoading />;
+}
   return (
     <>
       <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
-        <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
-          <CardTitle className="text-lg font-medium">
-            <div className="flex justify-between ">
-              <h2> Download Promoters</h2>
-              <div className="space-x-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={
-                          !downloadDonor?.indicomp_promoter ||
-                          !downloadDonor?.receipt_from_date ||
-                          !downloadDonor?.receipt_to_date
-                        }
-                        onClick={handlePrintPdf}
-                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        <Printer className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Print Receipt</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={
-                          !downloadDonor?.indicomp_promoter ||
-                          !downloadDonor?.receipt_from_date ||
-                          !downloadDonor?.receipt_to_date
-                        }
-                        onClick={handleSavePDF}
-                        className=" transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        <Download className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Download PDF</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleDownload}
-                        disabled={
-                          !downloadDonor?.indicomp_promoter ||
-                          !downloadDonor?.receipt_from_date ||
-                          !downloadDonor?.receipt_to_date
-                        }
-                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-                      >
-                        {loading ? (
-                          <Loader className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <FileType className="h-5 w-5" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Download Excel</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-6">
           <form id="dowRecp" autoComplete="off" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <div>
                 <Label htmlFor="indicomp_promoter">Notice Title</Label>
 
-                <MemoizedSelect
+                <MemoizedProductSelect
                   name="indicomp_promoter"
                   value={downloadDonor?.indicomp_promoter}
                   onChange={(e) => handleInputChange(e, "indicomp_promoter")}
@@ -284,8 +222,61 @@ const Promoter = () => {
                   required
                 />
               </div>
+
               <div className="flex gap-4 pt-6">
-                <Button onClick={handleClick}>View</Button>
+                <Button onClick={handleClick}>{childLoading? "Loading" : "View"}</Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={handlePrintPdf}
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Printer className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Print Receipt</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={handleSavePDF}
+                        className=" transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download PDF</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        onClick={handleDownload}
+                        className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                      >
+                        {loading ? (
+                          <Loader className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <FileType className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download Excel</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </form>
@@ -299,6 +290,7 @@ const Promoter = () => {
             receiptToDate={downloadDonor?.receipt_to_date}
             indicompFullName={downloadDonor?.indicomp_promoter}
             componentRef={componentRef}
+            onLoadingChange={setChildLoading}
           />
         </div>
       )}

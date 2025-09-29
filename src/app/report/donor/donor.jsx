@@ -1,5 +1,3 @@
-"use client";
-
 import {
   DONOR_SUMMARY_DOWNLOAD,
   DONOR_SUMMARY_FETCH_DONOR,
@@ -27,10 +25,11 @@ import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import DonorGroupView from "./donor-group-view";
 import DonorIndividualView from "./donor-individual-view";
+import DonorLoading from "./loading";
 const Donor = () => {
   const today = moment().format("YYYY-MM-DD");
   const firstOfMonth = moment().startOf("month").format("YYYY-MM-DD");
-  const [viewType, setViewType] = useState(null); // "individual" | "group"
+  const [viewType, setViewType] = useState(null); 
   const [donorSummary, setDonorSummary] = useState({
     indicomp_full_name: "",
     receipt_from_date: firstOfMonth,
@@ -45,13 +44,17 @@ const Donor = () => {
     setDonorSummary({ ...donorSummary, [field]: value });
   };
 
-  const { data: donorsData } = useGetMutation(
+  const { data: donorsData,isLoading } = useGetMutation(
     "donors",
     DONOR_SUMMARY_FETCH_DONOR
   );
 
   const handleIndividualViewClick = (e) => {
     e.preventDefault();
+    if (!donorSummary.indicomp_full_name) {
+      toast.warning("Please select a donor.");
+      return;
+    }
     if (donorSummary.indicomp_full_name) {
       setViewType("individual");
     }
@@ -59,6 +62,10 @@ const Donor = () => {
 
   const handleGroupViewClick = (e) => {
     e.preventDefault();
+    if (!donorSummary.indicomp_full_name) {
+      toast.warning("Please select a donor.");
+      return;
+    }
     if (donorSummary.indicomp_full_name) {
       setViewType("group");
     }
@@ -183,24 +190,16 @@ const Donor = () => {
       console.error("Error downloading donor summary:", err);
     }
   };
-
+if (isLoading) {
+  return <DonorLoading />;
+}
   return (
     <>
       <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
-        {/* <CardHeader className="border-b bg-[var(--color-light)] rounded-t-md py-2 px-4">
-          <CardTitle className="text-lg font-medium">
-            <div className="flex justify-between ">
-              <h2> Download Receipts</h2>
-          
-            </div>
-          </CardTitle>
-        </CardHeader> */}
-
         <CardContent className="p-6">
           <form id="dowRecp" className="space-y-6" autoComplete="off">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-end">
-              {/* Donor Name */}
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row lg:items-end lg:gap-6 gap-6">
+              <div className="flex-1 min-w-[220px]">
                 <Label className="font-medium" htmlFor="indicomp_full_name">
                   Donor Name <span className="text-red-500">*</span>
                 </Label>
@@ -232,7 +231,6 @@ const Donor = () => {
                 />
               </div>
 
-              {/* To Date */}
               <div>
                 <Label className="font-medium" htmlFor="receipt_to_date">
                   To Date
@@ -247,22 +245,19 @@ const Donor = () => {
                 />
               </div>
 
-              {/* View Buttons */}
               <div className="flex gap-4">
                 <Button
                   className="text-white"
                   onClick={handleIndividualViewClick}
                 >
-                  Individual View
+            Individual View
                 </Button>
                 <Button className="text-white" onClick={handleGroupViewClick}>
-                  Group View
+                  Group View 
                 </Button>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 justify-start lg:justify-center">
-                {/* Print */}
+              <div className="flex gap-4">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -270,11 +265,7 @@ const Donor = () => {
                         variant="ghost"
                         size="icon"
                         onClick={handlePrintPdf}
-                        disabled={
-                          !donorSummary?.indicomp_full_name ||
-                          !donorSummary?.receipt_from_date ||
-                          !donorSummary?.receipt_to_date
-                        }
+                        type="button"
                         className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
                       >
                         <Printer className="h-5 w-5" />
@@ -291,12 +282,8 @@ const Donor = () => {
                       <Button
                         variant="ghost"
                         size="icon"
+                        type="button"
                         onClick={handleSavePDF}
-                        disabled={
-                          !donorSummary?.indicomp_full_name ||
-                          !donorSummary?.receipt_from_date ||
-                          !donorSummary?.receipt_to_date
-                        }
                         className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
                       >
                         <Download className="h-5 w-5" />
@@ -314,11 +301,7 @@ const Donor = () => {
                         variant="ghost"
                         size="icon"
                         onClick={handleDownload}
-                        disabled={
-                          !donorSummary?.indicomp_full_name ||
-                          !donorSummary?.receipt_from_date ||
-                          !donorSummary?.receipt_to_date
-                        }
+                        type="button"
                         className="transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
                       >
                         {loading ? (

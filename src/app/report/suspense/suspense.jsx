@@ -18,12 +18,13 @@ import ReportHeader from "@/components/common/report-header";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
 import { Button } from "@/components/ui/button";
+import SuspenseLoading from "./loading";
 
 const SuspenseSummary = () => {
   const componentRef = useRef();
 
   const { trigger, loading } = useApiMutation();
-  const { data, isLoading, isError } = useGetMutation(
+  const { data, isLoading } = useGetMutation(
     "supense-summary-view",
     SUSPENSE_SUMMARY_VIEW
   );
@@ -99,11 +100,13 @@ const SuspenseSummary = () => {
       toast.error("Failed to download Suspense Summary.");
     }
   };
-
+  if (isLoading) {
+    return <SuspenseLoading />;
+  }
   return (
     <div className="p-6 bg-white shadow rounded-md">
       {/* Action Buttons */}
-      <div className="fixed bottom-12 right-5 flex flex-col gap-2 z-50">
+      <div className="flex justify-end gap-2 z-50">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

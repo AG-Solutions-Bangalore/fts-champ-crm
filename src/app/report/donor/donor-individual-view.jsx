@@ -29,7 +29,7 @@ const DonorIndividualView = ({
     if (indicompFullName && receiptFromDate && receiptToDate) {
       refetch();
     }
-  }, []);
+  }, [indicompFullName, receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.receipt || [];
   const individual = data?.individual_Company || [];

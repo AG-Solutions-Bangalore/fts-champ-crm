@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useEffect } from "react";
 
-const SchoolView = ({ indicompFullName, componentRef }) => {
+const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
   const {
     data,
     isLoading: loader,
@@ -22,7 +22,11 @@ const SchoolView = ({ indicompFullName, componentRef }) => {
       refetch();
     }
   }, [indicompFullName]);
-
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(loader);
+    }
+  }, [loader, onLoadingChange]);
   const SchoolAlotReceipt = data?.SchoolAlotReceipt || {};
   const chapter = data?.chapter || {};
   const SchoolAlotView = data?.SchoolAlotView || [];
