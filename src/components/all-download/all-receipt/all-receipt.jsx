@@ -7,7 +7,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { Label } from '@/components/ui/label';
 import {
   Table,
@@ -31,16 +31,27 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { DOWNLOAD_RECEIPT, DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE } from '@/api';
-import Cookies from 'js-cookie';
 
-const ReceiptDownload = () => {
+import Cookies from 'js-cookie';
+import BASE_URL from '@/config/base-url';
+import { MemoizedSelect } from '@/components/common/memoized-select';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const AllReceiptDownload = () => {
   const token = Cookies.get('token');
+
+  
   const [formData, setFormData] = useState({
     receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
     receipt_to_date: Moment().format('YYYY-MM-DD'),
     receipt_donation_type: '',
     receipt_exemption_type: '',
+    receipt_amount_range: '0-100000000',
+    receipt_ots_range_from: '0',
+    receipt_ots_range_to: '5000',
+    indicomp_donor_type: '',
+    indicomp_promoter: '',
+    chapter_id: '',
     indicomp_source: ''
   });
 
@@ -50,33 +61,95 @@ const ReceiptDownload = () => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const exemptionTypes = [
-    { value: '80G', label: '80G' },
-    { value: 'Non 80G', label: 'Non 80G' },
-    { value: 'FCRA', label: 'FCRA' },
-    { value: 'CSR', label: 'CSR' }
-  ];
-
   const donationTypes = [
     { value: 'One Teacher School', label: 'EV' },
     { value: 'General', label: 'General' },
     { value: 'Membership', label: 'Membership' }
   ];
 
-  const { data: datasource = [], isLoading } = useQuery({
-    queryKey: ['receipt-download-datasource'],
+  const exemptionTypes = [
+    { value: '80G', label: '80G' },
+    { value: 'Non 80G', label: 'Non 80G' },
+    { value: 'FCRA', label: 'FCRA' },
+    { value: 'CSR', label: 'CSR' },
+  ];
+
+  const donorTypes = [
+    { value: 'Member', label: 'Member' },
+    { value: 'Donor', label: 'Donor' },
+    { value: 'Member+Donor', label: 'Member+Donor' },
+    { value: 'None', label: 'None' }
+  ];
+
+  const amountRanges = [
+    { value: '0-100000000', label: 'All' },
+    { value: '1-10000', label: '1-10000' },
+    { value: '10001-20000', label: '10000-20000' },
+    { value: '20001-30000', label: '20001-30000' },
+    { value: '30001-50000', label: '30001-50000' },
+    { value: '50001-100000', label: '50001-100000' },
+    { value: '100001-100000000', label: '100001-Above' }
+  ];
+
+
+  const {
+    data: datasource = [],
+    isLoading: datasourceLoading,
+    isError: datasourceError,
+    error: datasourceErr,
+  } = useQuery({
+    queryKey: ["all-receipt-datasource"],
+    enabled: !!token,
+    retry: 0,
     queryFn: async () => {
-      const response = await axios.get(DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axios.get(`${BASE_URL}/api/fetch-datasource`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Datasource response:", response.data);
       return response.data.datasource || [];
     },
-    retry: 2,
+  });
+  
+  const {
+    data: chapters = [],
+    isLoading: chaptersLoading,
+    isError: chaptersError,
+    error: chaptersErr,
+  } = useQuery({
+    queryKey: ["all-receipt-chapters"],
+    enabled: !!token,
+    retry: 0,
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/fetch-chapters`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Chapters response:", response.data);
+      return response.data.chapters || [];
+    },
+  });
+
+
+  const {
+    data: promoter = [],
+    isLoading: promoterLoading,
+    isError: promoterError,
+    error: promoterErr,
+  } = useQuery({
+    queryKey: ["all-receipt-promoter"],
+    enabled: !!token,
+    retry: 0,
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/fetch-promoter`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Promoter response:", response.data);
+      return response.data.promoter || [];
+    },
   });
 
   const downloadMutation = useMutation({
     mutationFn: async (downloadData) => {
-      const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
+      const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
         headers: { 'Authorization': `Bearer ${token}` },
         responseType: 'blob'
       });
@@ -86,60 +159,70 @@ const ReceiptDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'receipt_list.csv');
+      link.setAttribute('download', 'all_receipt_list.csv');
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Receipt downloaded successfully!');
+      toast.success('All receipts downloaded successfully!');
       setFormData({
         receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
         receipt_to_date: Moment().format('YYYY-MM-DD'),
         receipt_donation_type: '',
         receipt_exemption_type: '',
+        receipt_amount_range: '0-100000000',
+        receipt_ots_range_from: '0',
+        receipt_ots_range_to: '5000',
+        indicomp_donor_type: '',
+        indicomp_promoter: '',
+        chapter_id: '',
         indicomp_source: ''
       });
     },
     onError: (error) => {
-      toast.error('Failed to download receipt');
+      toast.error('Failed to download all receipts');
       console.error('Download error:', error);
     }
   });
 
-  // New mutation for viewing
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
-      const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
+      const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
         headers: { 'Authorization': `Bearer ${token}` },
         responseType: 'blob'
       });
       return response.data;
     },
-   // Replace the existing viewMutation.onSuccess function with this:
-onSuccess: async (blob) => {
-    const text = await blob.text();
-    const rows = text.split('\n').filter(Boolean);
-    const headers = rows[0].split(',');
-    const data = rows.slice(1).map(row => {
-      const values = row.split(',');
-      const obj = {};
-      headers.forEach((header, idx) => {
-        // Remove inverted commas from both header and value
-        const cleanHeader = header.replace(/^"|"$/g, '');
-        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-        obj[cleanHeader] = cleanValue;
+    onSuccess: async (blob) => {
+      const text = await blob.text();
+      const rows = text.split('\n').filter(Boolean);
+      const headers = rows[0].split(',');
+      const data = rows.slice(1).map(row => {
+        const values = row.split(',');
+        const obj = {};
+        headers.forEach((header, idx) => {
+          const cleanHeader = header.replace(/^"|"$/g, '');
+          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+          obj[cleanHeader] = cleanValue;
+        });
+        return obj;
       });
-      return obj;
-    });
-    setJsonData(data);
-  },
+      setJsonData(data);
+    },
     onError: () => {
-      toast.error('Failed to fetch receipt data');
+      toast.error('Failed to fetch all receipt data');
     }
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if ((name === 'receipt_ots_range_from' || name === 'receipt_ots_range_to') && value !== '') {
+      if (!/^[0-9\b]+$/.test(value)) {
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -165,9 +248,8 @@ onSuccess: async (blob) => {
     viewMutation.mutate(formData);
   };
 
-  // Define columns for the table
- // Replace the columns array with this:
-const columns = [
+ 
+  const columns = [
     {
       id: 'S. No.',
       header: 'S. No.',
@@ -178,8 +260,8 @@ const columns = [
       size: 60,
     },
     {
-      accessorKey: 'Receipt No', // Removed quotes
-      id: 'Receipt No',
+      accessorKey: 'Donor Name',
+      id: 'Donor Name',
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -187,89 +269,47 @@ const columns = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="px-2 h-8 text-xs"
         >
-          Receipt No
+          Donor Name
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt No')}</div>,
-      size: 100,
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Name')}</div>,
+      size: 150,
     },
     {
-      accessorKey: 'Date', // Removed quotes
-      id: 'Date',
-      header: 'Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Date')}</div>,
+      accessorKey: 'Contact Name',
+      id: 'Contact Name',
+      header: 'Contact Name',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Contact Name')}</div>,
+      size: 150,
+    },
+    {
+      accessorKey: 'Mobile',
+      id: 'Mobile',
+      header: 'Mobile',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Mobile')}</div>,
       size: 120,
     },
     {
-      accessorKey: 'Exemption Type', // Removed quotes
-      id: 'Exemption Type',
-      header: 'Exemption Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Exemption Type')}</div>,
+      accessorKey: 'Email',
+      id: 'Email',
+      header: 'Email',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Email')}</div>,
+      size: 180,
+    },
+    
+    {
+      accessorKey: 'Promoter',
+      id: 'Promoter',
+      header: 'Promoter',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Promoter')}</div>,
       size: 120,
     },
     {
-      accessorKey: 'Financial Year', // Removed quotes
-      id: 'Financial Year',
-      header: 'Financial Year',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Financial Year')}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: 'Amount', // Removed quotes
-      id: 'Amount',
-      header: 'Amount',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Amount')}</div>,
-      size: 100,
-    },
-    {
-      accessorKey: 'Realization Date', // Removed quotes
-      id: 'Realization Date',
-      header: 'Realization Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Realization Date')}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: 'Donation Type', // Removed quotes
-      id: 'Donation Type',
-      header: 'Donation Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donation Type')}</div>,
-      size: 140,
-    },
-    {
-      accessorKey: 'Pay Mode', // Removed quotes
-      id: 'Pay Mode',
-      header: 'Pay Mode',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pay Mode')}</div>,
-      size: 100,
-    },
-    {
-      accessorKey: 'Pay Details', // Removed quotes
-      id: 'Pay Details',
-      header: 'Pay Details',
-      cell: ({ row }) => {
-        const payDetails = row.getValue('Pay Details') || '';
-        const shortPayDetails = payDetails.length > 50 ? payDetails.slice(0, 50) + '…' : payDetails;
-        return <div className="text-xs font-medium">{shortPayDetails}</div>;
-      },
-      size: 200,
-    },
-    {
-      accessorKey: 'Remarks', // Removed quotes
-      id: 'Remarks',
-      header: 'Remarks',
-      cell: ({ row }) => {
-        const remarks = row.getValue('Remarks') || '';
-        const shortRemarks = remarks.length > 50 ? remarks.slice(0, 50) + '…' : remarks;
-        return <div className="text-xs font-medium">{shortRemarks}</div>;
-      },
-      size: 200,
-    },
-    {
-      accessorKey: 'Data Source', // Removed quotes
-      id: 'Data Source',
-      header: 'Data Source',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Data Source')}</div>,
+      accessorKey: 'Donor Type',
+      id: 'Donor Type',
+      header: 'Donor Type',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Type')}</div>,
       size: 120,
     },
   ];
@@ -309,16 +349,16 @@ const columns = [
       </TableRow>
     ));
   };
-
-  if (isLoading) {
+  
+    if (datasourceLoading || chaptersLoading || promoterLoading ) {
     return (
       <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
         <div className="p-4 border-b bg-muted/50">
           <Skeleton className="h-6 w-48" />
         </div>
         <div className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[...Array(8)].map((_, i) => (
               <div key={i}>
                 <Skeleton className="h-4 w-20 mb-1" />
                 <Skeleton className="h-9 w-full" />
@@ -331,12 +371,21 @@ const columns = [
     );
   }
 
+  if (datasourceError || chaptersError || promoterError) {
+    console.error("Errors:", { datasourceErr, chaptersErr, promoterErr });
+    return (
+      <div className="p-6 text-red-500">
+        Failed to load dropdown data. Please check console logs.
+      </div>
+    );
+  }
+  
   return (
     <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
       <div className="p-4 border-b bg-muted/50">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <Download className="w-5 h-5" />
-          Download Receipts
+          Download All Receipts
         </div>
         <div className="text-sm text-muted-foreground mt-0.5">
           Leave fields blank to get all records
@@ -345,7 +394,7 @@ const columns = [
 
       <div className="p-4">
         <form className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
               <Input id="receipt_from_date" name="receipt_from_date" type="date" value={formData.receipt_from_date} onChange={handleInputChange} required className="h-9" />
@@ -381,6 +430,81 @@ const columns = [
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="indicomp_donor_type" className="text-sm">Donor Type</Label>
+              <Select value={formData.indicomp_donor_type} onValueChange={(value) => handleSelectChange('indicomp_donor_type', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Donor Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {donorTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="indicomp_promoter" className="text-sm">Promoter</Label>
+              {/* <Select value={formData.indicomp_promoter} onValueChange={(value) => handleSelectChange('indicomp_promoter', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Promoter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {promoter.map(item => <SelectItem key={item.indicomp_promoter} value={item.indicomp_promoter}>{item.indicomp_promoter}</SelectItem>)}
+                </SelectContent>
+              </Select> */}
+              <MemoizedSelect
+value={formData.indicomp_promoter}
+onChange={(value) =>
+  handleSelectChange("indicomp_promoter", value)
+}
+options={
+    promoter?.map((item) => ({
+    value: item.indicomp_promoter,
+    label: item.indicomp_promoter,
+  })) || []
+}
+placeholder="Select Promoter"
+/>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_ots_range_from" className="text-sm">OTS Range From</Label>
+              <Input 
+                id="receipt_ots_range_from" 
+                name="receipt_ots_range_from" 
+                type="text" 
+                value={formData.receipt_ots_range_from} 
+                onChange={handleInputChange} 
+                placeholder="Enter OTS Range From"
+                className="h-9" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_ots_range_to" className="text-sm">OTS Range To</Label>
+              <Input 
+                id="receipt_ots_range_to" 
+                name="receipt_ots_range_to" 
+                type="text" 
+                value={formData.receipt_ots_range_to} 
+                onChange={handleInputChange} 
+                placeholder="Enter OTS Range To"
+                className="h-9" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_amount_range" className="text-sm">Amount Range</Label>
+              <Select value={formData.receipt_amount_range} onValueChange={(value) => handleSelectChange('receipt_amount_range', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Amount Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {amountRanges.map(range => <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="indicomp_source" className="text-sm">Source</Label>
               <Select value={formData.indicomp_source} onValueChange={(value) => handleSelectChange('indicomp_source', value)}>
                 <SelectTrigger className="h-9">
@@ -388,6 +512,18 @@ const columns = [
                 </SelectTrigger>
                 <SelectContent>
                   {datasource.map(item => <SelectItem key={item.data_source_type} value={item.data_source_type}>{item.data_source_type}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="chapter_id" className="text-sm">Chapter</Label>
+              <Select value={formData.chapter_id} onValueChange={(value) => handleSelectChange('chapter_id', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Chapter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chapters.map(item => <SelectItem key={item.id} value={item.id}>{item.chapter_name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -413,7 +549,7 @@ const columns = [
               <div className="relative w-72">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="Search receipts..."
+                  placeholder="Search all receipts..."
                   value={table.getState().globalFilter || ''}
                   onChange={(event) => table.setGlobalFilter(event.target.value)}
                   className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
@@ -529,4 +665,4 @@ const columns = [
   );
 };
 
-export default ReceiptDownload;
+export default AllReceiptDownload;

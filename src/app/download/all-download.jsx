@@ -6,6 +6,8 @@ import TeamDownload from "@/components/all-download/team/team-download";
 import OtsDownload from "@/components/all-download/ots/ots-download";
 import SchoolDownload from "@/components/all-download/school/school-download";
 
+import AllReceiptDownload from "@/components/all-download/all-receipt/all-receipt";
+
 const AllDownload = () => {
   return (
     <div className="p-4 max-w-full mx-auto">
@@ -14,7 +16,7 @@ const AllDownload = () => {
   <TabsTrigger value="receipt">Receipt</TabsTrigger>
   <TabsTrigger value="donor">Donor</TabsTrigger>
   <TabsTrigger value="school">School</TabsTrigger>
-  <TabsTrigger value="ots">OTS</TabsTrigger>
+  <TabsTrigger value="ots">EV</TabsTrigger>
   <TabsTrigger value="team">Team</TabsTrigger>
   <TabsTrigger value="all-receipt">All Receipt</TabsTrigger>
 </TabsList>
@@ -41,7 +43,7 @@ const AllDownload = () => {
         </TabsContent>
 
         <TabsContent value="all-receipt" className="space-y-2">
-          <p>All Receipt content goes here</p>
+       <AllReceiptDownload/>
         </TabsContent>
       </Tabs>
     </div>
