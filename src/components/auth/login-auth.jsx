@@ -156,9 +156,10 @@ export default function LoginAuth() {
               </div>
 
               <div className="grid gap-2">
-                <div className="flex items-center">
+                <div className="flex items-center" >
                   <Label htmlFor="password">Password</Label>
                   <a
+                  tabIndex={-1}
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm underline"
                     onClick={(e) => {

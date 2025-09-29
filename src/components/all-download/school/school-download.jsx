@@ -434,7 +434,7 @@ const SchoolDownload = () => {
 
       <div className="p-4">
         <form className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="schoolalot_from_date" className="text-sm">From Date *</Label>
               <Input 

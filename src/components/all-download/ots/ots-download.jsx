@@ -303,7 +303,7 @@ const OtsDownload = () => {
       <div className="p-4 border-b bg-muted/50">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <Download className="w-5 h-5" />
-          Download OTS
+          Download EV
         </div>
         <div className="text-sm text-muted-foreground mt-0.5">
           Leave fields blank to get all records
