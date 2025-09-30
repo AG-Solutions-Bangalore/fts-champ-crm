@@ -135,13 +135,13 @@ export const REAPEAT_DONOR_Edit_LIST = `${BASE_URL}/api/fetch-school-allot-repea
 export const REAPEAT_DONOR_Edit_UPDATE_NEXT = `${BASE_URL}/api/update-schoolsallot-repeat`;
 
 //SCHOOL ALLOT
-export const SCHOOL_ALLOT_LIST = `${BASE_URL}/api/fetch-school-allot`;
-export const SCHOOL_ALLOT_VIEW_LIST = `${BASE_URL}/api/fetch-schoolsallotview-by-id`;
-export const SCHOOL_ALLOT_LETTER = `${BASE_URL}/api/fetch-schoolsallot-receipt-by-id`;
+export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
+export const SCHOOL_ALLOT_VIEW_LIST = `/api/fetch-schoolsallotview-by-id`;
+export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
 // (school edit pending )
 
 //SCHOOL TO ALLOT
-export const SCHOOL_TO_ALOT_LIST = `${BASE_URL}/api/fetch-ots`;
+export const SCHOOL_TO_ALOT_LIST = `/api/fetch-ots`;
 // (DONOR DETAILS )
 export const SCHOOL_DATA_BY_ID = `${BASE_URL}/api/fetch-schoolsallotdonor-by-id/`;
 export const SCHOOL_ALLOT_YEAR_BY_YEAR = `${BASE_URL}/api/fetch-school-allot-year-by-year`;

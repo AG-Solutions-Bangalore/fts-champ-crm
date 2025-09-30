@@ -1,3 +1,4 @@
+import { SCHOOL_ALLOTED_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -37,11 +38,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  Search
+  Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SchoolList = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,14 +73,16 @@ const SchoolList = () => {
     isError,
     isFetching,
     prefetchPage,
-    // } = useGetMutation("school", SCHOOL_ALLOTED_LIST, {
-  } = useGetMutation("school", "/api/fetch-donors-list", {
+  } = useGetMutation("school", `${SCHOOL_ALLOTED_LIST}/2025-26`, {
+    // } = useGetMutation("school", "/api/fetch-donors-list", {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
+  console.log(schoolData, "schoolData");
+
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.data?.last_page || 1;
+    const totalPages = schoolData?.schools?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -88,7 +93,7 @@ const SchoolList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.data?.last_page,
+    schoolData?.schools?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
@@ -112,8 +117,8 @@ const SchoolList = () => {
       size: 60,
     },
     {
-      accessorKey: "full_name",
-      id: "fullName",
+      accessorKey: "achal",
+      id: "achal",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -121,12 +126,12 @@ const SchoolList = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs font-medium"
         >
-          Full Name
+          Ackal
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
       cell: ({ row }) => {
-        const name = row.getValue("full_name");
+        const name = row.getValue("achal");
         return name ? (
           <div className="text-[13px] font-medium">{name}</div>
         ) : null;
@@ -215,7 +220,13 @@ const SchoolList = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      navigate(`/school/list-view/${row?.original?.id}`)
+                    }
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -232,7 +243,7 @@ const SchoolList = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.data?.data || [],
+    data: schoolData?.schools || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -243,7 +254,7 @@ const SchoolList = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.data?.last_page || -1,
+    pageCount: schoolData?.schools?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -487,8 +498,8 @@ const SchoolList = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data.from || 0} to {schoolData?.data?.to || 0} of{" "}
-          {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
+          of {schoolData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

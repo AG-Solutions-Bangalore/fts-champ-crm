@@ -1,3 +1,4 @@
+import { SCHOOL_TO_ALOT_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,7 +42,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const SchoolAllotment = () => {
+const SchoolToAllot = () => {
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,8 +71,7 @@ const SchoolAllotment = () => {
     isError,
     isFetching,
     prefetchPage,
-    // } = useGetMutation("school", SCHOOL_ALLOTED_LIST, {
-  } = useGetMutation("school", "/api/fetch-donors-list", {
+  } = useGetMutation("schooltoallot", SCHOOL_TO_ALOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
@@ -93,146 +93,128 @@ const SchoolAllotment = () => {
   ]);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({
-    "Fts Id": false,
-  });
+  const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
 
-  const columns = [
-    {
-      id: "serialNo",
-      header: "S. No.",
-      cell: ({ row }) => {
-        const globalIndex =
-          pagination.pageIndex * pagination.pageSize + row.index + 1;
-        return (
-          <div className="text-xs font-medium text-center">{globalIndex}</div>
-        );
-      },
-      size: 60,
+ const columns = [
+  // Serial Number
+  {
+    id: "serialNo",
+    header: "S. No.",
+    cell: ({ row }) => {
+      const globalIndex =
+        pagination.pageIndex * pagination.pageSize + row.index + 1;
+      return (
+        <div className="text-xs font-medium text-center">{globalIndex}</div>
+      );
     },
-    {
-      accessorKey: "full_name",
-      id: "fullName",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-2 h-8 text-xs font-medium"
-        >
-          Full Name
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const name = row.getValue("full_name");
-        return name ? (
-          <div className="text-[13px] font-medium">{name}</div>
-        ) : null;
-      },
-      size: 150,
-    },
-    {
-      accessorKey: "cluster",
-      id: "cluster",
-      header: "Cluster",
-      cell: ({ row }) => {
-        const { cluster, sub_cluster } = row.original;
-        if (!cluster && !sub_cluster) return null;
-        return (
-          <div className="space-y-1">
-            {cluster && <div className="text-xs">{cluster}</div>}
-            {sub_cluster && (
-              <div className="text-xs text-blue-600">
-                <span className="font-medium">Sub Cluster:</span> {sub_cluster}
-              </div>
-            )}
-          </div>
-        );
-      },
-      size: 150,
-    },
-    {
-      accessorKey: "village",
-      id: "village",
-      header: "Village",
-      cell: ({ row }) => {
-        const { village, district } = row.original;
-        if (!village && !district) return null;
-        return (
-          <div className="space-y-1">
-            {village && <div className="text-xs">{village}</div>}
-            {district && (
-              <div className="text-xs text-gray-500">
-                <span className="font-medium">District:</span> {district}
-              </div>
-            )}
-          </div>
-        );
-      },
-      size: 150,
-    },
-    {
-      accessorKey: "school_state",
-      id: "state",
-      header: "State",
-      cell: ({ row }) => {
-        const state = row.original.school_state;
-        return state ? <div className="text-xs">{state}</div> : null;
-      },
-      size: 120,
-    },
-    {
-      accessorKey: "school_code",
-      id: "schoolCode",
-      header: "School Code",
-      cell: ({ row }) => {
-        const { school_code, status_label } = row.original;
-        if (!school_code && !status_label) return null;
-        return (
-          <div className="space-y-1">
-            {school_code && <div className="text-xs">{school_code}</div>}
-            {status_label && (
-              <div className="text-xs text-blue-600">
-                <span className="font-medium">Status:</span> {status_label}
-              </div>
-            )}
-          </div>
-        );
-      },
-      size: 150,
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const { school_code } = row.original;
-        if (!school_code) return null;
+    size: 60,
+  },
 
-        return (
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Allotment</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        );
-      },
-      size: 80,
+  // Full Name + Type
+  {
+    accessorKey: "individual_company.indicomp_full_name",
+    header: "Full Name",
+    cell: ({ row }) => {
+      const name = row?.original?.individual_company?.indicomp_full_name;
+      const type = row?.original?.individual_company?.indicomp_type;
+
+      return (
+        <div className="space-y-1">
+          {name && (
+            <div className="text-sm font-medium text-gray-900">{name}</div>
+          )}
+          {type && (
+            <span className="inline-block bg-primary text-white text-xs font-medium px-2 py-0.5 rounded-full">
+              {type}
+            </span>
+          )}
+        </div>
+      );
     },
-  ];
+    size: 180,
+  },
+
+  // Phone + Email
+  {
+    accessorKey: "individual_company.indicomp_mobile_phone",
+    header: "Phone / Email",
+    cell: ({ row }) => {
+      const phone = row?.original?.individual_company?.indicomp_mobile_phone;
+      const email = row?.original?.individual_company?.indicomp_email;
+
+      return (
+        <div className="space-y-1">
+          {phone && (
+            <div className="text-sm font-medium text-gray-900">{phone}</div>
+          )}
+          {email && (
+            <div className="text-xs text-gray-600 break-all">{email}</div>
+          )}
+        </div>
+      );
+    },
+    size: 200,
+  },
+
+  // Allotment Year
+  {
+    accessorKey: "schoolalot_year",
+    header: "Allotment Year",
+    cell: ({ row }) => {
+      const year = row.original.schoolalot_year;
+      return year ? <div className="text-xs">{year}</div> : null;
+    },
+    size: 120,
+  },
+
+  // OTS Count
+  {
+    accessorKey: "receipt_no_of_ots",
+    header: "OTS",
+    cell: ({ row }) => {
+      const ots = row.original.receipt_no_of_ots;
+      return ots ? <div className="text-xs">{ots} Schools</div> : null;
+    },
+    size: 100,
+  },
+
+  // Actions
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const ftsId = row?.original?.individual_company?.indicomp_fts_id;
+
+      return (
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    navigate(`/list-view/${ftsId}`) // 👈 navigate with ID
+                  }
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Allotment</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      );
+    },
+    size: 80,
+  },
+];
 
   const table = useReactTable({
-    data: schoolData?.data?.data || [],
+    data: schoolData?.schoolots || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -487,8 +469,8 @@ const SchoolAllotment = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data.from || 0} to {schoolData?.data?.to || 0} of{" "}
-          {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
+          of {schoolData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">
@@ -537,4 +519,4 @@ const SchoolAllotment = () => {
   );
 };
 
-export default SchoolAllotment;
+export default SchoolToAllot;

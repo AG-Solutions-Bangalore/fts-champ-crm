@@ -132,8 +132,8 @@ export function AppSidebar({ ...props }) {
           },
 
           {
-            title: "School Allotment",
-            url: "/school/allotment",
+            title: "School To Allot",
+            url: "/school/to-allot",
           },
           {
             title: "School Alloted",
