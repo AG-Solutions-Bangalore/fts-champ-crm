@@ -3,6 +3,7 @@ import axios from "axios";
 
 import BASE_URL from "@/config/base-url";
 import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
+import Cookies from "js-cookie";
 
 
 
@@ -378,7 +379,7 @@ export const ROUTES = {
     VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
     DUPLICATE_EDIT: (id) => `/duplicate-edit/${encryptId(id)}`,
     DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
-    DONOR_LIST_REDIRECT_CREATE_RECEIPT: (id) => `/donor-create/${encryptId(id)}`,
+    DONOR_LIST_REDIRECT_CREATE_RECEIPT: (id) => `/donor-create-receipt/${encryptId(id)}`,
     VIEWER_RECEIPTS_FROM_CREATE_RECEIPT: (id) => `/view-receipts/${encryptId(id)}`,
     VIEWER_RECEIPTS_FROM_OLD_RECEIPT: (id) => `/view-receipts/${encryptId(id)}`,
    
@@ -847,7 +848,7 @@ export const navigateToDonorEdit = (navigate, viewId) => {
 
   export const fetchDonorDataInCreateReceiptById = async (encryptedId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       if (!token) throw new Error("No authentication token found");
     
       const id = decryptId(encryptedId);

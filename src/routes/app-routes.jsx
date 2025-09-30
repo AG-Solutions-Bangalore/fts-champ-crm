@@ -15,8 +15,8 @@ import Viewer from "@/app/master-settings/viewer";
 import MemberShipDashboard from "@/app/membership/membership-dashboard";
 import MemberShipInactive from "@/app/membership/membership-inactive";
 import MembershipActive from "@/app/membership/membership-active";
-import DonorList from "@/app/donor/donor-list";
-import Duplicate from "@/app/donor/duplicate";
+import DonorList from "@/app/donor/donor-list/donor-list";
+import Duplicate from "@/app/donor/duplicate/duplicate";
 import Receipt from "@/app/receipt/receipt";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolAllotment from "@/app/school/school-allotment/school-allotment";
@@ -35,6 +35,8 @@ import Settings from "@/app/setting/setting";
 import ReceiptView from "@/app/receipt/receipt-view";
 import AllDownload from "@/app/download/all-download";
 import DonationSummary from "@/app/report/donation/donation";
+import MembershipList from "@/app/membership/membership-list";
+import ReceiptCreate from "@/app/donor/donor-list/receipt-create";
 
 
 function AppRoutes() {
@@ -58,6 +60,7 @@ function AppRoutes() {
 
           {/* membership  */}
           <Route path="/membership/dashboard" element={<MemberShipDashboard />} />
+          <Route path="/member-list" element={<MembershipList />} />
           <Route path="/membership/active" element={<MembershipActive />} />
           <Route path="/membership/inactive" element={<MemberShipInactive />} />
 
@@ -69,6 +72,7 @@ function AppRoutes() {
           {/* receipt  */}
           <Route path="/receipt" element={<Receipt />} />
           <Route path="/receipt-view/:id" element={<ReceiptView />} />
+          <Route path="/donor-create-receipt/:id" element={<ReceiptCreate />} />
 
           {/* school  */}
 
