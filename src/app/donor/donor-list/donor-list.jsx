@@ -28,12 +28,15 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Eye, ReceiptText, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import useNumericInput from "@/hooks/use-numeric-input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { navigateToCreateReceipt } from "@/api";
+import { useNavigate } from "react-router-dom";
 
 const DonorList = () => {
   const queryClient = useQueryClient();
   const keyDown = useNumericInput()
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   
@@ -249,7 +252,7 @@ const DonorList = () => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
-    
+        const id = row.original.id;
 
         return (
           <div className="flex flex-row">
@@ -259,7 +262,7 @@ const DonorList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                  
+                    onClick={() => navigateToCreateReceipt(navigate, id)}
                   >
                     <ReceiptText />
                   </Button>
@@ -277,7 +280,7 @@ const DonorList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-              
+       
                   >
                     <Eye />
                   </Button>

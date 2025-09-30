@@ -2,6 +2,7 @@ import axios from "axios";
 
 import BASE_URL from "@/config/base-url";
 import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
+import Cookies from "js-cookie";
 
 /*--------------------------Master-start----------------------------------- */
 // CHAPTER

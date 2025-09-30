@@ -13,8 +13,8 @@ import Viewer from "@/app/master-settings/viewer";
 import MemberShipDashboard from "@/app/membership/membership-dashboard";
 import MemberShipInactive from "@/app/membership/membership-inactive";
 import MembershipActive from "@/app/membership/membership-active";
-import DonorList from "@/app/donor/donor-list";
-import Duplicate from "@/app/donor/duplicate";
+import DonorList from "@/app/donor/donor-list/donor-list";
+import Duplicate from "@/app/donor/duplicate/duplicate";
 import Receipt from "@/app/receipt/receipt";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
@@ -34,6 +34,9 @@ import ReceiptView from "@/app/receipt/receipt-view";
 import AllDownload from "@/app/download/all-download";
 import DonationSummary from "@/app/report/donation/donation";
 import SchoolListView from "@/app/school/school-list/school-list-view";
+import MembershipList from "@/app/membership/membership-list";
+import ReceiptCreate from "@/app/donor/donor-list/receipt-create";
+
 
 function AppRoutes() {
   return (
@@ -53,10 +56,11 @@ function AppRoutes() {
         <Route path="/master/chapter" element={<Chapter />} />
         <Route path="/master/viewer" element={<Viewer />} />
 
-        {/* membership  */}
-        <Route path="/membership/dashboard" element={<MemberShipDashboard />} />
-        <Route path="/membership/active" element={<MembershipActive />} />
-        <Route path="/membership/inactive" element={<MemberShipInactive />} />
+          {/* membership  */}
+          <Route path="/membership/dashboard" element={<MemberShipDashboard />} />
+          <Route path="/member-list" element={<MembershipList />} />
+          <Route path="/membership/active" element={<MembershipActive />} />
+          <Route path="/membership/inactive" element={<MemberShipInactive />} />
 
         {/* donor  */}
         <Route path="/donor/donors" element={<DonorList />} />
@@ -67,6 +71,18 @@ function AppRoutes() {
         <Route path="/receipt-view/:id" element={<ReceiptView />} />
 
         {/* school  */}
+          {/* receipt  */}
+          <Route path="/receipt" element={<Receipt />} />
+          <Route path="/receipt-view/:id" element={<ReceiptView />} />
+          <Route path="/donor-create-receipt/:id" element={<ReceiptCreate />} />
+
+          {/* school  */}
+
+          <Route path="/school/list" element={<SchoolList />} />
+          <Route path="/school/allotment" element={<SchoolAllotment />} />
+          <Route path="/school/alloted" element={<SchoolAlloted />} />
+          <Route path="/school/repeated" element={<RepeatedDonor />} />
+
 
         <Route path="/school/list" element={<SchoolList />} />
         <Route path="/school/list-view/:id" element={<SchoolListView />} />
