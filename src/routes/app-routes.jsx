@@ -35,6 +35,7 @@ import Settings from "@/app/setting/setting";
 import ReceiptView from "@/app/receipt/receipt-view";
 import AllDownload from "@/app/download/all-download";
 import DonationSummary from "@/app/report/donation/donation";
+import SchoolListView from "@/app/school/school-list/school-list-view";
 
 
 function AppRoutes() {
@@ -73,6 +74,7 @@ function AppRoutes() {
           {/* school  */}
 
           <Route path="/school/list" element={<SchoolList />} />
+          <Route path="/school/list-view/:id" element={<SchoolListView />} />
           <Route path="/school/allotment" element={<SchoolAllotment />} />
           <Route path="/school/alloted" element={<SchoolAlloted />} />
           <Route path="/school/repeated" element={<RepeatedDonor />} />
