@@ -1,14 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 
 import Login from "@/app/auth/login";
-import Maintenance from "@/components/common/maintenance";
-import ForgotPassword from "@/components/forgot-password/forgot-password";
-import AuthRoute from "./auth-route";
-import ProtectedRoute from "./protected-route";
-
 import DonorList from "@/app/donor/donor-list/donor-list";
 import ReceiptCreate from "@/app/donor/donor-list/receipt-create";
-import Duplicate from "@/app/donor/duplicate/duplicate";
 import AllDownload from "@/app/download/all-download";
 import NotFound from "@/app/errors/not-found";
 import Home from "@/app/home/home";
@@ -21,6 +15,17 @@ import MembershipList from "@/app/membership/membership-list";
 import FaqOther from "@/app/other/faq/faq";
 import Notification from "@/app/other/notification/notification";
 import Team from "@/app/other/team/team";
+import Maintenance from "@/components/common/maintenance";
+import ForgotPassword from "@/components/forgot-password/forgot-password";
+import AuthRoute from "./auth-route";
+import ProtectedRoute from "./protected-route";
+// import MembershipActive from "@/app/membership/membership-active";
+// import DonorList from "@/app/donor/donor-list/donor-list";
+import DonorCompanyCreate from "@/app/donor/donor-list/donor-company-create";
+import DonorIndiviusalCreate from "@/app/donor/donor-list/donor-indiviusal-create";
+import DonorView from "@/app/donor/donor-list/donor-view";
+import DuplicateDonor from "@/app/donor/duplicate/duplicate-donor";
+import DuplicateDonorEdit from "@/app/donor/duplicate/duplicate-donor-edit";
 import Receipt from "@/app/receipt/receipt";
 import ReceiptView from "@/app/receipt/receipt-view";
 import DBStatement from "@/app/report/10db-statement/10db-statement";
@@ -39,6 +44,7 @@ import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolListView from "@/app/school/school-list/school-list-view";
 import Settings from "@/app/setting/setting";
+
 
 function AppRoutes() {
   return (
@@ -66,7 +72,11 @@ function AppRoutes() {
 
         {/* donor  */}
         <Route path="/donor/donors" element={<DonorList />} />
-        <Route path="/donor/duplicate" element={<Duplicate />} />
+        <Route path="/donor/donors-indiviusal-create" element={<DonorIndiviusalCreate />} />
+        <Route path="/donor/donors-company-create" element={<DonorCompanyCreate />} />
+        <Route path="/donor/donor-view/:id" element={<DonorView />} />
+        <Route path="/donor/duplicate" element={<DuplicateDonor />} />
+        <Route path="/donor/duplicate-edit/:id" element={<DuplicateDonorEdit />} />
 
         {/* receipt  */}
         <Route path="/receipt" element={<Receipt />} />

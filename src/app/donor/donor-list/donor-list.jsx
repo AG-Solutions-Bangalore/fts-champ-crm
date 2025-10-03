@@ -24,14 +24,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search, SquarePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { navigateToCreateReceipt } from "@/api";
 
 const DonorList = () => {
@@ -281,7 +281,7 @@ const DonorList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-       
+              onClick={()=>navigate(`/donor/donor-view/${id}`)}
                   >
                     <Eye />
                   </Button>
@@ -466,6 +466,7 @@ const DonorList = () => {
               className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
             />
           </div>
+           <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9">
@@ -488,7 +489,21 @@ const DonorList = () => {
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
-       
+          <Link 
+          to='/donor/donors-indiviusal-create'
+          >
+            <Button variant="default">
+          <SquarePlus className="h-3 w-3 mr-2" /> Indiviusal
+        </Button>
+        </Link>
+          <Link 
+          to='/donor/donors-company-create'
+          >
+            <Button variant="default" >
+          <SquarePlus className="h-3 w-3 mr-2" /> Company
+        </Button>
+        </Link>
+       </div>
       </div>
       
 

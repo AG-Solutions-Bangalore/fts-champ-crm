@@ -299,7 +299,7 @@ export const ROUTES = {
   SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
   REPEAT_DONOR_EDIT: (id) => `/repeat-donor-allot/${encryptId(id)}`,
   VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
-  DUPLICATE_EDIT: (id) => `/duplicate-edit/${encryptId(id)}`,
+  DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
   DONOR_LIST_REDIRECT_CREATE_RECEIPT: (id) =>
     `/donor-create-receipt/${encryptId(id)}`,
@@ -714,7 +714,7 @@ export const fetchViewerEditById = async (encryptedId) => {
 
 export const fetchDuplicateEditById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -734,7 +734,7 @@ export const fetchDuplicateEditById = async (encryptedId) => {
 
 export const fetchDuplicateEditByIdUpdate = async (encryptedId, formData) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
     const response = await axios.put(
