@@ -1,4 +1,4 @@
-import { SCHOOL_TO_ALOT_LIST } from "@/api";
+import { navigateToDonorDetailsView, SCHOOL_TO_ALOT_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,16 +33,18 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
-  ArrowUpDown,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Eye,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const SchoolToAllot = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,123 +97,171 @@ const SchoolToAllot = () => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
-
- const columns = [
-  // Serial Number
-  {
-    id: "serialNo",
-    header: "S. No.",
-    cell: ({ row }) => {
-      const globalIndex =
-        pagination.pageIndex * pagination.pageSize + row.index + 1;
-      return (
-        <div className="text-xs font-medium text-center">{globalIndex}</div>
-      );
+  const columns = [
+    // Serial Number
+    {
+      id: "serialNo",
+      header: "S. No.",
+      cell: ({ row }) => {
+        const globalIndex =
+          pagination.pageIndex * pagination.pageSize + row.index + 1;
+        return (
+          <div className="text-xs font-medium text-center">{globalIndex}</div>
+        );
+      },
+      size: 60,
     },
-    size: 60,
-  },
 
-  // Full Name + Type
-  {
-    accessorKey: "individual_company.indicomp_full_name",
-    header: "Full Name",
-    cell: ({ row }) => {
-      const name = row?.original?.individual_company?.indicomp_full_name;
-      const type = row?.original?.individual_company?.indicomp_type;
+    // Full Name + Type
+    {
+      accessorKey: "individual_company.indicomp_full_name",
+      header: "Full Name",
+      cell: ({ row }) => {
+        const name = row?.original?.individual_company?.indicomp_full_name;
+        const type = row?.original?.individual_company?.indicomp_type;
 
-      return (
-        <div className="space-y-1">
-          {name && (
-            <div className="text-sm font-medium text-gray-900">{name}</div>
-          )}
-          {type && (
-            <span className="inline-block bg-primary text-white text-xs font-medium px-2 py-0.5 rounded-full">
-              {type}
-            </span>
-          )}
-        </div>
-      );
+        return (
+          <div className="space-y-1">
+            {name && (
+              <div className="text-sm font-medium text-gray-900">{name}</div>
+            )}
+            {type && (
+              <span className="inline-block bg-primary text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                {type}
+              </span>
+            )}
+          </div>
+        );
+      },
+      size: 180,
     },
-    size: 180,
-  },
 
-  // Phone + Email
-  {
-    accessorKey: "individual_company.indicomp_mobile_phone",
-    header: "Phone / Email",
-    cell: ({ row }) => {
-      const phone = row?.original?.individual_company?.indicomp_mobile_phone;
-      const email = row?.original?.individual_company?.indicomp_email;
+    // Phone / Email
+    {
+      accessorKey: "individual_company.indicomp_mobile_phone",
+      header: "Phone / Email",
+      cell: ({ row }) => {
+        const phone = row?.original?.individual_company?.indicomp_mobile_phone;
+        const email = row?.original?.individual_company?.indicomp_email;
 
-      return (
-        <div className="space-y-1">
-          {phone && (
-            <div className="text-sm font-medium text-gray-900">{phone}</div>
-          )}
-          {email && (
-            <div className="text-xs text-gray-600 break-all">{email}</div>
-          )}
-        </div>
-      );
+        return (
+          <div className="space-y-1">
+            {phone && (
+              <div className="text-sm font-medium text-gray-900">{phone}</div>
+            )}
+            {email && (
+              <div className="text-xs text-gray-600 break-all">{email}</div>
+            )}
+          </div>
+        );
+      },
+      size: 200,
     },
-    size: 200,
-  },
 
-  // Allotment Year
-  {
-    accessorKey: "schoolalot_year",
-    header: "Allotment Year",
-    cell: ({ row }) => {
-      const year = row.original.schoolalot_year;
-      return year ? <div className="text-xs">{year}</div> : null;
+    // Allotment Year
+    {
+      accessorKey: "schoolalot_year",
+      header: "Allotment Year",
+      cell: ({ row }) => {
+        const year = row.original.schoolalot_year;
+        return year ? <div className="text-xs">{year}</div> : null;
+      },
+      size: 120,
     },
-    size: 120,
-  },
 
-  // OTS Count
-  {
-    accessorKey: "receipt_no_of_ots",
-    header: "OTS",
-    cell: ({ row }) => {
-      const ots = row.original.receipt_no_of_ots;
-      return ots ? <div className="text-xs">{ots} Schools</div> : null;
+    // OTS Count
+    {
+      accessorKey: "receipt_no_of_ots",
+      header: "OTS",
+      cell: ({ row }) => {
+        const ots = row.original.receipt_no_of_ots;
+        return ots ? <div className="text-xs">{ots} Schools</div> : null;
+      },
+      size: 100,
     },
-    size: 100,
-  },
 
-  // Actions
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const ftsId = row?.original?.individual_company?.indicomp_fts_id;
+    // Allotment / Actions
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const item = row.original;
+        if (!item || !item.individual_company) return null;
 
-      return (
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    navigate(`/list-view/${ftsId}`) // 👈 navigate with ID
-                  }
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Allotment</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      );
+        const allotmentAction =
+          item.individual_company.indicomp_status +
+          "#" +
+          item.individual_company.id +
+          "&" +
+          item.schoolalot_year +
+          "$" +
+          item.receipt_financial_year;
+
+        const status = allotmentAction.charAt(0); // "1" or "0"
+        const newValue = allotmentAction.substring(
+          allotmentAction.indexOf("#") + 1,
+          allotmentAction.lastIndexOf("&")
+        );
+        const newYear = allotmentAction.substring(
+          allotmentAction.indexOf("&") + 1,
+          allotmentAction.lastIndexOf("$")
+        );
+        const fYear = allotmentAction.substring(
+          allotmentAction.indexOf("$") + 1
+        );
+
+        return (
+          <div className="flex items-center gap-2">
+            {status === "1" ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        navigateToDonorDetailsView(
+                          navigate,
+                          newValue,
+                          newYear,
+                          fYear
+                        )
+                      }
+                    >
+                      <ClipboardList
+                        className="h-5 w-5 text-blue-500"
+                        title="Allotment"
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Allotment</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <ClipboardList
+                        className="h-5 w-5 text-blue-500"
+                        title="Current Year"
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Current Year</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        );
+      },
+      size: 80,
     },
-    size: 80,
-  },
-];
+  ];
 
   const table = useReactTable({
     data: schoolData?.schoolots || [],
