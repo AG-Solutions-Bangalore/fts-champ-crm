@@ -137,6 +137,8 @@ export const REAPEAT_DONOR_Edit_UPDATE_NEXT = `${BASE_URL}/api/update-schoolsall
 
 //SCHOOL ALLOT
 export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
+export const FETCH_SCHOOL_ALLOT_LIST = `/api/fetch-schoolsallot-by-id`;
+export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/fetch-school-alloted-list-by-id`;
 export const SCHOOL_ALLOT_VIEW_LIST = `/api/fetch-schoolsallotview-by-id`;
 export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
 // (school edit pending )
@@ -144,10 +146,11 @@ export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
 //SCHOOL TO ALLOT
 export const SCHOOL_TO_ALOT_LIST = `/api/fetch-ots`;
 // (DONOR DETAILS )
-export const SCHOOL_DATA_BY_ID = `${BASE_URL}/api/fetch-schoolsallotdonor-by-id/`;
-export const SCHOOL_ALLOT_YEAR_BY_YEAR = `${BASE_URL}/api/fetch-school-allot-year-by-year`;
-export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `${BASE_URL}/api/fetch-school-alloted-list`;
-export const DONOR_DETAILS_SUMBIT = `${BASE_URL}/api/create-school-alot`;
+export const SCHOOL_DATA_BY_ID = `/api/fetch-schoolsallotdonor-by-id/`;
+export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allot-year-by-year`;
+export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
+export const DONOR_DETAILS_SUMBIT = `/api/create-school-alot`;
+export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
 
 /*--------------------------School-end----------------------------------- */
 
@@ -287,18 +290,14 @@ export const ROUTES = {
   CHAPTER_DATASOURCE: (id) => `/edit-datasource/${encryptId(id)}`,
   CHAPTER_VIEW_SCHOOL: (id) => `/view-school/${encryptId(id)}`,
   RECEIPT_VIEW: (id) => `/view-receipts/${encryptId(id)}`,
-
   // temp
   RECEIPT_VIEW_SUPER: (id) => `/view-receipts-super/${encryptId(id)}`,
   // temp end
   RECEIPT_OLD_VIEW: (id) => `/view-old-receipts/${encryptId(id)}`,
-
   RECEIPT_EDIT: (id) => `/receipt-edit/${encryptId(id)}`,
   RECEIPT_OLD_EDIT: (id) => `/receipt-old-edit/${encryptId(id)}`,
-
   SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
   REPEAT_DONOR_EDIT: (id) => `/repeat-donor-allot/${encryptId(id)}`,
-  SCHOOL_ALLOT_EDIT: (id) => `/students-allotedit/${encryptId(id)}`,
   VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
   DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
@@ -349,6 +348,13 @@ export const navigateToReceiptEdit = (navigate, viewId) => {
 export const navigateToOldReceiptEdit = (navigate, viewId) => {
   navigate(ROUTES.RECEIPT_OLD_EDIT(viewId));
 };
+export const navigateToDonorDetailsView = (navigate, id, year, fYear) => {
+  navigate(
+    `/school/donor-details/${encryptId(id)}/${encryptId(year)}/${encryptId(
+      fYear
+    )}`
+  );
+};
 
 export const navigateToSchoolFullListView = (navigate, viewId) => {
   navigate(ROUTES.SCHOOL_FULL_LIST_VIEW(viewId));
@@ -356,8 +362,14 @@ export const navigateToSchoolFullListView = (navigate, viewId) => {
 export const navigateToRepeatDonorEdit = (navigate, viewId) => {
   navigate(ROUTES.REPEAT_DONOR_EDIT(viewId));
 };
-export const navigateToSchoolAllotEdit = (navigate, viewId) => {
-  navigate(ROUTES.SCHOOL_ALLOT_EDIT(viewId));
+// export const navigateToSchoolAllotEdit = (navigate, viewId, year) => {
+//   navigate(ROUTES.SCHOOL_ALLOT_EDIT(viewId, year));
+// };
+export const navigateToSchoolAllotEdit = (navigate, id, year) => {
+  navigate(`/school/allotedit/${encryptId(id)}/${encryptId(year)}`);
+};
+export const navigateToSchoolAllotView = (navigate, id) => {
+  navigate(`/school/allotview/${encryptId(id)}`);
 };
 export const navigateToViewerEdit = (navigate, viewId) => {
   navigate(ROUTES.VIEWER_EDIT(viewId));
