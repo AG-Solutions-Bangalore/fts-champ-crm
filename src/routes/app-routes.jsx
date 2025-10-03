@@ -66,24 +66,13 @@ function AppRoutes() {
         <Route path="/donor/donors" element={<DonorList />} />
         <Route path="/donor/duplicate" element={<Duplicate />} />
 
-        {/* receipt  */}
-        <Route path="/receipt" element={<Receipt />} />
-        <Route path="/receipt-view/:id" element={<ReceiptView />} />
-
-        {/* school  */}
+     
           {/* receipt  */}
           <Route path="/receipt" element={<Receipt />} />
           <Route path="/receipt-view/:id" element={<ReceiptView />} />
           <Route path="/donor-create-receipt/:id" element={<ReceiptCreate />} />
 
           {/* school  */}
-
-          <Route path="/school/list" element={<SchoolList />} />
-          <Route path="/school/allotment" element={<SchoolAllotment />} />
-          <Route path="/school/alloted" element={<SchoolAlloted />} />
-          <Route path="/school/repeated" element={<RepeatedDonor />} />
-
-
         <Route path="/school/list" element={<SchoolList />} />
         <Route path="/school/list-view/:id" element={<SchoolListView />} />
         <Route path="/school/to-allot" element={<SchoolToAllot />} />
