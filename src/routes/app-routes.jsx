@@ -14,7 +14,6 @@ import MemberShipDashboard from "@/app/membership/membership-dashboard";
 import MemberShipInactive from "@/app/membership/membership-inactive";
 import MembershipActive from "@/app/membership/membership-active";
 import DonorList from "@/app/donor/donor-list/donor-list";
-import Duplicate from "@/app/donor/duplicate/duplicate";
 import Receipt from "@/app/receipt/receipt";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
@@ -36,6 +35,11 @@ import DonationSummary from "@/app/report/donation/donation";
 import SchoolListView from "@/app/school/school-list/school-list-view";
 import MembershipList from "@/app/membership/membership-list";
 import ReceiptCreate from "@/app/donor/donor-list/receipt-create";
+import DonorView from "@/app/donor/donor-list/donor-view";
+import DonorIndiviusalCreate from "@/app/donor/donor-list/donor-indiviusal-create";
+import DonorCompanyCreate from "@/app/donor/donor-list/donor-company-create";
+import DuplicateDonor from "@/app/donor/duplicate/duplicate-donor";
+import DuplicateDonorEdit from "@/app/donor/duplicate/duplicate-donor-edit";
 
 
 function AppRoutes() {
@@ -64,7 +68,11 @@ function AppRoutes() {
 
         {/* donor  */}
         <Route path="/donor/donors" element={<DonorList />} />
-        <Route path="/donor/duplicate" element={<Duplicate />} />
+        <Route path="/donor/donors-indiviusal-create" element={<DonorIndiviusalCreate />} />
+        <Route path="/donor/donors-company-create" element={<DonorCompanyCreate />} />
+        <Route path="/donor/donor-view/:id" element={<DonorView />} />
+        <Route path="/donor/duplicate" element={<DuplicateDonor />} />
+        <Route path="/donor/duplicate-edit/:id" element={<DuplicateDonorEdit />} />
 
      
           {/* receipt  */}
