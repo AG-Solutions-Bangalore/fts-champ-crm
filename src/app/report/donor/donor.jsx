@@ -29,7 +29,7 @@ import DonorLoading from "./loading";
 const Donor = () => {
   const today = moment().format("YYYY-MM-DD");
   const firstOfMonth = moment().startOf("month").format("YYYY-MM-DD");
-  const [viewType, setViewType] = useState(null); 
+  const [viewType, setViewType] = useState(null);
   const [donorSummary, setDonorSummary] = useState({
     indicomp_full_name: "",
     receipt_from_date: firstOfMonth,
@@ -44,7 +44,7 @@ const Donor = () => {
     setDonorSummary({ ...donorSummary, [field]: value });
   };
 
-  const { data: donorsData,isLoading } = useGetMutation(
+  const { data: donorsData, isLoading } = useGetMutation(
     "donors",
     DONOR_SUMMARY_FETCH_DONOR
   );
@@ -190,9 +190,9 @@ const Donor = () => {
       console.error("Error downloading donor summary:", err);
     }
   };
-if (isLoading) {
-  return <DonorLoading />;
-}
+  if (isLoading) {
+    return <DonorLoading />;
+  }
   return (
     <>
       <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
@@ -250,10 +250,10 @@ if (isLoading) {
                   className="text-white"
                   onClick={handleIndividualViewClick}
                 >
-            Individual View
+                  Individual View
                 </Button>
                 <Button className="text-white" onClick={handleGroupViewClick}>
-                  Group View 
+                  Group View
                 </Button>
               </div>
 
