@@ -32,7 +32,6 @@ import {
 const DonorDetails = () => {
   const navigate = useNavigate();
   const { id, year, fyear } = useParams();
-
   const donorId = decryptId(id);
   const donorYear = decryptId(year);
   const donorFYear = decryptId(fyear);
@@ -233,11 +232,21 @@ const DonorDetails = () => {
         </div>
         <div className="flex flex-col">
           <Label htmlFor="from-date">From Date*</Label>
-          <Input id="from-date" value={dateschool.school_allot_from} disabled />
+          <Input
+            id="from-date"
+            value={dateschool.school_allot_from}
+            disabled
+            type="date"
+          />
         </div>
         <div className="flex flex-col">
           <Label htmlFor="to-date">To Date*</Label>
-          <Input id="to-date" value={dateschool.school_allot_to} disabled />
+          <Input
+            id="to-date"
+            value={dateschool.school_allot_to}
+            disabled
+            type="date"
+          />
         </div>
       </div>
 

@@ -116,6 +116,7 @@ const SchoolToAllot = () => {
     {
       accessorKey: "individual_company.indicomp_full_name",
       header: "Full Name",
+      id: "Full Name",
       cell: ({ row }) => {
         const name = row?.original?.individual_company?.indicomp_full_name;
         const type = row?.original?.individual_company?.indicomp_type;
@@ -140,6 +141,7 @@ const SchoolToAllot = () => {
     {
       accessorKey: "individual_company.indicomp_mobile_phone",
       header: "Phone / Email",
+      id: "Phone / Email",
       cell: ({ row }) => {
         const phone = row?.original?.individual_company?.indicomp_mobile_phone;
         const email = row?.original?.individual_company?.indicomp_email;
@@ -162,6 +164,7 @@ const SchoolToAllot = () => {
     {
       accessorKey: "schoolalot_year",
       header: "Allotment Year",
+      id: "Allotment Year",
       cell: ({ row }) => {
         const year = row.original.schoolalot_year;
         return year ? <div className="text-xs">{year}</div> : null;
@@ -173,6 +176,7 @@ const SchoolToAllot = () => {
     {
       accessorKey: "receipt_no_of_ots",
       header: "OTS",
+      id: "OTS",
       cell: ({ row }) => {
         const ots = row.original.receipt_no_of_ots;
         return ots ? <div className="text-xs">{ots} Schools</div> : null;
