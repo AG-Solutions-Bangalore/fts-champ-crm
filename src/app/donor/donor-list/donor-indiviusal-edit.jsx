@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Mail, MapPin, Building, Users, Search } from 'lucide-react';
+import { ArrowLeft, Info, User, Mail, MapPin, Building } from 'lucide-react';
+import AddToGroup from './add-to-group';
 import honorific from '@/utils/honorific';
 import belongs_to from '@/utils/belongs-to';
 import donor_type from '@/utils/donor-type';
@@ -17,10 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Constants
 const gender = [
@@ -41,7 +41,6 @@ const DonorEditIndv = () => {
   const token = Cookies.get('token');
   const [userImageBase, setUserImageBase] = useState("");
   const [noImageUrl, setNoImageUrl] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   
   // State
   const [donor, setDonor] = useState({
@@ -82,30 +81,14 @@ const DonorEditIndv = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [showGroupSection, setShowGroupSection] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   // API calls with TanStack Query
-  const {data:states=[]} = useFetchState()
-  const {data:datasource=[]} = useFetchDataSource()
-  const {data:promoter=[]} = useFetchPromoter()
+  const {data:statesHook} = useFetchState()
+  const {data:datasourceHook} = useFetchDataSource()
+  const {data:promoterHook} = useFetchPromoter()
 
-  // Fetch donors for group
-  const { data: donorData = [], isLoading: donorsLoading } = useQuery({
-    queryKey: ['donors'],
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-donors`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      return response.data.individualCompanies.map(donor => ({
-        name: donor.indicomp_full_name,
-        phone: donor.indicomp_mobile_phone,
-        id: donor.indicomp_related_id,
-      }));
-    },
-  });
-
-  const { data: donorIndividualData, isLoading } = useQuery({
+  const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor', id],
     queryFn: async () => {
       const response = await axios.get(`${DONOR_INDIVISUAL_EDIT_FETCH}/${id}`, {
@@ -178,31 +161,13 @@ const DonorEditIndv = () => {
     onSuccess: (data) => {
       toast.success(data.msg||'Data Successfully Updated');
       setDonor(data.individualCompany);
-      setShowGroupSection(false);
-      queryClient.invalidateQueries(['donor', id]);
+      setShowModal(false);
+      navigate('/donor/donors');
     },
     onError: (error) => {
       toast.error('Failed to update family group');
     },
   });
-
-  const addMemberToGroup = async (relativeId) => {
-    try {
-      await axios({
-        url: `${BASE_URL}/api/update-donor/${id}`,
-        method: 'PUT',
-        data: { indicomp_related_id: relativeId },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      toast.success('Successfully added to group');
-      setShowGroupSection(false);
-      queryClient.invalidateQueries(['donor', id]);
-    } catch (error) {
-      console.error('Error adding member to group:', error);
-      toast.error('Failed to add member to group');
-    }
-  };
 
   // Handlers
   const validateOnlyDigits = (inputtxt) => {
@@ -342,11 +307,6 @@ const DonorEditIndv = () => {
     familyGroupMutation.mutate(data);
   };
 
-  const filteredDonors = donorData.filter(donor => 
-    donor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    donor.phone.includes(searchTerm)
-  );
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -359,6 +319,7 @@ const DonorEditIndv = () => {
     <div className="container mx-auto p-4 space-y-6 max-w-7xl">
       {/* Compact Header */}
       <div className="flex items-center justify-between">
+               
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -386,23 +347,65 @@ const DonorEditIndv = () => {
           >
             {updateMutation.isLoading ? 'Updating...' : 'Update Donor'}
           </Button>
+                        <Button
+                type="button"
+                onClick={() => setShowModal(true)}
+                disabled={donor.indicomp_related_id !== donor.indicomp_fts_id}
+                variant={donor.indicomp_related_id === donor.indicomp_fts_id ? "default" : "outline"}
+                className={
+                  donor.indicomp_related_id === donor.indicomp_fts_id 
+                    ? "bg-green-600 hover:bg-green-700" 
+                    : ""
+                }
+              >
+                Attach to Group
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => familyGroupStatus("leave_family_group")}
+                disabled={donor.indicomp_related_id === donor.indicomp_fts_id}
+                variant={donor.indicomp_related_id !== donor.indicomp_fts_id ? "default" : "outline"}
+                className={
+                  donor.indicomp_related_id !== donor.indicomp_fts_id 
+                    ? "bg-orange-600 hover:bg-orange-700" 
+                    : ""
+                }
+              >
+                Leave Group
+              </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column - Personal & Communication */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* Personal Information */}
+      <Tabs defaultValue="personal" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="personal" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Personal
+          </TabsTrigger>
+          <TabsTrigger value="communication" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Communication
+          </TabsTrigger>
+          <TabsTrigger value="residence" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Residence
+          </TabsTrigger>
+          <TabsTrigger value="office" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Office
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Personal Details Tab */}
+        <TabsContent value="personal" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5" />
-                Personal Information
-              </CardTitle>
+              <CardTitle className="text-lg">Personal Information</CardTitle>
               <CardDescription>Basic details and personal information</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
@@ -570,7 +573,7 @@ const DonorEditIndv = () => {
                       <SelectValue placeholder="Select Promoter" />
                     </SelectTrigger>
                     <SelectContent>
-                      {promoter?.promoter.map(option => (
+                      {promoterHook?.promoter.map(option => (
                         <SelectItem key={option.indicomp_promoter} value={option.indicomp_promoter}>
                           {option.indicomp_promoter}
                         </SelectItem>
@@ -618,7 +621,7 @@ const DonorEditIndv = () => {
                       <SelectValue placeholder="Select Source" />
                     </SelectTrigger>
                     <SelectContent>
-                      {datasource?.datasource.map(option => (
+                      {datasourceHook?.datasource.map(option => (
                         <SelectItem key={option.id} value={option.data_source_type}>
                           {option.data_source_type}
                         </SelectItem>
@@ -657,18 +660,17 @@ const DonorEditIndv = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Communication Details */}
+        {/* Communication Details Tab */}
+        <TabsContent value="communication" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Mail className="h-5 w-5" />
-                Communication Details
-              </CardTitle>
+              <CardTitle className="text-lg">Communication Details</CardTitle>
               <CardDescription>Contact information and preferences</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Mobile Phone */}
                 <div className="space-y-2">
                   <Label htmlFor="indicomp_mobile_phone">Mobile Phone <span className="text-red-500">*</span></Label>
@@ -726,34 +728,30 @@ const DonorEditIndv = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </TabsContent>
 
-        {/* Right Column - Address & Group Management */}
-        <div className="space-y-6">
-          {/* Residence Address */}
+        {/* Residence Address Tab */}
+        <TabsContent value="residence" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-5 w-5" />
-                Residence Address
-              </CardTitle>
-              <CardDescription>Primary residential address</CardDescription>
+              <CardTitle className="text-lg">Residence Address</CardTitle>
+              <CardDescription>Primary residential address details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* House & Street */}
-              <div className="space-y-2">
-                <Label htmlFor="indicomp_res_reg_address">House & Street Number</Label>
-                <Textarea
-                  id="indicomp_res_reg_address"
-                  name="indicomp_res_reg_address"
-                  value={donor.indicomp_res_reg_address}
-                  onChange={onInputChange}
-                  placeholder="House number and street"
-                  rows={2}
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* House & Street */}
+                <div className="space-y-2">
+                  <Label htmlFor="indicomp_res_reg_address">House & Street Number</Label>
+                  <Textarea
+                    id="indicomp_res_reg_address"
+                    name="indicomp_res_reg_address"
+                    value={donor.indicomp_res_reg_address}
+                    onChange={onInputChange}
+                    placeholder="House number and street"
+                    rows={2}
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 gap-3">
                 {/* Area */}
                 <div className="space-y-2">
                   <Label htmlFor="indicomp_res_reg_area">Area</Label>
@@ -799,7 +797,7 @@ const DonorEditIndv = () => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {states?.states.map(state => (
+                      {statesHook?.states.map(state => (
                         <SelectItem key={state.id} value={state.state_name}>{state.state_name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -824,31 +822,30 @@ const DonorEditIndv = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Office Address */}
+        {/* Office Address Tab */}
+        <TabsContent value="office" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Building className="h-5 w-5" />
-                Office Address
-              </CardTitle>
-              <CardDescription>Office or business address</CardDescription>
+              <CardTitle className="text-lg">Office Address</CardTitle>
+              <CardDescription>Office or business address details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Office & Street */}
-              <div className="space-y-2">
-                <Label htmlFor="indicomp_off_branch_address">Office & Street Number</Label>
-                <Textarea
-                  id="indicomp_off_branch_address"
-                  name="indicomp_off_branch_address"
-                  value={donor.indicomp_off_branch_address}
-                  onChange={onInputChange}
-                  placeholder="Office address"
-                  rows={2}
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Office & Street */}
+                <div className="space-y-2">
+                  <Label htmlFor="indicomp_off_branch_address">Office & Street Number</Label>
+                  <Textarea
+                    id="indicomp_off_branch_address"
+                    name="indicomp_off_branch_address"
+                    value={donor.indicomp_off_branch_address}
+                    onChange={onInputChange}
+                    placeholder="Office address"
+                    rows={2}
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 gap-3">
                 {/* Area */}
                 <div className="space-y-2">
                   <Label htmlFor="indicomp_off_branch_area">Area</Label>
@@ -893,7 +890,7 @@ const DonorEditIndv = () => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {states?.states.map(state => (
+                      {statesHook?.states.map(state => (
                         <SelectItem key={state.id} value={state.state_name}>{state.state_name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -932,95 +929,73 @@ const DonorEditIndv = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+      </Tabs>
 
-          {/* Group Management */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5" />
-                Family Group Management
-              </CardTitle>
-              <CardDescription>Manage donor's family group associations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowGroupSection(!showGroupSection)}
-                    disabled={donor.indicomp_related_id !== donor.indicomp_fts_id}
-                    variant={donor.indicomp_related_id === donor.indicomp_fts_id ? "default" : "outline"}
-                    className="flex-1"
-                  >
-                    {showGroupSection ? 'Hide Donors' : 'Attach to Group'}
-                  </Button>
+      {/* Action Buttons */}
+      {/* <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap gap-3 justify-between items-center">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                onClick={() => setShowModal(true)}
+                disabled={donor.indicomp_related_id !== donor.indicomp_fts_id}
+                variant={donor.indicomp_related_id === donor.indicomp_fts_id ? "default" : "outline"}
+                className={
+                  donor.indicomp_related_id === donor.indicomp_fts_id 
+                    ? "bg-green-600 hover:bg-green-700" 
+                    : ""
+                }
+              >
+                Attach to Group
+              </Button>
 
-                  <Button
-                    onClick={() => familyGroupStatus("leave_family_group")}
-                    disabled={donor.indicomp_related_id === donor.indicomp_fts_id}
-                    variant={donor.indicomp_related_id !== donor.indicomp_fts_id ? "destructive" : "outline"}
-                    className="flex-1"
-                  >
-                    Leave Group
-                  </Button>
-                </div>
+              <Button
+                type="button"
+                onClick={() => familyGroupStatus("leave_family_group")}
+                disabled={donor.indicomp_related_id === donor.indicomp_fts_id}
+                variant={donor.indicomp_related_id !== donor.indicomp_fts_id ? "default" : "outline"}
+                className={
+                  donor.indicomp_related_id !== donor.indicomp_fts_id 
+                    ? "bg-orange-600 hover:bg-orange-700" 
+                    : ""
+                }
+              >
+                Leave Group
+              </Button>
+            </div>
 
-                {donor.indicomp_related_id !== donor.indicomp_fts_id && (
-                  <Badge variant="secondary" className="w-fit">
-                    Currently in a family group
-                  </Badge>
-                )}
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/donor/donors')}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={updateMutation.isLoading}
+              >
+                {updateMutation.isLoading ? 'Updating...' : 'Update Donor'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card> */}
 
-              {/* Donor List Section */}
-              {showGroupSection && (
-                <div className="border rounded-lg p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search donors by name or phone..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-
-                  <ScrollArea className="h-64">
-                    {donorsLoading ? (
-                      <div className="flex justify-center items-center h-16">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                      </div>
-                    ) : filteredDonors.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-8">
-                        No donors found
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {filteredDonors.map((donorItem, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                          >
-                            <div>
-                              <p className="font-medium text-sm">{donorItem.name}</p>
-                              <p className="text-xs text-muted-foreground">{donorItem.phone}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => addMemberToGroup(donorItem.id)}
-                            >
-                              Add
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <AddToGroup 
+              id={donor.id} 
+              closegroupModal={() => setShowModal(false)} 
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
