@@ -1,5 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BASE_URL from "@/config/base-url";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import Cookies from "js-cookie";
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -31,12 +32,12 @@ const createQueryConfig = (queryKey, endpoint, options = {}) => {
   };
 };
 
-export const useFetchBuyers = () => {
-  return useQuery(createQueryConfig(["buyer"], "/api/buyers"));
+export const useFetchState = () => {
+  return useQuery(createQueryConfig(["states"], "/api/fetch-states"));
 };
-export const useFetchCategory = () => {
-  return useQuery(createQueryConfig(["categorys"], "/api/categorys"));
+export const useFetchDataSource = () => {
+  return useQuery(createQueryConfig(["datasource"], "/api/fetch-datasource"));
 };
-export const useFetchItems = () => {
-  return useQuery(createQueryConfig(["items"], "/api/items"));
+export const useFetchPromoter = () => {
+  return useQuery(createQueryConfig(["promoter"], "/api/fetch-promoter"));
 };

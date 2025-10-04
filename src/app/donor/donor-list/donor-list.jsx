@@ -293,6 +293,29 @@ const DonorList = () => {
 
              
             </TooltipProvider>
+          <TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => {
+          if (row.original.indicomp_type === "Individual") {
+            navigate(`/donor/donor-edit-indivisual/${id}`);
+          } else {
+            navigate(`/donor/donor-edit-company/${id}`);
+          }
+        }}
+      >
+        <Edit />
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Donor Edit</p>
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+
           </div>
         );
       },

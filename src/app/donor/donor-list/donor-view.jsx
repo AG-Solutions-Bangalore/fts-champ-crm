@@ -53,7 +53,7 @@ import BASE_URL from '@/config/base-url';
 
 
 
-// Get token from cookies
+
 const getAuthHeaders = () => {
   const token = Cookies.get('token');
   return {
@@ -64,7 +64,7 @@ const getAuthHeaders = () => {
   };
 };
 
-// API calls with authentication
+
 const fetchDonorById = async (id) => {
   const { data } = await axios.get(`${BASE_URL}/api/fetch-donor-by-id/${id}`, getAuthHeaders());
   return data;
@@ -84,7 +84,7 @@ const DonorView = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // TanStack Query for data fetching
+
   const { data: donorData, isLoading: donorLoading, error: donorError } = useQuery({
     queryKey: ['donor', id],
     queryFn: () => fetchDonorById(id),
@@ -100,7 +100,7 @@ const DonorView = () => {
     queryFn: () => fetchDonorReceipts(id),
   });
 
-  // Memoized calculations
+  
   const statistics = useMemo(() => {
     if (!donorData || !oldReceiptsData || !donorReceiptsData) return null;
 
@@ -136,7 +136,7 @@ const DonorView = () => {
     };
   }, [donorData, oldReceiptsData, donorReceiptsData]);
 
-  // Loading state
+
   if (donorLoading) {
     return <LoadingSkeleton />;
   }
@@ -162,7 +162,7 @@ const DonorView = () => {
   const donorReceipts = donorReceiptsData?.donor_receipts || [];
   const membershipDetails = donorReceiptsData?.membership_details || [];
 
-  // Helper functions
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -510,7 +510,7 @@ const DonorView = () => {
                       <TableHead>Joining Date</TableHead>
                       <TableHead>Promoter</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+              
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -549,11 +549,7 @@ const DonorView = () => {
                             {member.indicomp_status ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
+                        
                       </TableRow>
                     ))}
                   </TableBody>
