@@ -1,9 +1,4 @@
-import {
-  navigateToSchoolAllotEdit,
-  navigateToSchoolAllotmentLetter,
-  navigateToSchoolAllotView,
-  SCHOOL_ALLOT_LIST,
-} from "@/api";
+import { REAPEAT_DONOR_EDIT_LIST, REAPEAT_DONOR_EDIT_UPDATE_NEXT } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,7 +22,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useApiMutation } from "@/hooks/use-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
+import { decryptId } from "@/utils/encyrption/encyrption";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -41,22 +38,23 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ClipboardList,
   Edit,
-  Eye,
   Search,
 } from "lucide-react";
-import moment from "moment";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
-const SchoolAlloted = () => {
-  const navigate = useNavigate();
+const AllotedList = () => {
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const { id } = useParams();
+  const { trigger: submitDetails, loading: submitloading } = useApiMutation();
 
+  const donorId = decryptId(id);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -80,13 +78,19 @@ const SchoolAlloted = () => {
     isError,
     isFetching,
     prefetchPage,
-  } = useGetMutation("schoolallotlist", SCHOOL_ALLOT_LIST, {
-    page: pagination.pageIndex + 1,
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-  });
+  } = useGetMutation(
+    `school/${donorId}`,
+    `${REAPEAT_DONOR_EDIT_LIST}/${donorId}`,
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
+  );
+  console.log(schoolData, "schoolData");
+
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.data?.last_page || 1;
+    const totalPages = schoolData?.schools?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -97,184 +101,142 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.data?.last_page,
+    schoolData?.schools?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState();
   const [rowSelection, setRowSelection] = useState({});
+  const updateNext = async (e, allotId) => {
+    const currentYear = "2025-26";
+    if (!currentYear) {
+      toast.error("Current year is required for updating.");
+      return;
+    }
+    const payload = {
+      schoolalot_financial_year: currentYear,
+    };
 
+    try {
+      const res = await submitDetails({
+        url: `${REAPEAT_DONOR_EDIT_UPDATE_NEXT}/${allotId}`,
+        method: "put",
+        data: payload,
+      });
+      if (res.code == 200) {
+        toast.success(res.msg);
+        navigate("/school/repeated");
+      } else {
+        toast.error(res.msg || "Unexpected error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to submit");
+    }
+  };
   const columns = [
-    // Serial Number
     {
       id: "serialNo",
-
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex =
-          pagination.pageIndex * pagination.pageSize + row.index + 1;
+        const globalIndex = row.index + 1; // adjust if pagination changes
         return (
           <div className="text-xs font-medium text-center">{globalIndex}</div>
         );
       },
       size: 60,
     },
-
-    // Donor Name
     {
       accessorKey: "indicomp_full_name",
+      id: "donorName",
       header: "Donor Name",
-      id: "Donor Name",
       cell: ({ row }) => {
         const name = row.original.indicomp_full_name;
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
       size: 150,
     },
-
-    // School Allotment Year
     {
-      accessorKey: "schoolalot_financial_year",
+      accessorKey: "schoolalot_year",
+      id: "year",
       header: "School Allot Year",
-      id: "School Allot Year",
-      cell: ({ row }) => {
-        const year = row.original.schoolalot_financial_year;
-        return year ? <div className="text-xs">{year}</div> : null;
-      },
+      cell: ({ row }) => (
+        <div className="text-xs">{row.original.schoolalot_year}</div>
+      ),
       size: 120,
     },
-
-    // From Date
     {
       accessorKey: "schoolalot_from_date",
+      id: "fromDate",
       header: "From Date",
-      id: "From Date",
-      cell: ({ row }) => {
-        const date = row.original.schoolalot_from_date;
-        return date ? (
-          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
-        ) : null;
-      },
-      size: 100,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.original.schoolalot_from_date}</div>
+      ),
+      size: 120,
     },
-
-    // To Date
     {
       accessorKey: "schoolalot_to_date",
+      id: "toDate",
       header: "To Date",
-      id: "To Date",
-      cell: ({ row }) => {
-        const date = row.original.schoolalot_to_date;
-        return date ? (
-          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
-        ) : null;
-      },
-      size: 100,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.original.schoolalot_to_date}</div>
+      ),
+      size: 120,
     },
-
-    // OTS Received
     {
       accessorKey: "receipt_no_of_ots",
+      id: "otsReceived",
       header: "OTS Received",
-      id: "OTS Received",
-      cell: ({ row }) => {
-        const ots = row.original.receipt_no_of_ots;
-        return ots ? <div className="text-xs">{ots}</div> : null;
-      },
-      size: 100,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.original.receipt_no_of_ots}</div>
+      ),
+      size: 120,
     },
-
-    // Schools Allotted
     {
       accessorKey: "no_of_schools_allotted",
+      id: "schoolsAllotted",
       header: "Schools Allotted",
-      id: "Schools Allotted",
-      cell: ({ row }) => {
-        const allotted = row.original.no_of_schools_allotted;
-        return allotted ? <div className="text-xs">{allotted}</div> : null;
-      },
-      size: 100,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.original.no_of_schools_allotted}</div>
+      ),
+      size: 120,
     },
-
-    // Pending
     {
-      accessorKey: "pending",
+      id: "pending",
       header: "Pending",
-      id: "Pending",
       cell: ({ row }) => {
         const pending =
           row.original.receipt_no_of_ots - row.original.no_of_schools_allotted;
         return <div className="text-xs">{pending}</div>;
       },
-      size: 80,
+      size: 100,
     },
-
-    // Actions
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
         const id = row.original.id;
-        const year = row.original.schoolalot_financial_year;
-
-        // const handleAllotment = () => {
-        //   navigate("/students-allotletter");
-        //   localStorage.setItem("sclaltid", id);
-        // };
-
         return (
           <div className="flex">
             <TooltipProvider>
-              {/* Edit */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      navigateToSchoolAllotEdit(navigate, id, year)
-                    }
+                    onClick={(e) => updateNext(e, row.original.id)}
                   >
-                    <Edit className="h-5 w-5 " />
+                    <Edit className="h-5 w-5 text-blue-500" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Edit</TooltipContent>
-              </Tooltip>
-
-              {/* View */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToSchoolAllotView(navigate, id)}
-                  >
-                    <Eye className="h-5 w-5 " />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      navigateToSchoolAllotmentLetter(navigate, id)
-                    }
-                  >
-                    <ClipboardList className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Allotment</TooltipContent>
+                <TooltipContent>Update Next</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         );
       },
-      size: 120,
+      size: 100,
     },
   ];
 
@@ -290,7 +252,7 @@ const SchoolAlloted = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.data?.last_page || -1,
+    pageCount: schoolData?.schools?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -438,7 +400,7 @@ const SchoolAlloted = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search allotment..."
+            placeholder="Search school..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -584,4 +546,4 @@ const SchoolAlloted = () => {
   );
 };
 
-export default SchoolAlloted;
+export default AllotedList;

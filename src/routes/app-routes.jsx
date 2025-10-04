@@ -36,6 +36,7 @@ import ReceiptSummary from "@/app/report/receipt/receipt";
 import SchoolSummary from "@/app/report/school/school";
 import SuspenseSummary from "@/app/report/suspense/suspense";
 import RepeatedDonor from "@/app/school/repeated-donor/repeated-donor";
+import SchoolAllotLetter from "@/app/school/school-alloted/allotment-letter";
 import SchoolAlloted from "@/app/school/school-alloted/school-alloted";
 import SchoolAllotEdit from "@/app/school/school-alloted/school-alloted-edit";
 import SchoolAllotView from "@/app/school/school-alloted/school-alloted-view";
@@ -44,7 +45,7 @@ import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolListView from "@/app/school/school-list/school-list-view";
 import Settings from "@/app/setting/setting";
-import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
+import AllotedList from "@/app/school/repeated-donor/alloted-list";import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
 
 
 function AppRoutes() {
@@ -73,12 +74,21 @@ function AppRoutes() {
 
         {/* donor  */}
         <Route path="/donor/donors" element={<DonorList />} />
-        <Route path="/donor/donors-indiviusal-create" element={<DonorIndiviusalCreate />} />
-        <Route path="/donor/donors-company-create" element={<DonorCompanyCreate />} />
+        <Route
+          path="/donor/donors-indiviusal-create"
+          element={<DonorIndiviusalCreate />}
+        />
+        <Route
+          path="/donor/donors-company-create"
+          element={<DonorCompanyCreate />}
+        />
         <Route path="/donor/donor-view/:id" element={<DonorView />} />
         <Route path="/donor/donor-edit-indivisual/:id" element={<DonorIndiviusalEdit />} />
         <Route path="/donor/duplicate" element={<DuplicateDonor />} />
-        <Route path="/donor/duplicate-edit/:id" element={<DuplicateDonorEdit />} />
+        <Route
+          path="/donor/duplicate-edit/:id"
+          element={<DuplicateDonorEdit />}
+        />
 
         {/* receipt  */}
         <Route path="/receipt" element={<Receipt />} />
@@ -94,9 +104,17 @@ function AppRoutes() {
           element={<DonorDetails />}
         />
         <Route path="/school/alloted" element={<SchoolAlloted />} />
-        <Route path="/school/allotedit/:id/:year" element={<SchoolAllotEdit />} />
+        <Route
+          path="/school/allotedit/:id/:year"
+          element={<SchoolAllotEdit />}
+        />
         <Route path="/school/allotview/:id" element={<SchoolAllotView />} />
         <Route path="/school/repeated" element={<RepeatedDonor />} />
+        <Route
+          path="/school/allotment-letter/:id"
+          element={<SchoolAllotLetter />}
+        />
+        <Route path="/school/alloted-list/:id" element={<AllotedList />} />
 
         {/* report  */}
         <Route path="/report/suspense-summary" element={<SuspenseSummary />} />

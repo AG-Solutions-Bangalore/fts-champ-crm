@@ -123,7 +123,7 @@ const SchoolList = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          onClick={() => column.toggleSorting(column.getIsSorted() == "asc")}
           className="px-2 h-8 text-xs font-medium"
         >
           Ackal

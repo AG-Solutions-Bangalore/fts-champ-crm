@@ -131,9 +131,9 @@ export const SCHOOL_VIEW_BY_ID = `/api/fetch-schools-by-id`;
 export const SCHOOL_FULL_LIST_VIEW = "/students-full-list-view";
 
 //REPEAT DONOR
-export const REAPEAT_DONOR_LIST = `${BASE_URL}/api/fetch-receipt-duplicate`;
-export const REAPEAT_DONOR_Edit_LIST = `${BASE_URL}/api/fetch-school-allot-repeat`;
-export const REAPEAT_DONOR_Edit_UPDATE_NEXT = `${BASE_URL}/api/update-schoolsallot-repeat`;
+export const REAPEAT_DONOR_LIST = `/api/fetch-receipt-duplicate`;
+export const REAPEAT_DONOR_EDIT_LIST = `/api/fetch-school-allot-repeat`;
+export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-schoolsallot-repeat`;
 
 //SCHOOL ALLOT
 export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
@@ -297,7 +297,7 @@ export const ROUTES = {
   RECEIPT_EDIT: (id) => `/receipt-edit/${encryptId(id)}`,
   RECEIPT_OLD_EDIT: (id) => `/receipt-old-edit/${encryptId(id)}`,
   SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
-  REPEAT_DONOR_EDIT: (id) => `/repeat-donor-allot/${encryptId(id)}`,
+  REPEAT_DONOR_EDIT: (id) => `/school/alloted-list/${encryptId(id)}`,
   VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
   DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
@@ -370,6 +370,9 @@ export const navigateToSchoolAllotEdit = (navigate, id, year) => {
 };
 export const navigateToSchoolAllotView = (navigate, id) => {
   navigate(`/school/allotview/${encryptId(id)}`);
+};
+export const navigateToSchoolAllotmentLetter = (navigate, id) => {
+  navigate(`/school/allotment-letter/${encryptId(id)}`);
 };
 export const navigateToViewerEdit = (navigate, viewId) => {
   navigate(ROUTES.VIEWER_EDIT(viewId));
@@ -679,7 +682,7 @@ export const fetchRepeatDonorEditList = async (encryptedId) => {
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
-    const response = await axios.get(`${REAPEAT_DONOR_Edit_LIST}/${id}`, {
+    const response = await axios.get(`${REAPEAT_DONOR_EDIT_LIST}/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
