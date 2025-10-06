@@ -397,7 +397,7 @@ const DonorIndiviusalCreate = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full space-y-1 p-4">
+      <div className="w-full  space-y-1 p-4">
         <Card className="p-4">
           <CardHeader className="pb-3">
             <Skeleton className="h-5 w-40" />
@@ -418,7 +418,7 @@ const DonorIndiviusalCreate = () => {
   }
 
   return (
-    <div className="w-full space-y-1 p-4">
+    <div className="w-full space-y-1  p-4">
       {/* Header Card */}
       <Card>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4">
@@ -455,16 +455,16 @@ const DonorIndiviusalCreate = () => {
         <CardContent className="p-4">
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Personal Details Section */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <div className=" space-y-1">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
                 <Info className="w-4 h-4" />
                 Personal Details
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Title */}
-                <div className="space-y-1">
-                  <Label htmlFor="title" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="title" className="text-xs  font-medium">
                     Title *
                   </Label>
                   <Select 
@@ -488,8 +488,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Full Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_full_name" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_full_name" className="text-xs  font-medium">
                     Full Name *
                   </Label>
                   <Input
@@ -512,8 +512,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Father Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_father_name" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_father_name" className="text-xs  font-medium">
                     Father Name
                   </Label>
                   <Input
@@ -526,8 +526,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Mother Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_mother_name" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_mother_name" className="text-xs  font-medium">
                     Mother Name
                   </Label>
                   <Input
@@ -540,8 +540,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Gender */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_gender" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_gender" className="text-xs  font-medium">
                     Gender *
                   </Label>
                   <Select 
@@ -565,8 +565,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Spouse Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_spouse_name" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_spouse_name" className="text-xs  font-medium">
                     Spouse Name
                   </Label>
                   <Input
@@ -579,8 +579,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Date of Birth */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_dob_annualday" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_dob_annualday" className="text-xs  font-medium">
                     Date of Birth
                   </Label>
                   <Input
@@ -593,8 +593,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Date of Anniversary */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_doa" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_doa" className="text-xs  font-medium">
                     Date of Anniversary
                   </Label>
                   <Input
@@ -607,8 +607,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* PAN Number */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_pan_no" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
                     PAN Number
                   </Label>
                   <Input
@@ -622,8 +622,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Upload Image */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_image_logo" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_image_logo" className="text-xs  font-medium">
                     Upload Image
                   </Label>
                   <Input
@@ -639,8 +639,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Remarks */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_remarks" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_remarks" className="text-xs  font-medium">
                     Remarks
                   </Label>
                   <Input
@@ -653,8 +653,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Promoter */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_promoter" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_promoter" className="text-xs  font-medium">
                     Promoter *
                   </Label>
                   <Select 
@@ -679,8 +679,8 @@ const DonorIndiviusalCreate = () => {
 
                 {/* New Promoter (if Other selected) */}
                 {donor.indicomp_promoter === "Other" && (
-                  <div className="space-y-1">
-                    <Label htmlFor="indicomp_newpromoter" className="text-sm font-medium">
+                  <div className=" ">
+                    <Label htmlFor="indicomp_newpromoter" className="text-xs  font-medium">
                       Promoter Details
                     </Label>
                     <Input
@@ -697,8 +697,8 @@ const DonorIndiviusalCreate = () => {
                 )}
 
                 {/* Belong To */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_belongs_to" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_belongs_to" className="text-xs  font-medium">
                     Belong To
                   </Label>
                   <Select 
@@ -719,8 +719,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Source */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_source" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_source" className="text-xs  font-medium">
                     Source
                   </Label>
                   <Select 
@@ -741,8 +741,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Donor Type */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_donor_type" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_donor_type" className="text-xs  font-medium">
                     Donor Type
                   </Label>
                   <Select 
@@ -763,8 +763,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Type (Disabled) */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_type" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_type" className="text-xs  font-medium">
                     Type
                   </Label>
                   <Input
@@ -778,16 +778,16 @@ const DonorIndiviusalCreate = () => {
             </div>
 
             {/* Communication Details Section */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <div className=" space-y-1">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
                 <Phone className="w-4 h-4" />
                 Communication Details
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Mobile Phone */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_mobile_phone" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_mobile_phone" className="text-xs  font-medium">
                     Mobile Phone *
                   </Label>
                   <Input
@@ -812,8 +812,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* WhatsApp */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_mobile_whatsapp" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_mobile_whatsapp" className="text-xs  font-medium">
                     WhatsApp
                   </Label>
                   <Input
@@ -828,8 +828,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Email */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_email" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_email" className="text-xs  font-medium">
                     Email
                   </Label>
                   <Input
@@ -843,8 +843,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Website */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_website" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_website" className="text-xs  font-medium">
                     Website
                   </Label>
                   <Input
@@ -859,16 +859,16 @@ const DonorIndiviusalCreate = () => {
             </div>
 
             {/* Residence Address Section */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <div className=" space-y-1">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
                 <MapPin className="w-4 h-4" />
                 Residence Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Address */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_address" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_address" className="text-xs  font-medium">
                     House & Street Number
                   </Label>
                   <Input
@@ -881,8 +881,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Area */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_area" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_area" className="text-xs  font-medium">
                     Area
                   </Label>
                   <Input
@@ -895,8 +895,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Landmark */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_ladmark" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_ladmark" className="text-xs  font-medium">
                     Landmark
                   </Label>
                   <Input
@@ -909,8 +909,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* City */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_city" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_city" className="text-xs  font-medium">
                     City *
                   </Label>
                   <Input
@@ -926,8 +926,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* State */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_state" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_state" className="text-xs  font-medium">
                     State *
                   </Label>
                   <Select 
@@ -951,8 +951,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Pincode */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_pin_code" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_res_reg_pin_code" className="text-xs  font-medium">
                     Pincode *
                   </Label>
                   <Input
@@ -971,16 +971,16 @@ const DonorIndiviusalCreate = () => {
             </div>
 
             {/* Office Address Section */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <div className="space-y-1 ">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
                 <Building className="w-4 h-4" />
                 Office Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Office Address */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_address" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_address" className="text-xs  font-medium">
                     Office & Street Number
                   </Label>
                   <Input
@@ -993,8 +993,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Office Area */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_area" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_area" className="text-xs  font-medium">
                     Area
                   </Label>
                   <Input
@@ -1007,8 +1007,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Office Landmark */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_ladmark" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_ladmark" className="text-xs  font-medium">
                     Landmark
                   </Label>
                   <Input
@@ -1021,8 +1021,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Office City */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_city" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_city" className="text-xs  font-medium">
                     City
                   </Label>
                   <Input
@@ -1035,8 +1035,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Office State */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_state" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_state" className="text-xs  font-medium">
                     State
                   </Label>
                   <Select 
@@ -1057,8 +1057,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Office Pincode */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_pin_code" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_off_branch_pin_code" className="text-xs  font-medium">
                     Pincode
                   </Label>
                   <Input
@@ -1072,8 +1072,8 @@ const DonorIndiviusalCreate = () => {
                 </div>
 
                 {/* Correspondence Preference */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_corr_preffer" className="text-sm font-medium">
+                <div className=" ">
+                  <Label htmlFor="indicomp_corr_preffer" className="text-xs  font-medium">
                     Correspondence Preference *
                   </Label>
                   <Select 
@@ -1132,4 +1132,4 @@ const DonorIndiviusalCreate = () => {
   );
 };
 
-export default DonorIndiviusalCreate;
+export default DonorIndiviusalCreate; 

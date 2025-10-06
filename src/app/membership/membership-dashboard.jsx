@@ -287,8 +287,6 @@ const MemberDashboard = () => {
     memberEmailStats.some(stat => String(stat.member_vailidity) === String(year));
   
 
-  console.log('yearmembers',yearMembers)
-  console.log('emailStats',emailStats)
 
   return (
     <Card 
