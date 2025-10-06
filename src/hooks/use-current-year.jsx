@@ -7,16 +7,13 @@ export const useCurrentYear = () => {
     const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
-    const response = await fetch(
-      `${BASE_URL}/api/panel-fetch-year`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
+    const response = await fetch(`${BASE_URL}/api/panel-fetch-year`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log(response, "response");
     if (!response.ok) throw new Error("Failed to fetch year data");
     return response.json();
   };
@@ -24,6 +21,6 @@ export const useCurrentYear = () => {
   return useQuery({
     queryKey: ["currentYear"],
     queryFn: fetchCurrentYear,
-    select: (data) => data.year.current_year, 
+    select: (data) => data.year.current_year,
   });
 };

@@ -130,7 +130,6 @@ const SchoolAlloted = () => {
         const name = row.original.indicomp_full_name;
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
-      size: 150,
     },
 
     // School Allotment Year
@@ -142,35 +141,32 @@ const SchoolAlloted = () => {
         const year = row.original.schoolalot_financial_year;
         return year ? <div className="text-xs">{year}</div> : null;
       },
-      size: 120,
+      size: 200,
     },
-
-    // From Date
     {
-      accessorKey: "schoolalot_from_date",
-      header: "From Date",
-      id: "From Date",
+      id: "Date",
+      header: "Date",
       cell: ({ row }) => {
-        const date = row.original.schoolalot_from_date;
-        return date ? (
-          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
-        ) : null;
+        const fromDate = row.original.schoolalot_from_date;
+        const toDate = row.original.schoolalot_to_date;
+        return (
+          <div className="space-y-1 text-xs">
+            {fromDate && (
+              <div>
+                From Date :{""}
+                {moment(fromDate).format("DD MMM YYYY")}
+              </div>
+            )}
+            {toDate && (
+              <div>
+                To Date : {""}
+                {moment(toDate).format("DD MMM YYYY")}
+              </div>
+            )}
+          </div>
+        );
       },
-      size: 100,
-    },
-
-    // To Date
-    {
-      accessorKey: "schoolalot_to_date",
-      header: "To Date",
-      id: "To Date",
-      cell: ({ row }) => {
-        const date = row.original.schoolalot_to_date;
-        return date ? (
-          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
-        ) : null;
-      },
-      size: 100,
+      size: 200,
     },
 
     // OTS Received
@@ -182,7 +178,6 @@ const SchoolAlloted = () => {
         const ots = row.original.receipt_no_of_ots;
         return ots ? <div className="text-xs">{ots}</div> : null;
       },
-      size: 100,
     },
 
     // Schools Allotted
@@ -194,7 +189,6 @@ const SchoolAlloted = () => {
         const allotted = row.original.no_of_schools_allotted;
         return allotted ? <div className="text-xs">{allotted}</div> : null;
       },
-      size: 100,
     },
 
     // Pending
@@ -207,7 +201,6 @@ const SchoolAlloted = () => {
           row.original.receipt_no_of_ots - row.original.no_of_schools_allotted;
         return <div className="text-xs">{pending}</div>;
       },
-      size: 80,
     },
 
     // Actions
@@ -217,11 +210,6 @@ const SchoolAlloted = () => {
       cell: ({ row }) => {
         const id = row.original.id;
         const year = row.original.schoolalot_financial_year;
-
-        // const handleAllotment = () => {
-        //   navigate("/students-allotletter");
-        //   localStorage.setItem("sclaltid", id);
-        // };
 
         return (
           <div className="flex">
@@ -289,8 +277,8 @@ const SchoolAlloted = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    manualPagination: true,
-    pageCount: schoolData?.data?.last_page || -1,
+    // manualPagination: true,
+    // pageCount: schoolData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -309,7 +297,7 @@ const SchoolAlloted = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "donors",
+      "schoolallotlist",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -404,7 +392,7 @@ const SchoolAlloted = () => {
   };
 
   const TableShimmer = () => {
-    return Array.from({ length: 7 }).map((_, index) => (
+    return Array.from({ length: 10 }).map((_, index) => (
       <TableRow key={index} className="animate-pulse h-11">
         {table.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
@@ -499,7 +487,7 @@ const SchoolAlloted = () => {
 
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer />
+              <TableShimmer columns={table.getVisibleFlatColumns()} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

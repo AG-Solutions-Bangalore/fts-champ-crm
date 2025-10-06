@@ -44,6 +44,8 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { TableShimmer } from "../loadingtable/TableShimmer";
+import { useCurrentYear } from "@/hooks/use-current-year";
 
 const AllotedList = () => {
   const queryClient = useQueryClient();
@@ -86,7 +88,6 @@ const AllotedList = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
-  console.log(schoolData, "schoolData");
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
@@ -108,6 +109,9 @@ const AllotedList = () => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState();
   const [rowSelection, setRowSelection] = useState({});
+  // const { currentYear } = useCurrentYear();
+  // console.log(currentYear, "year");
+
   const updateNext = async (e, allotId) => {
     const currentYear = "2025-26";
     if (!currentYear) {
@@ -251,8 +255,8 @@ const AllotedList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    manualPagination: true,
-    pageCount: schoolData?.schools?.last_page || -1,
+    // manualPagination: true,
+    // pageCount: schoolData?.schools?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -271,7 +275,7 @@ const AllotedList = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "donors",
+      `school/${donorId}`,
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -365,18 +369,6 @@ const AllotedList = () => {
     return buttons;
   };
 
-  const TableShimmer = () => {
-    return Array.from({ length: 7 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11">
-        {table.getVisibleFlatColumns().map((column) => (
-          <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div>
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
-  };
-
   if (isError) {
     return (
       <div className="w-full p-4  ">
@@ -436,7 +428,7 @@ const AllotedList = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-none border min-h-[31rem] flex flex-col">
+      <div className="rounded-none border flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -461,7 +453,7 @@ const AllotedList = () => {
 
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer />
+              <TableShimmer columns={table.getVisibleFlatColumns()} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

@@ -27,10 +27,10 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
   const receiptsummary = data?.receiptTotal || [];
   const grandots = data?.receipt_grand_total_ots || [];
   const totalsummarygeneral = data?.recveiptTotalGeneral || [];
-  const receiptsummaryfootertotal = data?.receipt_grand_total_amount;
-  const grandtotal = data?.receipt_grand_total_count;
-  const receiptTotalMembership = data?.receiptTotalMembership;
-  const receiptTotalOTS = data?.receiptTotalOTS;
+  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || [];
+  const grandtotal = data?.receipt_grand_total_count || [];
+  const receiptTotalMembership = data?.receiptTotalMembership || [];
+  const receiptTotalOTS = data?.receiptTotalOTS || [];
   return (
     <>
       {!loader && error && (
@@ -101,7 +101,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                         >
                           Total
                         </td>
-                        {grandtotal.map((grandcount, key) => (
+                        {grandtotal?.map((grandcount, key) => (
                           <td className="border border-black px-4 py-2 text-xs font-bold">
                             {grandcount.total_grand_count}
                           </td>
@@ -112,7 +112,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                           </td>
                         ))}
 
-                        {receiptsummaryfootertotal.map((foota, key) => (
+                        {receiptsummaryfootertotal?.map((foota, key) => (
                           <td className="border border-black text-right px-4  py-2 text-xs font-bold">
                             <NumericFormat
                               value={foota.total_grand_amount}
@@ -134,7 +134,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                       <b className="items-center text-center">
                         One Teacher School
                       </b>
-                      {receiptTotalOTS.map((grandcount, key) => (
+                      {receiptTotalOTS?.map((grandcount, key) => (
                         <NumericFormat
                           thousandSeparator={true}
                           thousandsGroupStyle="lakh"
@@ -150,7 +150,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                       <b className="items-center text-center">
                         Membership Fees
                       </b>
-                      {receiptTotalMembership.map((grandcount, key) => (
+                      {receiptTotalMembership?.map((grandcount, key) => (
                         <NumericFormat
                           thousandSeparator={true}
                           thousandsGroupStyle="lakh"
@@ -178,7 +178,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
 
                     <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
                       <b className="items-center text-center">Total</b>
-                      {receiptsummary.map((grandcount, key) => (
+                      {receiptsummary?.map((grandcount, key) => (
                         <NumericFormat
                           thousandSeparator={true}
                           thousandsGroupStyle="lakh"

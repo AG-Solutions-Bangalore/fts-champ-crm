@@ -16,9 +16,11 @@ import { decryptId } from "@/utils/encyrption/encyrption";
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -28,14 +30,27 @@ import {
   SCHOOL_DATA_BY_ID,
   SCHOOL_DONOR_DETAILS_ALLOTED_LIST,
 } from "../../../api";
-
+import { TableShimmer } from "../loadingtable/TableShimmer";
+import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import useNumericInput from "@/hooks/use-numeric-input";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 const DonorDetails = () => {
   const navigate = useNavigate();
   const { id, year, fyear } = useParams();
   const donorId = decryptId(id);
   const donorYear = decryptId(year);
   const donorFYear = decryptId(fyear);
-
+  const keyDown = useNumericInput();
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = useState([]);
   const [userdata, setUserdata] = useState({});
   const [dateschool, setDateschool] = useState({});
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
@@ -141,7 +156,27 @@ const DonorDetails = () => {
   const table = useReactTable({
     data: schoolData,
     columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   const onSubmit = async () => {
@@ -175,19 +210,6 @@ const DonorDetails = () => {
     }
   };
 
-  // Shimmer Loader for Table
-  const TableShimmer = ({ table }) => {
-    return Array.from({ length: 7 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11">
-        {table.getVisibleFlatColumns().map((column) => (
-          <TableCell key={column.id} className="py-1">
-            <div className="h-6 bg-gray-200 rounded w-full"></div>
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
-  };
-
   const handlePageChange = (page) => {
     if (page < 0 || page >= totalPages) return;
     setPagination((prev) => ({ ...prev, pageIndex: page }));
@@ -196,13 +218,6 @@ const DonorDetails = () => {
   const handlePageInput = (e) => {
     const val = e.target.value;
     if (/^\d*$/.test(val)) setPageInput(val);
-  };
-
-  const keyDown = (e) => {
-    if (e.key === "Enter") {
-      const page = parseInt(pageInput, 10);
-      if (!isNaN(page)) handlePageChange(page - 1);
-    }
   };
 
   const generatePageButtons = () => {
@@ -223,7 +238,7 @@ const DonorDetails = () => {
   };
 
   return (
-    <div className="p-4 bg-white space-y-4">
+    <div className="p-4 bg-white space-y-2">
       {/* School Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex flex-col">
@@ -251,21 +266,47 @@ const DonorDetails = () => {
       </div>
 
       {/* Search */}
-      <div className="flex flex-col md:flex-row md:items-center gap-2">
-        <Label htmlFor="school-search" className="sr-only">
-          Search Schools
-        </Label>
-        <Input
-          id="school-search"
-          placeholder="Search schools..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-64"
-        />
+      <div className="flex items-center justify-between py-1">
+        <div className="relative w-64">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search donor..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchTerm("");
+              }
+            }}
+            className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              Columns <ChevronDown className="ml-2 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="text-xs capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Table */}
-      <div className="rounded-none border min-h-[31rem] flex flex-col">
+      <div className="rounded-none border flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -288,7 +329,7 @@ const DonorDetails = () => {
           </TableHeader>
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer table={table} />
+              <TableShimmer columns={table.getVisibleFlatColumns()} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} className="h-2">

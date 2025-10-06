@@ -40,7 +40,7 @@ const SchoolAllotLetter = () => {
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 15mm 10mm;  /* top-bottom 15mm, left-right 10mm */
+        margin: 5mm 0mm;  /* top-bottom 15mm, left-right 10mm */
       }
       @media print {
         body {

@@ -359,8 +359,7 @@ const Receipt = () => {
       initialState: {
         pagination: {
           pageSize: 10,
-        },
-        
+        }, 
       },
       
     });
