@@ -1,14 +1,56 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 
 import BASE_URL from '@/config/base-url';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, ChevronDown, Search, SquarePlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const AddToGroup = ({ id, closegroupModal }) => {
+const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
   const token = Cookies.get('token');
+  const queryClient = useQueryClient();
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [globalFilter, setGlobalFilter] = useState('');
 
   const { data: donorData = [], isLoading } = useQuery({
     queryKey: ['donors'],
@@ -36,66 +78,260 @@ const AddToGroup = ({ id, closegroupModal }) => {
       
       toast.success('Successfully added to group');
       closegroupModal();
+      switch (page) {
+        case 'indivisual':
+          queryClient.invalidateQueries(['donor', id]);
+          break;
+        case 'company':
+          queryClient.invalidateQueries(['donor-company', id]);
+          break;
+        default:
+          break;
+      }
     } catch (error) {
       console.error('Error adding member to group:', error);
       toast.error('Failed to add member to group');
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-56">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const columns = [
+    {
+      id: "S. No.",
+      header: "S. No.",
+      cell: ({ row }) => {
+        const globalIndex = row.index + 1;
+        return <div className="text-xs font-medium">{globalIndex}</div>;
+      },
+      size: 60,
+    },
+    {
+      accessorKey: "name",
+    
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-2 h-8 text-xs"
+        >
+          Name
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">{row.getValue("name")}</div>
+      ),
+      size: 150,
+    },
+    {
+      accessorKey: "phone",
+  
+      header: "Phone",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("phone")}</div>
+      ),
+      size: 120,
+    },
+    {
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => {
+        return (
+          <div className="flex flex-row">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => addMemberToGroup(row.original.id)}
+                  >
+                    <SquarePlus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add to Group</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: donorData,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+      columnVisibility,
+      rowSelection,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
+  });
+
+  const TableShimmer = () => {
+    return Array.from({ length: 10 }).map((_, index) => (
+      <TableRow key={index} className="animate-pulse h-11">
+        {table.getVisibleFlatColumns().map((column) => (
+          <TableCell key={column.id} className="py-1">
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
+          </TableCell>
+        ))}
+      </TableRow>
+    ));
+  };
 
   return (
-    <div className="relative">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-        <ArrowLeft 
-          onClick={closegroupModal}
-          className="w-5 h-5 cursor-pointer text-gray-600 hover:text-red-600 transition-colors"
-        />
-        <h2 className="text-lg font-semibold text-gray-900">Add to Group</h2>
-      </div>
+    <Dialog open={isOpen} onOpenChange={closegroupModal}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ArrowLeft 
+              onClick={closegroupModal}
+              className="w-5 h-5 cursor-pointer text-gray-600 hover:text-gray-800 transition-colors"
+            />
+            Add to Group
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="flex items-center justify-between py-1">
+          <div className="relative w-72">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search donors..."
+              value={table.getState().globalFilter || ""}
+              onChange={(event) => table.setGlobalFilter(event.target.value)}
+              className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+            />
+          </div>
+          <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  Columns <ChevronDown className="ml-2 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="text-xs capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
-      {/* Table */}
-      <div className="max-h-96 overflow-y-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 sticky top-0">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                Phone
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {donorData.map((donor, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm text-gray-900">{donor.name}</td>
-                <td className="px-4 py-3 text-sm text-gray-900">{donor.phone}</td>
-                <td className="px-4 py-3 text-sm">
-                  <button
-                    onClick={() => addMemberToGroup(donor.id)}
-                    className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+        {/* Table */}
+        <div className="rounded-none border flex flex-col">
+          <Table className="flex-1">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
+                      style={{ width: header.column.columnDef.size }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+
+            <TableBody>
+              {isLoading && !table.getRowModel().rows.length ? (
+                <TableShimmer />
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="h-2 hover:bg-gray-50"
                   >
-                    Add
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-3 py-1">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow className="h-12">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-sm"
+                  >
+                    No donors found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-end space-x-2 py-1">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Total Donors: &nbsp;
+            {table.getFilteredRowModel().rows.length}
+          </div>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

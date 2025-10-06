@@ -51,9 +51,6 @@ import {
 } from 'lucide-react';
 import BASE_URL from '@/config/base-url';
 
-
-
-
 const getAuthHeaders = () => {
   const token = Cookies.get('token');
   return {
@@ -63,7 +60,6 @@ const getAuthHeaders = () => {
     }
   };
 };
-
 
 const fetchDonorById = async (id) => {
   const { data } = await axios.get(`${BASE_URL}/api/fetch-donor-by-id/${id}`, getAuthHeaders());
@@ -84,7 +80,6 @@ const DonorView = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
 
-
   const { data: donorData, isLoading: donorLoading, error: donorError } = useQuery({
     queryKey: ['donor', id],
     queryFn: () => fetchDonorById(id),
@@ -100,7 +95,6 @@ const DonorView = () => {
     queryFn: () => fetchDonorReceipts(id),
   });
 
-  
   const statistics = useMemo(() => {
     if (!donorData || !oldReceiptsData || !donorReceiptsData) return null;
 
@@ -115,16 +109,23 @@ const DonorView = () => {
     const totalMembershipAmount = membershipDetails.reduce((sum, member) => sum + (member.receipt_total_amount || 0), 0);
     
     const currentYear = new Date().getFullYear();
+    const previousYear = currentYear - 1;
+
     const currentYearDonations = donorReceipts
       .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(currentYear))
       .reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
 
+    const previousYearDonations = donorReceipts
+    .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(previousYear.toString()))
+    .reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
+
     const avgDonation = donorReceipts.length > 0 ? totalDonations / donorReceipts.length : 0;
-    const largestDonation = Math.max(...donorReceipts.map(r => r.receipt_total_amount || 0));
+    const largestDonation = donorReceipts.length > 0 ? Math.max(...donorReceipts.map(r => r.receipt_total_amount || 0)) : 0;
 
     return {
-      totalDonations: totalDonations + totalOldReceiptsAmount,
+      totalDonations: totalDonations + totalOldReceiptsAmount + totalMembershipAmount,
       currentYearDonations,
+      previousYearDonations,
       totalReceipts: donorReceipts.length + oldReceipts.length,
       totalFamilyMembers: familyDetails.length,
       totalCompanies: companyDetails.length,
@@ -132,12 +133,11 @@ const DonorView = () => {
       avgDonation,
       largestDonation,
       membershipAmount: totalMembershipAmount,
-      donationGrowth: ((currentYearDonations / (totalDonations - currentYearDonations)) * 100) || 0
+      donationGrowth: previousYearDonations > 0 ? ((currentYearDonations - previousYearDonations) / previousYearDonations * 100) : 0
     };
   }, [donorData, oldReceiptsData, donorReceiptsData]);
 
-
-  if (donorLoading) {
+  if (donorLoading || oldReceiptsLoading || donorReceiptsLoading) {
     return <LoadingSkeleton />;
   }
 
@@ -157,11 +157,14 @@ const DonorView = () => {
     );
   }
 
-  const { individualCompany, family_details, company_details, related_group, image_url } = donorData;
+  const { individualCompany, family_details = [], company_details = [], related_group, image_url } = donorData || {};
   const oldReceipts = oldReceiptsData?.receipts || [];
   const donorReceipts = donorReceiptsData?.donor_receipts || [];
   const membershipDetails = donorReceiptsData?.membership_details || [];
 
+  if (!individualCompany) {
+    return <LoadingSkeleton />;
+  }
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -192,7 +195,6 @@ const DonorView = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
       <div className="container mx-auto  space-y-2">
         
-      
         <div className="flex flex-col lg:flex-row gap-3">
           <Card className="lg:w-1/3">
             <CardContent className="p-6">
@@ -227,7 +229,6 @@ const DonorView = () => {
             </CardContent>
           </Card>
 
-        
           <Card className="lg:w-2/3">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -266,18 +267,17 @@ const DonorView = () => {
           </Card>
         </div>
 
-       
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
             title="Current Year Donations"
             value={formatCurrency(statistics?.currentYearDonations)}
             icon={<TrendingUp className="h-4 w-4" />}
-            description={`${statistics?.donationGrowth.toFixed(1)}% growth`}
+            description={`${statistics?.donationGrowth?.toFixed(1) || 0}% growth`}
             trend="up"
           />
           <StatCard
-            title="Average Donation"
-            value={formatCurrency(statistics?.avgDonation)}
+            title="Last Year Donation"
+            value={formatCurrency(statistics?.previousYearDonations)}
             icon={<BarChart3 className="h-4 w-4" />}
             description="Per transaction"
             trend="neutral"
@@ -298,7 +298,6 @@ const DonorView = () => {
           />
         </div>
 
-      
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -311,11 +310,11 @@ const DonorView = () => {
             </TabsTrigger>
             <TabsTrigger value="family" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Family ({statistics?.totalFamilyMembers})
+              Family ({statistics?.totalFamilyMembers || 0})
             </TabsTrigger>
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              Companies ({statistics?.totalCompanies})
+              Companies ({statistics?.totalCompanies || 0})
             </TabsTrigger>
             <TabsTrigger value="donations" className="flex items-center gap-2">
               <Gift className="w-4 h-4" />
@@ -412,30 +411,38 @@ const DonorView = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {family_details.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="bg-blue-100 text-blue-800 text-xs">
-                                {getInitials(member.indicomp_full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {member.indicomp_full_name}
-                          </div>
-                        </TableCell>
-                        <TableCell>{member.indicomp_mobile_phone || 'N/A'}</TableCell>
-                        <TableCell>{member.indicomp_email || 'N/A'}</TableCell>
-                        <TableCell>
-                          {member.indicomp_res_reg_city || 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(member.indicomp_status)}>
-                            {member.indicomp_status ? "Active" : "Inactive"}
-                          </Badge>
+                    {family_details && family_details.length > 0 ? (
+                      family_details.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-blue-100 text-blue-800 text-xs">
+                                  {getInitials(member.indicomp_full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {member.indicomp_full_name}
+                            </div>
+                          </TableCell>
+                          <TableCell>{member.indicomp_mobile_phone || 'N/A'}</TableCell>
+                          <TableCell>{member.indicomp_email || 'N/A'}</TableCell>
+                          <TableCell>
+                            {member.indicomp_res_reg_city || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(member.indicomp_status)}>
+                              {member.indicomp_status ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                          No family members found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -497,7 +504,7 @@ const DonorView = () => {
               <CardHeader>
                 <CardTitle>Family Members Management</CardTitle>
                 <CardDescription>
-                  {statistics?.totalFamilyMembers} family members associated with this donor
+                  {statistics?.totalFamilyMembers || 0} family members associated with this donor
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -510,48 +517,54 @@ const DonorView = () => {
                       <TableHead>Joining Date</TableHead>
                       <TableHead>Promoter</TableHead>
                       <TableHead>Status</TableHead>
-              
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {family_details.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-purple-100 text-purple-800">
-                                {getInitials(member.indicomp_full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{member.indicomp_full_name}</div>
-                              <div className="text-sm text-gray-500">{member.title}</div>
+                    {family_details && family_details.length > 0 ? (
+                      family_details.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarFallback className="bg-purple-100 text-purple-800">
+                                  {getInitials(member.indicomp_full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{member.indicomp_full_name}</div>
+                                <div className="text-sm text-gray-500">{member.title}</div>
+                              </div>
                             </div>
-                          </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm">{member.indicomp_mobile_phone}</div>
+                              <div className="text-sm text-gray-500">{member.indicomp_email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {member.indicomp_res_reg_city}, {member.indicomp_res_reg_state}
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatDate(member.indicomp_joining_date)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{member.indicomp_promoter}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(member.indicomp_status)}>
+                              {member.indicomp_status ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                          No family members found
                         </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{member.indicomp_mobile_phone}</div>
-                            <div className="text-sm text-gray-500">{member.indicomp_email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {member.indicomp_res_reg_city}, {member.indicomp_res_reg_state}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatDate(member.indicomp_joining_date)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{member.indicomp_promoter}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(member.indicomp_status)}>
-                            {member.indicomp_status ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -564,7 +577,7 @@ const DonorView = () => {
               <CardHeader>
                 <CardTitle>Associated Companies</CardTitle>
                 <CardDescription>
-                  {statistics?.totalCompanies} companies linked to this donor
+                  {statistics?.totalCompanies || 0} companies linked to this donor
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -580,39 +593,47 @@ const DonorView = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {company_details.map((company) => (
-                      <TableRow key={company.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-orange-100 text-orange-800">
-                                <Building2 className="w-4 h-4" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{company.indicomp_full_name}</div>
-                              <div className="text-sm text-gray-500">{company.indicomp_com_contact_designation}</div>
+                    {company_details && company_details.length > 0 ? (
+                      company_details.map((company) => (
+                        <TableRow key={company.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarFallback className="bg-orange-100 text-orange-800">
+                                  <Building2 className="w-4 h-4" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{company.indicomp_full_name}</div>
+                                <div className="text-sm text-gray-500">{company.indicomp_com_contact_designation}</div>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{company.indicomp_com_contact_name}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{company.indicomp_mobile_phone}</div>
-                            <div className="text-sm text-gray-500">{company.indicomp_email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{company.indicomp_pan_no}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{company.indicomp_type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(company.indicomp_status)}>
-                            {company.indicomp_status ? "Active" : "Inactive"}
-                          </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{company.indicomp_com_contact_name}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm">{company.indicomp_mobile_phone}</div>
+                              <div className="text-sm text-gray-500">{company.indicomp_email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{company.indicomp_pan_no}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{company.indicomp_type}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(company.indicomp_status)}>
+                              {company.indicomp_status ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                          No companies found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

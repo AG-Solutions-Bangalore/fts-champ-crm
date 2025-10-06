@@ -162,7 +162,7 @@ const DuplicateDonorEdit = () => {
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-2">
         <Button
           variant="outline"
           size="sm"
@@ -180,25 +180,25 @@ const DuplicateDonorEdit = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="flex flex-col md:flex-row items-center w-full  ">
         {/* Left Column - Donor Information */}
-        <div className="lg:col-span-1 space-y-4">
+        <div className=" flex flex-col md:flex-row">
           {/* Duplicate Donor Card */}
        
-          <Card className="border-l-2 border-l-orange-500">
+          <div className="border-l-2 border-l-orange-500 border-t border-b relative rounded-l-lg bg-white">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-orange-500" />
-                <CardTitle className="text-base">Duplicate Donor</CardTitle>
+                <CardTitle className="text-base">{donor.indicomp_full_name}</CardTitle>
                 <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
                   Duplicate
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-1 gap-1 text-xs">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-1 text-sm">
                 <CompactInfoRow label="FTS ID" value={donor.indicomp_fts_id} />
-                <CompactInfoRow label="Donor Name" value={donor.indicomp_full_name} />
+           
                 <CompactInfoRow label="Type" value={donor.indicomp_type} />
                 <CompactInfoRow label="Donor Type" value={donor.indicomp_donor_type} />
                 <CompactInfoRow label="Contact Name" value={donor.indicomp_com_contact_name} />
@@ -207,10 +207,8 @@ const DuplicateDonorEdit = () => {
                 <CompactInfoRow label="Spouse Name" value={donor.indicomp_spouse_name} />
               </div>
             </CardContent>
-          </Card>
 
-          {/* Merge Instructions */}
-          <Card className="bg-blue-50 border-blue-200">
+            <div className="bg-blue-50 border-blue-200 absolute bottom-0 rounded-b-lg">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />
@@ -224,13 +222,27 @@ const DuplicateDonorEdit = () => {
                 <li>This action cannot be undone</li>
               </ul>
             </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Donor Selection and Table */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Merge Action Card */}
-          <Card>
+          </div>
+          </div>
+ {/* Donors Table */}
+ <div className="bg-white border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Available Donors</CardTitle>
+              <CardDescription className="text-xs">
+                Browse and select from all available donor records
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3">
+              <CompactDonorSelectTable 
+                onDonorSelect={(id) => setSelectedDonorId(id)}
+                selectedDonorId={selectedDonorId}
+              />
+            </CardContent>
+          </div>
+         
+       
+          
+          <div className="bg-white border-r border-t border-b rounded-r-lg">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Merge className="h-4 w-4 text-blue-600" />
@@ -295,23 +307,9 @@ const DuplicateDonorEdit = () => {
                 </div>
               </form>
             </CardContent>
-          </Card>
+          </div>
 
-          {/* Donors Table */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Available Donors</CardTitle>
-              <CardDescription className="text-xs">
-                Browse and select from all available donor records
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-3">
-              <CompactDonorSelectTable 
-                onDonorSelect={(id) => setSelectedDonorId(id)}
-                selectedDonorId={selectedDonorId}
-              />
-            </CardContent>
-          </Card>
+         
         </div>
       </div>
     </div>
