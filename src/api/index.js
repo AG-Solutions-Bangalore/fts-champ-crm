@@ -235,10 +235,10 @@ export const OTHER_FAQ = `${BASE_URL}/api/fetch-faqs`;
 export const OTHER_FAQ_DOWNLOAD = `${BASE_URL}/api/download-faq`;
 
 //TEAM
-export const OTHER_TEAM_DESIGNATION_DROPDOWN = `${BASE_URL}/api/fetch-designation`;
-export const OTHER_TEAM_COMMITTEE_DROPDOWN = `${BASE_URL}/api/fetch-committee-date`;
+export const OTHER_TEAM_DESIGNATION_DROPDOWN = `/api/fetch-designation`;
+export const OTHER_TEAM_COMMITTEE_DROPDOWN = `/api/fetch-committee-date`;
 export const OTHER_TEAM_CREATE = `${BASE_URL}/api/create-committee`;
-export const OTHER_TEAM_MEMBER_SELECT_LIST = `${BASE_URL}/api/fetch-ind-donors`;
+export const OTHER_TEAM_MEMBER_SELECT_LIST = `/api/fetch-ind-donors`;
 export const OTHER_TEAM_COMMITTEE_LIST = `${BASE_URL}/api/fetch-commitee`;
 export const OTHER_TEAM_COMMITTEE_DELETE = `${BASE_URL}/api/delete-commitee`;
 export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `${BASE_URL}/api/create-committee-image`;
@@ -297,7 +297,7 @@ export const ROUTES = {
   RECEIPT_EDIT: (id) => `/receipt-edit/${encryptId(id)}`,
   RECEIPT_OLD_EDIT: (id) => `/receipt-old-edit/${encryptId(id)}`,
   SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
-  REPEAT_DONOR_EDIT: (id) => `/school/alloted-list/${encryptId(id)}`,
+  REPEAT_DONOR_EDIT: (id) => `/school/repeat-list/${encryptId(id)}`,
   VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
   DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,

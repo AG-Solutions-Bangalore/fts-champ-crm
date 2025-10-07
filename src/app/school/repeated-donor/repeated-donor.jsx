@@ -1,11 +1,4 @@
-import {
-  navigateToRepeatDonorEdit,
-  navigateToSchoolAllotEdit,
-  navigateToSchoolAllotmentLetter,
-  navigateToSchoolAllotView,
-  REAPEAT_DONOR_LIST,
-  SCHOOL_ALLOT_LIST,
-} from "@/api";
+import { navigateToRepeatDonorEdit, REAPEAT_DONOR_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,14 +36,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ClipboardList,
   Edit,
-  Eye,
   Search,
 } from "lucide-react";
-import moment from "moment";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TableShimmer } from "../loadingtable/TableShimmer";
+import { useCurrentYear } from "@/hooks/use-current-year";
 
 const RepeatDonor = () => {
   const navigate = useNavigate();
@@ -76,6 +68,8 @@ const RepeatDonor = () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
+  // const { currentYear } = useCurrentYear();
+  // console.log(currentYear, "year");
   const {
     data: repeatData,
     isError,
@@ -109,7 +103,6 @@ const RepeatDonor = () => {
   const columns = [
     {
       id: "serialNo",
-      id: "serialNo",
       header: "S. No.",
       cell: ({ row }) => {
         const globalIndex =
@@ -142,29 +135,23 @@ const RepeatDonor = () => {
     },
     {
       accessorKey: "individual_company.indicomp_mobile_phone",
-      header: "Mobile",
-      id: "Mobile",
+      header: "Phone / Email",
+      id: "Phone / Email",
       cell: ({ row }) => {
-        const mobile = row.original.individual_company.indicomp_mobile_phone;
-        return !mobile || mobile === "null" ? (
-          <div className="text-xs">N/A</div>
-        ) : (
-          <div className="text-xs">{mobile}</div>
+        const phone = row?.original?.individual_company?.indicomp_mobile_phone;
+        const email = row?.original?.individual_company?.indicomp_email;
+
+        return (
+          <div className="space-y-1">
+            {phone && <div>{phone}</div>}
+            {email && (
+              <div className="text-xs text-gray-600 break-all">{email}</div>
+            )}
+          </div>
         );
       },
-      size: 120,
+      size: 200,
     },
-    {
-      accessorKey: "individual_company.indicomp_email",
-      header: "Email",
-      id: "Email",
-      cell: ({ row }) => {
-        const email = row.original.individual_company.indicomp_email;
-        return email ? <div className="text-xs">{email}</div> : null;
-      },
-      size: 150,
-    },
-
     {
       id: "actions",
       header: "Actions",
@@ -204,8 +191,8 @@ const RepeatDonor = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    manualPagination: true,
-    pageCount: repeatData?.data?.last_page || -1,
+    // manualPagination: true,
+    // pageCount: repeatData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -224,7 +211,7 @@ const RepeatDonor = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "donors",
+      "repeatdonor",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -318,18 +305,6 @@ const RepeatDonor = () => {
     return buttons;
   };
 
-  const TableShimmer = () => {
-    return Array.from({ length: 7 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11">
-        {table.getVisibleFlatColumns().map((column) => (
-          <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div>
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
-  };
-
   if (isError) {
     return (
       <div className="w-full p-4  ">
@@ -414,7 +389,7 @@ const RepeatDonor = () => {
 
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer />
+              <TableShimmer columns={table.getVisibleFlatColumns()} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

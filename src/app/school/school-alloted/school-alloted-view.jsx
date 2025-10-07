@@ -1,5 +1,11 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -8,39 +14,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useGetMutation } from "@/hooks/use-get-mutation";
+import useNumericInput from "@/hooks/use-numeric-input";
+import { decryptId } from "@/utils/encyrption/encyrption";
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { SCHOOL_ALLOT_VIEW_LIST } from "../../../api";
-import { decryptId } from "@/utils/encyrption/encyrption";
-import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
-
-const TableShimmer = ({ columns, rows = 7 }) =>
-  Array.from({ length: rows }).map((_, idx) => (
-    <TableRow key={idx} className="animate-pulse h-10">
-      {columns.map((col) => (
-        <TableCell key={col.id} className="py-1 px-3">
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-        </TableCell>
-      ))}
-    </TableRow>
-  ));
-
+import { TableShimmer } from "../loadingtable/TableShimmer";
 const SchoolAllotView = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
   const donorId = decryptId(id);
-
-  // Pagination state
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [pageInput, setPageInput] = useState("");
-
-  // Fetch paginated data
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const {
     data: schoolAllot,
     isError,
@@ -50,7 +55,7 @@ const SchoolAllotView = () => {
     `${SCHOOL_ALLOT_VIEW_LIST}/${donorId}`,
     { page: pagination.pageIndex + 1, limit: pagination.pageSize }
   );
-
+  const keyDown = useNumericInput();
   const schools = schoolAllot?.SchoolAlotView || [];
   const totalSchools = schoolAllot?.total || 0;
   const totalPages = Math.ceil(totalSchools / pagination.pageSize);
@@ -165,7 +170,27 @@ const SchoolAllotView = () => {
   const table = useReactTable({
     data: schools,
     columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   // Page change helpers
@@ -177,13 +202,6 @@ const SchoolAllotView = () => {
   const handlePageInput = (e) => {
     const val = e.target.value;
     if (/^\d*$/.test(val)) setPageInput(val);
-  };
-
-  const keyDown = (e) => {
-    if (e.key === "Enter") {
-      const page = parseInt(pageInput, 10);
-      if (!isNaN(page)) handlePageChange(page - 1);
-    }
   };
 
   const generatePageButtons = () =>
@@ -199,9 +217,46 @@ const SchoolAllotView = () => {
     ));
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Table */}
-      <div className="rounded-none border min-h-[31rem] flex flex-col">
+    <div className="p-4 space-y-2">
+      <div className="flex items-center justify-between py-1">
+        <div className="relative w-64">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search alloted..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchTerm("");
+              }
+            }}
+            className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              Columns <ChevronDown className="ml-2 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="text-xs capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-none border flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

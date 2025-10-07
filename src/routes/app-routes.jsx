@@ -116,7 +116,7 @@ function AppRoutes() {
           path="/school/allotment-letter/:id"
           element={<SchoolAllotLetter />}
         />
-        <Route path="/school/alloted-list/:id" element={<AllotedList />} />
+        <Route path="/school/repeat-list/:id" element={<AllotedList />} />
 
         {/* report  */}
         <Route path="/report/suspense-summary" element={<SuspenseSummary />} />

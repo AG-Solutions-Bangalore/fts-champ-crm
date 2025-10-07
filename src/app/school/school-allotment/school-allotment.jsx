@@ -37,11 +37,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
-  Eye,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { TableShimmer } from "../loadingtable/TableShimmer";
 
 const SchoolToAllot = () => {
   const navigate = useNavigate();
@@ -190,33 +190,18 @@ const SchoolToAllot = () => {
       header: "Actions",
       cell: ({ row }) => {
         const item = row.original;
-        if (!item || !item.individual_company) return null;
+        const company = item?.individual_company;
 
-        const allotmentAction =
-          item.individual_company.indicomp_status +
-          "#" +
-          item.individual_company.id +
-          "&" +
-          item.schoolalot_year +
-          "$" +
-          item.receipt_financial_year;
+        if (!company) return null;
 
-        const status = allotmentAction.charAt(0); // "1" or "0"
-        const newValue = allotmentAction.substring(
-          allotmentAction.indexOf("#") + 1,
-          allotmentAction.lastIndexOf("&")
-        );
-        const newYear = allotmentAction.substring(
-          allotmentAction.indexOf("&") + 1,
-          allotmentAction.lastIndexOf("$")
-        );
-        const fYear = allotmentAction.substring(
-          allotmentAction.indexOf("$") + 1
-        );
+        const status = company.indicomp_status;
+        const donorId = company.id;
+        const schoolAllotYear = item.schoolalot_year;
+        const receiptYear = item.receipt_financial_year;
 
         return (
           <div className="flex items-center gap-2">
-            {status === "1" ? (
+            {status == "1" ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -226,9 +211,9 @@ const SchoolToAllot = () => {
                       onClick={() =>
                         navigateToDonorDetailsView(
                           navigate,
-                          newValue,
-                          newYear,
-                          fYear
+                          donorId,
+                          schoolAllotYear,
+                          receiptYear
                         )
                       }
                     >
@@ -278,8 +263,8 @@ const SchoolToAllot = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    manualPagination: true,
-    pageCount: schoolData?.data?.last_page || -1,
+    // manualPagination: true,
+    // pageCount: schoolData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -298,7 +283,7 @@ const SchoolToAllot = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "donors",
+      "schooltoallot",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -392,18 +377,6 @@ const SchoolToAllot = () => {
     return buttons;
   };
 
-  const TableShimmer = () => {
-    return Array.from({ length: 7 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11">
-        {table.getVisibleFlatColumns().map((column) => (
-          <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div>
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
-  };
-
   if (isError) {
     return (
       <div className="w-full p-4  ">
@@ -488,7 +461,7 @@ const SchoolToAllot = () => {
 
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer />
+              <TableShimmer columns={columns} />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
