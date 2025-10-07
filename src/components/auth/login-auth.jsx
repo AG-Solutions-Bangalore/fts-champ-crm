@@ -81,8 +81,7 @@ export default function LoginAuth() {
           sameSite: "Strict",
         };
 
-        console.log("Saving user details to cookies...", version);
-        console.log("Saving u", UserInfo);
+
 
         Cookies.set("token", UserInfo.token, cookieOptions);
         Cookies.set("id", UserInfo.user.user_type_id, cookieOptions);

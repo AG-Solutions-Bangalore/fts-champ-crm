@@ -30,9 +30,12 @@ import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { navigateToChapterViewSuperAdmin } from "@/api";
+import { Link, useNavigate } from "react-router-dom";
 
 const ChapterList = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate()
   
   const {
     data: chaptersData,
@@ -137,6 +140,9 @@ const ChapterList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => {
+                      navigateToChapterViewSuperAdmin(navigate, row.original.id);
+                    }}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -243,13 +249,14 @@ const ChapterList = () => {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-                variant="default"
-                
-               
-              >
-                <SquarePlus className="h-4 w-4" /> Chapter
-              </Button>
+          <Link 
+                  to='/master/chapter/create'
+                  >
+                    <Button variant="default">
+                  <SquarePlus className="h-3 w-3 " /> Chapter
+                </Button>
+                </Link>
+        
               </div>
       </div>
 

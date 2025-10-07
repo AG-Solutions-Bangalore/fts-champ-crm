@@ -148,7 +148,7 @@ export function AppSidebar({ ...props }) {
     ],
     navMainReport: [
       {
-        title: "Report",
+        title: "Summary",
         url: "#",
         isActive: false,
         icon: Settings2,
