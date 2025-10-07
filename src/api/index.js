@@ -60,7 +60,7 @@ export const FAMILY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const COMPANY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/create-donor`;
 
-export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `${BASE_URL}/api/update-promoter`;
+export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `/api/update-promoter`;
 
 export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/create-donor`;
 export const DONOR_COMPANY_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
@@ -237,11 +237,12 @@ export const OTHER_FAQ_DOWNLOAD = `${BASE_URL}/api/download-faq`;
 //TEAM
 export const OTHER_TEAM_DESIGNATION_DROPDOWN = `/api/fetch-designation`;
 export const OTHER_TEAM_COMMITTEE_DROPDOWN = `/api/fetch-committee-date`;
-export const OTHER_TEAM_CREATE = `${BASE_URL}/api/create-committee`;
+export const OTHER_TEAM_CREATE = `/api/create-committee`;
 export const OTHER_TEAM_MEMBER_SELECT_LIST = `/api/fetch-ind-donors`;
-export const OTHER_TEAM_COMMITTEE_LIST = `${BASE_URL}/api/fetch-commitee`;
+export const OTHER_TEAM_COMMITTEE_LIST = `/api/fetch-commitee`;
+//not used
 export const OTHER_TEAM_COMMITTEE_DELETE = `${BASE_URL}/api/delete-commitee`;
-export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `${BASE_URL}/api/create-committee-image`;
+export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/create-committee-image`;
 
 //NOTIFICATION
 export const OTHER_NOTIFICATION_SUPERADMIN = `${BASE_URL}/api/superadmin-fetch-notices`;
@@ -252,10 +253,10 @@ export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/superadmin-add-
 
 /*--------------------------Receipt-Super-start----------------------------------- */
 
-export const RECEIPT_SUPER_LIST = `${BASE_URL}/api/fetch-receipts-zero-list`;
+export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
 export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `${BASE_URL}/api/fetch-receipts-all-list`;
-export const RECEIPT_SUPER_DIALOG_LIST = `${BASE_URL}/api/fetch-receipts-zero`;
-export const RECEIPT_SUPER_SUMBIT = `${BASE_URL}/api/update-receipts-zero-by-id`;
+export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
+export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 
@@ -306,6 +307,7 @@ export const ROUTES = {
   VIEWER_RECEIPTS_FROM_CREATE_RECEIPT: (id) =>
     `/view-receipts/${encryptId(id)}`,
   VIEWER_RECEIPTS_FROM_OLD_RECEIPT: (id) => `/view-receipts/${encryptId(id)}`,
+  NON_ZERO_RECEPIT: (id) => `/recepit/non-zero-list/${encryptId(id)}`,
 };
 
 export const navigateToAdminSchoolView = (navigate, viewId) => {
@@ -391,6 +393,9 @@ export const navigateToViewReceiptFromOldReceipt = (navigate, viewId) => {
 };
 export const navigateToDonorEdit = (navigate, viewId) => {
   navigate(ROUTES.DONOR_LIST_EDIT(viewId));
+};
+export const navigateToNonZero = (navigate, editId) => {
+  navigate(ROUTES.NON_ZERO_RECEPIT(editId));
 };
 
 export const fetchAdminSchoolViewById = async (encryptedId) => {

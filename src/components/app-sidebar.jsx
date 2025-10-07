@@ -146,28 +146,6 @@ export function AppSidebar({ ...props }) {
         ],
       },
     ],
-    // schoolManagement:[
-    //   {
-    //     name: "School List",
-    //     url: "/school-list",
-    //     icon: Frame,
-    //   },
-    //   {
-    //     name: "School Allotment",
-    //     url: "/school-allotment",
-    //     icon: Settings,
-    //   },
-    //   {
-    //     name: "School Alloted",
-    //     url: "/school-alloted",
-    //     icon: Settings,
-    //   },
-    //   {
-    //     name: "Repeated Donor",
-    //     url: "/repeated-donor",
-    //     icon: Settings,
-    //   },
-    // ],
     navMainReport: [
       {
         title: "Report",
@@ -213,39 +191,6 @@ export function AppSidebar({ ...props }) {
         icon: Blocks,
         isActive: false,
       },
-      // {
-      //   title: "Download",
-      //   url: "#",
-      //   isActive: false,
-      //   icon: Package,
-      //   items: [
-      //     {
-      //       title: "Receipt",
-      //       url: "/download/receipt",
-      //     },
-      //     {
-      //       title: "Donor",
-      //       url: "/download/donor",
-      //     },
-      //     {
-      //       title: "School",
-      //       url: "/download/school",
-      //     },
-      //     {
-      //       title: "OTS",
-      //       url: "/download/ots",
-      //     },
-      //     {
-      //       title: "Team",
-      //       url: "/download/team",
-      //     },
-      //     {
-      //       title: "All Receipt",
-      //       url: "/download/all-receipt",
-      //     },
-
-      //   ],
-      // },
       {
         title: "Other",
         url: "#",
@@ -269,6 +214,18 @@ export function AppSidebar({ ...props }) {
       {
         title: "Settings",
         url: "/settings",
+        icon: Blocks,
+        isActive: false,
+      },
+      {
+        title: "Change Promoter-S",
+        url: "/change-promoter",
+        icon: Blocks,
+        isActive: false,
+      },
+      {
+        title: "Recepit-S",
+        url: "/recepit/zero-list",
         icon: Blocks,
         isActive: false,
       },

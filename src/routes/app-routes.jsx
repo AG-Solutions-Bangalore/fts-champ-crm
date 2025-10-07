@@ -45,9 +45,13 @@ import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
 import SchoolList from "@/app/school/school-list/school-list";
 import SchoolListView from "@/app/school/school-list/school-list-view";
 import Settings from "@/app/setting/setting";
-import AllotedList from "@/app/school/repeated-donor/alloted-list";import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
+import AllotedList from "@/app/school/repeated-donor/alloted-list";
+import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
 import DonorCompanyEdit from "@/app/donor/donor-list/donor-company-edit";
-
+import ChangePromoter from "@/app/donor/change-promoter/change-promoter";
+import RecepitSuperList from "@/app/recepit-super/recepit-zero-list";
+import RecepitZeroList from "@/app/recepit-super/recepit-zero-list";
+import RecepitNonZeroList from "@/app/recepit-super/recepit-nonzero-list";
 
 function AppRoutes() {
   return (
@@ -84,8 +88,14 @@ function AppRoutes() {
           element={<DonorCompanyCreate />}
         />
         <Route path="/donor/donor-view/:id" element={<DonorView />} />
-        <Route path="/donor/donor-edit-indivisual/:id" element={<DonorIndiviusalEdit />} />
-        <Route path="/donor/donor-edit-company/:id" element={<DonorCompanyEdit />} />
+        <Route
+          path="/donor/donor-edit-indivisual/:id"
+          element={<DonorIndiviusalEdit />}
+        />
+        <Route
+          path="/donor/donor-edit-company/:id"
+          element={<DonorCompanyEdit />}
+        />
         <Route path="/donor/duplicate" element={<DuplicateDonor />} />
         <Route
           path="/donor/duplicate-edit/:id"
@@ -140,6 +150,9 @@ function AppRoutes() {
 
         {/* settings  */}
         <Route path="/settings" element={<Settings />} />
+        <Route path="/change-promoter" element={<ChangePromoter />} />
+        <Route path="/recepit/zero-list" element={<RecepitZeroList />} />
+        <Route path="/recepit/non-zero-list/:id" element={<RecepitNonZeroList />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
