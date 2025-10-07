@@ -9,8 +9,9 @@ import {
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import TeamLoading from "./TeamLoading"; // your skeleton loader
+
 import moment from "moment";
+import TeamLoading from "./teamloading";
 
 const commiteeOptions = [
   { value: "Executive Committee", label: "Executive Committee" },

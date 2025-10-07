@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+
 const TeamLoading = () => {
   return (
     <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">

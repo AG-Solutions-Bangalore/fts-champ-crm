@@ -285,7 +285,7 @@ export const ADMIN_DATASOURCE_UPDATE = `${BASE_URL}/api/update-datasource`;
 
 export const ROUTES = {
   ADMIN_SCHOOL_VIEW: (id) => `/chapter/view-shool/${encryptId(id)}`,
-  CHAPTER_VIEW: (id) => `/view-chapter/${encryptId(id)}`,
+  CHAPTER_VIEW_SUPERADMIN: (id) => `/master/chapter/view/${encryptId(id)}`,
   CHAPTER_EDIT: (id) => `/edit-chapter/${encryptId(id)}`,
   CHAPTER_DATASOURCE: (id) => `/edit-datasource/${encryptId(id)}`,
   CHAPTER_VIEW_SCHOOL: (id) => `/view-school/${encryptId(id)}`,
@@ -298,7 +298,7 @@ export const ROUTES = {
   RECEIPT_OLD_EDIT: (id) => `/receipt-old-edit/${encryptId(id)}`,
   SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
   REPEAT_DONOR_EDIT: (id) => `/school/repeat-list/${encryptId(id)}`,
-  VIEWER_EDIT: (id) => `/edit-viewer/${encryptId(id)}`,
+  VIEWER_EDIT: (id) => `/master/viewer/edit/${encryptId(id)}`,
   DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
   DONOR_LIST_REDIRECT_CREATE_RECEIPT: (id) =>
@@ -311,8 +311,8 @@ export const ROUTES = {
 export const navigateToAdminSchoolView = (navigate, viewId) => {
   navigate(ROUTES.ADMIN_SCHOOL_VIEW(viewId));
 };
-export const navigateToChapterView = (navigate, viewId) => {
-  navigate(ROUTES.CHAPTER_VIEW(viewId));
+export const navigateToChapterViewSuperAdmin = (navigate, viewId) => {
+  navigate(ROUTES.CHAPTER_VIEW_SUPERADMIN(viewId));
 };
 export const navigateToChapterEdit = (navigate, editId) => {
   navigate(ROUTES.CHAPTER_EDIT(editId));
@@ -437,7 +437,7 @@ export const fetchChapterViewById = async (encryptedId) => {
 
 export const fetchChapterEditById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -457,7 +457,7 @@ export const fetchChapterEditById = async (encryptedId) => {
 
 export const fetchChapterUpdateEditById = async (encryptedId, formData) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
     const response = await axios.put(
@@ -478,7 +478,7 @@ export const fetchChapterUpdateEditById = async (encryptedId, formData) => {
 
 export const fetchChapterDatasourceById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -697,7 +697,7 @@ export const fetchRepeatDonorEditList = async (encryptedId) => {
 };
 export const fetchViewerEditById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);

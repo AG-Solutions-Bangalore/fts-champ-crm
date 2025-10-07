@@ -47,6 +47,10 @@ import SchoolListView from "@/app/school/school-list/school-list-view";
 import Settings from "@/app/setting/setting";
 import AllotedList from "@/app/school/repeated-donor/alloted-list";import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
 import DonorCompanyEdit from "@/app/donor/donor-list/donor-company-edit";
+import CreateViewer from "@/components/master-settings/viewers/create-viewer";
+import EditViewer from "@/components/master-settings/viewers/edit-viewer";
+import ChapterViewSuperAdmin from "@/components/master-settings/chapter-superadmin/chapter-view";
+import ChapterCreate from "@/components/master-settings/chapter-superadmin/chapter-create";
 
 
 function AppRoutes() {
@@ -65,7 +69,11 @@ function AppRoutes() {
         {/* master-setting */}
 
         <Route path="/master/chapter" element={<Chapter />} />
+        <Route path="/master/chapter/create" element={<ChapterCreate />} />
+        <Route path="/master/chapter/view/:id" element={<ChapterViewSuperAdmin />} />
         <Route path="/master/viewer" element={<Viewer />} />
+        <Route path="/master/viewer/create" element={<CreateViewer />} />
+        <Route path="/master/viewer/edit/:id" element={<EditViewer />} />
 
         {/* membership  */}
         <Route path="/membership/dashboard" element={<MemberShipDashboard />} />

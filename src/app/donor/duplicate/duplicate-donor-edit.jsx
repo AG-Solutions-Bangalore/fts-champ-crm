@@ -319,8 +319,8 @@ const DuplicateDonorEdit = () => {
 // Compact Info Row Component
 const CompactInfoRow = ({ label, value }) => (
   <div className="flex justify-between items-center py-0.5">
-    <span className="font-medium text-gray-600 text-xs">{label}:</span>
-    <span className="text-gray-900 text-xs">{value || "N/A"}</span>
+    <span className="font-medium text-gray-600 text-sm">{label}:</span>
+    <span className="text-gray-900 text-sm">{value || "N/A"}</span>
   </div>
 );
 
