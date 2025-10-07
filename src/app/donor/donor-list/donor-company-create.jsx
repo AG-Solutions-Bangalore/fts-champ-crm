@@ -475,15 +475,15 @@ const DonorCompanyCreate = () => {
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Company Details Section */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                <Info className="w-4 h-4" />
+              <div className="flex items-center p-1 gap-2 text-sm rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
+                <Info className="w-4 h-4 " />
                 Company Details
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Company Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_full_name" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_full_name" className="text-xs  font-medium">
                     Company Name *
                   </Label>
                   <Input
@@ -509,8 +509,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Company Type */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_type" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_type" className="text-xs  font-medium">
                     Company Type *
                   </Label>
                   <Select 
@@ -534,8 +534,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Title */}
-                <div className="space-y-1">
-                  <Label htmlFor="title" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="title" className="text-xs  font-medium">
                     Title *
                   </Label>
                   <Select 
@@ -559,8 +559,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Contact Name */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_com_contact_name" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_com_contact_name" className="text-xs  font-medium">
                     Contact Name *
                   </Label>
                   <Input
@@ -576,8 +576,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Designation */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_com_contact_designation" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_com_contact_designation" className="text-xs  font-medium">
                     Designation
                   </Label>
                   <Input
@@ -590,8 +590,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Gender */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_gender" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_gender" className="text-xs  font-medium">
                     Gender *
                   </Label>
                   <Select 
@@ -615,8 +615,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Annual Day */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_dob_annualday" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_dob_annualday" className="text-xs  font-medium">
                     Annual Day
                   </Label>
                   <Input
@@ -629,8 +629,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* PAN Number */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_pan_no" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
                     PAN Number *
                   </Label>
                   <Input
@@ -647,8 +647,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Upload Logo */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_image_logo" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_image_logo" className="text-xs  font-medium">
                     Upload Logo
                   </Label>
                   <Input
@@ -665,8 +665,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Remarks */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_remarks" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_remarks" className="text-xs  font-medium">
                     Remarks
                   </Label>
                   <Input
@@ -679,8 +679,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Promoter */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_promoter" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_promoter" className="text-xs  font-medium">
                     Promoter *
                   </Label>
                   <Select 
@@ -705,8 +705,8 @@ const DonorCompanyCreate = () => {
 
                 {/* New Promoter (if Other selected) */}
                 {donor.indicomp_promoter === "Other" && (
-                  <div className="space-y-1">
-                    <Label htmlFor="indicomp_newpromoter" className="text-sm font-medium">
+                  <div className="">
+                    <Label htmlFor="indicomp_newpromoter" className="text-xs  font-medium">
                       Promoter Details
                     </Label>
                     <Input
@@ -723,8 +723,8 @@ const DonorCompanyCreate = () => {
                 )}
 
                 {/* Belong To */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_belongs_to" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_belongs_to" className="text-xs  font-medium">
                     Belong To
                   </Label>
                   <Select 
@@ -745,8 +745,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Source */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_source" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_source" className="text-xs  font-medium">
                     Source
                   </Label>
                   <Select 
@@ -767,8 +767,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Donor Type */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_donor_type" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_donor_type" className="text-xs  font-medium">
                     Donor Type
                   </Label>
                   <Select 
@@ -789,8 +789,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* CSR */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_csr" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_csr" className="text-xs  font-medium">
                     CSR
                   </Label>
                   <Select 
@@ -814,15 +814,15 @@ const DonorCompanyCreate = () => {
 
             {/* Communication Details Section */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1  font-medium bg-[var(--team-color)] text-white">
                 <Phone className="w-4 h-4" />
                 Communication Details
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Mobile Phone */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_mobile_phone" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_mobile_phone" className="text-xs  font-medium">
                     Mobile Phone *
                   </Label>
                   <Input
@@ -847,8 +847,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* WhatsApp */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_mobile_whatsapp" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_mobile_whatsapp" className="text-xs  font-medium">
                     WhatsApp
                   </Label>
                   <Input
@@ -863,8 +863,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Email */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_email" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_email" className="text-xs  font-medium">
                     Email
                   </Label>
                   <Input
@@ -878,8 +878,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Website */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_website" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_website" className="text-xs  font-medium">
                     Website
                   </Label>
                   <Input
@@ -895,15 +895,15 @@ const DonorCompanyCreate = () => {
 
             {/* Registered Address Section */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+              <div className="flex items-center gap-2 text-sm rounded-md px-1 p-1 font-medium bg-[var(--team-color)] text-white">
                 <MapPin className="w-4 h-4" />
                 Registered Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Address */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_address" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_address" className="text-xs  font-medium">
                     House & Street Number
                   </Label>
                   <Input
@@ -916,8 +916,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Area */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_area" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_area" className="text-xs  font-medium">
                     Area
                   </Label>
                   <Input
@@ -930,8 +930,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Landmark */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_ladmark" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_ladmark" className="text-xs  font-medium">
                     Landmark
                   </Label>
                   <Input
@@ -944,8 +944,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* City */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_city" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_city" className="text-xs  font-medium">
                     City *
                   </Label>
                   <Input
@@ -961,8 +961,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* State */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_state" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_state" className="text-xs  font-medium">
                     State *
                   </Label>
                   <Select 
@@ -986,8 +986,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Pincode */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_res_reg_pin_code" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_res_reg_pin_code" className="text-xs  font-medium">
                     Pincode *
                   </Label>
                   <Input
@@ -1007,15 +1007,15 @@ const DonorCompanyCreate = () => {
 
             {/* Branch Office Address Section */}
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+              <div className="flex items-center gap-2 text-sm rounded-md px-1 p-1 font-medium bg-[var(--team-color)] text-white">
                 <Briefcase className="w-4 h-4" />
                 Branch Office Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Office Address */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_address" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_address" className="text-xs  font-medium">
                     Office & Street Number
                   </Label>
                   <Input
@@ -1028,8 +1028,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Office Area */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_area" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_area" className="text-xs  font-medium">
                     Area
                   </Label>
                   <Input
@@ -1042,8 +1042,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Office Landmark */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_ladmark" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_ladmark" className="text-xs  font-medium">
                     Landmark
                   </Label>
                   <Input
@@ -1056,8 +1056,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Office City */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_city" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_city" className="text-xs  font-medium">
                     City
                   </Label>
                   <Input
@@ -1070,8 +1070,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Office State */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_state" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_state" className="text-xs  font-medium">
                     State
                   </Label>
                   <Select 
@@ -1092,8 +1092,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Office Pincode */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_off_branch_pin_code" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_off_branch_pin_code" className="text-xs  font-medium">
                     Pincode
                   </Label>
                   <Input
@@ -1107,8 +1107,8 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* Correspondence Preference */}
-                <div className="space-y-1">
-                  <Label htmlFor="indicomp_corr_preffer" className="text-sm font-medium">
+                <div className="">
+                  <Label htmlFor="indicomp_corr_preffer" className="text-xs  font-medium">
                     Correspondence Preference *
                   </Label>
                   <Select 

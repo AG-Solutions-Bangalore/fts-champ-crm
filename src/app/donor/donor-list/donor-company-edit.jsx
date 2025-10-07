@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
-import { ArrowLeft, Info, User, Mail, MapPin, Building,Phone } from 'lucide-react';
+import { ArrowLeft, Info, User, Mail, MapPin, Building, Phone, Calendar, Globe, FileText, AlertCircle } from 'lucide-react';
 import AddToGroup from './add-to-group';
 import honorific from '@/utils/honorific';
 import belongs_to from '@/utils/belongs-to';
 import donor_type from '@/utils/donor-type';
-import { DONOR_INDIVISUAL_EDIT_FETCH, DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE, DONOR_INDIVISUAL_UPDATE_SUMBIT } from '@/api';
+import company_type from '@/utils/company-type';
+import { DONOR_COMPANY_EDIT_FETCH, DONOR_COMPANY_FAMILY_GROUP_UPDATE, DONOR_COMPANY_UPDATE_SUMBIT } from '@/api';
 
 import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use-api';
 
@@ -17,8 +18,7 @@ import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -28,31 +28,36 @@ const gender = [
   { value: "Female", label: "Female" },
 ];
 
+const csr = [
+  { value: "0", label: "No" },
+  { value: "1", label: "Yes" },
+];
+
 const corrpreffer = [
-  { value: "Residence", label: "Residence" },
-  { value: "Office", label: "Office" },
+  { value: "Registered", label: "Registered" },
+  { value: "Branch Office", label: "Branch Office" },
   { value: "Digital", label: "Digital" },
 ];
 
-const DonorEditIndv = () => {
+const DonorCompanyEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const token = Cookies.get('token');
   const [userImageBase, setUserImageBase] = useState("");
   const [noImageUrl, setNoImageUrl] = useState("");
-   const [initialDonor, setInitialDonor] = useState({});
-    const [isFormDirty, setIsFormDirty] = useState(false);
+  const [initialDonor, setInitialDonor] = useState({});
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
   // State
   const [donor, setDonor] = useState({
     indicomp_full_name: "",
     title: "",
-    indicomp_father_name: "",
-    indicomp_mother_name: "",
+    indicomp_com_contact_name: "",
+    indicomp_com_contact_designation: "",
     indicomp_gender: "",
-    indicomp_spouse_name: "",
     indicomp_dob_annualday: "",
-    indicomp_doa: "",
     indicomp_pan_no: "",
     indicomp_image_logo: "",
     indicomp_remarks: "",
@@ -61,6 +66,7 @@ const DonorEditIndv = () => {
     indicomp_belongs_to: "",
     indicomp_source: "",
     indicomp_donor_type: "",
+    indicomp_csr: "",
     indicomp_type: "",
     indicomp_mobile_phone: "",
     indicomp_mobile_whatsapp: "",
@@ -82,17 +88,16 @@ const DonorEditIndv = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [showModal, setShowModal] = useState(false);
 
-  // API calls with TanStack Query
-  const {data:statesHook} = useFetchState()
-  const {data:datasourceHook} = useFetchDataSource()
-  const {data:promoterHook} = useFetchPromoter()
+
+  const { data: statesHook } = useFetchState()
+  const { data: datasourceHook } = useFetchDataSource()
+  const { data: promoterHook } = useFetchPromoter()
 
   const { data: donorData, isLoading } = useQuery({
-    queryKey: ['donor', id],
+    queryKey: ['donor-company', id],
     queryFn: async () => {
-      const response = await axios.get(`${DONOR_INDIVISUAL_EDIT_FETCH}/${id}`, {
+      const response = await axios.get(`${DONOR_COMPANY_EDIT_FETCH}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -105,6 +110,7 @@ const DonorEditIndv = () => {
       
       setDonor(cleanedData);
       setInitialDonor(cleanedData);
+      
       const userImageBase = response.data.image_url.find(
         (img) => img.image_for === "Donor"
       )?.image_url;
@@ -119,15 +125,17 @@ const DonorEditIndv = () => {
     enabled: !!id,
     refetchOnWindowFocus: false, 
   });
-useEffect(() => {
+
+  useEffect(() => {
     const isDirty = JSON.stringify(donor) !== JSON.stringify(initialDonor);
     setIsFormDirty(isDirty);
   }, [donor, initialDonor]);
+
   // Mutations
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
       const response = await axios({
-        url: `${DONOR_INDIVISUAL_UPDATE_SUMBIT}${id}?_method=PUT`,
+        url: `${DONOR_COMPANY_UPDATE_SUMBIT}${id}?_method=PUT`,
         method: 'POST',
         data: formData,
         headers: {
@@ -140,7 +148,7 @@ useEffect(() => {
     onSuccess: (data) => {
       if (data.code === 200) {
         toast.success(data.msg);
-        queryClient.invalidateQueries(['donor', id]);
+        queryClient.invalidateQueries(['donor-company', id]);
         navigate('/donor/donors');
       } else if (data.code === 400) {
         toast.error(data.msg);
@@ -157,7 +165,7 @@ useEffect(() => {
   const familyGroupMutation = useMutation({
     mutationFn: async (data) => {
       const response = await axios({
-        url: `${DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE}${id}`,
+        url: `${DONOR_COMPANY_FAMILY_GROUP_UPDATE}${id}`,
         method: 'PUT',
         data,
         headers: { Authorization: `Bearer ${token}` },
@@ -165,10 +173,10 @@ useEffect(() => {
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success(data.msg||'Data Successfully Updated');
-
+      toast.success(data.msg || 'Data Successfully Updated');
+  
       setShowModal(false);
-      queryClient.invalidateQueries(['donor', id]);
+      queryClient.invalidateQueries(['donor-company', id]);
     },
     onError: (error) => {
       toast.error('Failed to update family group');
@@ -201,20 +209,29 @@ useEffect(() => {
   };
 
   const onChangePanNumber = (e) => {
-    setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value }));
+    setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value.toUpperCase() }));
   };
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!donor.indicomp_full_name?.trim()) {
-      newErrors.indicomp_full_name = "Full Name is required";
+      newErrors.indicomp_full_name = "Company Name is required";
+    }
+    if (!donor.indicomp_type) {
+      newErrors.indicomp_type = "Company Type is required";
+    }
+    if (!donor.indicomp_com_contact_name) {
+      newErrors.indicomp_com_contact_name = "Contact Name is required";
     }
     if (!donor.title) {
       newErrors.title = "Title is required";
     }
     if (!donor.indicomp_gender) {
       newErrors.indicomp_gender = "Gender is required";
+    }
+    if (!donor.indicomp_pan_no || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(donor.indicomp_pan_no)) {
+      newErrors.indicomp_pan_no = "Valid PAN Number is required (format: AAAAA9999A)";
     }
     if (!donor.indicomp_promoter) {
       newErrors.indicomp_promoter = "Promoter is required";
@@ -263,12 +280,10 @@ useEffect(() => {
     formData.append("indicomp_full_name", processValue(donor.indicomp_full_name));
     formData.append("title", processValue(donor.title));
     formData.append("indicomp_type", processValue(donor.indicomp_type));
-    formData.append("indicomp_father_name", processValue(donor.indicomp_father_name));
-    formData.append("indicomp_mother_name", processValue(donor.indicomp_mother_name));
+    formData.append("indicomp_com_contact_name", processValue(donor.indicomp_com_contact_name));
+    formData.append("indicomp_com_contact_designation", processValue(donor.indicomp_com_contact_designation));
     formData.append("indicomp_gender", processValue(donor.indicomp_gender));
-    formData.append("indicomp_spouse_name", processValue(donor.indicomp_spouse_name));
     formData.append("indicomp_dob_annualday", processValue(donor.indicomp_dob_annualday));
-    formData.append("indicomp_doa", processValue(donor.indicomp_doa));
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
 
     // Handle file upload
@@ -282,6 +297,7 @@ useEffect(() => {
     formData.append("indicomp_promoter", processValue(donor.indicomp_promoter));
     formData.append("indicomp_newpromoter", processValue(donor.indicomp_newpromoter));
     formData.append("indicomp_source", processValue(donor.indicomp_source));
+    formData.append("indicomp_csr", processValue(donor.indicomp_csr));
     formData.append("indicomp_mobile_phone", processValue(donor.indicomp_mobile_phone));
     formData.append("indicomp_mobile_whatsapp", processValue(donor.indicomp_mobile_whatsapp));
     formData.append("indicomp_email", processValue(donor.indicomp_email));
@@ -328,14 +344,14 @@ useEffect(() => {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4">
           <div className="flex items-start gap-3">
             <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <User className="text-muted-foreground w-5 h-5" />
+              <Building className="text-muted-foreground w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h1 className="text-md font-semibold text-gray-900">Edit Individual Donor</h1>
+                  <h1 className="text-md font-semibold text-gray-900">Edit Company Donor</h1>
                   <p className="text-xs text-gray-500 mt-1">
-                    Update donor information and details
+                    Update company donor information and details
                   </p>
                 </div>
               </div>
@@ -352,7 +368,7 @@ useEffect(() => {
               <ArrowLeft className="w-3 h-3" />
               Back
             </Button>
-           
+          
           </div>
         </div>
       </Card>
@@ -361,14 +377,57 @@ useEffect(() => {
       <Card>
         <CardContent className="p-4">
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Personal Details Section */}
+            {/* Company Details Section */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white">
                 <Info className="w-4 h-4" />
-                Personal Details
+                Company Details
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Company Name */}
+                <div className="">
+                  <Label htmlFor="indicomp_full_name" className="text-xs font-medium">
+                    Company Name *
+                  </Label>
+                  <Input
+                    id="indicomp_full_name"
+                    name="indicomp_full_name"
+                    value={donor.indicomp_full_name}
+                    onChange={onInputChange}
+                    placeholder="Enter company name"
+                  />
+                  {errors?.indicomp_full_name && (
+                    <p className="text-red-500 text-xs">{errors.indicomp_full_name}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Please don't add M/s before name</p>
+                </div>
+
+                {/* Company Type */}
+                <div className="">
+                  <Label htmlFor="indicomp_type" className="text-xs font-medium">
+                    Company Type *
+                  </Label>
+                  <Select 
+                    value={donor.indicomp_type} 
+                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Company Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {company_type.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors?.indicomp_type && (
+                    <p className="text-red-500 text-xs">{errors.indicomp_type}</p>
+                  )}
+                </div>
+
                 {/* Title */}
                 <div className="">
                   <Label htmlFor="title" className="text-xs font-medium">
@@ -394,48 +453,34 @@ useEffect(() => {
                   )}
                 </div>
 
-                {/* Full Name */}
+                {/* Contact Name */}
                 <div className="">
-                  <Label htmlFor="indicomp_full_name" className="text-xs font-medium">
-                    Full Name *
+                  <Label htmlFor="indicomp_com_contact_name" className="text-xs font-medium">
+                    Contact Name *
                   </Label>
                   <Input
-                    id="indicomp_full_name"
-                    name="indicomp_full_name"
-                    value={donor.indicomp_full_name}
+                    id="indicomp_com_contact_name"
+                    name="indicomp_com_contact_name"
+                    value={donor.indicomp_com_contact_name}
                     onChange={onInputChange}
-                    placeholder="Enter full name"
+                    placeholder="Enter contact name"
                   />
-                  {errors?.indicomp_full_name && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_full_name}</p>
+                  {errors?.indicomp_com_contact_name && (
+                    <p className="text-red-500 text-xs">{errors.indicomp_com_contact_name}</p>
                   )}
                 </div>
 
-                {/* Father Name */}
+                {/* Designation */}
                 <div className="">
-                  <Label htmlFor="indicomp_father_name" className="text-xs font-medium">
-                    Father Name
+                  <Label htmlFor="indicomp_com_contact_designation" className="text-xs font-medium">
+                    Designation
                   </Label>
                   <Input
-                    id="indicomp_father_name"
-                    name="indicomp_father_name"
-                    value={donor.indicomp_father_name}
+                    id="indicomp_com_contact_designation"
+                    name="indicomp_com_contact_designation"
+                    value={donor.indicomp_com_contact_designation}
                     onChange={onInputChange}
-                    placeholder="Enter father's name"
-                  />
-                </div>
-
-                {/* Mother Name */}
-                <div className="">
-                  <Label htmlFor="indicomp_mother_name" className="text-xs font-medium">
-                    Mother Name
-                  </Label>
-                  <Input
-                    id="indicomp_mother_name"
-                    name="indicomp_mother_name"
-                    value={donor.indicomp_mother_name}
-                    onChange={onInputChange}
-                    placeholder="Enter mother's name"
+                    placeholder="Enter designation"
                   />
                 </div>
 
@@ -464,24 +509,10 @@ useEffect(() => {
                   )}
                 </div>
 
-                {/* Spouse Name */}
-                <div className="">
-                  <Label htmlFor="indicomp_spouse_name" className="text-xs font-medium">
-                    Spouse Name
-                  </Label>
-                  <Input
-                    id="indicomp_spouse_name"
-                    name="indicomp_spouse_name"
-                    value={donor.indicomp_spouse_name}
-                    onChange={onInputChange}
-                    placeholder="Enter spouse name"
-                  />
-                </div>
-
-                {/* Date of Birth */}
+                {/* Annual Day */}
                 <div className="">
                   <Label htmlFor="indicomp_dob_annualday" className="text-xs font-medium">
-                    Date of Birth
+                    Annual Day
                   </Label>
                   <Input
                     id="indicomp_dob_annualday"
@@ -492,24 +523,10 @@ useEffect(() => {
                   />
                 </div>
 
-                {/* Date of Anniversary */}
-                <div className="">
-                  <Label htmlFor="indicomp_doa" className="text-xs font-medium">
-                    Date of Anniversary
-                  </Label>
-                  <Input
-                    id="indicomp_doa"
-                    name="indicomp_doa"
-                    type="date"
-                    value={donor.indicomp_doa}
-                    onChange={onInputChange}
-                  />
-                </div>
-
                 {/* PAN Number */}
                 <div className="">
                   <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
-                    PAN Number
+                    PAN Number *
                   </Label>
                   <Input
                     id="indicomp_pan_no"
@@ -519,12 +536,15 @@ useEffect(() => {
                     placeholder="Enter PAN number"
                     className="uppercase"
                   />
+                  {errors?.indicomp_pan_no && (
+                    <p className="text-red-500 text-xs">{errors.indicomp_pan_no}</p>
+                  )}
                 </div>
 
-                {/* Upload Image */}
+                {/* Upload Logo */}
                 <div className="">
                   <Label htmlFor="indicomp_image_logo" className="text-xs font-medium">
-                    Upload Image
+                    Upload Logo
                   </Label>
                   <div className="flex items-center gap-2">
                     {donor.indicomp_image_logo && (
@@ -534,7 +554,7 @@ useEffect(() => {
                             ? `${userImageBase}${donor.indicomp_image_logo}`
                             : URL.createObjectURL(donor.indicomp_image_logo)
                         }
-                        alt="User"
+                        alt="Company Logo"
                         className="w-8 h-8 object-cover rounded-md border"
                       />
                     )}
@@ -549,6 +569,7 @@ useEffect(() => {
                       }))}
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">Upload Company Logo</p>
                 </div>
 
                 {/* Remarks */}
@@ -675,17 +696,26 @@ useEffect(() => {
                   </Select>
                 </div>
 
-                {/* Type (Disabled) */}
+                {/* CSR */}
                 <div className="">
-                  <Label htmlFor="indicomp_type" className="text-xs font-medium">
-                    Type
+                  <Label htmlFor="indicomp_csr" className="text-xs font-medium">
+                    CSR
                   </Label>
-                  <Input
-                    id="indicomp_type"
-                    name="indicomp_type"
-                    value={donor.indicomp_type}
-                    disabled
-                  />
+                  <Select 
+                    value={donor.indicomp_csr} 
+                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_csr: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select CSR" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {csr.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -764,11 +794,11 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Residence Address Section */}
+            {/* Registered Address Section */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white">
                 <MapPin className="w-4 h-4" />
-                Residence Address
+                Registered Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -876,11 +906,11 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Office Address Section */}
+            {/* Branch Office Address Section */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white">
                 <Building className="w-4 h-4" />
-                Office Address
+                Branch Office Address
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1008,8 +1038,8 @@ useEffect(() => {
             <div className="flex gap-3 pt-6 border-t">
               <Button
                 type="submit"
+                  size='sm'
                 disabled={updateMutation.isLoading || !isFormDirty}
-                size="sm"
                 className="flex items-center gap-2"
               >
                 {updateMutation.isLoading ? (
@@ -1019,8 +1049,8 @@ useEffect(() => {
                   </>
                 ) : (
                   <>
-                    <User className="w-4 h-4" />
-                    Update Donor
+                    <Building className="w-4 h-4" />
+                    Update Company
                   </>
                 )}
               </Button>
@@ -1052,11 +1082,10 @@ useEffect(() => {
             >
               Leave Group
             </Button>
-            
               <Button
                 type="button"
+                size='sm'
                 variant="outline"
-                       size="sm"
                 onClick={() => navigate('/donor/donors')}
               >
                 Cancel
@@ -1072,21 +1101,20 @@ useEffect(() => {
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
             <AddToGroup 
               id={donor.id} 
-                   page='indivisual'
+              page='company'
               closegroupModal={() => setShowModal(false)} 
             />
-            
           </div>
         </div>
       )} */}
-      <AddToGroup
-  id={donor.id}
-  page="indivisual"
-  isOpen={showModal}
-  closegroupModal={() => setShowModal(false)}
-/>
+          <AddToGroup
+        id={donor.id}
+        page="indivisual"
+        isOpen={showModal}
+        closegroupModal={() => setShowModal(false)}
+      />
     </div>
   );
 };
 
-export default DonorEditIndv;
+export default DonorCompanyEdit;

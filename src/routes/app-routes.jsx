@@ -46,6 +46,7 @@ import SchoolList from "@/app/school/school-list/school-list";
 import SchoolListView from "@/app/school/school-list/school-list-view";
 import Settings from "@/app/setting/setting";
 import AllotedList from "@/app/school/repeated-donor/alloted-list";import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
+import DonorCompanyEdit from "@/app/donor/donor-list/donor-company-edit";
 
 
 function AppRoutes() {
@@ -84,6 +85,7 @@ function AppRoutes() {
         />
         <Route path="/donor/donor-view/:id" element={<DonorView />} />
         <Route path="/donor/donor-edit-indivisual/:id" element={<DonorIndiviusalEdit />} />
+        <Route path="/donor/donor-edit-company/:id" element={<DonorCompanyEdit />} />
         <Route path="/donor/duplicate" element={<DuplicateDonor />} />
         <Route
           path="/donor/duplicate-edit/:id"
