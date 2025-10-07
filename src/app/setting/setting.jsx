@@ -155,7 +155,7 @@ const Settings = () => {
       <Tabs defaultValue="profile" className="w-full mt-2">
         <TabsList className="grid w-full grid-cols-2 mb-2">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="doc">Document</TabsTrigger>
+          <TabsTrigger value="doc">HelpDesk</TabsTrigger>
        
         </TabsList>
 

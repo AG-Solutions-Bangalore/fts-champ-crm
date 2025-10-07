@@ -35,6 +35,7 @@ import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OtsCreate from "./ots-create";
+import OtsEdit from "./ots-edit";
 
 const OtsList = () => {
 
@@ -122,12 +123,11 @@ const OtsList = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                
+                  <OtsEdit 
+      otsData={row.original}
+     
+    />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Edit Ots</p>

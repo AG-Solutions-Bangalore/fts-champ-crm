@@ -25,15 +25,17 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { navigateToViewerEdit } from "@/api";
+import { Link, useNavigate } from "react-router-dom";
 
 const Viewer = () => {
   const queryClient = useQueryClient();
-  
+  const navigate = useNavigate()
   const {
     data: viewersData,
     isLoading,
@@ -166,6 +168,7 @@ const Viewer = () => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+        const id = row.original.id
         return (
           <div className="flex flex-row">
             
@@ -175,6 +178,9 @@ const Viewer = () => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => {
+                      navigateToViewerEdit(navigate,id)
+                                                  }}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -258,6 +264,7 @@ const Viewer = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
+        <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
@@ -280,6 +287,14 @@ const Viewer = () => {
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Link 
+                  to='/master/viewer/create'
+                  >
+                    <Button variant="default">
+                  <SquarePlus className="h-3 w-3 mr-2" /> Viewer
+                </Button>
+                </Link>
+                </div>
       </div>
 
       {/* Table */}

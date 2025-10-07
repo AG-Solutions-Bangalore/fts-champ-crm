@@ -35,6 +35,7 @@ import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import DesignationCreate from "./designation-create";
+import DesignationEdit from "./designation-edit";
 
 const DesignationList = () => {
 
@@ -122,12 +123,10 @@ const DesignationList = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                <DesignationEdit 
+        designation={row.original}
+    
+      />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Edit Designation</p>
