@@ -1,4 +1,4 @@
-import { navigateToNonZero, RECEIPT_ZERO_LIST } from "@/api";
+import { RECEIPT_SUPER_MULTI_RECEIPT_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -16,12 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,10 +32,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Download,
-  Edit,
-  Loader,
-  Search,
+  Search
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -49,7 +40,7 @@ import { useNavigate } from "react-router-dom";
 import { TableShimmer } from "../school/loadingtable/TableShimmer";
 import ReceiptSuperView from "./recepit-sup-view";
 
-const RecepitZeroList = () => {
+const MultipleRecepitList = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
@@ -81,7 +72,7 @@ const RecepitZeroList = () => {
     isFetching,
     prefetchPage,
     refetch,
-  } = useGetMutation("recepit-zero-list", `${RECEIPT_ZERO_LIST}`, {
+  } = useGetMutation("multiple-recepit-list", `${RECEIPT_SUPER_MULTI_RECEIPT_LIST}`, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
@@ -201,53 +192,7 @@ const RecepitZeroList = () => {
       },
       size: 120,
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigateToNonZero(navigate, row?.original?.id)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleOpenViewDialog(row?.original?.id)}
-                  disabled={isDownloading}
-                >
-                  {isDownloading && selectedReceiptId == row?.original?.id ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 " />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      ),
-      size: 80,
-    },
+   
   ];
 
   const table = useReactTable({
@@ -281,7 +226,7 @@ const RecepitZeroList = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "recepit-zero-list",
+      "multiple-recepit-list",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -375,18 +320,13 @@ const RecepitZeroList = () => {
     return buttons;
   };
 
-  const handleOpenViewDialog = (id) => {
-    setSelectedReceiptId(id);
-    setShowViewModal(true);
-    setIsDownloading(true);
-  };
   if (isError) {
     return (
       <div className="w-full p-4  ">
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching Recepit Zero List Data
+              Error Fetching Multiple Recepit List Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -403,7 +343,7 @@ const RecepitZeroList = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search recepit..."
+            placeholder="Search multiple Recepit..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -544,9 +484,8 @@ const RecepitZeroList = () => {
         </div>
       </div>
       <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-      
         <DialogContent
-          hideOverlay 
+          hideOverlay
           className="max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] h-[85vh] p-0 absolute opacity-0 pointer-events-none -z-50 overflow-hidden bg-white rounded-xl [&>button]:hidden"
           aria-describedby={undefined}
         >
@@ -568,4 +507,4 @@ const RecepitZeroList = () => {
   );
 };
 
-export default RecepitZeroList;
+export default MultipleRecepitList;
