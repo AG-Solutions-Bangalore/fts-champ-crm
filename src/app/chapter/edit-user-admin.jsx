@@ -1,8 +1,7 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Loader2, SquarePlus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,18 +10,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { CHAPTER_VIEW_CREATE_USER } from "@/api";
+import { ADMIN_CHAPTER_EDIT_UPDATE } from "../../api";
 
-const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
-  const [open, setOpen] = useState(false);
+const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  
   const [user, setUser] = useState({
     name: "",
     email: "",
@@ -30,61 +24,79 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
     image: null,
     last_name: "",
     phone: "",
-    password: "",
-    confirm_password: "",
     user_type_id: "",
+    user_status: "",
   });
+  const [currentImage, setCurrentImage] = useState("");
 
   const queryClient = useQueryClient();
 
   const UserDrop = [
-    {
-      value: "1",
-      label: "User",
-    },
-    {
-      value: "2",
-      label: "Admin",
-    },
+    { value: "1", label: "User" },
   ];
 
+  const statusOptions = [
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
+  ];
+
+  useEffect(() => {
+    if (userData) {
+      setUser({
+        name: userData.name || "",
+        email: userData.email || "",
+        first_name: userData.first_name || "",
+        image: userData.image || null,
+        last_name: userData.last_name || "",
+        phone: userData.phone || "",
+        user_type_id: userData.user_type_id?.toString() || "",
+        user_status: userData.user_status || "Active",
+      });
+      setCurrentImage(userData.image || "");
+    }
+  }, [userData]);
+
   const handleSubmit = async () => {
-    // Basic validation
-    if (!user.name.trim() || !user.email.trim() || !user.first_name.trim() || 
-        !user.phone.trim() || !user.password || !user.confirm_password || !user.user_type_id) {
-      toast.error("All fields are required");
+    if (
+      !user.name.trim() ||
+      !user.email.trim() ||
+      !user.first_name.trim() ||
+      !user.phone.trim() ||
+      !user.user_type_id ||
+      !user.user_status
+    ) {
+      toast.error("All required fields must be filled");
       return;
     }
 
-    if (user.password !== user.confirm_password) {
-      setError("Passwords do not match");
-      toast.error("Passwords do not match");
+    if (user.phone.length !== 10) {
+      toast.error("Phone number must be 10 digits");
       return;
     }
 
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      
       const formData = new FormData();
+
       formData.append("name", user.name);
       formData.append("first_name", user.first_name);
       formData.append("last_name", user.last_name || "");
       formData.append("email", user.email);
       formData.append("phone", user.phone);
-      formData.append("password", user.password);
-      formData.append("user_type", user.user_type_id);
-      formData.append("chapter_id", chapterCodeForCreateUser); 
-      
+      formData.append("user_type", parseInt(user.user_type_id, 10));
+      formData.append("user_status", user.user_status);
+      formData.append("_method", "PUT");
+
       if (user.image instanceof File) {
         formData.append("image", user.image);
       }
 
       const response = await axios.post(
-        `${CHAPTER_VIEW_CREATE_USER}`,
+        `${ADMIN_CHAPTER_EDIT_UPDATE}/${userData.id}`,
         formData,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
@@ -92,32 +104,16 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
       );
 
       if (response?.data.code === 200) {
-        toast.success(response.data.msg || "User created successfully");
-
+        toast.success(response.data.msg || "User updated successfully");
       
-        setUser({
-          name: "",
-          email: "",
-          first_name: "",
-          image: null,
-          last_name: "",
-          phone: "",
-          password: "",
-          confirm_password: "",
-          user_type_id: "",
-        });
-        setError("");
-        
-      
-        await queryClient.invalidateQueries(["chapter"]);
-        setOpen(false);
+        refetch();
+        onClose(); 
       } else {
-        toast.error(response.data.msg || "Failed to create user");
+        toast.error(response.data.msg || "Failed to update user");
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to create user"
-      );
+      console.error("Error updating user:", error);
+      toast.error(error.response?.data?.msg || "Failed to update user");
     } finally {
       setIsLoading(false);
     }
@@ -125,18 +121,9 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
     if (name === "phone") {
-    
       if (/^\d*$/.test(value) && value.length <= 10) {
         setUser((prev) => ({ ...prev, [name]: value }));
-      }
-    } else if (name === "confirm_password") {
-      setUser((prev) => ({ ...prev, [name]: value }));
-      if (value && value !== user.password) {
-        setError("Passwords do not match");
-      } else {
-        setError("");
       }
     } else {
       setUser((prev) => ({ ...prev, [name]: value }));
@@ -144,26 +131,32 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
   };
 
   const handleFileChange = (e) => {
-    setUser((prev) => ({ 
-      ...prev, 
-      image: e.target.files[0] 
+    setUser((prev) => ({
+      ...prev,
+      image: e.target.files[0],
     }));
   };
 
+  const getImageUrl = () => {
+    if (user.image instanceof File) {
+      return URL.createObjectURL(user.image);
+    }
+    if (currentImage) {
+      const imageUrl = ImageUrl?.find((img) => img.image_for === "User")?.image_url || "";
+      const noImageUrl = ImageUrl?.find((img) => img.image_for === "No Image")?.image_url || "";
+      return currentImage ? `${imageUrl}${currentImage}` : noImageUrl;
+    }
+    return "";
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default" size="sm" className={`ml-2`}>
-          <SquarePlus className="h-4 w-4 mr-2" /> User
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New User</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new user
-          </DialogDescription>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>Update user information below</DialogDescription>
         </DialogHeader>
+
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-2">
@@ -173,10 +166,10 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
               <Input
                 id="name"
                 name="name"
-                placeholder="Enter username"
                 value={user.name}
-                onChange={handleInputChange}
-                required
+                disabled
+                placeholder="Username"
+                className="h-9"
               />
             </div>
 
@@ -188,10 +181,9 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Enter email"
                 value={user.email}
                 onChange={handleInputChange}
-                required
+                className="h-9"
               />
             </div>
 
@@ -202,10 +194,9 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
               <Input
                 id="first_name"
                 name="first_name"
-                placeholder="Enter full name"
                 value={user.first_name}
                 onChange={handleInputChange}
-                required
+                className="h-9"
               />
             </div>
 
@@ -216,11 +207,10 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
               <Input
                 id="phone"
                 name="phone"
-                placeholder="Enter phone number"
                 value={user.phone}
                 onChange={handleInputChange}
                 maxLength={10}
-                required
+                className="h-9"
               />
             </div>
 
@@ -233,8 +223,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 name="user_type_id"
                 value={user.user_type_id}
                 onChange={handleInputChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                required
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Select User Type</option>
                 {UserDrop.map((option) => (
@@ -246,68 +235,76 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
             </div>
 
             <div className="grid gap-2">
+              <label htmlFor="user_status" className="text-sm font-medium">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="user_status"
+                name="user_status"
+                value={user.user_status}
+                onChange={handleInputChange}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-2 md:col-span-2">
               <label htmlFor="image" className="text-sm font-medium">
-                Upload Image
+                Profile Image
               </label>
               <Input
                 id="image"
-                name="image"
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
+                className="h-9"
               />
-            </div>
-
-            <div className="grid gap-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter password"
-                value={user.password}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label htmlFor="confirm_password" className="text-sm font-medium">
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="confirm_password"
-                name="confirm_password"
-                type="password"
-                placeholder="Confirm password"
-                value={user.confirm_password}
-                onChange={handleInputChange}
-                required
-              />
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+              {getImageUrl() && (
+                <div className="mt-2 flex items-center gap-4">
+                  <img
+                    src={getImageUrl()}
+                    alt="User"
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                  <span className="text-sm text-gray-500">Current image preview</span>
+                </div>
+              )}
             </div>
           </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className={`mt-2`}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create User"
-            )}
-          </Button>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="h-9 w-[120px]"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update User"
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default CreateUserSuperadmin;
+export default EditUserAdmin;

@@ -1,18 +1,14 @@
-import { useToast } from "@/hooks/use-toast";
+
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 const DisabledRightClick = () => {
-  const { toast } = useToast();
+
 
   useEffect(() => {
     const handleRightClick = (e) => {
       e.preventDefault();
-      toast({
-        title: "Info",
-        description: "No Access.",
-        variant: "info",
-        style: { backgroundColor: "#3b82f6", color: "#ffffff" }, 
-      });
+      toast.success('No Access.');
     };
 
     const handleKeyDown = (e) => {
@@ -30,12 +26,7 @@ const DisabledRightClick = () => {
         (e.metaKey && e.key.toLowerCase() === "u") // CMD + U (Mac View Source)
       ) {
         e.preventDefault();
-        toast({
-          title: "Warning",
-          description: "This action is disabled on this page.",
-          variant: "warning",
-          style: { backgroundColor: "#facc15", color: "#000000" }, // Yellow color for Warning
-        });
+        toast.success('No Access.');
         return false;
       }
     };

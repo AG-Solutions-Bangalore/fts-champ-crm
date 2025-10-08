@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,13 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building, Save, X, Loader2, Info, } from 'lucide-react';
+import { ArrowLeft, Building, Save, X, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
-import { fetchChapterEditById, fetchChapterUpdateEditById, CHAPTER_EDIT_STATES_DROPDOWN } from '@/api';
-
-import UserListSuperadmin from './user-list-superadmin';
-import DatasourceListSuperadmin from './datasource-list-superadmin';
+import { ADMIN_CHAPTER_DATA_CHAPTER_LIST, ADMIN_CHAPTER_UPDATE } from '../../api';
+import UserListAdmin from './user-list-admin';
+import DatasourceListAdmin from './datasource-list-admin';
 
 const committee_type = [
   {
@@ -29,17 +28,13 @@ const committee_type = [
     value: "Treasurer",
     label: "Treasurer",
   },
-  {
-    value: "Joint Org Secretary",
-    label: "Joint Org Secretary",
-  },
 ];
 
-const ChapterViewSuperAdmin = () => {
-  const { id } = useParams();
+const ChapterViewAdmin = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users");
+  const id = Cookies.get("chapter_id");
 
   const [formData, setFormData] = useState({
     chapter_name: "",
@@ -60,31 +55,22 @@ const ChapterViewSuperAdmin = () => {
   const [initialFormData, setInitialFormData] = useState({});
 
 
-  const { data: statesData } = useQuery({
-    queryKey: ['chapter-states'],
-    queryFn: async () => {
-      const response = await axios.get(CHAPTER_EDIT_STATES_DROPDOWN, {
-        headers: { Authorization: `Bearer ${Cookies.get('token')}` },
-      });
-      return response.data?.states || [];
-    },
-  });
-  const states = statesData || [];
-
-  
   const { data: chapterData, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['chapter', id],
-    queryFn: () => fetchChapterEditById(id),
+    queryKey: ['chapter-admin', id],
+    queryFn: async () => {
+      const response = await axios.get(`${ADMIN_CHAPTER_DATA_CHAPTER_LIST}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${Cookies.get('token')}`,
+        },
+      });
+      return response.data;
+    },
     enabled: !!id,
   });
 
-
-
-
-
   const users = chapterData?.users || [];
   const ImageUrl = chapterData?.image_url;
-  const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code
+  const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code;
 
   useEffect(() => {
     if (chapterData?.chapter) {
@@ -116,12 +102,17 @@ const ChapterViewSuperAdmin = () => {
   }, [formData, initialFormData]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => fetchChapterUpdateEditById(id, data),
+    mutationFn: (data) => 
+      axios.put(`${ADMIN_CHAPTER_UPDATE}${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${Cookies.get('token')}`,
+        },
+      }),
     onSuccess: (response) => {
       if (response.data.code === 200) {
         toast.success(response.data.msg);
-        queryClient.invalidateQueries(['chapters', id]);
-        navigate('/master/chapter');
+        queryClient.invalidateQueries(['chapter', id]);
+        refetch();
       } else if (response.data.code === 400) {
         toast.error(response.data.msg);
       } else {
@@ -132,7 +123,6 @@ const ChapterViewSuperAdmin = () => {
   });
 
   const handleInputChange = (field, value) => {
-  
     const digitFields = ["chapter_pin", "chapter_phone", "chapter_whatsapp"];
     if (digitFields.includes(field)) {
       if (/^\d*$/.test(value)) {
@@ -157,72 +147,71 @@ const ChapterViewSuperAdmin = () => {
     updateMutation.mutate(formData);
   };
 
-  
-
   if (isError) {
     return (
-      <div className="w-full p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-destructive font-medium mb-2">
-              Error Fetching Chapter Data
+      <>
+        <div className="w-full p-4">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="text-destructive font-medium mb-2">
+                Error Fetching Chapter Data
+              </div>
+              <Button onClick={() => refetch()} variant="outline" size="sm">
+                Try Again
+              </Button>
             </div>
-            <Button onClick={() => refetch()} variant="outline" size="sm">
-              Try Again
-            </Button>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading chapter data...</span>
+      <>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span>Loading chapter data...</span>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="max-w-full space-y-2">
-      {/* Header Card */}
-      <Card className="p-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Building className="text-muted-foreground w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h1 className="text-md font-semibold text-gray-900">Edit Chapter</h1>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Update chapter information and details
-                  </p>
+    <>
+      <div className="max-w-full space-y-2">
+        {/* Header Card */}
+        <Card className="p-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <Building className="text-muted-foreground w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h1 className="text-md font-semibold text-gray-900">
+                      {formData.chapter_name || "Chapter Details"}
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.chapter_city && formData.chapter_state && formData.chapter_pin && 
+                        `${formData.chapter_city}, ${formData.chapter_state} - ${formData.chapter_pin}`
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+            
           
-          <div className="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
-            <Button 
-              onClick={() => navigate('/master/chapter')}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 text-xs h-8"
-            >
-              <ArrowLeft className="w-3 h-3" />
-              Back
-            </Button>
           </div>
-        </div>
-      </Card>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
-      <Card className="p-4">
+        </Card>
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
+          {/* Chapter Details Form */}
+          <Card className="p-4">
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4 p-0">
                 <div className="flex items-center gap-2 text-xs p-2 rounded font-medium bg-[var(--team-color)] text-white">
@@ -230,38 +219,9 @@ const ChapterViewSuperAdmin = () => {
                   Chapter Details
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Chapter Name */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_name" className="text-xs font-medium">
-                      Chapter Name <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="chapter_name"
-                      value={formData.chapter_name}
-                      onChange={(e) => handleInputChange('chapter_name', e.target.value)}
-                      placeholder="Enter chapter name"
-                      className="h-8 text-xs"
-                      required
-                    />
-                  </div>
-
-                  {/* Chapter Code */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_code" className="text-xs font-medium">
-                      Chapter Code
-                    </Label>
-                    <Input
-                      id="chapter_code"
-                      value={formData.chapter_code}
-                      onChange={(e) => handleInputChange('chapter_code', e.target.value)}
-                      placeholder="Enter chapter code"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Address */}
-                  <div className="space-y-1">
+                  <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="chapter_address" className="text-xs font-medium">
                       Address <span className="text-red-500">*</span>
                     </Label>
@@ -273,60 +233,6 @@ const ChapterViewSuperAdmin = () => {
                       className="h-8 text-xs"
                       required
                     />
-                  </div>
-
-                  {/* City */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_city" className="text-xs font-medium">
-                      City <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="chapter_city"
-                      value={formData.chapter_city}
-                      onChange={(e) => handleInputChange('chapter_city', e.target.value)}
-                      placeholder="Enter city"
-                      className="h-8 text-xs"
-                      required
-                    />
-                  </div>
-
-                  {/* Pin */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_pin" className="text-xs font-medium">
-                      Pin <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="chapter_pin"
-                      type="tel"
-                      value={formData.chapter_pin}
-                      onChange={(e) => handleContactChange('chapter_pin', e.target.value)}
-                      placeholder="Enter pin code"
-                      maxLength={6}
-                      className="h-8 text-xs"
-                      required
-                    />
-                  </div>
-
-                  {/* State */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_state" className="text-xs font-medium">
-                      State
-                    </Label>
-                    <Select 
-                      value={formData.chapter_state} 
-                      onValueChange={(value) => handleInputChange('chapter_state', value)}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {states.map((state) => (
-                          <SelectItem key={state.state_name} value={state.state_name} className="text-xs">
-                            {state.state_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   {/* Phone */}
@@ -392,34 +298,6 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Incorporation Date */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_date_of_incorporation" className="text-xs font-medium">
-                      Incorporation Date
-                    </Label>
-                    <Input
-                      id="chapter_date_of_incorporation"
-                      type="date"
-                      value={formData.chapter_date_of_incorporation}
-                      onChange={(e) => handleInputChange('chapter_date_of_incorporation', e.target.value)}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-
-                  {/* Region Code */}
-                  <div className="space-y-1">
-                    <Label htmlFor="chapter_region_code" className="text-xs font-medium">
-                      Region Code
-                    </Label>
-                    <Input
-                      id="chapter_region_code"
-                      value={formData.chapter_region_code}
-                      onChange={(e) => handleInputChange('chapter_region_code', e.target.value)}
-                      placeholder="Enter region code"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-
                   {/* Committee Member for Sign */}
                   <div className="space-y-1">
                     <Label htmlFor="auth_sign" className="text-xs font-medium">
@@ -441,7 +319,20 @@ const ChapterViewSuperAdmin = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">Committee Member</p>
+                  </div>
+
+                  {/* Incorporation Date */}
+                  <div className="space-y-1">
+                    <Label htmlFor="chapter_date_of_incorporation" className="text-xs font-medium">
+                      Incorporation Date
+                    </Label>
+                    <Input
+                      id="chapter_date_of_incorporation"
+                      type="date"
+                      value={formData.chapter_date_of_incorporation}
+                      onChange={(e) => handleInputChange('chapter_date_of_incorporation', e.target.value)}
+                      className="h-8 text-xs"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -451,7 +342,7 @@ const ChapterViewSuperAdmin = () => {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate('/master/chapter')} 
+                  onClick={() => navigate(-1)} 
                   className="flex items-center gap-2 h-8 text-xs"
                 >
                   <X className="w-3 h-3" /> 
@@ -477,38 +368,40 @@ const ChapterViewSuperAdmin = () => {
               </div>
             </form>
           </Card>
+
+          {/* Users Tab */}
           <Card className='p-4'>
-      {/* Main Content with Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="">
-        <TabsList className="grid w-full grid-cols-2 h-9 bg-[var(--team-color)] text-white rounded-md">
-      
-          <TabsTrigger value="users" className="text-xs">Users </TabsTrigger>
-          <TabsTrigger value="datasources" className="text-xs">Data Sources </TabsTrigger>
-        </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="">
+              <TabsList className="grid w-full grid-cols-2 h-9 bg-[var(--team-color)] text-white rounded-md">
+                <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
+                <TabsTrigger value="datasource" className="text-xs">Datsource</TabsTrigger>
+              </TabsList>
 
-   
-
-        {/* Users Tab */}
-        <TabsContent value="users" className="">
-      
-       <UserListSuperadmin id={id} users={users} isLoading={isLoading} isError={isError} refetch={refetch} isFetching={isFetching} ImageUrl={ImageUrl} chapterCodeForCreateUser={chapterCodeForCreateUser}/>
-         
-         
-          
-        </TabsContent>
-
-        {/* Data Sources Tab */}
-        <TabsContent value="datasources" className="">
-        <DatasourceListSuperadmin id={id}/>
-          
-          
-       
-        </TabsContent>
-      </Tabs>
-      </Card>
+              <TabsContent value="users" className="">
+                <UserListAdmin 
+                  id={id} 
+                  users={users} 
+                  isLoading={isLoading} 
+                  isError={isError} 
+                  refetch={refetch} 
+                  isFetching={isFetching} 
+                  ImageUrl={ImageUrl} 
+                  chapterCodeForCreateUser={chapterCodeForCreateUser}
+                />
+              
+              </TabsContent>
+              <TabsContent value="datasource" className="">
+                <DatasourceListAdmin 
+                  
+                />
+              
+              </TabsContent>
+            </Tabs>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-export default ChapterViewSuperAdmin;
+export default ChapterViewAdmin;

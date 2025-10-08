@@ -7,14 +7,14 @@ export const ContextPanel = createContext();
 const AppProvider = ({ children }) => {
   const [statusCheck, setStatusCheck] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
+  const [isPanelUp, setIsPanelUp] = useState(true);
+ 
     const checkPanelStatus = async () => {
       try { 
         // check-status
         const response = await fetch(`${BASE_URL}/api/check-status`);
         const data = await response.json();
-
+        setIsPanelUp(data);
         if (data.success === "ok") {
           setStatusCheck("ok");
           if (location.pathname === "/maintenance") {
@@ -28,16 +28,17 @@ const AppProvider = ({ children }) => {
         navigate("/maintenance"); 
       }
     };
-
+    useEffect(() => {
     checkPanelStatus();
 
     const interval = setInterval(checkPanelStatus, 300000);
 
     return () => clearInterval(interval);
   }, []);
+ 
 
   return (
-    <ContextPanel.Provider value={{ statusCheck }}>
+    <ContextPanel.Provider value={{ statusCheck ,isPanelUp}}>
       {statusCheck === "ok" ? children : null}
     </ContextPanel.Provider>
   );

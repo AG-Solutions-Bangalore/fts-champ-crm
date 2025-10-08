@@ -14,18 +14,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { CHAPTER_DATASOURCE_CREATE } from "@/api";
+import { ADMIN_DATASOURCE_CREATE } from "@/api";
 
-const CreateDatasourceSuperadmin = ({ chapterId }) => {
-  console.log('chapterId',chapterId)
+const CreateDatasourceAdmin = ({ refetch }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     data_source_type: "",
-    chapter_id: chapterId || "",
+    chapter_id: "",
   });
 
   const queryClient = useQueryClient();
@@ -36,18 +34,19 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
       return;
     }
 
-    if (!formData.chapter_id) {
-      toast.error("Chapter ID is required");
-      return;
-    }
-
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
+      const chapterId = Cookies.get("chapter_id");
       
+      const requestData = {
+        data_source_type: formData.data_source_type,
+        chapter_id: chapterId,
+      };
+
       const response = await axios.post(
-        `${CHAPTER_DATASOURCE_CREATE}`, 
-        formData,
+        ADMIN_DATASOURCE_CREATE, 
+        requestData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -58,21 +57,23 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
       if (response?.data.code === 200) {
         toast.success(response.data.msg || "Data source created successfully");
 
-     
+        // Reset form
         setFormData({
           data_source_type: "",
-          chapter_id: chapterId || "",
+          chapter_id: "",
         });
         
-        
-        await queryClient.invalidateQueries(["chapterDataSources"]);
+        // Invalidate queries and refetch
+        await queryClient.invalidateQueries(["chapter-datasource-admin"]);
+        refetch();
         setOpen(false);
       } else {
         toast.error(response.data.msg || "Failed to create data source");
       }
     } catch (error) {
+      console.error("Error creating data source:", error);
       toast.error(
-        error.response?.data?.message || "Failed to create data source"
+        error.response?.data?.msg || "Failed to create data source"
       );
     } finally {
       setIsLoading(false);
@@ -90,7 +91,7 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
     if (!isOpen) {
       setFormData({
         data_source_type: "",
-        chapter_id: chapterId || "",
+        chapter_id: "",
       });
     }
   };
@@ -98,23 +99,13 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className="ml-2">
-          <SquarePlus className="h-4 w-4 mr-2" /> DataSource
+        <Button variant="default" size="sm" className="h-8 text-xs">
+          <SquarePlus className="h-4 w-4 mr-2" /> Data Source
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Create Data Source</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(false)}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
+         
           <DialogDescription>
             Enter the details for the new data source
           </DialogDescription>
@@ -131,29 +122,40 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
                 placeholder="Enter data source type"
                 value={formData.data_source_type}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
             </div>
           </div>
           
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="mt-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Data Source"
-            )}
-          </Button>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="h-9"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Data Source"
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default CreateDatasourceSuperadmin;
+export default CreateDatasourceAdmin;

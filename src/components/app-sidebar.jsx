@@ -57,13 +57,19 @@ export function AppSidebar({ ...props }) {
         isActive: false,
       },
       {
+        title: "Chapter",
+        url: "/chapter",
+        icon: Frame,
+        isActive: false,
+      },
+      {
         title: "Master Settings",
         url: "#",
         isActive: false,
         icon: Settings2,
         items: [
           {
-            title: "Chapter",
+            title: "Chapters",
             url: "/master/chapter",
           },
 

@@ -12,14 +12,16 @@ function App() {
   const navigate = useNavigate();
   const time = Cookies.get("token-expire-time");
   const handleLogout = () => {
- 
-    navigate("/");
-  };
+     ['token', 'id', 'name','username','chapter_id','viewer_chapter_ids','user_type_id','token-expire-time', 'ver_con', 'email','currentYear'].forEach(cookie => {
+       Cookies.remove(cookie);
+     });
+     navigate("/");
+   };
   return (
     <>
       {/* <DisabledRightClick /> */}
       <Toaster richColors position="top-right" />
-      {/* <SessionTimeoutTracker expiryTime={time} onLogout={handleLogout} /> */}
+      <SessionTimeoutTracker expiryTime={time} onLogout={handleLogout} />
       <AppRoutes />
     </>
   );
