@@ -235,6 +235,18 @@ export function AppSidebar({ ...props }) {
         icon: Blocks,
         isActive: false,
       },
+      {
+        title: "C-Recepit-Donor",
+        url: "/recepit/change-donor",
+        icon: Blocks,
+        isActive: false,
+      },
+      {
+        title: "M-Recepit",
+        url: "/recepit/multiple-list",
+        icon: Blocks,
+        isActive: false,
+      },
     ],
   };
 
