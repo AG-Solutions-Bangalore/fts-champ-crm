@@ -56,6 +56,8 @@ import CreateViewer from "@/components/master-settings/viewers/create-viewer";
 import EditViewer from "@/components/master-settings/viewers/edit-viewer";
 import ChapterViewSuperAdmin from "@/components/master-settings/chapter-superadmin/chapter-view";
 import ChapterCreate from "@/components/master-settings/chapter-superadmin/chapter-create";
+import SuperReceiptDonor from "@/app/change-recepit-donor/change-recepit-donor";
+import MultipleRecepitList from "@/app/recepit-super/multiple-recepit-list";
 
 
 function AppRoutes() {
@@ -162,6 +164,8 @@ function AppRoutes() {
         <Route path="/change-promoter" element={<ChangePromoter />} />
         <Route path="/recepit/zero-list" element={<RecepitZeroList />} />
         <Route path="/recepit/non-zero-list/:id" element={<RecepitNonZeroList />} />
+        <Route path="/recepit/change-donor" element={<SuperReceiptDonor />} />
+        <Route path="/recepit/multiple-list" element={<MultipleRecepitList />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

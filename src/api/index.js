@@ -254,9 +254,12 @@ export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/superadmin-add-
 /*--------------------------Receipt-Super-start----------------------------------- */
 
 export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
-export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `${BASE_URL}/api/fetch-receipts-all-list`;
+export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/fetch-receipts-all-list`;
 export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
 export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
+export const CHANGE_RECEPIT_DONOR = `/api/fetch-change-receipts-donor`;
+export const CHANGE_DONOR = `/api/fetch-change-donors`;
+export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 
