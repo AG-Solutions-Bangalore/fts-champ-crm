@@ -171,7 +171,7 @@ const SuperReceiptDonor = () => {
     {
       id: "select",
       header: "Select",
-      id: "Select",
+    
       cell: ({ row }) => {
         const isSelected =
           selectedDonor?.indicomp_fts_id === row.original.indicomp_fts_id;

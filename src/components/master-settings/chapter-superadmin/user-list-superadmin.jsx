@@ -28,15 +28,16 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import CreateUserSuperadmin from './create-user-superadmin';
+import EditUserSuperadmin from './edit-user-superadmin';
 
 
-const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,chapterData,ImageUrl}) => {
+const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,ImageUrl,chapterCodeForCreateUser}) => {
     
       const navigate = useNavigate();
    
     
     
-     
+    const [editUser, setEditUser] = useState(null);
     
 
     
@@ -116,25 +117,27 @@ const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,chapt
           id: "actions",
           header: "Action",
           cell: ({ row }) => {
+            const userData = row.original;
             return (
               <div className="flex flex-row gap-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                      >
-                        Edit
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Edit User</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
+                 <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs"
+                                    onClick={() => setEditUser(userData)} 
+                                  >
+                                    Edit
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit User</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                {/* <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -149,7 +152,7 @@ const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,chapt
                       <p>Edit School</p>
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
+                </TooltipProvider> */}
               </div>
             );
           },
@@ -237,7 +240,7 @@ const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,chapt
                      />
                    </div>
                    <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
-                  <CreateUserSuperadmin/>
+                  <CreateUserSuperadmin chapterCodeForCreateUser={chapterCodeForCreateUser}/>
                    </div>
                  </div>
            
@@ -322,6 +325,14 @@ const UserListSuperadmin = ({id,isLoading,isError,refetch,isFetching,users,chapt
                      </Button>
                    </div>
                  </div>
+                  {editUser && (
+                         <EditUserSuperadmin
+                           userData={editUser}
+                           ImageUrl={ImageUrl}
+                           open={!!editUser}
+                           onClose={() => setEditUser(null)}
+                         />
+                       )}
                </div>
   )
 }

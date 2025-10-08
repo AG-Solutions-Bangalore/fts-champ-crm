@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Cookies from "js-cookie";
 import Logout from "./auth/log-out";
+import { Upgrade } from "./upgrade/upgrade";
 
 
 export function NavUser({ user }) {
@@ -40,7 +41,7 @@ export function NavUser({ user }) {
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-     
+     <Upgrade/>
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"

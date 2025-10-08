@@ -104,9 +104,9 @@ export default function Page({ children }) {
 
         {/* Mobile header text - only shown on sm screens */}
 
-        <div className="sm:hidden sticky top-0 flex justify-between items-center px-4 py-2  border-b z-40 bg-white  rounded-b-lg shadow-sm">
+        {/* <div className="sm:hidden sticky top-0 flex justify-between items-center px-4 py-2  border-b z-40 bg-white  rounded-b-lg shadow-sm">
           <div className="font-semibold flex items-center space-x-2">
-            {/* <img src={logo} alt="logo"  className="h-8 w-full" /> */}
+            <img src={logo} alt="logo"  className="h-8 w-full" />
             <span>JAJU-CRM</span>
           </div>
           <DropdownMenu>
@@ -152,7 +152,7 @@ export default function Page({ children }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </div> */}
 
 
 
@@ -180,9 +180,9 @@ export default function Page({ children }) {
 </div>
 </footer>
         {/* Mobile bottom navigation */}
-        <div className="sm:hidden ">
+        {/* <div className="sm:hidden ">
           <AppBottombar />
-        </div>
+        </div> */}
         <ChangePassword setOpen={setOpen} open={open} />
       </SidebarInset>
     </SidebarProvider>

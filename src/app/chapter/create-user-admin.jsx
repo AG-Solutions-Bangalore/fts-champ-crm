@@ -14,11 +14,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { CHAPTER_VIEW_CREATE_USER } from "@/api";
+import { ADMIN_CHAPTER_CREATE } from "../../api";
 
-const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
+const CreateUserAdmin = ({ chapterCodeForCreateUser, refetch }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,10 +41,6 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
       value: "1",
       label: "User",
     },
-    {
-      value: "2",
-      label: "Admin",
-    },
   ];
 
   const handleSubmit = async () => {
@@ -62,9 +57,15 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
       return;
     }
 
+    if (user.phone.length !== 10) {
+      toast.error("Phone number must be 10 digits");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
+      const chapterId = Cookies.get("chapter_id");
       
       const formData = new FormData();
       formData.append("name", user.name);
@@ -74,14 +75,14 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
       formData.append("phone", user.phone);
       formData.append("password", user.password);
       formData.append("user_type", user.user_type_id);
-      formData.append("chapter_id", chapterCodeForCreateUser); 
+      formData.append("chapter_id", chapterId); 
       
       if (user.image instanceof File) {
         formData.append("image", user.image);
       }
 
       const response = await axios.post(
-        `${CHAPTER_VIEW_CREATE_USER}`,
+        ADMIN_CHAPTER_CREATE,
         formData,
         {
           headers: { 
@@ -94,7 +95,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
       if (response?.data.code === 200) {
         toast.success(response.data.msg || "User created successfully");
 
-      
+        // Reset form
         setUser({
           name: "",
           email: "",
@@ -108,15 +109,16 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
         });
         setError("");
         
-      
-        await queryClient.invalidateQueries(["chapter"]);
+     
+        refetch();
         setOpen(false);
       } else {
         toast.error(response.data.msg || "Failed to create user");
       }
     } catch (error) {
+      console.error("Error creating user:", error);
       toast.error(
-        error.response?.data?.message || "Failed to create user"
+        error.response?.data?.msg || "Failed to create user"
       );
     } finally {
       setIsLoading(false);
@@ -127,7 +129,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
     const { name, value } = e.target;
     
     if (name === "phone") {
-    
+      // Only allow digits and limit to 10 characters
       if (/^\d*$/.test(value) && value.length <= 10) {
         setUser((prev) => ({ ...prev, [name]: value }));
       }
@@ -153,8 +155,8 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className={`ml-2`}>
-          <SquarePlus className="h-4 w-4 mr-2" /> User
+        <Button variant="default" size="sm" className="h-8 text-xs">
+          <SquarePlus className="h-4 w-4 mr-2" /> Add User
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
@@ -176,6 +178,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 placeholder="Enter username"
                 value={user.name}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
             </div>
@@ -191,6 +194,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 placeholder="Enter email"
                 value={user.email}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
             </div>
@@ -205,6 +209,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 placeholder="Enter full name"
                 value={user.first_name}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
             </div>
@@ -220,6 +225,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 value={user.phone}
                 onChange={handleInputChange}
                 maxLength={10}
+                className="h-9"
                 required
               />
             </div>
@@ -233,7 +239,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 name="user_type_id"
                 value={user.user_type_id}
                 onChange={handleInputChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
               >
                 <option value="">Select User Type</option>
@@ -255,6 +261,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
+                className="h-9"
               />
             </div>
 
@@ -269,6 +276,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 placeholder="Enter password"
                 value={user.password}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
             </div>
@@ -284,30 +292,41 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
                 placeholder="Confirm password"
                 value={user.confirm_password}
                 onChange={handleInputChange}
+                className="h-9"
                 required
               />
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+              {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
             </div>
           </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className={`mt-2`}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create User"
-            )}
-          </Button>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="h-9"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create User"
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default CreateUserSuperadmin;
+export default CreateUserAdmin;

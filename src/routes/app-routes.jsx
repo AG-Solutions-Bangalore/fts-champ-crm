@@ -56,6 +56,7 @@ import CreateViewer from "@/components/master-settings/viewers/create-viewer";
 import EditViewer from "@/components/master-settings/viewers/edit-viewer";
 import ChapterViewSuperAdmin from "@/components/master-settings/chapter-superadmin/chapter-view";
 import ChapterCreate from "@/components/master-settings/chapter-superadmin/chapter-create";
+import ChapterViewAdmin from "@/app/chapter/chapter-view-admin";
 import SuperReceiptDonor from "@/app/change-recepit-donor/change-recepit-donor";
 import MultipleRecepitList from "@/app/recepit-super/multiple-recepit-list";
 
@@ -72,6 +73,7 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute />}>
         {/* dashboard  */}
         <Route path="/home" element={<Home />} />
+        <Route path="/chapter" element={<ChapterViewAdmin />} />
 
         {/* master-setting */}
 

@@ -1,25 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building, Save, X, Loader2, Info, Search, ChevronDown, ArrowUpDown, Mail, Phone, User, Edit } from 'lucide-react';
-import { toast } from 'sonner';
-import Cookies from 'js-cookie';
-import { fetchChapterEditById, fetchChapterUpdateEditById, CHAPTER_EDIT_STATES_DROPDOWN, fetchChapterDatasourceById } from '@/api';
+import { Search, Loader2, Edit, ArrowUpDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import {
   Table,
   TableBody,
@@ -28,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   flexRender,
   getCoreRowModel,
@@ -37,28 +20,33 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import CreateUserSuperadmin from './create-user-superadmin';
-import CreateDatasourceSuperadmin from './create-datasource-superadmin';
-import EditDatasourceSuperadmin from './edit-datasource-superadmin';
-import { decryptId } from '@/utils/encyrption/encyrption';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import { toast } from 'sonner';
+import { ADMIN_DATASOURCE_LIST } from '@/api';
+import CreateDatasourceAdmin from './create-datasource-admin';
+import EditDatasourceAdmin from './edit-datasource-admin';
 
-const DatasourceListSuperadmin = ({id}) => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users");
+const DatasourceListAdmin = () => {
   const [editDatasource, setEditDatasource] = useState(null);
+  const chapterId = Cookies.get("chapter_id");
 
-  const decryptedId = decryptId(id);
-
-  const { data: datasourceData, isLoading: isDatasourceLoading, isError: isDatasourceError, refetch: refetchDatasource } = useQuery({
-    queryKey: ['chapter-datasource', id],
-    queryFn: () => fetchChapterDatasourceById(id),
-    enabled: !!id,
+  const { data: datasourceData, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ['chapter-datasource-admin', chapterId],
+    queryFn: async () => {
+      const response = await axios.get(ADMIN_DATASOURCE_LIST, {
+        headers: {
+          Authorization: `Bearer ${Cookies.get('token')}`,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!chapterId,
   });
 
   const datasources = datasourceData?.datasource || [];
 
-  // -----------------------------------------------Datasource List -----------
+
   const [datasourceSorting, setDatasourceSorting] = useState([]);
   const [datasourceColumnFilters, setDatasourceColumnFilters] = useState([]);
   const [datasourceColumnVisibility, setDatasourceColumnVisibility] = useState({});
@@ -109,6 +97,7 @@ const DatasourceListSuperadmin = ({id}) => {
                     size="sm"
                     className="h-8 text-xs"
                     onClick={() => setEditDatasource(datasource)}
+                    disabled={datasource.chapter_id === 0}
                   >
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
@@ -163,15 +152,15 @@ const DatasourceListSuperadmin = ({id}) => {
     ));
   };
 
-  if (isDatasourceError) {
+  if (isError) {
     return (
       <div className="w-full p-4">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching datasource Data
+              Error Fetching Data Source Data
             </div>
-            <Button onClick={() => refetchDatasource()} variant="outline" size="sm">
+            <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
             </Button>
           </div>
@@ -180,12 +169,12 @@ const DatasourceListSuperadmin = ({id}) => {
     );
   }
 
-  if (isDatasourceLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-[20rem] bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading datasource data...</span>
+          <span>Loading data source data...</span>
         </div>
       </div>
     );
@@ -204,7 +193,7 @@ const DatasourceListSuperadmin = ({id}) => {
           />
         </div>
         <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
-          <CreateDatasourceSuperadmin chapterId={decryptedId} />
+          <CreateDatasourceAdmin refetch={refetch} />
         </div>
       </div>
 
@@ -217,7 +206,7 @@ const DatasourceListSuperadmin = ({id}) => {
                 {headerGroup.headers.map((header) => (
                   <TableHead 
                     key={header.id} 
-                    className="h-9 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-xs font-medium"
+                    className="h-9 px-3 bg-[var(--team-color)] text-white text-xs font-medium"
                     style={{ width: header.column.columnDef.size }}
                   >
                     {header.isPlaceholder
@@ -233,7 +222,7 @@ const DatasourceListSuperadmin = ({id}) => {
           </TableHeader>
           
           <TableBody>
-            {isDatasourceLoading && !datasourceTable.getRowModel().rows.length ? (
+            {isFetching && !datasourceTable.getRowModel().rows.length ? (
               <DatasourceTableShimmer />
             ) : datasourceTable.getRowModel().rows?.length ? (
               datasourceTable.getRowModel().rows.map((row) => (
@@ -292,14 +281,15 @@ const DatasourceListSuperadmin = ({id}) => {
 
       {/* Edit Dialog */}
       {editDatasource && (
-        <EditDatasourceSuperadmin
+        <EditDatasourceAdmin
           datasourceData={editDatasource}
           open={!!editDatasource}
           onClose={() => setEditDatasource(null)}
+          refetch={refetch}
         />
       )}
     </div>
   );
 }
 
-export default DatasourceListSuperadmin;
+export default DatasourceListAdmin;
