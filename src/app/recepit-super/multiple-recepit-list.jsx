@@ -115,9 +115,10 @@ const MultipleRecepitList = () => {
       },
       size: 60,
     },
+
     {
-      accessorKey: "indicomp_fts_id",
-      id: "FTS ID",
+      accessorKey: "id",
+      id: "ID",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -125,12 +126,20 @@ const MultipleRecepitList = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs font-medium"
         >
-          FTS ID
+          ID
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="text-[13px] font-medium">{row.getValue("FTS ID")}</div>
+        <div className="text-[13px] font-medium">{row.getValue("ID")}</div>
+      ),
+    },
+    {
+      accessorKey: "indicomp_fts_id",
+      id: "FTS ID",
+      header: "FTS ID",
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("FTS ID")}</div>
       ),
     },
     {
@@ -352,32 +361,48 @@ const MultipleRecepitList = () => {
 
     if (!from_id && !to_id) {
       toast.warning("Please enter both From and To ID.");
+      return;
     } else if (!from_id) {
       toast.warning("From ID is required.");
+      return;
     } else if (!to_id) {
       toast.warning("To ID is required.");
-    } else {
-      const payload = { from_id, to_id };
+      return;
+    }
 
-      try {
-        const res = await trigger({
-          url: DOWNLOAD_MULTI_RECEIPT,
-          method: "post",
-          data: payload,
-        });
+    const payload = { from_id, to_id };
 
-        if (!res) {
-          toast.warning("No response from server.");
-        } else {
-          toast.success(res?.msg || "Receipt downloaded successfully!");
-          setRange({ from_id: "", to_id: "" });
-        }
-      } catch (err) {
-        console.error("Error downloading receipt:", err);
-        toast.error(
-          err.message || "Something went wrong while downloading the receipt."
-        );
+    try {
+      const res = await trigger({
+        url: DOWNLOAD_MULTI_RECEIPT,
+        method: "post",
+        data: payload,
+        responseType: "blob",
+      });
+
+      if (!res) {
+        toast.warning("No response from server.");
+        return;
       }
+      const blob = new Blob([res], { type: "application/zip" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `receipts_${from_id}_to_${to_id}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      toast.success("Receipts downloaded successfully!");
+      setRange({ from_id: "", to_id: "" });
+    } catch (err) {
+      console.error("Error downloading receipt:", err);
+      toast.error(
+        err.message || "Something went wrong while downloading the receipt."
+      );
     }
   };
 
