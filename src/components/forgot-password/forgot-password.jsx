@@ -11,19 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+
 import BASE_URL from "@/config/base-url";
 import { motion, AnimatePresence } from "framer-motion";
 import { ContextPanel } from "@/lib/context-panel";
 import logo from "../../assets/jaju1.png";
 import { ButtonConfig } from "@/config/button-config";
+import { toast } from "sonner";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [username, setUserName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
+
 
   const loadingMessages = [
     "Setting things up for you...",
@@ -65,36 +66,17 @@ export default function ForgotPassword() {
         const response = res.data;
 
         if (response.code === 200) {
-          toast({
-            title: "Success",
-            description: response.msg,
-          });
+          toast.success(response.msg || 'Success');
         } else if (response.code === 400) {
-          toast({
-            title: "Duplicate Entry",
-            description: response.msg,
-            variant: "destructive",
-          });
+          toast.error(response.msg || 'Duplicate Entry');
         } else {
-          toast({
-            title: "Unexpected Response",
-            description: response.msg,
-            variant: "destructive",
-          });
+          toast.error(response.msg|| 'Unexpected Error');
         }
       } else {
-        toast({
-          title: "Error",
-          description: "Unexpected response from the server.",
-          variant: "destructive",
-        });
+        toast.error('Unexpected response from the server.');
       }
     } catch (error) {
-      toast({
-        title: "Request Failed",
-        description: error.response?.data?.message || "Please try again later.",
-        variant: "destructive",
-      });
+      toast.error(error.response?.data?.message || "Please try again later.");
     } finally {
       setIsLoading(false);
     }

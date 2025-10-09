@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import BASE_URL from "@/config/base-url";
 import { ButtonConfig } from "@/config/button-config";
-import { useToast } from "@/hooks/use-toast";
+
 import axios from "axios";
 import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 const ChangePassword = ({ open, setOpen }) => {
-  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState();
   const username = Cookies.get("name");
   const [formData, setFormData] = useState({
@@ -40,20 +41,8 @@ const ChangePassword = ({ open, setOpen }) => {
     if (!formData.newPassword) missingFields.push("New Password");
 
     if (missingFields.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: (
-          <div>
-            <p>Please fill in the following fields:</p>
-            <ul className="list-disc pl-5">
-              {missingFields.map((field, index) => (
-                <li key={index}>{field}</li>
-              ))}
-            </ul>
-          </div>
-        ),
-        variant: "destructive",
-      });
+      toast.error(
+       "Validation Error");
       return;
     }
 
@@ -69,10 +58,7 @@ const ChangePassword = ({ open, setOpen }) => {
       );
 
       if (response?.data.code == 200) {
-        toast({
-          title: "Success",
-          description: response.data.msg,
-        });
+        toast.success(response.data.msg || 'Updated Successfuly');
 
         setFormData({
           name: "",
@@ -81,19 +67,10 @@ const ChangePassword = ({ open, setOpen }) => {
         });
         setOpen(false);
       } else {
-        toast({
-          title: "Error",
-          description: response.data.msg,
-          variant: "destructive",
-        });
+        toast.error(response.data.msg || 'Error');
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error.response?.data?.message || "Failed to change password",
-        variant: "destructive",
-      });
+      toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setIsLoading(false);
     }

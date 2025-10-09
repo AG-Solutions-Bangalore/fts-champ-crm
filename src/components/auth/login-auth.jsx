@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+
 import { motion } from "framer-motion";
 import { ContextPanel } from "@/lib/context-panel";
 import BASE_URL from "@/config/base-url";
@@ -19,6 +19,7 @@ import Cookies from "js-cookie";
 import { ButtonConfig } from "@/config/button-config";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "../../assets/jaju1.png";
+import { toast } from "sonner";
 
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export default function LoginAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const [showPassword, setShowPassword] = useState(false);
   
   const loadingMessages = [
@@ -105,12 +106,7 @@ export default function LoginAuth() {
     } catch (error) {
       console.error("❌ Login Error:", error.response?.data.message || error.message);
 
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description:
-          error.response?.data?.message || "Please check your credentials.",
-      });
+      toast.error(error.response?.data?.message || "Please check your credentials.");
 
       setIsLoading(false);
     }
