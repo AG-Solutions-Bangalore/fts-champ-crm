@@ -224,12 +224,7 @@ export function AppSidebar({ ...props }) {
         icon: Blocks,
         isActive: false,
       },
-      {
-        title: "Change Promoter-S",
-        url: "/change-promoter",
-        icon: Blocks,
-        isActive: false,
-      },
+     
       {
         title: "Recepit-S",
         url: "/recepit/zero-list",

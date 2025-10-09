@@ -48,8 +48,6 @@ import Settings from "@/app/setting/setting";
 import AllotedList from "@/app/school/repeated-donor/alloted-list";
 import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
 import DonorCompanyEdit from "@/app/donor/donor-list/donor-company-edit";
-import ChangePromoter from "@/app/donor/change-promoter/change-promoter";
-import RecepitSuperList from "@/app/recepit-super/recepit-zero-list";
 import RecepitZeroList from "@/app/recepit-super/recepit-zero-list";
 import RecepitNonZeroList from "@/app/recepit-super/recepit-nonzero-list";
 import CreateViewer from "@/components/master-settings/viewers/create-viewer";
@@ -163,7 +161,7 @@ function AppRoutes() {
 
         {/* settings  */}
         <Route path="/settings" element={<Settings />} />
-        <Route path="/change-promoter" element={<ChangePromoter />} />
+     
         <Route path="/recepit/zero-list" element={<RecepitZeroList />} />
         <Route path="/recepit/non-zero-list/:id" element={<RecepitNonZeroList />} />
         <Route path="/recepit/change-donor" element={<SuperReceiptDonor />} />
