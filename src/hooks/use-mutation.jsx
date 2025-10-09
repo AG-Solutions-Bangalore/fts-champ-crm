@@ -14,6 +14,7 @@ export function useApiMutation() {
     data = null,
     params = null,
     headers = {},
+    responseType = "json",
   }) => {
     setLoading(true);
     setError(null);
@@ -23,12 +24,15 @@ export function useApiMutation() {
         method,
         data,
         params,
+        responseType,
         headers: {
           ...headers,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-
+      if (responseType == "blob") {
+        return response.data;
+      }
       return response.data;
     } catch (err) {
       setError(err);

@@ -21,11 +21,12 @@ import {
 } from "@/components/ui/sidebar";
 import Cookies from "js-cookie";
 import { NavMainReport } from "./nav-main-report";
+import { useState } from "react";
 
 export function AppSidebar({ ...props }) {
   const nameL = Cookies.get("name");
   const emailL = Cookies.get("email");
-
+  const [openItem, setOpenItem] = useState(null);
   const initialData = {
     user: {
       name: `${nameL}`,
@@ -256,10 +257,18 @@ export function AppSidebar({ ...props }) {
         <TeamSwitcher teams={initialData.teams} />
       </SidebarHeader>
       <SidebarContent className="sidebar-content">
-        <NavMain items={initialData.navMain} />
+        <NavMain
+          items={initialData.navMain}
+          openItem={openItem}
+          setOpenItem={setOpenItem}
+        />
 
         {/* <NavMainUser projects={initialData.schoolManagement} /> */}
-        <NavMainReport items={initialData.navMainReport} />
+        <NavMainReport
+          items={initialData.navMainReport}
+          openItem={openItem}
+          setOpenItem={setOpenItem}
+        />
         {/* <NavMainUser projects={initialData.schoolManagement} /> */}
       </SidebarContent>
       <SidebarFooter>
