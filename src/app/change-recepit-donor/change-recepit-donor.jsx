@@ -171,7 +171,7 @@ const SuperReceiptDonor = () => {
     {
       id: "select",
       header: "Select",
-    
+
       cell: ({ row }) => {
         const isSelected =
           selectedDonor?.indicomp_fts_id === row.original.indicomp_fts_id;
@@ -388,122 +388,94 @@ const SuperReceiptDonor = () => {
 
     return buttons;
   };
+
   return (
     <div className="max-w-screen-lg mx-auto p-4 space-y-6">
       {!receiptData && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex flex-col items-center justify-center min-h-[70vh] px-4"
-        >
-          {/* Card */}
+        <div className="flex flex-col items-center justify-center px-4 py-12">
           <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-primary/10 p-8"
+            className="flex flex-col md:flex-row w-full max-w-5xl bg-white/95 backdrop-blur-md border border-primary/20 rounded-3xl shadow-2xl overflow-hidden"
           >
-            {/* Header */}
-            <motion.header
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-              className="text-center mb-8"
-            >
-              <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">
-                Change Receipt Donor
-              </h1>
-              <p className="text-gray-600 text-sm md:text-base">
-                Enter your receipt reference number to fetch donor details
+            <div className="hidden md:flex flex-1 bg-gradient-to-b from-primary to-secondary text-black flex-col justify-center items-center p-10">
+              <h2 className="text-4xl font-extrabold mb-4 text-black">
+                Donor Management
+              </h2>
+              <p className="text-black/80 text-lg text-center">
+                Quickly fetch and update donor details using your receipt
+                number. Everything you need is in one place.
               </p>
-            </motion.header>
+            </div>
 
-            {/* Input Field */}
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="flex items-center gap-3"
-            >
-              <div className="relative w-full">
-                <File
-                  className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-200 ${
-                    searchFocused ? "text-primary" : "text-primary/60"
-                  }`}
-                />
+            <div className="flex-1 p-8 md:p-12 flex flex-col justify-center">
+              <motion.h1
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-3xl font-bold text-primary mb-4"
+              >
+                Change Receipt Donor
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-black/70 mb-6"
+              >
+                Enter your receipt reference number to fetch donor details
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row gap-4 mb-6"
+              >
                 <Input
-                  className={`w-full pl-12 py-3 text-center text-base md:text-lg rounded-xl border transition-all duration-200
-      ${
-        searchFocused
-          ? "border-primary ring-2 ring-primary/40 bg-primary/10 placeholder:text-primary/60"
-          : "border-gray-200 bg-primary/5 placeholder:text-gray-400"
-      }
-    `}
-                  placeholder="e.g., GEN/6/2024-25"
                   value={receiptRefNo}
                   onChange={(e) => setReceiptRefNo(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
+                  placeholder="e.g: GEN/6/2024-25"
                   onKeyDown={(e) => e.key === "Enter" && handleFetchReceipt()}
+                  className={`peer w-full text-base rounded-xl border px-4 py-3 focus:ring-2 transition-all text-black placeholder-black/50 ${
+                    searchFocused
+                      ? "border-primary ring-primary/30"
+                      : "border-gray-300"
+                  }`}
                 />
-              </div>
 
-              <Button
-                onClick={handleFetchReceipt}
-                disabled={loadingrecepit}
-                className={`min-w-[120px] flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white transition-all ${
-                  loadingrecepit
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
-                }`}
+<Button
+  onClick={handleFetchReceipt}
+  disabled={loadingrecepit}
+  className={`w-full sm:w-36 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 ${
+    loadingrecepit
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+  }`}
+>
+  {loadingrecepit ? (
+    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+  ) : (
+    <Search className="w-5 h-5 inline transition-transform duration-300 group-hover:rotate-12" />
+  )}
+  Search
+</Button>
+
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-black/60 text-sm"
               >
-                {loadingrecepit ? (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Search className="w-5 h-5" /> Search
-                  </>
-                )}
-              </Button>
-            </motion.div>
-
-            {/* Hint */}
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="mt-3 text-center text-gray-500 text-sm"
-            >
-              Press <span className="font-semibold text-primary">Enter</span> or
-              click <span className="font-semibold text-primary">Search</span>{" "}
-              to continue
-            </motion.p>
-
-            {/* Feature Highlights */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4"
-            >
-              {[
-                { icon: File, label: "Manage Receipts" },
-                { icon: Search, label: "Update Donors" },
-                { icon: RefreshCcw, label: "Easy Process" },
-              ].map(({ icon: Icon, label }, idx) => (
-                <motion.div
-                  key={idx}
-                  whileHover={{ y: -5, scale: 1.03 }}
-                  className="flex flex-col items-center justify-center gap-2 bg-primary/10 text-primary rounded-xl py-4 px-3 shadow-sm hover:shadow-md transition-all"
-                >
-                  <Icon className="w-6 h-6" />
-                  <span className="text-sm font-medium">{label}</span>
-                </motion.div>
-              ))}
-            </motion.div>
+                Press <span className="text-primary font-medium">Enter</span> or
+                click <span className="text-primary font-medium">Search</span>{" "}
+                to continue
+              </motion.p>
+            </div>
           </motion.div>
-        </motion.section>
+        </div>
       )}
 
       <AnimatePresence>

@@ -255,6 +255,7 @@ export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/superadmin-add-
 
 export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
 export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/fetch-receipts-all-list`;
+export const DOWNLOAD_MULTI_RECEIPT = `/api/download-receipts-multi`;
 export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
 export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
 export const CHANGE_RECEPIT_DONOR = `/api/fetch-change-receipts-donor`;
