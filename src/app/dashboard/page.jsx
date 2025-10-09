@@ -21,13 +21,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, ChevronsUpDown, Key, LogOut } from "lucide-react";
+import { ArrowLeft, Building, ChevronsUpDown, Key, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ChangePassword from "../auth/change-password";
 import { useState } from "react";
 import logo from "../../assets/el.png"
 import Cookies from "js-cookie";
 import { Breadcrumbs } from "@/components/new/breadcrumbs";
+import ChapterSelection from "@/components/common/chapter-selection";
 
 
 
@@ -45,12 +46,12 @@ export default function Page({ children }) {
     navigate(-1);
   };
 
-  const handleLogout = () => {
-    ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
-      Cookies.remove(cookie);
-    });
-    navigate("/");
-  };
+  // const handleLogout = () => {
+  //   ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
+  //     Cookies.remove(cookie);
+  //   });
+  //   navigate("/");
+  // };
 
   // Create initials from user name
   const splitUser = nameL || "";
@@ -70,10 +71,10 @@ export default function Page({ children }) {
  
       <SidebarInset>
         {/* Header that appears on all screens */}
-        <header className="sticky  top-0 z-10 flex h-16 shrink-0 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky  top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         
           <div className="flex items-center gap-2 px-4">
-
+ 
             <SidebarTrigger className="-ml-1 hover:bg-blue-100" />
             <Separator orientation="vertical" className="mr-2 h-4 inline-block" />
 
@@ -95,7 +96,14 @@ export default function Page({ children }) {
               </BreadcrumbList>
             </Breadcrumb> */}
                <Breadcrumbs onBack={handleBackClick} />
+            
+             
           </div>
+          <div>
+         
+               <ChapterSelection/>
+              
+               </div>
         </header>
 
 

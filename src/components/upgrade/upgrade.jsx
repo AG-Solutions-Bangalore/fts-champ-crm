@@ -7,7 +7,6 @@ import { Download, Package, X } from "lucide-react";
 
 import { Badge } from "../../components/ui/badge";
 import { ContextPanel } from "@/lib/context-panel";
-import BASE_URL from "@/config/base-url";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";

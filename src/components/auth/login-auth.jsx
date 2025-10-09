@@ -117,8 +117,8 @@ export default function LoginAuth() {
   };
 
   return (
-    <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
-      <div className="flex items-center justify-center py-12">
+    <div className=" flex flex-col justify-center items-center min-h-screen bg-gray-100">
+      <div className=" py-12">
         <motion.div 
           className="mx-auto grid w-[350px] gap-6"
           initial={{ opacity: 0, y: 20 }}
@@ -205,7 +205,7 @@ export default function LoginAuth() {
               >
                 <Button
                   type="submit"
-                  className={`w-full ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                  className={`w-full `}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -232,14 +232,14 @@ export default function LoginAuth() {
         </motion.div>
       </div>
       
-      <div className="hidden bg-muted lg:block">
+      {/* <div className="hidden bg-muted lg:block">
         <img
           src="/login.jpg"
           alt="Login Image"
       
           className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
         />
-      </div>
+      </div> */}
     </div>
   );
 }

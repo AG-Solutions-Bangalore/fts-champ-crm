@@ -7,6 +7,7 @@ import DisabledRightClick from "./components/common/disabled-right-click";
 import AppRoutes from "./routes/app-routes";
 import Cookies from "js-cookie";
 import { Toaster } from "sonner";
+import ScrollToTop from "./components/common/scroll-to-top";
 
 function App() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ function App() {
     <>
       {/* <DisabledRightClick /> */}
       <Toaster richColors position="top-right" />
+      <ScrollToTop/>
       <SessionTimeoutTracker expiryTime={time} onLogout={handleLogout} />
       <AppRoutes />
     </>
