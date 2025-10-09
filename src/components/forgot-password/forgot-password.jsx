@@ -1,6 +1,3 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,12 +8,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BASE_URL from "@/config/base-url";
-import { motion, AnimatePresence } from "framer-motion";
-import { ContextPanel } from "@/lib/context-panel";
-import logo from "../../assets/jaju1.png";
 import { ButtonConfig } from "@/config/button-config";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -24,7 +21,6 @@ export default function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
-
 
   const loadingMessages = [
     "Setting things up for you...",
@@ -60,20 +56,23 @@ export default function ForgotPassword() {
     try {
       console.log("Submitting forgot password request...");
 
-      const res = await axios.post(`${BASE_URL}/api/web-send-password?username=${username}&email=${email}`, formData);
+      const res = await axios.post(
+        `${BASE_URL}/api/web-send-password?username=${username}&email=${email}`,
+        formData
+      );
 
       if (res.status === 200) {
         const response = res.data;
 
         if (response.code === 200) {
-          toast.success(response.msg || 'Success');
+          toast.success(response.msg || "Success");
         } else if (response.code === 400) {
-          toast.error(response.msg || 'Duplicate Entry');
+          toast.error(response.msg || "Duplicate Entry");
         } else {
-          toast.error(response.msg|| 'Unexpected Error');
+          toast.error(response.msg || "Unexpected Error");
         }
       } else {
-        toast.error('Unexpected response from the server.');
+        toast.error("Unexpected response from the server.");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Please try again later.");
@@ -134,7 +133,6 @@ export default function ForgotPassword() {
                       required
                       minLength={1}
                       maxLength={50}
-                     
                     />
                   </motion.div>
                 </div>
@@ -160,7 +158,6 @@ export default function ForgotPassword() {
                       required
                       minLength={1}
                       maxLength={50}
-                     
                     />
                   </motion.div>
                 </div>
@@ -171,8 +168,8 @@ export default function ForgotPassword() {
                 >
                   <Button
                     type="submit"
-                    className={`${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} w-full`}
                     disabled={isLoading}
+                    className={`w-full `}
                   >
                     {isLoading ? (
                       <motion.span

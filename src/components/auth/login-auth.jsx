@@ -1,24 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { motion } from "framer-motion";
-import { ContextPanel } from "@/lib/context-panel";
 import BASE_URL from "@/config/base-url";
+import { motion } from "framer-motion";
 import Cookies from "js-cookie";
-import { ButtonConfig } from "@/config/button-config";
 import { Eye, EyeOff } from "lucide-react";
-import logo from "../../assets/jaju1.png";
 import { toast } from "sonner";
 
 export default function LoginAuth() {
