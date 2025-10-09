@@ -390,14 +390,14 @@ const SuperReceiptDonor = () => {
   };
 
   return (
-    <div className="max-w-screen-lg mx-auto p-4 space-y-6">
+    <div className="max-w-full mx-auto ">
       {!receiptData && (
-        <div className="flex flex-col items-center justify-center px-4 py-12">
+        <div className="flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="flex flex-col md:flex-row w-full max-w-5xl bg-white/95 backdrop-blur-md border border-primary/20 rounded-3xl shadow-2xl overflow-hidden"
+            className="flex flex-col md:flex-row w-full  bg-white/95 backdrop-blur-md border border-primary/20 rounded-3xl shadow-2xl overflow-hidden"
           >
             <div className="hidden md:flex flex-1 bg-gradient-to-b from-primary to-secondary text-black flex-col justify-center items-center p-10">
               <h2 className="text-4xl font-extrabold mb-4 text-black">
