@@ -25,6 +25,11 @@ const Settings = () => {
       });
       return response.data;
     },
+    staleTime: 30 * 60 * 1000,
+    cacheTime: 60 * 60 * 1000, 
+    refetchOnMount: false, 
+    refetchOnWindowFocus: false, 
+    refetchOnReconnect: false, 
   });
 
   const user = profileData?.user;

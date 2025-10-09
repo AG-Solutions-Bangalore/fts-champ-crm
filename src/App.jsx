@@ -4,7 +4,7 @@ import SessionTimeoutTracker from "./components/session-timeout-tracker/session-
 
 import Cookies from "js-cookie";
 import { Toaster } from "sonner";
-import AppRoutes from "./routes/app-routes";
+import ScrollToTop from "./components/common/scroll-to-top";
 
 function App() {
   const navigate = useNavigate();
@@ -31,6 +31,7 @@ function App() {
     <>
       {/* <DisabledRightClick /> */}
       <Toaster richColors position="top-right" />
+      <ScrollToTop/>
       <SessionTimeoutTracker expiryTime={time} onLogout={handleLogout} />
       <AppRoutes />
     </>

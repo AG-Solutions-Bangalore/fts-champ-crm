@@ -157,6 +157,7 @@ const Home = () => {
       return response.data;
     },
     enabled: !!userTypeId,
+   
   });
 
   const datanotification = noticesData?.notices || [];
@@ -175,6 +176,11 @@ const Home = () => {
       return response.data;
     },
     enabled: !!currentYear,
+    staleTime: 30 * 60 * 1000,
+    cacheTime: 60 * 60 * 1000, 
+    refetchOnMount: false, 
+    refetchOnWindowFocus: false, 
+    refetchOnReconnect: false, 
   });
 
   const result = dashboardData || {};
