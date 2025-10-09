@@ -1,6 +1,8 @@
-import { RECEIPT_SUPER_MULTI_RECEIPT_LIST } from "@/api";
+import {
+  DOWNLOAD_MULTI_RECEIPT,
+  RECEIPT_SUPER_MULTI_RECEIPT_LIST,
+} from "@/api";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -17,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useApiMutation } from "@/hooks/use-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -32,28 +35,26 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Search
+  Download,
+  Loader,
+  Search,
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { TableShimmer } from "../school/loadingtable/TableShimmer";
-import ReceiptSuperView from "./recepit-sup-view";
+import { toast } from "sonner";
 
 const MultipleRecepitList = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedReceiptId, setSelectedReceiptId] = useState(null);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
+  const { trigger, loading } = useApiMutation();
+  const [range, setRange] = useState({ from_id: "", to_id: "" });
   const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
@@ -72,10 +73,14 @@ const MultipleRecepitList = () => {
     isFetching,
     prefetchPage,
     refetch,
-  } = useGetMutation("multiple-recepit-list", `${RECEIPT_SUPER_MULTI_RECEIPT_LIST}`, {
-    page: pagination.pageIndex + 1,
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-  });
+  } = useGetMutation(
+    "multiple-recepit-list",
+    `${RECEIPT_SUPER_MULTI_RECEIPT_LIST}`,
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
+  );
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = receiptData?.schools?.last_page || 1;
@@ -124,31 +129,31 @@ const MultipleRecepitList = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => {
-        const ftsId =
-          row.original?.indicomp_fts_id || row.getValue("indicomp_fts_id");
-        return ftsId ? (
-          <div className="text-[13px] font-medium">{ftsId}</div>
-        ) : (
-          <div className="text-gray-400 text-xs">—</div>
-        );
-      },
-      size: 150,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">{row.getValue("FTS ID")}</div>
+      ),
     },
     {
       accessorKey: "receipt_no",
-      id: "Receipt No",
-      header: "Receipt No",
+      id: "Recepit No",
+      header: "Recepit No",
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("Recepit No")}</div>
+      ),
+    },
+
+    {
+      accessorKey: "indicomp_full_name",
+      id: "Donor Name",
+      header: "Donor Name",
       cell: ({ row }) => {
-        const receiptNo =
-          row.original?.receipt_no || row.getValue("receipt_no");
-        return receiptNo ? (
-          <div className="text-xs">{receiptNo}</div>
+        const fullName = row.original?.individual_company?.indicomp_full_name;
+        return fullName ? (
+          <div className="text-xs">{fullName}</div>
         ) : (
           <div className="text-gray-400 text-xs">—</div>
         );
       },
-      size: 150,
     },
     {
       accessorKey: "receipt_date",
@@ -162,21 +167,23 @@ const MultipleRecepitList = () => {
           <div className="text-gray-400 text-xs">—</div>
         );
       },
-      size: 120,
     },
+
     {
       accessorKey: "receipt_exemption_type",
       id: "Exemption Type",
       header: "Exemption Type",
-      cell: ({ row }) => {
-        const type = row.original?.receipt_exemption_type;
-        return type ? (
-          <div className="text-xs">{type}</div>
-        ) : (
-          <div className="text-gray-400 text-xs">—</div>
-        );
-      },
-      size: 120,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("Exemption Type")}</div>
+      ),
+    },
+    {
+      accessorKey: "receipt_donation_type",
+      id: "Donation Type",
+      header: "Donation Type",
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("Donation Type")}</div>
+      ),
     },
     {
       accessorKey: "chapter_name",
@@ -190,9 +197,7 @@ const MultipleRecepitList = () => {
           <div className="text-gray-400 text-xs">—</div>
         );
       },
-      size: 120,
     },
-   
   ];
 
   const table = useReactTable({
@@ -222,7 +227,13 @@ const MultipleRecepitList = () => {
       },
     },
   });
-
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setRange((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
@@ -336,6 +347,39 @@ const MultipleRecepitList = () => {
       </div>
     );
   }
+  const handleDownload = async () => {
+    const { from_id, to_id } = range;
+
+    if (!from_id && !to_id) {
+      toast.warning("Please enter both From and To ID.");
+    } else if (!from_id) {
+      toast.warning("From ID is required.");
+    } else if (!to_id) {
+      toast.warning("To ID is required.");
+    } else {
+      const payload = { from_id, to_id };
+
+      try {
+        const res = await trigger({
+          url: DOWNLOAD_MULTI_RECEIPT,
+          method: "post",
+          data: payload,
+        });
+
+        if (!res) {
+          toast.warning("No response from server.");
+        } else {
+          toast.success(res?.msg || "Receipt downloaded successfully!");
+          setRange({ from_id: "", to_id: "" });
+        }
+      } catch (err) {
+        console.error("Error downloading receipt:", err);
+        toast.error(
+          err.message || "Something went wrong while downloading the receipt."
+        );
+      }
+    }
+  };
 
   return (
     <div className="max-w-full p-2">
@@ -354,28 +398,63 @@ const MultipleRecepitList = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9">
-              Columns <ChevronDown className="ml-2 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="text-xs capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Input
+            name="from_id"
+            placeholder="From Id..."
+            value={range.from_id}
+            onChange={handleChange}
+            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+          />
+
+          <Input
+            name="to_id"
+            placeholder="To Id..."
+            value={range.to_id}
+            onChange={handleChange}
+            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+          />
+
+          <Button
+            variant="default"
+            size="sm"
+            disabled={loading}
+            className="flex items-center gap-2"
+            onClick={handleDownload}
+          >
+            {loading ? (
+              <Loader className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {loading ? "Downloading..." : "Download Zip"}
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                Columns <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="text-xs capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       {/* Table */}
       <div className="rounded-none border flex flex-col">
@@ -483,26 +562,6 @@ const MultipleRecepitList = () => {
           </Button>
         </div>
       </div>
-      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-        <DialogContent
-          hideOverlay
-          className="max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] h-[85vh] p-0 absolute opacity-0 pointer-events-none -z-50 overflow-hidden bg-white rounded-xl [&>button]:hidden"
-          aria-describedby={undefined}
-        >
-          <div className="flex-1 overflow-y-auto max-h-[80vh]">
-            {selectedReceiptId && (
-              <ReceiptSuperView
-                id={selectedReceiptId}
-                isDialog={true}
-                onClose={() => {
-                  setShowViewModal(false);
-                  setIsDownloading(false);
-                }}
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
