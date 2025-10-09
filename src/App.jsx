@@ -5,6 +5,7 @@ import SessionTimeoutTracker from "./components/session-timeout-tracker/session-
 import Cookies from "js-cookie";
 import { Toaster } from "sonner";
 import ScrollToTop from "./components/common/scroll-to-top";
+import AppRoutes from "./routes/app-routes";
 
 function App() {
   const navigate = useNavigate();
