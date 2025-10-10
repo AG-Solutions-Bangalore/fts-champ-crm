@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Download, Info, ChevronDown, ChevronUp, Search, Eye, Plus, CheckCircle, X } from 'lucide-react';
+import { Download, Info, ChevronDown, ChevronUp, Search, Eye, Plus, CheckCircle, X, Edit } from 'lucide-react';
 import Cookies from 'js-cookie';
 import moment from 'moment';
 
@@ -53,9 +53,8 @@ import {
 
 import { 
   OTHER_NOTIFICATION_MARK_AS_READ, 
-  OTHER_NOTIFICATION_SUPERADMIN, 
-  OTHER_NOTIFICATION_USER,
-  OTHER_NOTIFICATION_SUMBIT_NOTICE 
+  OTHER_NOTIFICATION_SUMBIT_NOTICE, 
+  OTHER_NOTIFICATION
 } from '@/api';
 
 const Notification = () => {
@@ -66,35 +65,38 @@ const Notification = () => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [viewMode, setViewMode] = useState('table');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState(null);
+  const [editingNotice, setEditingNotice] = useState(null);
 
   const { data: notificationsData = [], isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const url = userTypeId === "3" ? OTHER_NOTIFICATION_SUPERADMIN : OTHER_NOTIFICATION_USER;
+      const url = OTHER_NOTIFICATION
       const response = await axios.get(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      return response.data.notices || [];
+      return response.data.data || [];
     },
     retry: 2,
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (noticeId) => {
-      await axios.post(`${OTHER_NOTIFICATION_MARK_AS_READ}${noticeId}`, {}, {
+     const response = await axios.post(`${OTHER_NOTIFICATION_MARK_AS_READ}/${noticeId}/read`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      return response.data
     },
-    onSuccess: () => {
-      toast.success('Notification acknowledged successfully!');
+    onSuccess: (data) => {
+      toast.success(data.message||'Notification acknowledged successfully!');
       refetch();
       setIsConfirmDialogOpen(false);
       setSelectedNotice(null);
     },
     onError: (error) => {
-      toast.error('Failed to acknowledge notification');
+      toast.error(error.response.data.message || 'Failed to acknowledge notification');
       console.error('Acknowledge error:', error);
     }
   });
@@ -106,16 +108,48 @@ const Notification = () => {
       });
       return response.data;
     },
-    onSuccess: () => {
-      toast.success('Notice posted successfully!');
+    onSuccess: (data) => {
+      toast.success(data.message || 'Notice posted successfully!');
       setIsAddDialogOpen(false);
       refetch();
     },
     onError: (error) => {
-      toast.error('Failed to post notice');
+      toast.error(error.response.data.message || 'Failed to post notice');
       console.error('Add notice error:', error);
     }
   });
+
+  const editNoticeMutation = useMutation({
+    mutationFn: async ({ id, noticeData }) => {
+      const response = await axios.put(`${OTHER_NOTIFICATION_SUMBIT_NOTICE}/${id}`, noticeData, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || 'Notice updated successfully!');
+      setIsEditDialogOpen(false);
+      setEditingNotice(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.response.data.message || 'Failed to update notice');
+      console.error('Edit notice error:', error);
+    }
+  });
+
+  // Fetch single notice for editing
+  const fetchNotice = async (id) => {
+    try {
+      const response = await axios.get(`${OTHER_NOTIFICATION_SUMBIT_NOTICE}/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching notice:', error);
+      throw error;
+    }
+  };
 
   const handleAccordionToggle = (index) => {
     setOpenAccordion(openAccordion === index ? null : index);
@@ -124,6 +158,16 @@ const Notification = () => {
   const handleAcknowledge = (notice) => {
     setSelectedNotice(notice);
     setIsConfirmDialogOpen(true);
+  };
+
+  const handleEdit = async (notice) => {
+    try {
+      const noticeData = await fetchNotice(notice.id);
+      setEditingNotice(noticeData);
+      setIsEditDialogOpen(true);
+    } catch (error) {
+      toast.error('Failed to fetch notice details');
+    }
   };
 
   const confirmAcknowledge = () => {
@@ -215,9 +259,20 @@ const Notification = () => {
               Acknowledge
             </Button>
           )}
+          {userTypeId === "3" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEdit(row.original)}
+              className="h-7 text-xs"
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Edit
+            </Button>
+          )}
         </div>
       ),
-      size: 150,
+      size: 200,
     },
   ];
 
@@ -297,23 +352,25 @@ const Notification = () => {
             </Button>
             
             {userTypeId === "3" && (
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2 h-9"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Notice
-                  </Button>
-                </DialogTrigger>
-                <AddNoticeDialog 
-                  onSubmit={addNoticeMutation.mutate}
-                  isPending={addNoticeMutation.isPending}
-                  onClose={() => setIsAddDialogOpen(false)}
-                />
-              </Dialog>
+              <>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 h-9"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Notice
+                    </Button>
+                  </DialogTrigger>
+                  <AddNoticeDialog 
+                    onSubmit={addNoticeMutation.mutate}
+                    isPending={addNoticeMutation.isPending}
+                    onClose={() => setIsAddDialogOpen(false)}
+                  />
+                </Dialog>
+              </>
             )}
           </div>
         </div>
@@ -494,6 +551,20 @@ const Notification = () => {
                         Acknowledged
                       </span>
                     )}
+                    {userTypeId === "3" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(row.original);
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    )}
                     {openAccordion === index ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -551,6 +622,21 @@ const Notification = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Notice Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <EditNoticeDialog 
+            notice={editingNotice}
+            onSubmit={editNoticeMutation.mutate}
+            isPending={editNoticeMutation.isPending}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setEditingNotice(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -560,14 +646,15 @@ const AddNoticeDialog = ({ onSubmit, isPending, onClose }) => {
   const [formData, setFormData] = useState({
     notice_name: '',
     notice_detail: '',
-    to_be_sent_to: 'To All'
+    to_be_sent_to: 'all'
   });
 
   const sento = [
-    { value: 'To All', label: 'To All' },
-    { value: 'To Only Viewers', label: 'To Only Viewers' },
-    { value: 'To Only Admins', label: 'To Only Admins' },
-    { value: 'To Only Users', label: 'To Only Users' },
+    { value: 'all', label: 'All' },
+    { value: 'users', label: 'Users' },
+    { value: 'admins', label: 'Admins' },
+    { value: 'viewers', label: 'Viewers' },
+    { value: 'donors', label: 'Donors' },
   ];
 
   const handleSubmit = (e) => {
@@ -655,6 +742,151 @@ const AddNoticeDialog = ({ onSubmit, isPending, onClose }) => {
           >
             <CheckCircle className="w-4 h-4 mr-1" />
             {isPending ? 'Posting...' : 'Post Notice'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+};
+
+// Edit Notice Dialog Component
+const EditNoticeDialog = ({ notice, onSubmit, isPending, onClose }) => {
+  const [formData, setFormData] = useState({
+    notice_name: '',
+    notice_detail: '',
+    to_be_sent_to: 'all',
+    status: 'Active'
+  });
+
+  const sento = [
+    { value: 'all', label: 'All' },
+    { value: 'users', label: 'Users' },
+    { value: 'admins', label: 'Admins' },
+    { value: 'viewers', label: 'Viewers' },
+    { value: 'donors', label: 'Donors' },
+  ];
+
+  const statusOptions = [
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+
+  useEffect(() => {
+    if (notice) {
+      setFormData({
+        notice_name: notice.notice_name || '',
+        notice_detail: notice.notice_detail || '',
+        to_be_sent_to: notice.to_be_sent_to || 'all',
+        status: notice.status || 'Active'
+      });
+    }
+  }, [notice]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (notice) {
+      onSubmit({ id: notice.id, noticeData: formData });
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Edit className="w-5 h-5" />
+          Edit Notice
+        </DialogTitle>
+      </DialogHeader>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="edit_notice_name" className="text-sm font-semibold">
+            Notice Title <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="edit_notice_name"
+            value={formData.notice_name}
+            onChange={(e) => handleChange('notice_name', e.target.value)}
+            className="w-full"
+            placeholder="Enter notice title"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit_notice_detail" className="text-sm font-semibold">
+            Notice Details <span className="text-red-500">*</span>
+          </Label>
+          <textarea
+            id="edit_notice_detail"
+            value={formData.notice_detail}
+            onChange={(e) => handleChange('notice_detail', e.target.value)}
+            className="w-full min-h-[100px] p-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
+            placeholder="Enter notice details"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit_to_be_sent_to" className="text-sm font-semibold">
+            Send To <span className="text-red-500">*</span>
+          </Label>
+          <Select value={formData.to_be_sent_to} onValueChange={(value) => handleChange('to_be_sent_to', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select recipient" />
+            </SelectTrigger>
+            <SelectContent>
+              {sento.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit_status" className="text-sm font-semibold">
+            Status <span className="text-red-500">*</span>
+          </Label>
+          <Select value={formData.status} onValueChange={(value) => handleChange('status', value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DialogFooter className="flex space-x-2 justify-end pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isPending}
+          >
+            <X className="w-4 h-4 mr-1" />
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <CheckCircle className="w-4 h-4 mr-1" />
+            {isPending ? 'Updating...' : 'Update Notice'}
           </Button>
         </DialogFooter>
       </form>

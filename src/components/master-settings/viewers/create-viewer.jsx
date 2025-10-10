@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Building, Save, X, Loader2, Info } from 'lucide-react';
+import { ArrowLeft, Building, Save, X, Loader2, Info, Upload } from 'lucide-react';
 import { VIEWVER_CREATE } from '@/api';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
@@ -28,37 +28,109 @@ const CreateViewer = () => {
     endDate: '', 
     chapter_id: '', 
     user_position: '', 
-    chapterIds: ''
+    chapterIds: '',
+    // New fields
+    user_add: "",
+    user_birthday: '',
+    user_type: "",
+    image: null,
+    user_school_ids: "",
   });
   
   const [selectedChapterIds, setSelectedChapterIds] = useState([]);
-
+  const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [viewerTypeId, setViewerTypeId] = useState("");
 
   // Fetch chapters
   const { data: chapters = [], isLoading: chaptersLoading } = useQuery({
-    queryKey: ['chapters'],
+    queryKey: ['chapters-dropdown'],
     queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-chapters`, {
+      const response = await axios.get(`${BASE_URL}/api/chapter`, {
         headers: { Authorization: `Bearer ${Cookies.get('token')}` },
       });
-      return response.data.chapters || [];
+      return response.data.data || [];
     },
   });
 
- 
 
-  // Create mutation
+  const { data: userTypes = [], isLoading: userTypesLoading } = useQuery({
+    queryKey: ['user-types'],
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/fetch-user-type`, {
+        headers: { Authorization: `Bearer ${Cookies.get('token')}` },
+      });
+      return response.data.data || [];
+    },
+  });
+
+  const { data: chapterActive = [], isLoading: chapterActiveLoading } = useQuery({
+    queryKey: ['chapter-active'],
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/chapter-active`, {
+        headers: { Authorization: `Bearer ${Cookies.get('token')}` },
+      });
+      return response.data.data || [];
+    },
+  });
+
+  useEffect(() => {
+    if (userTypes.length > 0) {
+      const viewerType = userTypes.find(type => type.user_type == "Viewers");
+      if (viewerType) {
+        setViewerTypeId(viewerType.user_type);
+        setFormData(prev => ({ ...prev, user_type: viewerType.id }));
+      }
+    }
+  }, [userTypes]);
+
+  
+  useEffect(() => {
+    if (formData.chapter_id) {
+      const primaryChapterCode = formData.chapter_id.toString();
+      
+     
+      if (!selectedChapterIds.includes(primaryChapterCode)) {
+        const newChapterIds = [...selectedChapterIds, primaryChapterCode];
+        setSelectedChapterIds(newChapterIds);
+        setFormData(prev => ({ ...prev, chapterIds: newChapterIds.join(',') }));
+      }
+      
+  
+      if (!selectedSchoolIds.includes(primaryChapterCode)) {
+        const newSchoolIds = [...selectedSchoolIds, primaryChapterCode];
+        setSelectedSchoolIds(newSchoolIds);
+        setFormData(prev => ({ ...prev, user_school_ids: newSchoolIds.join(',') }));
+      }
+    }
+  }, [formData.chapter_id]); 
+
   const createMutation = useMutation({
-    mutationFn: (data) => axios.post(VIEWVER_CREATE, data, {
-      headers: { Authorization: `Bearer ${Cookies.get('token')}` },
-    }),
+    mutationFn: (data) => {
+      const formDataToSend = new FormData();
+      
+      Object.keys(data).forEach(key => {
+        if (key === 'image' && data[key] instanceof File) {
+          formDataToSend.append('image', data[key]);
+        } else if (data[key] !== null && data[key] !== undefined) {
+          formDataToSend.append(key, data[key]);
+        }
+      });
+
+      return axios.post(VIEWVER_CREATE, formDataToSend, {
+        headers: { 
+          Authorization: `Bearer ${Cookies.get('token')}`,
+          'Content-Type': 'multipart/form-data'
+        },
+      });
+    },
     onSuccess: (response) => {
-      if (response.data.code === 200) {
-        toast.success(response.data.msg);
+      if (response.data.code === 201) {
+        toast.success(response.data.message);
         queryClient.invalidateQueries(['viewers']);
         navigate('/master/viewer');
       } else if (response.data.code === 400) {
-        toast.error(response.data.msg);
+        toast.error(response.data.message);
       } else {
         toast.error('Unexpected error occurred');
       }
@@ -72,6 +144,29 @@ const CreateViewer = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, image: file }));
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
+  
+    const fileInput = document.getElementById('image');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   const handleChapterCheckbox = (chapterId, checked) => {
     const newChapterIds = checked
       ? [...selectedChapterIds, chapterId.toString()]
@@ -79,6 +174,15 @@ const CreateViewer = () => {
     
     setSelectedChapterIds(newChapterIds);
     setFormData(prev => ({ ...prev, chapterIds: newChapterIds.join(',') }));
+  };
+
+  const handleSchoolCheckbox = (chapterCode, checked) => {
+    const newSchoolIds = checked
+      ? [...selectedSchoolIds, chapterCode.toString()]
+      : selectedSchoolIds.filter(id => id !== chapterCode.toString());
+    
+    setSelectedSchoolIds(newSchoolIds);
+    setFormData(prev => ({ ...prev, user_school_ids: newSchoolIds.join(',') }));
   };
 
   const handleContactChange = (value) => {
@@ -94,32 +198,36 @@ const CreateViewer = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-   
-
     const submitData = {
       first_name: formData.firstName,
       last_name: formData.lastName,
       chapter_id: formData.chapter_id,
-      username: formData.userName,
-      mobile_number: formData.contact,
+      name: formData.userName,
+      phone: formData.contact,
       email: formData.email,
       viewer_start_date: formData.startDate,
       viewer_end_date: formData.endDate,
-      chapter_ids_comma_separated: formData.chapterIds,
+      viewer_chapter_ids: formData.chapterIds,
       user_position: formData.user_position,
-   
+      user_birthday: formData.user_birthday,
+      user_add: formData.user_add,
+      user_type: formData.user_type,
+      user_school_ids: formData.user_school_ids,
       password: formData.password,
+      image: formData.image,
     };
 
     createMutation.mutate(submitData);
   };
 
-  if (chaptersLoading) {
+  const isLoading = chaptersLoading || userTypesLoading || chapterActiveLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading chapters...</span>
+          <span>Loading data...</span>
         </div>
       </div>
     );
@@ -166,13 +274,14 @@ const CreateViewer = () => {
             <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white mb-4">
               <Info className="w-4 h-4" />
               Personal Details 
+              <span>User : {viewerTypeId}</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* First Name */}
               <div className="">
                 <Label htmlFor="firstName" className="text-xs font-medium">
-                  Full Name <span className="text-red-500">*</span>
+                  First Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="firstName"
@@ -183,12 +292,24 @@ const CreateViewer = () => {
                 />
               </div>
 
-           
+              {/* Last Name */}
+              <div className="">
+                <Label htmlFor="lastName" className="text-xs font-medium">
+                  Last Name 
+                </Label>
+                <Input
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  placeholder="Enter last name"
+               
+                />
+              </div>
 
               {/* Username */}
               <div className="">
                 <Label htmlFor="userName" className="text-xs font-medium">
-                  Username(Login Name) <span className="text-red-500">*</span>
+                  Username (Login Name) <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="userName"
@@ -259,6 +380,71 @@ const CreateViewer = () => {
                 />
               </div>
 
+              {/* Address */}
+              <div className="">
+                <Label htmlFor="user_add" className="text-xs font-medium">
+                  Address
+                </Label>
+                <Input
+                  id="user_add"
+                  value={formData.user_add}
+                  onChange={(e) => handleInputChange('user_add', e.target.value)}
+                  placeholder="Enter address"
+                />
+              </div>
+
+              {/* Birthday */}
+              <div className="">
+                <Label htmlFor="user_birthday" className="text-xs font-medium">
+                  Birthday
+                </Label>
+                <Input
+                  id="user_birthday"
+                  type="date"
+                  value={formData.user_birthday}
+                  onChange={(e) => handleInputChange('user_birthday', e.target.value)}
+                />
+              </div>
+
+              {/* Image Upload - Now in same row */}
+              <div className="">
+                <Label htmlFor="image" className="text-xs font-medium">
+                  Profile Image
+                </Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  {imagePreview && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="relative">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="h-16 w-16 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
+                          onClick={removeImage}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <span className="text-xs text-green-600">Image selected</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Start Date */}
               <div className="">
                 <Label htmlFor="startDate" className="text-xs font-medium">
@@ -288,9 +474,6 @@ const CreateViewer = () => {
                   required
                 />
               </div>
-              
-           
-             
             </div>
 
             <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white mb-4">
@@ -303,17 +486,28 @@ const CreateViewer = () => {
                 <Label htmlFor="chapter_id" className="text-xs font-medium">
                   Primary Chapter <span className="text-red-500">*</span>
                 </Label>
-                <Select 
-                  value={formData.chapter_id} 
-                  onValueChange={(value) => handleInputChange('chapter_id', value)} 
+                <Select
+                  value={formData.chapter_id?.toString() || ""}
+                  onValueChange={(value) => handleInputChange("chapter_id", value)}
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select primary chapter" />
+                    <SelectValue
+                      placeholder="Select primary chapter"
+                    >
+                      {
+                        chapters.find(
+                          (chapter) => chapter.chapter_code.toString() === formData.chapter_id
+                        )?.chapter_name || "Select primary chapter"
+                      }
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {chapters.map((chapter) => (
-                      <SelectItem key={chapter.id} value={chapter.id.toString()}>
+                      <SelectItem
+                        key={chapter.id}
+                        value={chapter.chapter_code.toString()} 
+                      >
                         {chapter.chapter_name}
                       </SelectItem>
                     ))}
@@ -323,17 +517,43 @@ const CreateViewer = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               <Label className="text-sm font-medium">Additional Chapter Access</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {chapters.map((chapter) => (
-                  <div key={chapter.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50/50">
+                  <div
+                    key={chapter.id}
+                    className="flex items-center space-x-3 p-2 border rounded-lg hover:bg-gray-50/50"
+                  >
                     <Checkbox
                       id={`chapter-${chapter.id}`}
-                      checked={selectedChapterIds.includes(chapter.id.toString())}
-                      onCheckedChange={(checked) => handleChapterCheckbox(chapter.id, checked)}
+                      checked={selectedChapterIds.includes(chapter.chapter_code.toString())}
+                      onCheckedChange={(checked) =>
+                        handleChapterCheckbox(chapter.chapter_code, checked)
+                      }
                     />
-                    <Label htmlFor={`chapter-${chapter.id}`} className="text-sm font-normal cursor-pointer flex-1">
+                    <Label
+                      htmlFor={`chapter-${chapter.id}`}
+                      className="text-sm font-normal cursor-pointer flex-1"
+                    >
+                      {chapter.chapter_name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">School Chapter Access</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {chapterActive.map((chapter) => (
+                  <div key={chapter.id} className="flex items-center space-x-3 p-2 border rounded-lg hover:bg-gray-50/50">
+                    <Checkbox
+                      id={`school-${chapter.id}`}
+                      checked={selectedSchoolIds.includes(chapter.chapter_code.toString())}
+                      onCheckedChange={(checked) => handleSchoolCheckbox(chapter.chapter_code, checked)}
+                    />
+                    <Label htmlFor={`school-${chapter.id}`} className="text-sm font-normal cursor-pointer flex-1">
                       {chapter.chapter_name}
                     </Label>
                   </div>
@@ -356,7 +576,7 @@ const CreateViewer = () => {
           </Button>
           <Button 
             type="submit" 
-            disabled={createMutation.isLoading } 
+            disabled={createMutation.isLoading} 
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
           >
             {createMutation.isLoading ? (

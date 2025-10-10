@@ -47,7 +47,7 @@ const FaqOther = () => {
       const response = await axios.get(OTHER_FAQ, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      return response.data.faqs || [];
+      return response.data.data || [];
     },
     retry: 2,
   });
@@ -125,6 +125,17 @@ const FaqOther = () => {
       cell: ({ row }) => (
         <div className="text-xs font-medium">
           {row.getValue('Category') || 'General'}
+        </div>
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: 'status',
+      id: 'Status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue('Status')}
         </div>
       ),
       size: 120,
@@ -375,8 +386,9 @@ const FaqOther = () => {
                   onClick={() => handleAccordionToggle(index)}
                 >
                   <span className="font-semibold text-blue-600 text-sm">
-                    {row.original.header}
+                    {row.original.header}   
                   </span>
+                
                   {openAccordion === index ? (
                     <ChevronUp className="w-4 h-4 text-gray-500" />
                   ) : (

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -29,13 +29,24 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OtsCreate from "./ots-create";
 import OtsEdit from "./ots-edit";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const OtsList = () => {
 
@@ -52,7 +63,7 @@ const OtsList = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-ots-exptypes`,
+        `${BASE_URL}/api/ots-exp-type`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -60,11 +71,39 @@ const OtsList = () => {
           },
         }
       );
-      return response.data.otsexptype;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const token = Cookies.get("token");
+      const response = await axios.delete(
+        `${BASE_URL}/api/ots-exp-type/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Ots deleted successfully");
+      refetch();
+      setOpen(false);
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Failed to delete Ots type"
+      );
+    },
+  });
+
+
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -101,22 +140,23 @@ const OtsList = () => {
     },
     
    
-    {
-      accessorKey: "id",
-      id: "Id",
-      header: "Id",
-      cell: ({ row }) => (
-        <div className="text-xs">
-          {row.getValue("Id") || "-"}
-        </div>
-      ),
-      size: 120,
-    },
+    // {
+    //   accessorKey: "id",
+    //   id: "Id",
+    //   header: "Id",
+    //   cell: ({ row }) => (
+    //     <div className="text-xs">
+    //       {row.getValue("Id") || "-"}
+    //     </div>
+    //   ),
+    //   size: 120,
+    // },
    
     {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+        const id = row.original.id;
         return (
           <div className="flex flex-row">
             
@@ -134,6 +174,26 @@ const OtsList = () => {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+              <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                               
+                                onClick={() => {
+                                  setSelectedId(id);
+                                  setOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete Ots</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
           </div>
         );
       },
@@ -314,6 +374,31 @@ const OtsList = () => {
           </Button>
         </div>
       </div>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Ots</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this Ots Expensive Type? This
+                    action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteMutation.isPending}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate(selectedId)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {deleteMutation.isPending ? "Deleting..." : "Confirm"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
     </div>
   );
 };

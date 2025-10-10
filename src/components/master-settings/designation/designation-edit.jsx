@@ -40,15 +40,15 @@ const DesignationEdit = ({ designation }) => {
     try {
       const token = Cookies.get("token");
       const response = await axios.put(
-        `${BASE_URL}/api/update-designation/${designation.id}`,
+        `${BASE_URL}/api/designation/${designation.id}`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || 'Designation Updated Successfully');
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || 'Designation Updated Successfully');
         
         setFormData({
           designation_type: "",
@@ -59,7 +59,7 @@ const DesignationEdit = ({ designation }) => {
         
         setOpen(false);
       } else {
-        toast.error(response.data.msg || 'Error while updating Designation');
+        toast.error(response.data.message || 'Error while updating Designation');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update designation");

@@ -52,7 +52,7 @@ const StateEdit = ({ state }) => {
     try {
       const token = Cookies.get("token");
       const response = await axios.put(
-        `${BASE_URL}/api/update-states/${state.id}`,
+        `${BASE_URL}/api/panel-update-state//${state.id}`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },

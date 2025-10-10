@@ -42,15 +42,15 @@ const FaqCreate = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/create-faqs`,
+        `${BASE_URL}/api/faq`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || "FAQ created successfully");
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || "FAQ created successfully");
 
         setFormData({
           header: "",
@@ -59,7 +59,7 @@ const FaqCreate = () => {
         await queryClient.invalidateQueries(["faqList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create FAQ");
+        toast.error(response.data.message || "Failed to create FAQ");
       }
     } catch (error) {
       toast.error(

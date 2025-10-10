@@ -49,7 +49,7 @@ const StateList = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-states`,
+        `${BASE_URL}/api/panel-fetch-state`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -57,7 +57,7 @@ const StateList = () => {
           },
         }
       );
-      return response.data.states;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,

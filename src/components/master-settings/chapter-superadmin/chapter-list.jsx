@@ -49,7 +49,7 @@ const ChapterList = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-chapters`,
+        `${BASE_URL}/api/chapter`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -57,7 +57,7 @@ const ChapterList = () => {
           },
         }
       );
-      return response.data.chapters;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -96,13 +96,13 @@ const ChapterList = () => {
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Chapter Name")}</div>,
       size: 150,
     },
-    {
-      accessorKey: "chapter_email",
-      id: "Email",
-      header: "Email",
-      cell: ({ row }) => <div className="text-xs text-blue-600">{row.getValue("Email")}</div>,
-      size: 200,
-    },
+    // {
+    //   accessorKey: "chapter_email",
+    //   id: "Email",
+    //   header: "Email",
+    //   cell: ({ row }) => <div className="text-xs text-blue-600">{row.getValue("Email")}</div>,
+    //   size: 200,
+    // },
     {
       accessorKey: "chapter_state",
       id: "State",
@@ -122,10 +122,17 @@ const ChapterList = () => {
       size: 120,
     },
     {
-      accessorKey: "id",
-      id: "Chapter ID",
-      header: "Chapter ID",
-      cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter ID")}</div>,
+      accessorKey: "chapter_code",
+      id: "Chapter Code",
+      header: "Chapter Code",
+      cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter Code")}</div>,
+      size: 100,
+    },
+    {
+      accessorKey: "chapter_status",
+      id: "Status",
+      header: "Status",
+      cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Status")}</div>,
       size: 100,
     },
     {

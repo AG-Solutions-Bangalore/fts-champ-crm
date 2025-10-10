@@ -58,15 +58,15 @@ const OtsEdit = ({ otsData }) => {
     try {
       const token = Cookies.get("token");
       const response = await axios.put(
-        `${BASE_URL}/api/update-ots-exptypes/${otsData.id}`,
+        `${BASE_URL}/api/ots-exp-type/${otsData.id}`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || 'OTS Updated Successfully');
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || 'OTS Updated Successfully');
         
         setFormData({
           ots_exp_type: "",
@@ -79,7 +79,7 @@ const OtsEdit = ({ otsData }) => {
         
         setOpen(false);
       } else {
-        toast.error(response.data.msg || 'Error while updating OTS');
+        toast.error(response.data.message || 'Error while updating OTS');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update OTS");

@@ -40,15 +40,15 @@ const OtsCreate = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/create-ots-exptypes`,
+        `${BASE_URL}/api/ots-exp-type`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || 'Ots Created Successfully')
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || 'Ots Created Successfully')
   
         setFormData({
           ots_exp_type: "",
@@ -56,7 +56,7 @@ const OtsCreate = () => {
         await queryClient.invalidateQueries(["otsList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || 'Error while creating ots');
+        toast.error(response.data.message || 'Error while creating ots');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create ots");

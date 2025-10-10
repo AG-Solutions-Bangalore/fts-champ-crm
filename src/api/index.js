@@ -81,8 +81,11 @@ export const SEND_BULK_EMAIL = `${BASE_URL}/api/create-membership-email`;
 
 //VIEWVER
 export const VIEWVER_LIST = `${BASE_URL}/api/superadmin-get-all-viewers`;
-export const VIEWVER_CREATE = `${BASE_URL}/api/superadmin-add-a-viewer`;
-export const VIEWVER_EDIT_BY_ID = `${BASE_URL}/api/fetch-viewer-by-id`;
+
+//changed
+export const VIEWVER_CREATE = `${BASE_URL}/api/create-user`;
+
+export const VIEWVER_EDIT_BY_ID = `${BASE_URL}/api/fetch-user-by-id`;
 export const VIEWVER_EDIT_UPDATE = `${BASE_URL}/api/update-viewer`;
 
 //DUPLICATE
@@ -157,10 +160,13 @@ export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
 /*--------------------------Dashboard-start----------------------------------- */
 
 export const DASHBOARD_YEAR = `${BASE_URL}/api/fetch-year`;
-export const DASHBOARD_SUPERADMIN_NOTICE = `${BASE_URL}/api/superadmin-fetch-notices`;
-export const DASHBOARD_USER_NOTICE = `${BASE_URL}/api/user-fetch-notices`;
-export const DASHBOARD_DATA = `${BASE_URL}/api/fetch-dashboard-data-by`;
-export const DASHBOARD_MARK_NOTICE_AS_READ = `${BASE_URL}/api/user-mark-a-notice-as-read?notice_id=`;
+// export const DASHBOARD_SUPERADMIN_NOTICE = `${BASE_URL}/api/superadmin-fetch-notices`;
+// export const DASHBOARD_USER_NOTICE = `${BASE_URL}/api/user-fetch-notices`;
+
+export const DASHBOARD_NOTICE = `${BASE_URL}/api/notice`;
+export const DASHBOARD_DATA = `${BASE_URL}/api/dashboard`;
+
+export const DASHBOARD_MARK_NOTICE_AS_READ = `${BASE_URL}/api/notices`;
 /*--------------------------Dashboard-end----------------------------------- */
 
 /*--------------------------Report-start----------------------------------- */
@@ -231,7 +237,7 @@ export const DOWNLOAD_SCHOOL_UNALLOTED = `${BASE_URL}/api/download-school-unallo
 
 /*--------------------------Other-start----------------------------------- */
 //FAQ
-export const OTHER_FAQ = `${BASE_URL}/api/fetch-faqs`;
+export const OTHER_FAQ = `${BASE_URL}/api/faq`;
 export const OTHER_FAQ_DOWNLOAD = `${BASE_URL}/api/download-faq`;
 
 //TEAM
@@ -246,9 +252,9 @@ export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/create-committee-image`;
 
 //NOTIFICATION
 export const OTHER_NOTIFICATION_SUPERADMIN = `${BASE_URL}/api/superadmin-fetch-notices`;
-export const OTHER_NOTIFICATION_USER = `${BASE_URL}/api/user-fetch-notices`;
-export const OTHER_NOTIFICATION_MARK_AS_READ = `${BASE_URL}/api/user-mark-a-notice-as-read?notice_id=`;
-export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/superadmin-add-notice`;
+export const OTHER_NOTIFICATION = `${BASE_URL}/api/notice`;
+export const OTHER_NOTIFICATION_MARK_AS_READ = `${BASE_URL}/api/notices`;
+export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/notice`;
 /*--------------------------Other-end----------------------------------- */
 
 /*--------------------------Receipt-Super-start----------------------------------- */

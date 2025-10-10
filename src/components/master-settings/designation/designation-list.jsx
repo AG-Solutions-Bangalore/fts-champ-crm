@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -29,13 +29,24 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import DesignationCreate from "./designation-create";
 import DesignationEdit from "./designation-edit";
+import { toast } from "sonner";
 
 const DesignationList = () => {
 
@@ -52,7 +63,7 @@ const DesignationList = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-designation`,
+        `${BASE_URL}/api/designation`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -60,11 +71,35 @@ const DesignationList = () => {
           },
         }
       );
-      return response.data.designation;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const token = Cookies.get("token");
+      const response =  await axios.delete(`${BASE_URL}/api/designation/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message|| "Designation deleted successfully");
+      refetch();
+      setOpen(false);
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Failed to delete designation"
+      );
+    },
+  });
+
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -117,6 +152,7 @@ const DesignationList = () => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+      const  id = row.original.id
         return (
           <div className="flex flex-row">
             
@@ -130,6 +166,26 @@ const DesignationList = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Edit Designation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                 
+                    onClick={() => {
+                      setSelectedId(id);
+                      setOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600 hover:text-black" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete Designation</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -313,6 +369,27 @@ const DesignationList = () => {
           </Button>
         </div>
       </div>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Designation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this designation? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate(selectedId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
