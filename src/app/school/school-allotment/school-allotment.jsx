@@ -49,13 +49,12 @@ const SchoolToAllot = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const [pageInput, setPageInput] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -69,17 +68,18 @@ const SchoolToAllot = () => {
   }, [searchTerm]);
 
   const {
-    data: schoolData,
+    data: schooltoallotData,
     isError,
     isFetching,
     prefetchPage,
+    refetch,
   } = useGetMutation("schooltoallot", SCHOOL_TO_ALOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.data?.last_page || 1;
+    const totalPages = schooltoallotData?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -90,7 +90,7 @@ const SchoolToAllot = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.data?.last_page,
+    schooltoallotData?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
@@ -114,12 +114,12 @@ const SchoolToAllot = () => {
 
     // Full Name + Type
     {
-      accessorKey: "individual_company.indicomp_full_name",
+      accessorKey: "donor.indicomp_full_name",
       header: "Full Name",
       id: "Full Name",
       cell: ({ row }) => {
-        const name = row?.original?.individual_company?.indicomp_full_name;
-        const type = row?.original?.individual_company?.indicomp_type;
+        const name = row?.original?.donor?.indicomp_full_name;
+        const type = row?.original?.donor?.indicomp_type;
 
         return (
           <div className="space-y-1">
@@ -139,12 +139,12 @@ const SchoolToAllot = () => {
 
     // Phone / Email
     {
-      accessorKey: "individual_company.indicomp_mobile_phone",
+      accessorKey: "donor.indicomp_mobile_phone",
       header: "Phone / Email",
       id: "Phone / Email",
       cell: ({ row }) => {
-        const phone = row?.original?.individual_company?.indicomp_mobile_phone;
-        const email = row?.original?.individual_company?.indicomp_email;
+        const phone = row?.original?.donor?.indicomp_mobile_phone;
+        const email = row?.original?.donor?.indicomp_email;
 
         return (
           <div className="space-y-1">
@@ -183,25 +183,22 @@ const SchoolToAllot = () => {
       },
       size: 100,
     },
-
-    // Allotment / Actions
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
         const item = row.original;
-        const company = item?.individual_company;
-
+        const company = item?.donor;
         if (!company) return null;
 
         const status = company.indicomp_status;
         const donorId = company.id;
         const schoolAllotYear = item.schoolalot_year;
         const receiptYear = item.receipt_financial_year;
-
+        console.log(receiptYear, "receiptYear");
         return (
           <div className="flex items-center gap-2">
-            {status == "1" ? (
+            {status == "Active" && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -228,22 +225,6 @@ const SchoolToAllot = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <ClipboardList
-                        className="h-5 w-5 text-blue-500"
-                        title="Current Year"
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Current Year</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             )}
           </div>
         );
@@ -251,9 +232,8 @@ const SchoolToAllot = () => {
       size: 80,
     },
   ];
-
   const table = useReactTable({
-    data: schoolData?.schoolots || [],
+    data: schooltoallotData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -263,8 +243,8 @@ const SchoolToAllot = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.data?.last_page || -1,
+    manualPagination: true,
+    pageCount: schooltoallotData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -295,16 +275,25 @@ const SchoolToAllot = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {
@@ -383,7 +372,7 @@ const SchoolToAllot = () => {
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching School List Data
+              Error Fetching School To Allot Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -400,7 +389,7 @@ const SchoolToAllot = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search allotment..."
+            placeholder="Search to allot..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -485,7 +474,7 @@ const SchoolToAllot = () => {
                   colSpan={columns.length}
                   className="h-24 text-center text-sm"
                 >
-                  No school found.
+                  No school to data.
                 </TableCell>
               </TableRow>
             )}
@@ -496,8 +485,8 @@ const SchoolToAllot = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
+          Showing {schooltoallotData?.from || 0} to {schooltoallotData?.to || 0}{" "}
+          of {schooltoallotData?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

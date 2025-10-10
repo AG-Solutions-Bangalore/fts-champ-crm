@@ -1,23 +1,42 @@
-// import { useQuery } from "@tanstack/react-query";
+// import { useQuery, useQueryClient } from "@tanstack/react-query";
 // import { useApiMutation } from "./use-mutation";
 
-// export const useGetMutation = (key, url, params = {}) => {
-//   const { trigger} = useApiMutation();
-
-//   return useQuery({
+// export const useGetMutation = (key, url, params = {}, options = {}) => {
+//   const { trigger } = useApiMutation();
+//   const queryClient = useQueryClient();
+//   const query = useQuery({
 //     queryKey: [key, params],
 //     queryFn: async () => {
 //       const searchParams = new URLSearchParams(params).toString();
 //       const response = await trigger({
 //         url: `${url}?${searchParams}`,
-//         method: "get",
 //       });
-
 //       return response || [];
 //     },
 //     keepPreviousData: true,
 //     staleTime: 5 * 60 * 1000,
+//     ...options,
 //   });
+
+//   const prefetchPage = async (extraParams) => {
+//     const searchParams = new URLSearchParams({
+//       ...params,
+//       ...extraParams,
+//     }).toString();
+
+//     await queryClient.prefetchQuery({
+//       queryKey: [key, { ...params, ...extraParams }],
+//       queryFn: async () => {
+//         const response = await trigger({
+//           url: `${url}?${searchParams}`,
+//         });
+//         return response || [];
+//       },
+//       staleTime: 5 * 60 * 1000,
+//     });
+//   };
+
+//   return { ...query, prefetchPage };
 // };
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiMutation } from "./use-mutation";
@@ -26,16 +45,19 @@ export const useGetMutation = (key, url, params = {}, options = {}) => {
   const { trigger } = useApiMutation();
   const queryClient = useQueryClient();
 
-  // Main query
+  const buildUrl = (baseUrl, extraParams = {}) => {
+    const hasQuery = baseUrl.includes("?");
+    const connector = hasQuery ? "&" : "?";
+    const searchParams = new URLSearchParams(extraParams).toString();
+    return `${baseUrl}${searchParams ? `${connector}${searchParams}` : ""}`;
+  };
+
   const query = useQuery({
     queryKey: [key, params],
     queryFn: async () => {
-      const searchParams = new URLSearchParams(params).toString();
-      const response = await trigger({
-        url: `${url}?${searchParams}`,
-        // method: "get",
-      });
-      return response || [];
+      const finalUrl = buildUrl(url, params);
+      const response = await trigger({ url: finalUrl });
+      return response.data || [];
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -43,19 +65,13 @@ export const useGetMutation = (key, url, params = {}, options = {}) => {
   });
 
   const prefetchPage = async (extraParams) => {
-    const searchParams = new URLSearchParams({
-      ...params,
-      ...extraParams,
-    }).toString();
+    const finalUrl = buildUrl(url, { ...params, ...extraParams });
 
     await queryClient.prefetchQuery({
       queryKey: [key, { ...params, ...extraParams }],
       queryFn: async () => {
-        const response = await trigger({
-          url: `${url}?${searchParams}`,
-          // method: "get",
-        });
-        return response || [];
+        const response = await trigger({ url: finalUrl });
+        return response.data || [];
       },
       staleTime: 5 * 60 * 1000,
     });

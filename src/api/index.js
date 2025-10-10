@@ -128,10 +128,12 @@ export const RECEIPT_VIEW_SUMBIT = `${BASE_URL}/api/update-donor-email`;
 
 /*--------------------------School-start(student)----------------------------------- */
 //FULL LIST
-export const SCHOOL_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
+// export const SCHOOL_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
+export const SCHOOL_LIST = `/api/school-list`;
 export const SCHOOL_COUNT_CHAPTERWISE_LIST = `/api/fetch-school-count-chapterwise`;
 export const SCHOOL_VIEW_BY_ID = `/api/fetch-schools-by-id`;
-export const SCHOOL_FULL_LIST_VIEW = "/students-full-list-view";
+// export const SCHOOL_FULL_LIST_VIEW = "/students-full-list-view";
+export const SCHOOL_FULL_LIST_VIEW = "/api/school-by-id";
 
 //REPEAT DONOR
 export const REAPEAT_DONOR_LIST = `/api/fetch-receipt-duplicate`;
@@ -139,7 +141,8 @@ export const REAPEAT_DONOR_EDIT_LIST = `/api/fetch-school-allot-repeat`;
 export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-schoolsallot-repeat`;
 
 //SCHOOL ALLOT
-export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
+// export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
+export const SCHOOL_ALLOT_LIST = `/api/school-alloted-list`;
 export const FETCH_SCHOOL_ALLOT_LIST = `/api/fetch-schoolsallot-by-id`;
 export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/fetch-school-alloted-list-by-id`;
 export const SCHOOL_ALLOT_VIEW_LIST = `/api/fetch-schoolsallotview-by-id`;
@@ -147,11 +150,16 @@ export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
 // (school edit pending )
 
 //SCHOOL TO ALLOT
-export const SCHOOL_TO_ALOT_LIST = `/api/fetch-ots`;
+// export const SCHOOL_TO_ALOT_LIST = `/api/fetch-ots`;
+export const SCHOOL_TO_ALOT_LIST = `/api/school-allotment`;
 // (DONOR DETAILS )
-export const SCHOOL_DATA_BY_ID = `/api/fetch-schoolsallotdonor-by-id/`;
-export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allot-year-by-year`;
-export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
+// export const SCHOOL_DATA_BY_ID = `/api/fetch-schoolsallotdonor-by-id/`;
+export const SCHOOL_DATA_BY_ID = `/api/school-alloted-donor-by-id`;
+// export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allot-year-by-year`;
+export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allotment-year-by-year`;
+// export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
+//no need
+// export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `/api/school-alloted-list`;
 export const DONOR_DETAILS_SUMBIT = `/api/create-school-alot`;
 export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
 
@@ -307,7 +315,7 @@ export const ROUTES = {
   RECEIPT_OLD_VIEW: (id) => `/view-old-receipts/${encryptId(id)}`,
   RECEIPT_EDIT: (id) => `/receipt-edit/${encryptId(id)}`,
   RECEIPT_OLD_EDIT: (id) => `/receipt-old-edit/${encryptId(id)}`,
-  SCHOOL_FULL_LIST_VIEW: (id) => `/students-full-list-view/${encryptId(id)}`,
+  SCHOOL_FULL_LIST_VIEW: (id) => `/school/list-view/${encryptId(id)}`,
   REPEAT_DONOR_EDIT: (id) => `/school/repeat-list/${encryptId(id)}`,
   VIEWER_EDIT: (id) => `/master/viewer/edit/${encryptId(id)}`,
   DUPLICATE_EDIT: (id) => `/donor/duplicate-edit/${encryptId(id)}`,
