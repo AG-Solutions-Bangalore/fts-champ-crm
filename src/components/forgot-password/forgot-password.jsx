@@ -57,7 +57,7 @@ export default function ForgotPassword() {
       console.log("Submitting forgot password request...");
 
       const res = await axios.post(
-        `${BASE_URL}/api/web-send-password?username=${username}&email=${email}`,
+        `${BASE_URL}/api/panel-send-password?username=${username}&email=${email}`,
         formData
       );
 
