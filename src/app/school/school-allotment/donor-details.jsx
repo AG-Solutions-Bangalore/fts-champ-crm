@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +18,9 @@ import {
 } from "@/components/ui/table";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
+import useNumericInput from "@/hooks/use-numeric-input";
 import { decryptId } from "@/utils/encyrption/encyrption";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -21,26 +29,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  DONOR_DETAILS_SUMBIT,
   SCHOOL_ALLOT_YEAR_BY_YEAR,
   SCHOOL_DATA_BY_ID,
-  SCHOOL_DONOR_DETAILS_ALLOTED_LIST,
+  SCHOOL_LIST,
+  SCHOOL_TO_ALOT_LIST,
 } from "../../../api";
 import { TableShimmer } from "../loadingtable/TableShimmer";
-import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import useNumericInput from "@/hooks/use-numeric-input";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 const DonorDetails = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { id, year, fyear } = useParams();
   const donorId = decryptId(id);
@@ -51,110 +52,187 @@ const DonorDetails = () => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
-  const [userdata, setUserdata] = useState({});
-  const [dateschool, setDateschool] = useState({});
+  // const [userdata, setUserdata] = useState({});
+  // const [dateschool, setDateschool] = useState({});
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [debouncedPage, setDebouncedPage] = useState("");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [pageInput, setPageInput] = useState("");
 
-  const { trigger } = useApiMutation();
   const { trigger: submitDetails, loading: submitloading } = useApiMutation();
-
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch donor info and dates
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userRes = await trigger({ url: SCHOOL_DATA_BY_ID + donorId });
-        setUserdata(userRes?.SchoolAlotDonor || {});
-
-        const datesRes = await trigger({
-          url: `${SCHOOL_ALLOT_YEAR_BY_YEAR}/${donorYear}`,
-        });
-        setDateschool(datesRes?.schoolallotyear || {});
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to fetch donor info or school dates");
-      }
-    };
-    fetchData();
-  }, [donorId, donorYear]);
-
-  const { data: schoolDataRes, isFetching } = useGetMutation(
-    "donorSchoolList",
-    `${SCHOOL_DONOR_DETAILS_ALLOTED_LIST}/${donorYear}`,
-    { search: debouncedSearchTerm, page: pagination.pageIndex + 1 }
+  const { data: schoolUserData, refetch: refetchchooluser } = useGetMutation(
+    "schooluserdata",
+    `${SCHOOL_DATA_BY_ID}/${donorId}`
   );
 
-  const schoolData = schoolDataRes?.schools || [];
-  const totalSchools = schoolDataRes?.data?.total || 0;
-  const totalPages = Math.ceil(totalSchools / pagination.pageSize);
+  const {
+    data: schoolallotyear,
+    refetch: refetchchoolallotyeaar,
+    isError,
+  } = useGetMutation(
+    "schoolallotyear",
+    `${SCHOOL_ALLOT_YEAR_BY_YEAR}/${donorYear}`
+  );
+  const userdata = schoolUserData || [];
+  const dateschool = schoolallotyear || [];
+  const {
+    data: schoolData,
+    isFetching,
+    prefetchPage,
+  } = useGetMutation("donorschoollist", `${SCHOOL_LIST}?year=${donorYear}`, {
+    page: pagination.pageIndex + 1,
+    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+  });
+  useEffect(() => {
+    refetchchooluser();
+    refetchchoolallotyeaar();
+  }, [donorId, donorYear]);
 
+  useEffect(() => {
+    if (!schoolData?.school?.last_page) return;
+
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = schoolData?.school?.last_page;
+    if (currentPage < totalPages) {
+      prefetchPage({ page: currentPage + 1 });
+    }
+    if (currentPage > 1) {
+      prefetchPage({ page: currentPage - 1 });
+    }
+  }, [
+    pagination.pageIndex,
+    debouncedSearchTerm,
+    schoolData?.school?.last_page,
+    prefetchPage,
+  ]);
   const columns = [
     {
       id: "select",
-      header: () => (
-        <Checkbox
-          checked={
-            selectedSchoolIds.length ===
-              schoolData.filter((s) => s.status_label !== "Allotted").length &&
-            schoolData.length > 0
-          }
-          onCheckedChange={(checked) => {
-            if (checked) {
-              setSelectedSchoolIds(
-                schoolData
-                  .filter((s) => s.status_label !== "Allotted")
-                  .map((s) => s.school_code)
+      header: () => {
+        const nonAllottedSchools =
+          schoolData?.school?.data?.filter(
+            (s) => s.status_label !== "Allotted"
+          ) || [];
+
+        const allSelected =
+          nonAllottedSchools.length > 0 &&
+          nonAllottedSchools.every((s) =>
+            selectedSchoolIds.includes(s.school_code)
+          );
+
+        return (
+          <div>
+            <Checkbox
+              checked={allSelected}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setSelectedSchoolIds(
+                    nonAllottedSchools.map((s) => s.school_code)
+                  );
+                } else {
+                  setSelectedSchoolIds([]);
+                }
+              }}
+              className="bg-white data-[state=checked]:bg-white data-[state=checked]:text-primary border border-gray-300 rounded"
+              aria-label="Select all schools"
+            />
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const id = row.original.school_code;
+        return (
+          <Checkbox
+            checked={selectedSchoolIds.includes(id)}
+            disabled={row.original.status_label === "Allotted"}
+            onCheckedChange={(checked) => {
+              setSelectedSchoolIds((prev) =>
+                checked ? [...prev, id] : prev.filter((s) => s !== id)
               );
-            } else {
-              setSelectedSchoolIds([]);
-            }
-          }}
-          aria-label="Select all schools"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedSchoolIds.includes(row.original.school_code)}
-          disabled={row.original.status_label === "Allotted"}
-          onCheckedChange={(checked) => {
-            const id = row.original.school_code;
-            setSelectedSchoolIds((prev) =>
-              checked ? [...prev, id] : prev.filter((s) => s !== id)
-            );
-          }}
-          aria-label={`Select school ${row.original.school_code}`}
-        />
-      ),
+            }}
+            aria-label={`Select school ${id}`}
+          />
+        );
+      },
     },
+
     { id: "state", header: "State", accessorFn: (row) => row.school_state },
-    { id: "district", header: "District", accessorFn: (row) => row.district },
     { id: "achal", header: "Achal", accessorFn: (row) => row.achal },
-    { id: "cluster", header: "Cluster", accessorFn: (row) => row.cluster },
     {
-      id: "subCluster",
-      header: "Sub Cluster",
-      accessorFn: (row) => row.sub_cluster,
+      accessorKey: "cluster",
+      id: "cluster",
+      header: "Cluster",
+      cell: ({ row }) => {
+        const { cluster, sub_cluster } = row.original;
+        if (!cluster && !sub_cluster) return null;
+        return (
+          <div className="space-y-1">
+            {cluster && <div className="text-xs">{cluster}</div>}
+            {sub_cluster && (
+              <div className="text-xs text-blue-600">
+                <span className="font-medium">Sub Cluster:</span> {sub_cluster}
+              </div>
+            )}
+          </div>
+        );
+      },
+      size: 150,
     },
-    { id: "village", header: "Village", accessorFn: (row) => row.village },
+    {
+      accessorKey: "village",
+      id: "village",
+      header: "Village",
+      cell: ({ row }) => {
+        const { village, district } = row.original;
+        if (!village && !district) return null;
+        return (
+          <div className="space-y-1">
+            {village && <div className="text-xs">{village}</div>}
+            {district && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">District:</span> {district}
+              </div>
+            )}
+          </div>
+        );
+      },
+      size: 150,
+    },
     {
       id: "schoolCode",
       header: "School Code",
       accessorFn: (row) => row.school_code,
     },
-    { id: "status", header: "Status", accessorFn: (row) => row.status_label },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status_label;
+        const isAllotted = status === "Allotted";
+        return (
+          <span
+            className={`text-xs font-medium px-2 py-1 rounded-full ${
+              isAllotted
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {isAllotted ? "Allotted" : "Not Allotted"}
+          </span>
+        );
+      },
+    },
   ];
 
   const table = useReactTable({
-    data: schoolData,
+    data: schoolData?.school?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -164,6 +242,8 @@ const DonorDetails = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    pageCount: schoolData?.school?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -194,49 +274,140 @@ const DonorDetails = () => {
 
     try {
       const res = await submitDetails({
-        url: DONOR_DETAILS_SUMBIT,
+        url: SCHOOL_TO_ALOT_LIST,
         method: "post",
         data: payload,
       });
-      if (res.code === 200) {
-        toast.success(res.msg);
-        navigate("/students-schoolallot");
+      if (res.code == 201) {
+        toast.success(res.message);
+        navigate("/school/to-allot");
       } else {
-        toast.error(res.msg || "Unexpected error");
+        toast.error(res.message || "Unexpected error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to submit");
+      toast.error(err.message || "Failed to submit");
     }
   };
 
-  const handlePageChange = (page) => {
-    if (page < 0 || page >= totalPages) return;
-    setPagination((prev) => ({ ...prev, pageIndex: page }));
-  };
+  const handlePageChange = (newPageIndex) => {
+    const targetPage = newPageIndex + 1;
+    const cachedData = queryClient.getQueryData([
+      "donorschoollist",
+      debouncedSearchTerm,
+      targetPage,
+    ]);
 
+    if (cachedData) {
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
+    } else {
+      table.setPageIndex(newPageIndex);
+    }
+  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
+      if (pageNum >= 1 && pageNum <= table.getPageCount()) {
+        handlePageChange(pageNum - 1);
+      }
+    }
+  }, [debouncedPage]);
   const handlePageInput = (e) => {
-    const val = e.target.value;
-    if (/^\d*$/.test(val)) setPageInput(val);
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {
-    let buttons = [];
-    for (let i = 0; i < totalPages; i++) {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = table.getPageCount();
+    const buttons = [];
+
+    buttons.push(
+      <Button
+        key={1}
+        variant={currentPage === 1 ? "default" : "outline"}
+        size="sm"
+        onClick={() => handlePageChange(0)}
+        className="h-8 w-8 p-0 text-xs"
+      >
+        1
+      </Button>
+    );
+
+    if (currentPage > 3) {
+      buttons.push(
+        <span key="ellipsis1" className="px-2">
+          ...
+        </span>
+      );
+    }
+
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
+      if (i !== 1 && i !== totalPages) {
+        buttons.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i - 1)}
+            className="h-8 w-8 p-0 text-xs"
+          >
+            {i}
+          </Button>
+        );
+      }
+    }
+
+    if (currentPage < totalPages - 2) {
+      buttons.push(
+        <span key="ellipsis2" className="px-2">
+          ...
+        </span>
+      );
+    }
+
+    if (totalPages > 1) {
       buttons.push(
         <Button
-          key={i}
-          variant={i === pagination.pageIndex ? "default" : "outline"}
+          key={totalPages}
+          variant={currentPage === totalPages ? "default" : "outline"}
           size="sm"
-          onClick={() => handlePageChange(i)}
+          onClick={() => handlePageChange(totalPages - 1)}
+          className="h-8 w-8 p-0 text-xs"
         >
-          {i + 1}
+          {totalPages}
         </Button>
       );
     }
+
     return buttons;
   };
-
+  if (isError) {
+    return (
+      <div className="w-full p-4  ">
+        <div className="flex items-center justify-center h-64 ">
+          <div className="text-center ">
+            <div className="text-destructive font-medium mb-2">
+              Error Fetching School List Data
+            </div>
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="p-4 bg-white space-y-2">
       {/* School Info */}
@@ -270,7 +441,7 @@ const DonorDetails = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search donor..."
+            placeholder="Search school allotment..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -357,15 +528,11 @@ const DonorDetails = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-          {Math.min(
-            (pagination.pageIndex + 1) * pagination.pageSize,
-            totalSchools
-          )}{" "}
-          of {totalSchools} schools
+          Showing {schoolData?.school?.from || 0} to{" "}
+          {schoolData?.school?.to || 0} of {schoolData?.school?.total || 0}{" "}
+          schools
         </div>
 
         <div className="flex items-center space-x-2">
@@ -373,7 +540,7 @@ const DonorDetails = () => {
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={pagination.pageIndex === 0}
+            disabled={!table.getCanPreviousPage()}
             className="h-8 px-2"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -388,7 +555,7 @@ const DonorDetails = () => {
             <Input
               type="tel"
               min="1"
-              max={totalPages}
+              max={table.getPageCount()}
               value={pageInput}
               onChange={handlePageInput}
               onBlur={() => setPageInput("")}
@@ -396,14 +563,14 @@ const DonorDetails = () => {
               className="w-16 h-8 text-sm"
               placeholder="Page"
             />
-            <span>of {totalPages}</span>
+            <span>of {table.getPageCount()}</span>
           </div>
 
           <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={pagination.pageIndex + 1 >= totalPages}
+            disabled={!table.getCanNextPage()}
             className="h-8 px-2"
           >
             <ChevronRight className="h-4 w-4" />

@@ -1,17 +1,18 @@
 import { SCHOOL_FULL_LIST_VIEW } from "@/api";
 import { Card } from "@/components/ui/card";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import moment from "moment";
 import { useParams } from "react-router-dom";
 import SchoolViewLoading from "./loading";
+import { decryptId } from "@/utils/encyrption/encyrption";
 
 const SectionHeader = ({ title }) => (
   <div className="flex justify-between items-center">
@@ -28,18 +29,17 @@ const InfoField = ({ label, value }) => (
 
 const SchoolListView = () => {
   const { id } = useParams();
-
-  const { data, isLoading } = useGetMutation(
-    "school-full-list-view",
-    SCHOOL_FULL_LIST_VIEW,
-    { id }
+  const decryptedId = decryptId(id);
+  const { data: schoolviewdata, isLoading } = useGetMutation(
+    `school-full-list-view${decryptedId}`,
+    `${SCHOOL_FULL_LIST_VIEW}/${decryptedId}`
   );
-
-  const school = data?.schools || {};
-  const schoolAdoption = data?.schoolsadoption || [];
+  const school = schoolviewdata?.data?.schools || {};
+  const schoolAdoption = schoolviewdata?.data?.schoolsadoption || [];
   if (isLoading) {
     return <SchoolViewLoading />;
   }
+
   return (
     <>
       <div className="max-w-screen">
@@ -140,30 +140,36 @@ const SchoolListView = () => {
         <Card className="p-6 mt-4 shadow-sm">
           <SectionHeader title="Adoption Details" />
           {schoolAdoption.length > 0 ? (
-            <Table className="mt-4">
+            <Table className="mt-4 border border-gray-300 rounded-lg overflow-hidden">
               <TableHeader>
-                <TableRow className="h-10 px-3">
-                  <TableHead className="text-left  bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium">
+                <TableRow className="h-10 bg-[var(--team-color)] hover:bg-[var(--team-color)]">
+                  <TableHead className="text-left text-[var(--label-color)] text-sm font-medium px-4 py-2">
                     FTS
                   </TableHead>
-                  <TableHead className="text-left  bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium">
+                  <TableHead className="text-left text-[var(--label-color)] text-sm font-medium px-4 py-2">
                     Name
                   </TableHead>
-                  <TableHead className="text-left  bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium">
+                  <TableHead className="text-left text-[var(--label-color)] text-sm font-medium px-4 py-2">
                     Year
                   </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {schoolAdoption.map((adoption, idx) => (
-                  <TableRow key={idx} className="hover:bg-muted/30">
-                    <TableCell>
+                  <TableRow
+                    key={idx}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="px-4 py-2 text-sm font-medium text-gray-700">
                       {adoption.individual_company.indicomp_fts_id}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-4 py-2 text-sm text-gray-700">
                       {adoption.individual_company.indicomp_full_name}
                     </TableCell>
-                    <TableCell>{adoption.schoolalot_financial_year}</TableCell>
+                    <TableCell className="px-4 py-2 text-sm text-gray-700">
+                      {adoption.schoolalot_financial_year}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
