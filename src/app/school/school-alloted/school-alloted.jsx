@@ -56,14 +56,12 @@ const SchoolAlloted = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const [pageInput, setPageInput] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
-
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -85,9 +83,10 @@ const SchoolAlloted = () => {
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
   useEffect(() => {
-    const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.data?.last_page || 1;
+    if (!schoolData?.school?.last_page) return;
 
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = schoolData?.school?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -97,7 +96,7 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.data?.last_page,
+    schoolData?.school?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
@@ -106,7 +105,6 @@ const SchoolAlloted = () => {
   const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
-    // Serial Number
     {
       id: "serialNo",
 
@@ -265,9 +263,8 @@ const SchoolAlloted = () => {
       size: 120,
     },
   ];
-
   const table = useReactTable({
-    data: schoolData?.schoolAllot || [],
+    data: schoolData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -277,8 +274,8 @@ const SchoolAlloted = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.data?.last_page || -1,
+    manualPagination: true,
+    pageCount: schoolData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -309,16 +306,25 @@ const SchoolAlloted = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {
@@ -409,7 +415,7 @@ const SchoolAlloted = () => {
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching School List Data
+              Error Fetching School Allotment Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again

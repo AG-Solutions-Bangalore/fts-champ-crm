@@ -1,4 +1,4 @@
-import { SCHOOL_ALLOTED_LIST } from "@/api";
+import { navigateToSchoolFullListView, SCHOOL_LIST } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,8 +32,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Cookies from "js-cookie";
 import {
-  ArrowUpDown,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -43,7 +43,6 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TableShimmer } from "../loadingtable/TableShimmer";
-import { useCurrentYear } from "@/hooks/use-current-year";
 
 const SchoolList = () => {
   const navigate = useNavigate();
@@ -51,14 +50,17 @@ const SchoolList = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const [pageInput, setPageInput] = useState("");
+  const currentYear = Cookies.get("currentYear");
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState();
+  const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
-
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -69,23 +71,21 @@ const SchoolList = () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
-  // const { currentYear } = useCurrentYear();
-  // console.log(currentYear, "year");
   const {
     data: schoolData,
     isError,
     isFetching,
     prefetchPage,
-  } = useGetMutation("school", `${SCHOOL_ALLOTED_LIST}/2025-26`, {
+    refetch,
+  } = useGetMutation("schoollist", `${SCHOOL_LIST}?year=${currentYear}`, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
-  console.log(schoolData, "schoolData");
-
   useEffect(() => {
-    const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.schools?.last_page || 1;
+    if (!schoolData?.school?.last_page) return;
 
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = schoolData?.school?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -95,13 +95,9 @@ const SchoolList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.schools?.last_page,
+    schoolData?.school?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState();
-  const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
     {
@@ -116,27 +112,16 @@ const SchoolList = () => {
       },
       size: 60,
     },
+
     {
       accessorKey: "achal",
       id: "achal",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() == "asc")}
-          className="px-2 h-8 text-xs font-medium"
-        >
-          Ackal
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
+      header: "Ackal",
       cell: ({ row }) => {
-        const name = row.getValue("achal");
-        return name ? (
-          <div className="text-[13px] font-medium">{name}</div>
-        ) : null;
+        const achal = row.original.achal;
+        return achal ? <div className="text-xs">{achal}</div> : null;
       },
-      size: 150,
+      size: 120,
     },
     {
       accessorKey: "cluster",
@@ -223,15 +208,15 @@ const SchoolList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      navigate(`/school/list-view/${row?.original?.id}`)
-                    }
+                    onClick={() => {
+                      navigateToSchoolFullListView(navigate, row?.original?.id);
+                    }}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Allotment</p>
+                  <p>View</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -243,7 +228,7 @@ const SchoolList = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.schools || [],
+    data: schoolData?.school?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -253,8 +238,8 @@ const SchoolList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.schools?.last_page || -1,
+    manualPagination: true,
+    pageCount: schoolData?.school?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -273,7 +258,7 @@ const SchoolList = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "school",
+      "schoollist",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -284,19 +269,26 @@ const SchoolList = () => {
       table.setPageIndex(newPageIndex);
     }
   };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
-  };
+  }, [debouncedPage]);
 
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
+  };
   const generatePageButtons = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
@@ -386,6 +378,14 @@ const SchoolList = () => {
 
   return (
     <div className="max-w-full p-2">
+      {schoolData?.schoolcount?.length > 0 && (
+        <div className="text-base font-semibold">
+          {schoolData?.schoolcount[0].chapter_name}{" "}
+          <span className="text-sm font-medium text-primary">
+            ({schoolData?.schoolcount[0].school_count} schools)
+          </span>
+        </div>
+      )}
       <div className="flex items-center justify-between py-1">
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
@@ -424,9 +424,7 @@ const SchoolList = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* Table */}
-      <div className="rounded-none border flex flex-col">
+      <div className="rounded-none border min-h-[31rem] flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -475,7 +473,7 @@ const SchoolList = () => {
                   colSpan={columns.length}
                   className="h-24 text-center text-sm"
                 >
-                  No school found.
+                  No school data found.
                 </TableCell>
               </TableRow>
             )}
@@ -483,11 +481,11 @@ const SchoolList = () => {
         </Table>
       </div>
 
-      {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.school?.from || 0} to{" "}
+          {schoolData?.school?.to || 0} of {schoolData?.school?.total || 0}{" "}
+          schools
         </div>
 
         <div className="flex items-center space-x-2">
