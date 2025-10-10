@@ -12,7 +12,7 @@ const AppProvider = ({ children }) => {
     const checkPanelStatus = async () => {
       try { 
         // check-status
-        const response = await fetch(`${BASE_URL}/api/check-status`);
+        const response = await fetch(`${BASE_URL}/api/panel-check-status`);
         const data = await response.json();
         setIsPanelUp(data);
         if (data.success === "ok") {

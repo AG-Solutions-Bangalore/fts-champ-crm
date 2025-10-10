@@ -53,7 +53,7 @@ export default function LoginAuth() {
     formData.append("password", password);
 
     try {
-      const res = await axios.post(`${BASE_URL}/api/login`, formData);
+      const res = await axios.post(`${BASE_URL}/api/panel-login`, formData);
 
       if (res.status === 200) {
         if (!res.data.UserInfo || !res.data.UserInfo.token) {

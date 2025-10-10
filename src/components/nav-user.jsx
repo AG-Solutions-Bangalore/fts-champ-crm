@@ -13,14 +13,15 @@ import { useNavigate } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import Logout from "./auth/log-out";
-import { Upgrade } from "./upgrade/upgrade";
-import { ContextPanel } from "@/lib/context-panel";
+
+
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
+import { ContextPanel } from "@/lib/context-panel";
 
 
 export function NavUser({ user }) {
@@ -31,7 +32,7 @@ export function NavUser({ user }) {
   const navigate = useNavigate();
   const user_position = Cookies.get("email");
   const handleLogout = () => {
-    ['token', 'id', 'name','username','chapter_id','viewer_chapter_ids','user_type_id','token-expire-time', 'ver_con', 'email','currentYear'].forEach(cookie => {
+    ['token', 'id', 'name','username','chapter_id','viewer_chapter_ids','user_type_id','token-expire-time', 'ver_con', 'email','currentYear','favorite_chapters','recent_chapters'].forEach(cookie => {
       Cookies.remove(cookie);
     });
     navigate("/");
@@ -98,7 +99,7 @@ export function NavUser({ user }) {
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-     {/* <Upgrade/> */}
+ 
      {!showUpdateBadge ?(  <SidebarMenuButton
                 size="lg"
                 className="  data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
