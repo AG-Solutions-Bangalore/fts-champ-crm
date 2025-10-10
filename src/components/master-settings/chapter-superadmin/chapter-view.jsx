@@ -189,7 +189,7 @@ const ChapterViewSuperAdmin = () => {
 
   return (
     <div className="max-w-full space-y-2">
-      {/* Header Card */}
+     
       <Card className="p-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -231,7 +231,7 @@ const ChapterViewSuperAdmin = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Chapter Name */}
+                  
                   <div className="space-y-1">
                     <Label htmlFor="chapter_name" className="text-xs font-medium">
                       Chapter Name <span className="text-red-500">*</span>
@@ -246,7 +246,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Chapter Code */}
+               
                   <div className="space-y-1">
                     <Label htmlFor="chapter_code" className="text-xs font-medium">
                       Chapter Code
@@ -260,7 +260,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Address */}
+                 
                   <div className="space-y-1">
                     <Label htmlFor="chapter_address" className="text-xs font-medium">
                       Address <span className="text-red-500">*</span>
@@ -275,7 +275,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* City */}
+              
                   <div className="space-y-1">
                     <Label htmlFor="chapter_city" className="text-xs font-medium">
                       City <span className="text-red-500">*</span>
@@ -290,7 +290,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Pin */}
+             
                   <div className="space-y-1">
                     <Label htmlFor="chapter_pin" className="text-xs font-medium">
                       Pin <span className="text-red-500">*</span>
@@ -307,7 +307,6 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* State */}
                   <div className="space-y-1">
                     <Label htmlFor="chapter_state" className="text-xs font-medium">
                       State
@@ -329,7 +328,7 @@ const ChapterViewSuperAdmin = () => {
                     </Select>
                   </div>
 
-                  {/* Phone */}
+                 
                   <div className="space-y-1">
                     <Label htmlFor="chapter_phone" className="text-xs font-medium">
                       Phone <span className="text-red-500">*</span>
@@ -346,7 +345,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* WhatsApp */}
+               
                   <div className="space-y-1">
                     <Label htmlFor="chapter_whatsapp" className="text-xs font-medium">
                       WhatsApp
@@ -362,7 +361,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Email */}
+           
                   <div className="space-y-1">
                     <Label htmlFor="chapter_email" className="text-xs font-medium">
                       Email <span className="text-red-500">*</span>
@@ -378,7 +377,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Website */}
+             
                   <div className="space-y-1">
                     <Label htmlFor="chapter_website" className="text-xs font-medium">
                       Website
@@ -392,7 +391,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Incorporation Date */}
+                 
                   <div className="space-y-1">
                     <Label htmlFor="chapter_date_of_incorporation" className="text-xs font-medium">
                       Incorporation Date
@@ -406,7 +405,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Region Code */}
+             
                   <div className="space-y-1">
                     <Label htmlFor="chapter_region_code" className="text-xs font-medium">
                       Region Code
@@ -420,7 +419,7 @@ const ChapterViewSuperAdmin = () => {
                     />
                   </div>
 
-                  {/* Committee Member for Sign */}
+            
                   <div className="space-y-1">
                     <Label htmlFor="auth_sign" className="text-xs font-medium">
                       Comm. Member for Sign <span className="text-red-500">*</span>
@@ -446,7 +445,7 @@ const ChapterViewSuperAdmin = () => {
                 </div>
               </CardContent>
 
-              {/* Action Buttons */}
+          
               <div className="flex items-center justify-end gap-3 pt-4">
                 <Button 
                   type="button" 
@@ -478,7 +477,7 @@ const ChapterViewSuperAdmin = () => {
             </form>
           </Card>
           <Card className='p-4'>
-      {/* Main Content with Tabs */}
+    
       <Tabs value={activeTab} onValueChange={setActiveTab} className="">
         <TabsList className="grid w-full grid-cols-2 h-9 bg-[var(--team-color)] text-white rounded-md">
       
@@ -488,7 +487,7 @@ const ChapterViewSuperAdmin = () => {
 
    
 
-        {/* Users Tab */}
+ 
         <TabsContent value="users" className="">
       
        <UserListSuperadmin id={id} users={users} isLoading={isLoading} isError={isError} refetch={refetch} isFetching={isFetching} ImageUrl={ImageUrl} chapterCodeForCreateUser={chapterCodeForCreateUser}/>
@@ -497,7 +496,7 @@ const ChapterViewSuperAdmin = () => {
           
         </TabsContent>
 
-        {/* Data Sources Tab */}
+      
         <TabsContent value="datasources" className="">
         <DatasourceListSuperadmin id={id}/>
           
@@ -506,6 +505,7 @@ const ChapterViewSuperAdmin = () => {
         </TabsContent>
       </Tabs>
       </Card>
+      
       </div>
     </div>
   );

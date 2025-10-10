@@ -34,8 +34,10 @@ const SchoolListView = () => {
     `school-full-list-view${decryptedId}`,
     `${SCHOOL_FULL_LIST_VIEW}/${decryptedId}`
   );
-  const school = schoolviewdata?.data?.schools || {};
+  const school = schoolviewdata?.schools || {};
+ 
   const schoolAdoption = schoolviewdata?.data?.schoolsadoption || [];
+  console.log('schoolAdoption',schoolAdoption)
   if (isLoading) {
     return <SchoolViewLoading />;
   }
@@ -162,10 +164,10 @@ const SchoolListView = () => {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="px-4 py-2 text-sm font-medium text-gray-700">
-                      {adoption.individual_company.indicomp_fts_id}
+                      {adoption?.individual_company.indicomp_fts_id}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
-                      {adoption.individual_company.indicomp_full_name}
+                      {adoption?.individual_company.indicomp_full_name}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
                       {adoption.schoolalot_financial_year}
