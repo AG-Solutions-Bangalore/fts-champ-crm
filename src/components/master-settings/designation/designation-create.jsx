@@ -40,15 +40,15 @@ const DesignationCreate = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/create-designation`,
+        `${BASE_URL}/api/designation`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || 'Designation Created Successfully')
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || 'Designation Created Successfully')
   
         setFormData({
           designation_type: "",
@@ -56,7 +56,7 @@ const DesignationCreate = () => {
         await queryClient.invalidateQueries(["designationList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || 'Error while creating Designation');
+        toast.error(response.data.message || 'Error while creating Designation');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create designation");

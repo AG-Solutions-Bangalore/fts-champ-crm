@@ -16,7 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import BASE_URL from "@/config/base-url";
 
@@ -26,16 +32,17 @@ const FaqEdit = ({ faqData }) => {
   const [formData, setFormData] = useState({
     header: "",
     text: "",
+    status: "",
   });
 
   const queryClient = useQueryClient();
 
-  // Initialize form data when faqData changes or dialog opens
   useEffect(() => {
     if (faqData && open) {
       setFormData({
         header: faqData.header || "",
         text: faqData.text || "",
+        status: faqData.status || "",
       });
     }
   }, [faqData, open]);
@@ -55,28 +62,24 @@ const FaqEdit = ({ faqData }) => {
     try {
       const token = Cookies.get("token");
       const response = await axios.put(
-        `${BASE_URL}/api/update-faqs/${faqData.id}`,
+        `${BASE_URL}/api/faq/${faqData.id}`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || "FAQ updated successfully");
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || "FAQ updated successfully");
 
-        setFormData({
-          header: "",
-          text: "",
-        });
         
-        // Invalidate queries to refresh the list
+        
         await queryClient.invalidateQueries(["faqList"]);
         
        
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to update FAQ");
+        toast.error(response.data.message || "Failed to update FAQ");
       }
     } catch (error) {
       toast.error(
@@ -92,13 +95,18 @@ const FaqEdit = ({ faqData }) => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
+  const handleStatusChange = (value) => {
+    setFormData((prev) => ({ ...prev, status: value }));
+  };
+
   const handleOpenChange = (isOpen) => {
     setOpen(isOpen);
-    // Reset form when dialog closes
+   
     if (!isOpen) {
       setFormData({
         header: "",
         text: "",
+        status: "",
       });
     }
   };
@@ -117,7 +125,7 @@ const FaqEdit = ({ faqData }) => {
         <DialogHeader>
           <DialogTitle>Edit FAQ</DialogTitle>
           <DialogDescription>
-            Update the details for the FAQ
+            Update the details for the FAQ 
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -135,6 +143,18 @@ const FaqEdit = ({ faqData }) => {
               onChange={handleInputChange}
               rows={5}
             />
+              <Select
+                        value={formData.status}
+                        onValueChange={handleStatusChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
           </div>
           <Button
             onClick={handleSubmit}

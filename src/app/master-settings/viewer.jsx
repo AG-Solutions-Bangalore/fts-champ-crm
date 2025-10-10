@@ -48,7 +48,7 @@ const Viewer = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/superadmin-get-all-viewers`,
+        `${BASE_URL}/api/fetch-user-list`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ const Viewer = () => {
           },
         }
       );
-      return response.data.viewerUsers;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,

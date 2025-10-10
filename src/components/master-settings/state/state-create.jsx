@@ -41,15 +41,15 @@ const StateCreate = () => {
     try {
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/create-states`,
+        `${BASE_URL}/api/panel-create-state`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || "State created successfully");
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || "State created successfully");
 
         setFormData({
           state_name: "",
@@ -59,7 +59,7 @@ const StateCreate = () => {
         await queryClient.invalidateQueries(["stateList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create state");
+        toast.error(response.data.message || "Failed to create state");
       }
     } catch (error) {
       toast.error(

@@ -29,8 +29,7 @@ import moment from 'moment';
 import { 
   DASHBOARD_DATA, 
   DASHBOARD_MARK_NOTICE_AS_READ, 
-  DASHBOARD_SUPERADMIN_NOTICE, 
-  DASHBOARD_USER_NOTICE, 
+  DASHBOARD_NOTICE, 
 } from '@/api';
 
 Chart.register(ArcElement, ...registerables);
@@ -150,7 +149,7 @@ const Home = () => {
   } = useQuery({
     queryKey: ['dashboard-notices', userTypeId],
     queryFn: async () => {
-      const url = userTypeId == "3" ? DASHBOARD_SUPERADMIN_NOTICE : DASHBOARD_USER_NOTICE;
+      const url = DASHBOARD_NOTICE;
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -160,7 +159,7 @@ const Home = () => {
    
   });
 
-  const datanotification = noticesData?.notices || [];
+  const datanotification = noticesData?.data || [];
 
 
   const { 
@@ -168,14 +167,14 @@ const Home = () => {
     isLoading: loadingDashboardData,
     refetch: refetchDashboard 
   } = useQuery({
-    queryKey: ['dashboard-data', currentYear],
+    queryKey: ['dashboard-data'],
     queryFn: async () => {
-      const response = await axios.get(`${DASHBOARD_DATA}/${currentYear}`, {
+      const response = await axios.get(`${DASHBOARD_DATA}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data;
+      return response.data.data;
     },
-    enabled: !!currentYear,
+ 
     staleTime: 30 * 60 * 1000,
     cacheTime: 60 * 60 * 1000, 
     refetchOnMount: false, 
@@ -188,8 +187,9 @@ const Home = () => {
 
   const markNoticeAsReadMutation = useMutation({
     mutationFn: async (noticeId) => {
+      
       const response = await axios.post(
-        `${DASHBOARD_MARK_NOTICE_AS_READ}${noticeId}`,
+        `${DASHBOARD_MARK_NOTICE_AS_READ}/${noticeId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -197,13 +197,13 @@ const Home = () => {
       );
       return response.data;
     },
-    onSuccess: () => {
-      toast.success('Notice acknowledged successfully');
-      refetchNotices();
-    },
-    onError: () => {
-      toast.error('Error acknowledging notice');
-    },
+   onSuccess: (data) => {
+         toast.success(data.message || 'Notice acknowledged successfully');
+         refetchNotices();
+       },
+       onError: (error) => {
+         toast.error(error.response.data.message || 'Error acknowledging notice');
+       },
   });
 
   const handleMarkNoticeAsRead = (notice) => {
@@ -513,10 +513,12 @@ const Home = () => {
             <DialogTitle className="text-base">Acknowledge Notice</DialogTitle>
             <DialogDescription className="text-sm">
               Confirm you have read and understood this notice?
+          
             </DialogDescription>
           </DialogHeader>
           {selectedNotice && (
             <div className="bg-gray-50 p-2 rounded border">
+                 
               <h4 className="font-medium text-sm mb-1">{selectedNotice.notice_name}</h4>
               <p className="text-xs text-gray-600 line-clamp-3">{selectedNotice.notice_detail}</p>
             </div>

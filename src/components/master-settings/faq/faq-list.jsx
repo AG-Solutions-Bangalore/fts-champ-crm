@@ -49,7 +49,7 @@ const FaqList = () => {
       const token = Cookies.get("token");
       
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-faqs`,
+        `${BASE_URL}/api/faq`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -57,7 +57,7 @@ const FaqList = () => {
           },
         }
       );
-      return response.data.faqs;
+      return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -108,8 +108,18 @@ const FaqList = () => {
         },
         size: 120,
       },
-      
-   
+    
+      {
+        accessorKey: "status",
+        id: "Status",
+        header: "Status",
+        cell: ({ row }) => (
+          <div className="text-xs">
+            {row.getValue("Status") || "-"}
+          </div>
+        ),
+        size: 120,
+      },
     {
       id: "actions",
       header: "Action",

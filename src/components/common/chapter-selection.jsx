@@ -31,7 +31,7 @@ const ChapterSelection = () => {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: ["chapters"],
+    queryKey: ["chapter-selection"],
     queryFn: async () => {
       const res = await axios.get(`${BASE_URL}/api/fetch-profile-chapter`, {
         headers: { Authorization: `Bearer ${Cookies.get("token")}` },
