@@ -136,17 +136,24 @@ export const SCHOOL_VIEW_BY_ID = `/api/fetch-schools-by-id`;
 export const SCHOOL_FULL_LIST_VIEW = "/api/school-by-id";
 
 //REPEAT DONOR
-export const REAPEAT_DONOR_LIST = `/api/fetch-receipt-duplicate`;
-export const REAPEAT_DONOR_EDIT_LIST = `/api/fetch-school-allot-repeat`;
-export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-schoolsallot-repeat`;
+// export const REAPEAT_DONOR_LIST = `/api/fetch-receipt-duplicate`;
+export const REAPEAT_DONOR_LIST = `/api/receipt-repeated-donor`;
+// export const REAPEAT_DONOR_EDIT_LIST = `/api/fetch-school-allot-repeat`;
+export const REAPEAT_DONOR_EDIT_LIST = `/api/school-alloted-list`;
+// export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-schoolsallot-repeat`;
+export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-repeated-donor`;
 
 //SCHOOL ALLOT
 // export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
 export const SCHOOL_ALLOT_LIST = `/api/school-alloted-list`;
-export const FETCH_SCHOOL_ALLOT_LIST = `/api/fetch-schoolsallot-by-id`;
-export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/fetch-school-alloted-list-by-id`;
-export const SCHOOL_ALLOT_VIEW_LIST = `/api/fetch-schoolsallotview-by-id`;
-export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
+// export const FETCH_SCHOOL_ALLOT_LIST = `/api/fetch-schoolsallot-by-id`;
+export const FETCH_SCHOOL_ALLOT_LIST = `/api/school-allotment`;
+export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/school-list-alloted`;
+// export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/fetch-school-alloted-list-by-id`;
+// export const SCHOOL_ALLOT_VIEW_LIST = `/api/fetch-schoolsallotview-by-id`;
+export const SCHOOL_ALLOT_VIEW_LIST = `/api/school-alloted-view-by-id`;
+// export const SCHOOL_ALLOT_LETTER = `/api/fetch-schoolsallot-receipt-by-id`;
+export const SCHOOL_ALLOT_LETTER = `/api/school-alloted-letter`;
 // (school edit pending )
 
 //SCHOOL TO ALLOT
@@ -161,7 +168,8 @@ export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allotment-year-by-ye
 //no need
 // export const SCHOOL_DONOR_DETAILS_ALLOTED_LIST = `/api/school-alloted-list`;
 export const DONOR_DETAILS_SUMBIT = `/api/create-school-alot`;
-export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
+// export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
+export const UPDATE_DETAILS_SUMBIT = `/api/school-allotment`;
 
 /*--------------------------School-end----------------------------------- */
 

@@ -42,7 +42,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TableShimmer } from "../loadingtable/TableShimmer";
-import { useCurrentYear } from "@/hooks/use-current-year";
+import Cookies from "js-cookie";
 
 const RepeatDonor = () => {
   const navigate = useNavigate();
@@ -50,13 +50,17 @@ const RepeatDonor = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const currentYear = Cookies.get("currentYear");
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [pageInput, setPageInput] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -68,20 +72,24 @@ const RepeatDonor = () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
-  // const { currentYear } = useCurrentYear();
-  // console.log(currentYear, "year");
+
   const {
     data: repeatData,
     isError,
     isFetching,
     prefetchPage,
-  } = useGetMutation("repeatdonor", `${REAPEAT_DONOR_LIST}/2025-26`, {
-    page: pagination.pageIndex + 1,
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-  });
+  } = useGetMutation(
+    "repeatdonor",
+    `${REAPEAT_DONOR_LIST}?year=${currentYear}`,
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
+  );
+  console.log(repeatData, "repeatData");
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = repeatData?.data?.last_page || 1;
+    const totalPages = repeatData?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -92,13 +100,9 @@ const RepeatDonor = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    repeatData?.data?.last_page,
+    repeatData?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
     {
@@ -114,32 +118,32 @@ const RepeatDonor = () => {
       size: 60,
     },
     {
-      accessorKey: "individual_company.indicomp_full_name",
+      accessorKey: "donor.indicomp_full_name",
       id: "Full Name",
       header: "Full Name",
       cell: ({ row }) => {
-        const name = row.original.individual_company.indicomp_full_name;
+        const name = row.original.donor.indicomp_full_name;
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
       size: 150,
     },
     {
       id: "Type",
-      accessorKey: "individual_company.indicomp_type",
+      accessorKey: "donor.indicomp_type",
       header: "Type",
       cell: ({ row }) => {
-        const type = row.original.individual_company.indicomp_type;
+        const type = row.original.donor.indicomp_type;
         return type ? <div className="text-xs">{type}</div> : null;
       },
       size: 100,
     },
     {
-      accessorKey: "individual_company.indicomp_mobile_phone",
+      accessorKey: "donor.indicomp_mobile_phone",
       header: "Phone / Email",
       id: "Phone / Email",
       cell: ({ row }) => {
-        const phone = row?.original?.individual_company?.indicomp_mobile_phone;
-        const email = row?.original?.individual_company?.indicomp_email;
+        const phone = row?.original?.donor?.indicomp_mobile_phone;
+        const email = row?.original?.donor?.indicomp_email;
 
         return (
           <div className="space-y-1">
@@ -181,7 +185,7 @@ const RepeatDonor = () => {
   ];
 
   const table = useReactTable({
-    data: repeatData?.receipts || [],
+    data: repeatData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -191,8 +195,8 @@ const RepeatDonor = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: repeatData?.data?.last_page || -1,
+    manualPagination: true,
+    pageCount: repeatData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -222,17 +226,25 @@ const RepeatDonor = () => {
       table.setPageIndex(newPageIndex);
     }
   };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {
@@ -311,7 +323,7 @@ const RepeatDonor = () => {
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching School List Data
+              Error Fetching Repeat Donor Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -424,8 +436,8 @@ const RepeatDonor = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {repeatData?.data?.from || 0} to {repeatData?.data?.to || 0}{" "}
-          of {repeatData?.data?.total || 0} schools
+          Showing {repeatData?.from || 0} to {repeatData?.to || 0} of{" "}
+          {repeatData?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

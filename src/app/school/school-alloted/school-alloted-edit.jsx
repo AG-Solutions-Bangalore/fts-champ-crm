@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,8 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
+import useNumericInput from "@/hooks/use-numeric-input";
 import { decryptId } from "@/utils/encyrption/encyrption";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -20,6 +29,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -28,15 +38,6 @@ import {
   FETCH_SCHOOL_ALLOT_LIST_BY_ID,
   UPDATE_DETAILS_SUMBIT,
 } from "../../../api";
-import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import useNumericInput from "@/hooks/use-numeric-input";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TableShimmer } from "../loadingtable/TableShimmer";
 
 const SchoolAllotEdit = () => {
@@ -45,21 +46,19 @@ const SchoolAllotEdit = () => {
   const queryClient = useQueryClient();
   const donorId = decryptId(id);
   const donorYear = decryptId(year);
-  const [schoolalot, setSchoolalot] = useState({
-    schoolalot_financial_year: "",
-    schoolalot_from_date: "",
-    schoolalot_to_date: "",
-    schoolalot_school_id: "",
-    rept_fin_year: "",
-  });
+  // const [schoolalot, setSchoolalot] = useState({
+  //   schoolalot_financial_year: "",
+  //   schoolalot_from_date: "",
+  //   schoolalot_to_date: "",
+  //   schoolalot_school_id: "",
+  //   rept_fin_year: "",
+  // });
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [schoolData, setSchoolData] = useState([]);
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [pageInput, setPageInput] = useState("");
-  const { trigger } = useApiMutation();
+  const [debouncedPage, setDebouncedPage] = useState("");
   const { trigger: Updatetrigger, loading: updateloading } = useApiMutation();
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -69,96 +68,145 @@ const SchoolAllotEdit = () => {
     pageIndex: 0,
     pageSize: 10,
   });
-  // Fetch donor & school data
+  // console.log(selectedSchoolIds, "selectedSchoolIds");
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const donorRes = await trigger({
-          url: `${FETCH_SCHOOL_ALLOT_LIST}/${donorId}`,
-        });
-        setSchoolalot(donorRes?.individualCompanys || {});
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  const {
+    data: schoolalot,
+    refetch: refetchSchoolAllot,
+    isLoading: loadingSchoolAllot,
+  } = useGetMutation(
+    `schooluserdata${donorId}`,
+    `${FETCH_SCHOOL_ALLOT_LIST}/${donorId}`
+  );
 
-        const schoolsRes = await trigger({
-          url: `${FETCH_SCHOOL_ALLOT_LIST_BY_ID}/${donorId}/${donorYear}`,
-        });
-        const schools = schoolsRes?.schools || [];
-        setSchoolData(schools);
+  const {
+    data: schoolListRes,
+    refetch: refetchSchoolList,
+    isLoading: loadingSchoolList,
+    prefetchPage,
+  } = useGetMutation(
+    `schoolListById${donorId}`,
+    `${FETCH_SCHOOL_ALLOT_LIST_BY_ID}?year=${donorYear}&id=${donorId}`,
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
+  );
+  const schoolData = schoolListRes || [];
+  useEffect(() => {
+    if (!donorId || !donorYear) return;
 
-        // Preselect already allotted schools
-        const savedIds = (
-          donorRes?.individualCompanys?.schoolalot_school_id || ""
-        ).split(",");
-        const defaultSelectedIds = schools
-          .filter((s) => savedIds.includes(s.school_code))
-          .map((s) => s.school_code);
-        setSelectedSchoolIds(defaultSelectedIds);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to fetch data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    if (schoolalot && schoolListRes?.data) {
+      const savedIds = (schoolalot?.schoolalot_school_id || "")
+        .split(",")
+        .map((id) => id.trim());
+
+      const school = schoolListRes.data || [];
+
+      const defaultSelectedIds = school
+        .filter((s) => savedIds.includes(s.school_code.trim()))
+        .map((s) => s.school_code.trim());
+
+      console.log("Saved IDs:", savedIds);
+      console.log(
+        "School codes in list:",
+        school.map((s) => s.school_code)
+      );
+      console.log("Matched defaultSelectedIds:", defaultSelectedIds);
+
+      setSelectedSchoolIds(defaultSelectedIds);
+    }
+  }, [schoolalot, schoolListRes]);
+
+  useEffect(() => {
+    if (donorId && donorYear) {
+      refetchSchoolAllot();
+      refetchSchoolList();
+    }
   }, [donorId, donorYear]);
   useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }, 500);
+    if (!schoolData?.last_page) return;
 
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [searchTerm]);
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = schoolData?.last_page;
+    if (currentPage < totalPages) {
+      prefetchPage({ page: currentPage + 1 });
+    }
+    if (currentPage > 1) {
+      prefetchPage({ page: currentPage - 1 });
+    }
+  }, [
+    pagination.pageIndex,
+    debouncedSearchTerm,
+    schoolData?.last_page,
+    prefetchPage,
+  ]);
+
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
-    // const cachedData = queryClient.getQueryData([
-    //   "donors",
-    //   debouncedSearchTerm,
-    //   targetPage,
-    // ]);
+    const cachedData = queryClient.getQueryData([
+      "schoolListById",
+      debouncedSearchTerm,
+      targetPage,
+    ]);
 
-    // if (cachedData) {
-    //   setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
-    // } else {
+    if (cachedData) {
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
+    } else {
       table.setPageIndex(newPageIndex);
-    // }
+    }
   };
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
+
   const columns = [
     {
       id: "select",
-      header: () => (
-        <Checkbox
-          checked={
-            selectedSchoolIds.length ===
-              schoolData.filter((s) => s.status_label !== "Allotted").length &&
-            schoolData.length > 0
-          }
-          onCheckedChange={(checked) => {
-            if (checked) {
-              setSelectedSchoolIds(
-                schoolData
-                  .filter((s) => s.status_label !== "Allotted")
-                  .map((s) => s.school_code)
-              );
-            } else setSelectedSchoolIds([]);
-          }}
-          aria-label="Select all schools"
-        />
-      ),
+      header: () => {
+        const selectableSchools =
+          schoolData?.data?.filter((s) => s.status_label !== "Allotted") || [];
+
+        const allSelected =
+          selectedSchoolIds.length > 0 &&
+          selectedSchoolIds.length === selectableSchools.length;
+
+        return (
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setSelectedSchoolIds(
+                  selectableSchools.map((s) => s.school_code)
+                );
+              } else {
+                setSelectedSchoolIds([]);
+              }
+            }}
+            className="bg-white data-[state=checked]:bg-white data-[state=checked]:text-primary border border-gray-300 rounded"
+            aria-label="Select all schools"
+          />
+        );
+      },
+
       cell: ({ row }) => {
         const code = row.original.school_code;
         const disabled = row.original.status_label === "Allotted";
@@ -194,7 +242,7 @@ const SchoolAllotEdit = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData,
+    data: schoolData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -204,6 +252,8 @@ const SchoolAllotEdit = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    pageCount: schoolData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -223,16 +273,14 @@ const SchoolAllotEdit = () => {
     if (!selectedSchoolIds.length)
       return toast.error("Select at least one school");
 
-    setLoading(true);
     const payload = {
       donor_related_id: donorId,
-      schoolalot_financial_year: schoolalot.schoolalot_financial_year,
-      schoolalot_from_date: schoolalot.schoolalot_from_date,
-      schoolalot_to_date: schoolalot.schoolalot_to_date,
+      schoolalot_financial_year: schoolalot?.schoolalot_financial_year ?? "",
+      schoolalot_from_date: schoolalot?.schoolalot_from_date ?? "",
+      schoolalot_to_date: schoolalot?.schoolalot_to_date ?? "",
       schoolalot_school_id: selectedSchoolIds.join(","),
-      rept_fin_year: schoolalot.rept_fin_year,
+      rept_fin_year: schoolalot?.rept_fin_year ?? "",
     };
-
     try {
       const res = await Updatetrigger({
         url: `${UPDATE_DETAILS_SUMBIT}/${donorId}`,
@@ -240,17 +288,15 @@ const SchoolAllotEdit = () => {
         data: payload,
       });
 
-      if (res?.code === 200) {
-        toast.success(res.msg);
+      if (res?.code === 201) {
+        toast.success(res.message);
         navigate("/school/alloted");
       } else {
-        toast.error(res.msg || "Unexpected error");
+        toast.error(res.message || "Unexpected error");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update");
-    } finally {
-      setLoading(false);
+      toast.error(err.message || "Failed to update");
     }
   };
   const generatePageButtons = () => {
@@ -328,15 +374,19 @@ const SchoolAllotEdit = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label required>School Allot Year</Label>
-          <Input value={schoolalot.schoolalot_financial_year} disabled />
+          <Input value={schoolalot?.schoolalot_financial_year} disabled />
         </div>
         <div>
           <Label required>From Date</Label>
-          <Input value={schoolalot.schoolalot_from_date} disabled type="date" />
+          <Input
+            value={schoolalot?.schoolalot_from_date}
+            disabled
+            type="date"
+          />
         </div>
         <div>
           <Label required>To Date</Label>
-          <Input value={schoolalot.schoolalot_to_date} disabled type="date" />
+          <Input value={schoolalot?.schoolalot_to_date} disabled type="date" />
         </div>
       </div>
 
@@ -401,7 +451,7 @@ const SchoolAllotEdit = () => {
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loadingSchoolList || loadingSchoolAllot ? (
               <TableShimmer columns={table.getVisibleFlatColumns()} />
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
@@ -431,8 +481,8 @@ const SchoolAllotEdit = () => {
       </div>
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.from || 0} to {schoolData?.to || 0} of{" "}
+          {schoolData?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

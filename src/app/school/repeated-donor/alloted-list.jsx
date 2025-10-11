@@ -39,6 +39,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit,
+  Loader,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -46,6 +47,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { TableShimmer } from "../loadingtable/TableShimmer";
 import { useCurrentYear } from "@/hooks/use-current-year";
+import Cookies from "js-cookie";
 
 const AllotedList = () => {
   const queryClient = useQueryClient();
@@ -53,16 +55,16 @@ const AllotedList = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [debouncedPage, setDebouncedPage] = useState("");
   const { id } = useParams();
+  const [pageInput, setPageInput] = useState("");
   const { trigger: submitDetails, loading: submitloading } = useApiMutation();
-
+  const currentYear = Cookies.get("currentYear");
   const donorId = decryptId(id);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -82,7 +84,7 @@ const AllotedList = () => {
     prefetchPage,
   } = useGetMutation(
     `school/${donorId}`,
-    `${REAPEAT_DONOR_EDIT_LIST}/${donorId}`,
+    `${REAPEAT_DONOR_EDIT_LIST}?id=${donorId}`,
     {
       page: pagination.pageIndex + 1,
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
@@ -91,7 +93,7 @@ const AllotedList = () => {
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.schools?.last_page || 1;
+    const totalPages = schoolData?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -102,18 +104,15 @@ const AllotedList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.schools?.last_page,
+    schoolData?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState();
   const [rowSelection, setRowSelection] = useState({});
-  // const { currentYear } = useCurrentYear();
-  // console.log(currentYear, "year");
 
   const updateNext = async (e, allotId) => {
-    const currentYear = "2025-26";
     if (!currentYear) {
       toast.error("Current year is required for updating.");
       return;
@@ -144,7 +143,7 @@ const AllotedList = () => {
       id: "serialNo",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = row.index + 1; // adjust if pagination changes
+        const globalIndex = row.index + 1; 
         return (
           <div className="text-xs font-medium text-center">{globalIndex}</div>
         );
@@ -229,9 +228,13 @@ const AllotedList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={(e) => updateNext(e, row.original.id)}
+                    onClick={(e) => updateNext(e, id)}
                   >
-                    <Edit className="h-5 w-5 text-blue-500" />
+                    {loading ? (
+                      <Loader className="h-5 w-5 animate-spin text-blue-500" />
+                    ) : (
+                      <Edit className="h-5 w-5 text-blue-500" />
+                    )}{" "}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Update Next</TooltipContent>
@@ -255,8 +258,8 @@ const AllotedList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.schools?.last_page || -1,
+    manualPagination: true,
+    pageCount: schoolData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -287,18 +290,26 @@ const AllotedList = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
-  };
+  }, [debouncedPage]);
 
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
+  };
   const generatePageButtons = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
@@ -392,7 +403,7 @@ const AllotedList = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search school..."
+            placeholder="Search Repeated Donor..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -488,8 +499,8 @@ const AllotedList = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.from || 0} to {schoolData?.to || 0}{" "}
+          of {schoolData?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

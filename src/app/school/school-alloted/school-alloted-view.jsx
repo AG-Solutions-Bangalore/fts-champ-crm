@@ -32,12 +32,16 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SCHOOL_ALLOT_VIEW_LIST } from "../../../api";
 import { TableShimmer } from "../loadingtable/TableShimmer";
+import { useQueryClient } from "@tanstack/react-query";
 const SchoolAllotView = () => {
   const { id } = useParams();
+  const queryClient = useQueryClient();
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [debouncedPage, setDebouncedPage] = useState("");
   const donorId = decryptId(id);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [pageInput, setPageInput] = useState("");
@@ -46,19 +50,49 @@ const SchoolAllotView = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
   const {
-    data: schoolAllot,
+    data: schoolsAllotment,
     isError,
     isFetching,
+    prefetchPage,
   } = useGetMutation(
     `schoolallotlist-${donorId}-${pagination.pageIndex}`,
     `${SCHOOL_ALLOT_VIEW_LIST}/${donorId}`,
-    { page: pagination.pageIndex + 1, limit: pagination.pageSize }
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
   );
+
   const keyDown = useNumericInput();
-  const schools = schoolAllot?.SchoolAlotView || [];
-  const totalSchools = schoolAllot?.total || 0;
-  const totalPages = Math.ceil(totalSchools / pagination.pageSize);
+  console.log(schoolsAllotment);
+  useEffect(() => {
+    if (!schoolsAllotment?.last_page) return;
+
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = schoolsAllotment?.last_page;
+    if (currentPage < totalPages) {
+      prefetchPage({ page: currentPage + 1 });
+    }
+    if (currentPage > 1) {
+      prefetchPage({ page: currentPage - 1 });
+    }
+  }, [
+    pagination.pageIndex,
+    debouncedSearchTerm,
+    schoolsAllotment?.last_page,
+    prefetchPage,
+  ]);
 
   const columns = [
     {
@@ -168,7 +202,7 @@ const SchoolAllotView = () => {
   ];
 
   const table = useReactTable({
-    data: schools,
+    data: schoolsAllotment || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -178,6 +212,8 @@ const SchoolAllotView = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    pageCount: schoolsAllotment?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -193,28 +229,110 @@ const SchoolAllotView = () => {
     },
   });
 
-  // Page change helpers
-  const handlePageChange = (page) => {
-    if (page < 0 || page >= totalPages) return;
-    setPagination((prev) => ({ ...prev, pageIndex: page }));
+  const handlePageChange = (newPageIndex) => {
+    const targetPage = newPageIndex + 1;
+    const cachedData = queryClient.getQueryData([
+      `schoolallotlist-${donorId}-${pagination.pageIndex}`,
+      debouncedSearchTerm,
+      targetPage,
+    ]);
+
+    if (cachedData) {
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
+    } else {
+      table.setPageIndex(newPageIndex);
+    }
   };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
+      if (pageNum >= 1 && pageNum <= table.getPageCount()) {
+        handlePageChange(pageNum - 1);
+      }
+    }
+  }, [debouncedPage]);
 
   const handlePageInput = (e) => {
-    const val = e.target.value;
-    if (/^\d*$/.test(val)) setPageInput(val);
+    setPageInput(e.target.value);
   };
 
-  const generatePageButtons = () =>
-    Array.from({ length: totalPages }).map((_, i) => (
+  const generatePageButtons = () => {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = table.getPageCount();
+    const buttons = [];
+
+    buttons.push(
       <Button
-        key={i}
-        variant={i === pagination.pageIndex ? "default" : "outline"}
+        key={1}
+        variant={currentPage === 1 ? "default" : "outline"}
         size="sm"
-        onClick={() => handlePageChange(i)}
+        onClick={() => handlePageChange(0)}
+        className="h-8 w-8 p-0 text-xs"
       >
-        {i + 1}
+        1
       </Button>
-    ));
+    );
+
+    if (currentPage > 3) {
+      buttons.push(
+        <span key="ellipsis1" className="px-2">
+          ...
+        </span>
+      );
+    }
+
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
+      if (i !== 1 && i !== totalPages) {
+        buttons.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i - 1)}
+            className="h-8 w-8 p-0 text-xs"
+          >
+            {i}
+          </Button>
+        );
+      }
+    }
+
+    if (currentPage < totalPages - 2) {
+      buttons.push(
+        <span key="ellipsis2" className="px-2">
+          ...
+        </span>
+      );
+    }
+
+    if (totalPages > 1) {
+      buttons.push(
+        <Button
+          key={totalPages}
+          variant={currentPage === totalPages ? "default" : "outline"}
+          size="sm"
+          onClick={() => handlePageChange(totalPages - 1)}
+          className="h-8 w-8 p-0 text-xs"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+
+    return buttons;
+  };
 
   return (
     <div className="p-4 space-y-2">
@@ -222,7 +340,7 @@ const SchoolAllotView = () => {
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search alloted..."
+            placeholder="Search Allotment..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -306,16 +424,10 @@ const SchoolAllotView = () => {
           </TableBody>
         </Table>
       </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between py-2">
+      <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-          {Math.min(
-            (pagination.pageIndex + 1) * pagination.pageSize,
-            totalSchools
-          )}{" "}
-          of {totalSchools} schools
+          Showing {schoolsAllotment?.from || 0} to {schoolsAllotment?.to || 0}{" "}
+          of {schoolsAllotment?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">
@@ -323,7 +435,7 @@ const SchoolAllotView = () => {
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={pagination.pageIndex === 0}
+            disabled={!table.getCanPreviousPage()}
             className="h-8 px-2"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -338,7 +450,7 @@ const SchoolAllotView = () => {
             <Input
               type="tel"
               min="1"
-              max={totalPages}
+              max={table.getPageCount()}
               value={pageInput}
               onChange={handlePageInput}
               onBlur={() => setPageInput("")}
@@ -346,14 +458,14 @@ const SchoolAllotView = () => {
               className="w-16 h-8 text-sm"
               placeholder="Page"
             />
-            <span>of {totalPages}</span>
+            <span>of {table.getPageCount()}</span>
           </div>
 
           <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={pagination.pageIndex + 1 >= totalPages}
+            disabled={!table.getCanNextPage()}
             className="h-8 px-2"
           >
             <ChevronRight className="h-4 w-4" />
