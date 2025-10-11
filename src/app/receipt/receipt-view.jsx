@@ -61,7 +61,7 @@ const ReceiptOne = () => {
     queryKey: ['receiptView', id],
     queryFn: async () => {
       const { data } = await axios.get(
-        `${BASE_URL}/api/fetch-receipt-by-id/${id}`,
+        `${BASE_URL}/api/receipt-view/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -77,7 +77,7 @@ const ReceiptOne = () => {
   staleTime: 1000 * 60 * 5, 
   });
 
-  const receipts = receiptData?.receipt || {};
+  const receipts = receiptData?.data || {};
   const chapter = receiptData?.chapter || {};
   const authsign = receiptData?.auth_sign || [];
   const country = receiptData?.country || [];
@@ -92,7 +92,7 @@ const ReceiptOne = () => {
           Authorization: `Bearer ${Cookies.get("token")}`,
         },
       });
-      return response.data.receipt_control;
+      return response.data.data;
     },
   });
 
@@ -100,7 +100,7 @@ const ReceiptOne = () => {
   const sendEmailMutation = useMutation({
   mutationFn: async () => {
     const response = await axios.get(
-      `${BASE_URL}/api/send-receipt/${id}?id=${id}`,
+      `${BASE_URL}/api/send-receipt-email/${id}`,
       {
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
@@ -111,11 +111,11 @@ const ReceiptOne = () => {
   },
 
   onSuccess: (response) => {
-    if (response?.code === 200) {
+    if (response?.code === 201) {
       queryClient.invalidateQueries(["receiptView", id]);
-      toast.success(response.msg);
+      toast.success(response.message);
     } else {
-      toast.error(response.msg);
+      toast.error(response.message);
     }
   },
 
@@ -134,13 +134,13 @@ const ReceiptOne = () => {
         },
       }),
     onSuccess: (response) => {
-      if (response?.data.code == 200) {
+      if (response?.data.code == 201) {
         handleClose();
         queryClient.invalidateQueries(['receiptView', id]);
-        toast.success(response?.data.msg);
+        toast.success(response?.data.message);
         setDonor1({ indicomp_email: "" });
       } else {
-        toast.error(response?.data.msg);
+        toast.error(response?.data.message);
       }
     },
     onError: (error) => {
@@ -346,7 +346,7 @@ const ReceiptOne = () => {
           <TooltipContent>Download PDF</TooltipContent>
         </Tooltip>
 
-        {receipts?.individual_company?.indicomp_email ? (
+        {receipts?.donor?.indicomp_email ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -486,46 +486,46 @@ const ReceiptOne = () => {
                       {Object.keys(receipts).length !== 0 && (
                         <div className="ml-6 font-bold">
                           <p className="text-sm leading-tight">
-                            {receipts.individual_company.indicomp_type !== "Individual" && "M/s"}
-                            {receipts.individual_company.indicomp_type === "Individual" &&
-                              receipts.individual_company.title}{" "}
-                            {receipts.individual_company.indicomp_full_name}
+                            {receipts.donor.indicomp_type !== "Individual" && "M/s"}
+                            {receipts.donor.indicomp_type === "Individual" &&
+                              receipts.donor.title}{" "}
+                            {receipts.donor.indicomp_full_name}
                           </p>
 
-                          {receipts.individual_company.indicomp_off_branch_address && (
+                          {receipts.donor.indicomp_off_branch_address && (
                             <div>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_address}
+                                {receipts.donor.indicomp_off_branch_address}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_area}
+                                {receipts.donor.indicomp_off_branch_area}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_ladmark}
+                                {receipts.donor.indicomp_off_branch_ladmark}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                                {receipts.individual_company.indicomp_off_branch_pin_code},
-                                {receipts.individual_company.indicomp_off_branch_state}
+                                {receipts.donor.indicomp_off_branch_city} -{" "}
+                                {receipts.donor.indicomp_off_branch_pin_code},
+                                {receipts.donor.indicomp_off_branch_state}
                               </p>
                             </div>
                           )}
 
-                          {receipts.individual_company.indicomp_res_reg_address && (
+                          {receipts.donor.indicomp_res_reg_address && (
                             <div>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_address}
+                                {receipts.donor.indicomp_res_reg_address}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_area}
+                                {receipts.donor.indicomp_res_reg_area}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_ladmark}
+                                {receipts.donor.indicomp_res_reg_ladmark}
                               </p>
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                                {receipts.individual_company.indicomp_res_reg_pin_code},
-                                {receipts.individual_company.indicomp_res_reg_state}
+                                {receipts.donor.indicomp_res_reg_city} -{" "}
+                                {receipts.donor.indicomp_res_reg_pin_code},
+                                {receipts.donor.indicomp_res_reg_state}
                               </p>
                             </div>
                           )}
@@ -557,7 +557,7 @@ const ReceiptOne = () => {
                         </span>
                         <span className="font-bold ml-2">
                           {country.find((coustate) => coustate.state_country === "India") &&
-                            receipts.individual_company.indicomp_pan_no}
+                            receipts.donor.indicomp_pan_no}
                         </span>
                       </div>
                     </td>
@@ -656,60 +656,60 @@ const ReceiptOne = () => {
         {Object.keys(receipts).length !== 0 && (
           <div className="mt-1 space-y-1">
             {receipts.receipt_donation_type !== "Membership" &&
-              receipts.individual_company.indicomp_type !== "Individual" && (
+              receipts.donor.indicomp_type !== "Individual" && (
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.title}{" "}
-                  {receipts.individual_company.indicomp_com_contact_name}
+                  {receipts.donor.title}{" "}
+                  {receipts.donor.indicomp_com_contact_name}
                 </p>
               )}
 
-            {receipts.individual_company.indicomp_type !== "Individual" && (
+            {receipts.donor.indicomp_type !== "Individual" && (
               <p className="font-serif text-sm">
-                M/s {receipts.individual_company.indicomp_full_name}
+                M/s {receipts.donor.indicomp_full_name}
               </p>
             )}
 
-            {receipts.individual_company.indicomp_type === "Individual" && (
+            {receipts.donor.indicomp_type === "Individual" && (
               <p className="font-serif text-sm">
-                {receipts.individual_company.title}{" "}
-                {receipts.individual_company.indicomp_full_name}
+                {receipts.donor.title}{" "}
+                {receipts.donor.indicomp_full_name}
               </p>
             )}
 
-            {receipts.individual_company.indicomp_off_branch_address && (
+            {receipts.donor.indicomp_off_branch_address && (
               <div className="space-y-0.5">
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_address}
+                  {receipts.donor.indicomp_off_branch_address}
                 </p>
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_area}
+                  {receipts.donor.indicomp_off_branch_area}
                 </p>
                 <p className="text-sm">
-                  {receipts.individual_company.indicomp_off_branch_ladmark}
+                  {receipts.donor.indicomp_off_branch_ladmark}
                 </p>
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                  {receipts.individual_company.indicomp_off_branch_pin_code},{" "}
-                  {receipts.individual_company.indicomp_off_branch_state}
+                  {receipts.donor.indicomp_off_branch_city} -{" "}
+                  {receipts.donor.indicomp_off_branch_pin_code},{" "}
+                  {receipts.donor.indicomp_off_branch_state}
                 </p>
               </div>
             )}
 
-            {receipts.individual_company.indicomp_res_reg_address && (
+            {receipts.donor.indicomp_res_reg_address && (
               <div className="space-y-0.5">
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_address}
+                  {receipts.donor.indicomp_res_reg_address}
                 </p>
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_area}
+                  {receipts.donor.indicomp_res_reg_area}
                 </p>
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_ladmark}
+                  {receipts.donor.indicomp_res_reg_ladmark}
                 </p>
                 <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                  {receipts.individual_company.indicomp_res_reg_pin_code},{" "}
-                  {receipts.individual_company.indicomp_res_reg_state}
+                  {receipts.donor.indicomp_res_reg_city} -{" "}
+                  {receipts.donor.indicomp_res_reg_pin_code},{" "}
+                  {receipts.donor.indicomp_res_reg_state}
                 </p>
               </div>
             )}
@@ -717,11 +717,11 @@ const ReceiptOne = () => {
         )}
 
         <p className="my-2 font-serif text-sm">
-          {receipts.individual_company?.indicomp_gender === "Female" &&
+          {receipts.donor?.indicomp_gender === "Female" &&
             "Respected Madam,"}
-          {receipts.individual_company?.indicomp_gender === "Male" &&
+          {receipts.donor?.indicomp_gender === "Male" &&
             "Respected Sir,"}
-          {receipts.individual_company?.indicomp_gender === null &&
+          {receipts.donor?.indicomp_gender === null &&
             "Respected Sir,"}
         </p>
 
@@ -833,60 +833,60 @@ const ReceiptOne = () => {
                   {Object.keys(receipts).length !== 0 && (
                     <div className="mt-2">
                       {receipts.receipt_donation_type !== "Membership" &&
-                        receipts.individual_company.indicomp_type !== "Individual" && (
+                        receipts.donor.indicomp_type !== "Individual" && (
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.title}{" "}
-                            {receipts.individual_company.indicomp_com_contact_name}
+                            {receipts.donor.title}{" "}
+                            {receipts.donor.indicomp_com_contact_name}
                           </p>
                         )}
 
-                      {receipts.individual_company.indicomp_type !== "Individual" && (
+                      {receipts.donor.indicomp_type !== "Individual" && (
                         <p className="font-serif text-[18px]">
-                          M/s {receipts.individual_company.indicomp_full_name}
+                          M/s {receipts.donor.indicomp_full_name}
                         </p>
                       )}
 
-                      {receipts.individual_company.indicomp_type === "Individual" && (
+                      {receipts.donor.indicomp_type === "Individual" && (
                         <p className="font-serif text-[18px]">
-                          {receipts.individual_company.title}{" "}
-                          {receipts.individual_company.indicomp_full_name}
+                          {receipts.donor.title}{" "}
+                          {receipts.donor.indicomp_full_name}
                         </p>
                       )}
 
-                      {receipts.individual_company.indicomp_off_branch_address && (
+                      {receipts.donor.indicomp_off_branch_address && (
                         <div>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_address}
+                            {receipts.donor.indicomp_off_branch_address}
                           </p>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_area}
+                            {receipts.donor.indicomp_off_branch_area}
                           </p>
                           <p className="mb-0 text-xl">
-                            {receipts.individual_company.indicomp_off_branch_ladmark}
+                            {receipts.donor.indicomp_off_branch_ladmark}
                           </p>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                            {receipts.individual_company.indicomp_off_branch_pin_code},
-                            {receipts.individual_company.indicomp_off_branch_state}
+                            {receipts.donor.indicomp_off_branch_city} -{" "}
+                            {receipts.donor.indicomp_off_branch_pin_code},
+                            {receipts.donor.indicomp_off_branch_state}
                           </p>
                         </div>
                       )}
 
-                      {receipts.individual_company.indicomp_res_reg_address && (
+                      {receipts.donor.indicomp_res_reg_address && (
                         <div>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_address}
+                            {receipts.donor.indicomp_res_reg_address}
                           </p>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_area}
+                            {receipts.donor.indicomp_res_reg_area}
                           </p>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_ladmark}
+                            {receipts.donor.indicomp_res_reg_ladmark}
                           </p>
                           <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                            {receipts.individual_company.indicomp_res_reg_pin_code},
-                            {receipts.individual_company.indicomp_res_reg_state}
+                            {receipts.donor.indicomp_res_reg_city} -{" "}
+                            {receipts.donor.indicomp_res_reg_pin_code},
+                            {receipts.donor.indicomp_res_reg_state}
                           </p>
                         </div>
                       )}
@@ -894,9 +894,9 @@ const ReceiptOne = () => {
                   )}
 
                   <p className="my-6 font-serif text-[18px] text-justify">
-                    {receipts.individual_company?.indicomp_gender === "Female" && "Respected Madam,"}
-                    {receipts.individual_company?.indicomp_gender === "Male" && "Respected Sir,"}
-                    {receipts.individual_company?.indicomp_gender === null && "Respected Sir,"}
+                    {receipts.donor?.indicomp_gender === "Female" && "Respected Madam,"}
+                    {receipts.donor?.indicomp_gender === "Male" && "Respected Sir,"}
+                    {receipts.donor?.indicomp_gender === null && "Respected Sir,"}
                   </p>
 
                   {receipts.receipt_donation_type === "One Teacher School" && (

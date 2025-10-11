@@ -70,7 +70,7 @@ const DuplicateDonorEdit = () => {
     queryFn: async () => {
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-donors`,
+        `${BASE_URL}/api/donor`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

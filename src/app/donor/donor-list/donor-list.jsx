@@ -82,7 +82,7 @@ const DonorList = () => {
       }
 
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-donors-list?${params}`,
+        `${BASE_URL}/api/donor?${params}`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ const DonorList = () => {
           }
 
           const response = await axios.get(
-            `${BASE_URL}/api/fetch-donors-list?${params}`,
+            `${BASE_URL}/api/donor?${params}`,
             {
               headers: { 
                 Authorization: `Bearer ${token}`,
@@ -147,7 +147,7 @@ const DonorList = () => {
             }
 
             const response = await axios.get(
-              `${BASE_URL}/api/fetch-donors-list?${params}`,
+              `${BASE_URL}/api/donor?${params}`,
               {
                 headers: { 
                   Authorization: `Bearer ${token}`,

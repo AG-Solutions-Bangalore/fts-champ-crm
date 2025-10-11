@@ -81,7 +81,7 @@ const Receipt = () => {
         }
   
         const response = await axios.get(
-          `${BASE_URL}/api/fetch-receipts-old-list?${params}`,
+          `${BASE_URL}/api/receipt?${params}`,
           {
             headers: { 
               Authorization: `Bearer ${token}`,
@@ -114,7 +114,7 @@ const Receipt = () => {
             }
   
             const response = await axios.get(
-              `${BASE_URL}/api/fetch-receipts-old-list?${params}`,
+              `${BASE_URL}/api/receipt?${params}`,
               {
                 headers: { 
                   Authorization: `Bearer ${token}`,
@@ -146,7 +146,7 @@ const Receipt = () => {
               }
   
               const response = await axios.get(
-                `${BASE_URL}/api/fetch-receipts-old-list?${params}`,
+                `${BASE_URL}/api/receipt?${params}`,
                 {
                   headers: { 
                     Authorization: `Bearer ${token}`,
