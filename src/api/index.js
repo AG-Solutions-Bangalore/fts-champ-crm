@@ -50,19 +50,19 @@ export const UPDATES_FAQ = `${BASE_URL}/api/update-faqs`;
 /*--------------------------Donor-start----------------------------------- */
 //FULL LIST
 export const DONOR_LIST = `${BASE_URL}/api/fetch-donors`;
-export const DONOR_LIST_CREATE_RECEIPT = `${BASE_URL}/api/create-receipt`;
-export const DONOR_LIST_CREATE_RECEIPT_FETCH = `${BASE_URL}/api/fetch-donor-by-id`;
+export const DONOR_LIST_CREATE_RECEIPT = `${BASE_URL}/api/receipt`;
+export const DONOR_LIST_CREATE_RECEIPT_FETCH = `${BASE_URL}/api/donor`;
 export const DONOR_VIEW_DATA = `${BASE_URL}/api/fetch-donor-by-id`;
 export const DONOR_VIEW_OLD_RECEIPT_LIST = `${BASE_URL}/api/fetch-receipts-by-old-id`;
 export const DONATION_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-receipt-by-id`;
 export const MEMBERSHIP_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-receipt-by-id`;
 export const FAMILY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const COMPANY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
-export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/create-donor`;
+export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
 
 export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `/api/update-promoter`;
 
-export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/create-donor`;
+export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
 export const DONOR_COMPANY_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
 export const DONOR_INDIVISUAL_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
 export const DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor/`;
@@ -89,8 +89,8 @@ export const VIEWVER_EDIT_BY_ID = `${BASE_URL}/api/fetch-user-by-id`;
 export const VIEWVER_EDIT_UPDATE = `${BASE_URL}/api/update-viewer`;
 
 //DUPLICATE
-export const DUPLICATE_LIST = `${BASE_URL}/api/fetch-donors-duplicate`;
-export const DUPLICATE_DELETE = `${BASE_URL}/api/update-donors-duplicate-by-id/`;
+export const DUPLICATE_LIST = `${BASE_URL}/api/donor-duplicate`;
+export const DUPLICATE_DELETE = `${BASE_URL}/api/delete-donor-duplicate/`;
 export const DUPLICATE_EDIT_BY_ID = `${BASE_URL}/api/fetch-donors-duplicate-by-id`;
 export const DUPLICATE_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-donors-duplicate`;
 
@@ -234,7 +234,7 @@ export const DOWNLOAD_DROPDOWN_PROMOTER = `${BASE_URL}/api/fetch-promoter`;
 export const DOWNLOAD_PURCHASE_OTS = `${BASE_URL}/api/download-ots`;
 //DOWNLOAD RECEIPTS
 export const DOWNLOAD_RECEIPT = `${BASE_URL}/api/download-receipt`;
-export const DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE = `${BASE_URL}/api/fetch-datasource`;
+export const DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE = `${BASE_URL}/api/data-source`;
 //DOWNLOAD TEAM
 export const DOWNLOAD_TEAM = `${BASE_URL}/api/download-team-summary`;
 //SCHOOL

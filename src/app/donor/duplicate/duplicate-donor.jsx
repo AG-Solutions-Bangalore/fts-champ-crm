@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -39,12 +39,105 @@ import { toast } from "sonner";
 import Cookies from "js-cookie";
 import { DUPLICATE_DELETE, DUPLICATE_LIST, navigateToDuplicateEdit } from "@/api";
 import { useNavigate } from "react-router-dom";
+import useNumericInput from "@/hooks/use-numeric-input";
 
 const DuplicateDonor = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const userType = Cookies.get("user_type_id");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const keyDown = useNumericInput();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [pageInput, setPageInput] = useState("");
+
+  // Debounce search term
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  // Prefetch next and previous pages
+  useEffect(() => {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = duplicateData?.last_page || 1;
+    
+    // Prefetch next page
+    if (currentPage < totalPages) {
+      const nextPage = currentPage + 1;
+      queryClient.prefetchQuery({
+        queryKey: ["duplicateList", debouncedSearchTerm, nextPage],
+        queryFn: async () => {
+          const token = Cookies.get("token");
+          const params = new URLSearchParams({
+            page: nextPage.toString(),
+          });
+          
+          if (debouncedSearchTerm) {
+            params.append("search", debouncedSearchTerm);
+          }
+
+          const response = await axios.get(
+            `${DUPLICATE_LIST}?${params}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          return response.data?.data || response.data;
+        },
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+
+    // Prefetch previous page
+    if (currentPage > 1) {
+      const prevPage = currentPage - 1;
+    
+      if (!queryClient.getQueryData(["duplicateList", debouncedSearchTerm, prevPage])) {
+        queryClient.prefetchQuery({
+          queryKey: ["duplicateList", debouncedSearchTerm, prevPage],
+          queryFn: async () => {
+            const token = Cookies.get("token");
+            const params = new URLSearchParams({
+              page: prevPage.toString(),
+            });
+            
+            if (debouncedSearchTerm) {
+              params.append("search", debouncedSearchTerm);
+            }
+
+            const response = await axios.get(
+              `${DUPLICATE_LIST}?${params}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            return response.data?.data || response.data;
+          },
+          staleTime: 5 * 60 * 1000,
+        });
+      }
+    }
+  }, [pagination.pageIndex, debouncedSearchTerm, queryClient]);
+
   const {
     data: duplicateData,
     isLoading,
@@ -52,28 +145,30 @@ const DuplicateDonor = () => {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["duplicateList"],
+    queryKey: ["duplicateList", debouncedSearchTerm, pagination.pageIndex + 1],
     queryFn: async () => {
       const token = Cookies.get("token");
-      const response = await axios.get(DUPLICATE_LIST, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const params = new URLSearchParams({
+        page: (pagination.pageIndex + 1).toString(),
       });
-      return response.data?.individualCompanies || [];
+      
+      if (debouncedSearchTerm) {
+        params.append("search", debouncedSearchTerm);
+      }
+
+      const response = await axios.get(
+        `${DUPLICATE_LIST}?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data?.data || response.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
-
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({
-    indicomp_spouse_name: false,
-    indicomp_com_contact_name: false,
-  });
-  const [rowSelection, setRowSelection] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
 
   const handleOpenDeleteDialog = (id) => {
     setDeleteId(id);
@@ -91,33 +186,41 @@ const DuplicateDonor = () => {
     try {
       const response = await axios({
         url: DUPLICATE_DELETE + deleteId,
-        method: "PUT",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
         },
       });
 
       if (response.data.code === 200) {
-        toast.success(response.data.msg);
+        toast.success(response.data.message);
         refetch();
       } else if (response.data.code === 400) {
-        toast.error(response.data.msg);
+        toast.error(response.data.message);
       } else {
         toast.error("Unexpected Error");
       }
     } catch (error) {
-      toast.error("An error occurred: " + error.message);
+      toast.error( error.response.data.message|| "An error occurred ");
     } finally {
       handleCloseDeleteDialog();
     }
   };
+
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({
+    indicomp_spouse_name: false,
+    indicomp_com_contact_name: false,
+  });
+  const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
     {
       id: "S. No.",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = row.index + 1;
+        const globalIndex = (pagination.pageIndex * pagination.pageSize) + row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
       },
       size: 60,
@@ -240,7 +343,7 @@ const DuplicateDonor = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigateToDuplicateEdit(navigate,id)}
+                      onClick={() => navigateToDuplicateEdit(navigate, id)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -275,23 +378,25 @@ const DuplicateDonor = () => {
   }
 
   const table = useReactTable({
-    data: duplicateData || [],
+    data: duplicateData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    pageCount: duplicateData?.last_page || -1,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
-      globalFilter,
       columnVisibility,
       rowSelection,
+      pagination,
     },
     initialState: {
       pagination: {
@@ -299,6 +404,89 @@ const DuplicateDonor = () => {
       },
     },
   });
+
+  const handlePageChange = (newPageIndex) => {
+    const targetPage = newPageIndex + 1;
+    const cachedData = queryClient.getQueryData(["duplicateList", debouncedSearchTerm, targetPage]);
+    
+    if (cachedData) {
+      setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
+    } else {
+      table.setPageIndex(newPageIndex);
+    }
+  };
+
+  const handlePageInput = (e) => {
+    const value = e.target.value;
+    setPageInput(value);
+    
+    if (value && !isNaN(value)) {
+      const pageNum = parseInt(value);
+      if (pageNum >= 1 && pageNum <= table.getPageCount()) {
+        handlePageChange(pageNum - 1);
+      }
+    }
+  };
+
+  const generatePageButtons = () => {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = table.getPageCount();
+    const buttons = [];
+    
+    if (totalPages === 0) return buttons;
+    
+    buttons.push(
+      <Button
+        key={1}
+        variant={currentPage === 1 ? "default" : "outline"}
+        size="sm"
+        onClick={() => handlePageChange(0)}
+        className="h-8 w-8 p-0 text-xs"
+      >
+        1
+      </Button>
+    );
+
+    if (currentPage > 3) {
+      buttons.push(<span key="ellipsis1" className="px-2">...</span>);
+    }
+
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      if (i !== 1 && i !== totalPages) {
+        buttons.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i - 1)}
+            className="h-8 w-8 p-0 text-xs"
+          >
+            {i}
+          </Button>
+        );
+      }
+    }
+
+    if (currentPage < totalPages - 2) {
+      buttons.push(<span key="ellipsis2" className="px-2">...</span>);
+    }
+
+    if (totalPages > 1) {
+      buttons.push(
+        <Button
+          key={totalPages}
+          variant={currentPage === totalPages ? "default" : "outline"}
+          size="sm"
+          onClick={() => handlePageChange(totalPages - 1)}
+          className="h-8 w-8 p-0 text-xs"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+
+    return buttons;
+  };
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
@@ -330,7 +518,7 @@ const DuplicateDonor = () => {
   }
 
   return (
-    <div className="max-w-full">
+    <div className="max-w-full p-2">
       <div className="p-2 mb-4 rounded-lg bg-[#D0F6F2]">
         <p className="text-sm">
           Duplicate Criteria: If Mobile Number is Same or Donor Name is Same.
@@ -342,12 +530,17 @@ const DuplicateDonor = () => {
       </div>
 
       <div className="flex items-center justify-between py-1">
-        <div className="relative w-72">
+        <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search duplicates..."
-            value={table.getState().globalFilter || ""}
-            onChange={(event) => table.setGlobalFilter(event.target.value)}
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchTerm("");
+              }
+            }}
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
@@ -433,27 +626,51 @@ const DuplicateDonor = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2 py-1">
-        <div className="flex-1 text-sm text-muted-foreground">
-          Total Duplicates : &nbsp;
-          {table.getFilteredRowModel().rows.length}
+      <div className="flex items-center justify-between py-1">
+        <div className="text-sm text-muted-foreground">
+          Showing {duplicateData?.from || 0} to {duplicateData?.to || 0} of{" "}
+          {duplicateData?.total || 0} duplicates
         </div>
-        <div className="space-x-2">
+        
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
+            onClick={() => handlePageChange(pagination.pageIndex - 1)}
             disabled={!table.getCanPreviousPage()}
+            className="h-8 px-2"
           >
-            Previous
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+          
+          <div className="flex items-center space-x-1">
+            {generatePageButtons()}
+          </div>
+
+          <div className="flex items-center space-x-2 text-sm">
+            <span>Go to</span>
+            <Input
+              type="tel"
+              min="1"
+              max={table.getPageCount()}
+              value={pageInput}
+              onChange={handlePageInput}
+              onBlur={() => setPageInput("")}
+              onKeyDown={keyDown}
+              className="w-16 h-8 text-sm"
+              placeholder="Page"
+            />
+            <span>of {table.getPageCount()}</span>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
+            onClick={() => handlePageChange(pagination.pageIndex + 1)}
             disabled={!table.getCanNextPage()}
+            className="h-8 px-2"
           >
-            Next
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

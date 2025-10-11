@@ -135,27 +135,32 @@ const [draftData, setDraftData] = useState(null);
     retry: 2,
   });
 
-  const userdata = donorData?.individualCompany || {};
+  const userdata = donorData?.data || {};
 
  
   const { data: additionalData } = useQuery({
     queryKey: ['receipt-additional-data'],
     queryFn: async () => {
       const [dataSourcesRes, membershipYearsRes, schoolAllotYearsRes, receiptControlRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/fetch-datasource`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${BASE_URL}/api/data-source`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${BASE_URL}/api/fetch-membership-year`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${BASE_URL}/api/fetch-school-allot-year`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${BASE_URL}/api/fetch-school-allotment-year`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${BASE_URL}/api/fetch-receipt-control`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       return {
-        dataSources: dataSourcesRes.data.datasource,
-        membershipYears: membershipYearsRes.data.membershipyear,
-        schoolAllotYears: schoolAllotYearsRes.data.schoolallotyear,
-        receiptControl: receiptControlRes.data.receipt_control
+        dataSources: dataSourcesRes.data.data,
+        membershipYears: membershipYearsRes.data.data,
+        schoolAllotYears: schoolAllotYearsRes.data.data,
+        receiptControl: receiptControlRes.data.data
       };
     },
     retry: 2,
+      staleTime: 30 * 60 * 1000,
+    cacheTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   useEffect(() => {
@@ -318,14 +323,18 @@ const [draftData, setDraftData] = useState(null);
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code == 200) {
-        toast.success(data.msg);
+      if (data.code == 201) {
+        toast.success(data.message);
         navigate(`/receipt-view/${data.r_id}`);
-      } else if (data.code == 400) {
-        toast.error(data.msg);
+        setIsButtonDisabled(false);
+      } else if (data.code == 422) {
+        toast.error(data.message);
+        setIsButtonDisabled(false);
       } else {
-        toast.error('Unexpected Error');
+        toast.error(data.message||'Unexpected Error');
+        setIsButtonDisabled(false);
       }
+          
     },
     onError: (error) => {
       console.error('Error creating receipt:', error);

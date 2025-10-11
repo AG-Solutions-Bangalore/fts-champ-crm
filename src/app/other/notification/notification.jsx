@@ -259,7 +259,7 @@ const Notification = () => {
               Acknowledge
             </Button>
           )}
-          {/* {userTypeId === "3" && (
+          {userTypeId === "3" && (
             <Button
               variant="outline"
               size="sm"
@@ -269,7 +269,7 @@ const Notification = () => {
               <Edit className="w-3 h-3 mr-1" />
               Edit
             </Button>
-          )} */}
+          )}
         </div>
       ),
       size: 200,
@@ -551,7 +551,7 @@ const Notification = () => {
                         Acknowledged
                       </span>
                     )}
-                    {/* {userTypeId === "3" && (
+                    {userTypeId === "3" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -564,7 +564,7 @@ const Notification = () => {
                         <Edit className="w-3 h-3 mr-1" />
                         Edit
                       </Button>
-                    )} */}
+                    )}
                     {openAccordion === index ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
