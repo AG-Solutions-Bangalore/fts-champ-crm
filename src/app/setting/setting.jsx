@@ -32,7 +32,7 @@ const Settings = () => {
     refetchOnReconnect: false, 
   });
 
-  const user = profileData?.user;
+  const user = profileData?.data;
   const imageUrls = profileData?.image_url;
 
   const [editProfile, setEditProfile] = useState({
@@ -87,12 +87,12 @@ const Settings = () => {
       });
       return response.data;
     },
-    onSuccess: () => {
-      toast.success("Profile updated successfully!");
+    onSuccess: (data) => {
+      toast.success(data.message || "Profile updated successfully!");
       queryClient.invalidateQueries(["profile"]);
     },
     onError: (error) => {
-      toast.error("Failed to update profile");
+      toast.error(error.response.data.message || "Failed to update profile");
       console.error("Update profile error:", error);
     },
   });
@@ -112,7 +112,7 @@ const Settings = () => {
   const changePasswordMutation = useMutation({
     mutationFn: async (passwordData) => {
       const response = await axios.post(
-        `${BASE_URL}/api/change-password`,
+        `${BASE_URL}/api/panel-change-password`,
         {
           old_password: passwordData.oldPassword,
           password: passwordData.newPassword,
@@ -124,15 +124,15 @@ const Settings = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
-        toast.success("Password updated successfully!");
+      if (data.code === 201) {
+        toast.success(data.message || "Password updated successfully!");
         setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       } else {
-        toast.error(data.msg || "Unexpected error occurred");
+        toast.error(data.message  || "Unexpected error occurred");
       }
     },
-    onError: () => {
-      toast.error("Please enter valid old password");
+    onError: (error) => {
+      toast.error(error.response.data.message || "Please enter valid old password");
     },
   });
 
