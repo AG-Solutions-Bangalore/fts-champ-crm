@@ -58,6 +58,10 @@ const SchoolAlloted = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
   const [pageInput, setPageInput] = useState("");
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -78,15 +82,15 @@ const SchoolAlloted = () => {
     isError,
     isFetching,
     prefetchPage,
-  } = useGetMutation("schoolallotlist", SCHOOL_ALLOT_LIST, {
+  } = useGetMutation("schoolallotmentlist", SCHOOL_ALLOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
   useEffect(() => {
-    if (!schoolData?.school?.last_page) return;
+    if (!schoolData?.last_page) return;
 
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.school?.last_page;
+    const totalPages = schoolData?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -96,14 +100,10 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.school?.last_page,
+    schoolData?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
-
+  console.log(schoolData, "schoolData");
   const columns = [
     {
       id: "serialNo",
@@ -275,6 +275,8 @@ const SchoolAlloted = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
+    pageCount: schoolData?.school?.last_page || -1,
+    manualPagination: true,
     pageCount: schoolData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
@@ -294,7 +296,7 @@ const SchoolAlloted = () => {
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "schoolallotlist",
+      "schoolallotmentlist",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -525,11 +527,11 @@ const SchoolAlloted = () => {
         </Table>
       </div>
 
-      {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
+          Showing {schoolData?.from || 0} to{" "}
+          {schoolData?.to || 0} of {schoolData?.total || 0}{" "}
+          schools
         </div>
 
         <div className="flex items-center space-x-2">

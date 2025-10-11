@@ -52,8 +52,6 @@ const DonorDetails = () => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
-  // const [userdata, setUserdata] = useState({});
-  // const [dateschool, setDateschool] = useState({});
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
