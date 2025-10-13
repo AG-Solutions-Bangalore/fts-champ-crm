@@ -78,26 +78,31 @@ const DonorDetails = () => {
     "schoolallotyear",
     `${SCHOOL_ALLOT_YEAR_BY_YEAR}/${donorYear}`
   );
-  const userdata = schoolUserData || [];
-  const dateschool = schoolallotyear || [];
+
+  const userdata = schoolUserData?.data || [];
+  const dateschool = schoolallotyear?.data || [];
   const {
     data: schoolData,
     isFetching,
     prefetchPage,
-  } = useGetMutation("donorschoollist", `${SCHOOL_LIST}?year=${donorYear}`, {
-    page: pagination.pageIndex + 1,
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-  });
+  } = useGetMutation(
+    `donorschoollist${donorId}`,
+    `${SCHOOL_LIST}?year=${donorYear}`,
+    {
+      page: pagination.pageIndex + 1,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    }
+  );
   useEffect(() => {
     refetchchooluser();
     refetchchoolallotyeaar();
   }, [donorId, donorYear]);
-
+  console.log(schoolData?.data?.school?.last_page, "schoolData");
   useEffect(() => {
-    if (!schoolData?.school?.last_page) return;
+    if (!schoolData?.data?.school?.last_page) return;
 
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.school?.last_page;
+    const totalPages = schoolData?.data?.school?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -107,7 +112,7 @@ const DonorDetails = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.school?.last_page,
+    schoolData?.data?.school?.last_page,
     prefetchPage,
   ]);
   const columns = [
@@ -115,7 +120,7 @@ const DonorDetails = () => {
       id: "select",
       header: () => {
         const nonAllottedSchools =
-          schoolData?.school?.data?.filter(
+          schoolData?.data?.school?.data?.filter(
             (s) => s.status_label !== "Allotted"
           ) || [];
 
@@ -230,7 +235,7 @@ const DonorDetails = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.school?.data || [],
+    data: schoolData?.data?.school?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -241,7 +246,7 @@ const DonorDetails = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.school?.last_page || -1,
+    pageCount: schoolData?.data?.school?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -528,9 +533,9 @@ const DonorDetails = () => {
 
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.school?.from || 0} to{" "}
-          {schoolData?.school?.to || 0} of {schoolData?.school?.total || 0}{" "}
-          schools
+          Showing {schoolData?.data?.school?.from || 0} to{" "}
+          {schoolData?.data?.school?.to || 0} of{" "}
+          {schoolData?.data?.school?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

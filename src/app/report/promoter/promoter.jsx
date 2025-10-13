@@ -34,10 +34,11 @@ const Promoter = () => {
   });
   const componentRef = useRef();
   const { trigger, loading } = useApiMutation();
-  const { data: PromoterData,isLoading } = useGetMutation(
+  const { data: PromoterData, isLoading } = useGetMutation(
     "promter-summary-dropdown",
     PROMOTER_SUMMARY_DROPDOWN
   );
+  console.log(PromoterData, "PromoterData");
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
 
@@ -173,8 +174,8 @@ const Promoter = () => {
     }
   };
   if (isLoading) {
-  return <PromoterLoading />;
-}
+    return <PromoterLoading />;
+  }
   return (
     <>
       <Card className="bg-white shadow-md border text-[var(--label-color) rounded-md">
@@ -189,7 +190,7 @@ const Promoter = () => {
                   value={downloadDonor?.indicomp_promoter}
                   onChange={(e) => handleInputChange(e, "indicomp_promoter")}
                   options={
-                    PromoterData?.promoter?.map((item) => ({
+                    PromoterData?.data?.map((item) => ({
                       label: item.indicomp_promoter,
                       value: item.indicomp_promoter,
                     })) || []
@@ -224,7 +225,9 @@ const Promoter = () => {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <Button onClick={handleClick}>{childLoading? "Loading" : "View"}</Button>
+                <Button onClick={handleClick}>
+                  {childLoading ? "Loading" : "View"}
+                </Button>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

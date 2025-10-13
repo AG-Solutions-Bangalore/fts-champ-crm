@@ -67,7 +67,7 @@ const SchoolAllotView = () => {
     prefetchPage,
   } = useGetMutation(
     `schoolallotlist-${donorId}-${pagination.pageIndex}`,
-    `${SCHOOL_ALLOT_VIEW_LIST}/${donorId}`,
+    `${SCHOOL_ALLOT_VIEW_LIST}?id=${donorId}`,
     {
       page: pagination.pageIndex + 1,
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
@@ -75,12 +75,11 @@ const SchoolAllotView = () => {
   );
 
   const keyDown = useNumericInput();
-  console.log(schoolsAllotment);
   useEffect(() => {
-    if (!schoolsAllotment?.last_page) return;
+    if (!schoolsAllotment?.data?.last_page) return;
 
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolsAllotment?.last_page;
+    const totalPages = schoolsAllotment?.data?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -90,7 +89,7 @@ const SchoolAllotView = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolsAllotment?.last_page,
+    schoolsAllotment?.data?.last_page,
     prefetchPage,
   ]);
 
@@ -202,7 +201,7 @@ const SchoolAllotView = () => {
   ];
 
   const table = useReactTable({
-    data: schoolsAllotment || [],
+    data: schoolsAllotment?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -213,7 +212,7 @@ const SchoolAllotView = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolsAllotment?.last_page || -1,
+    pageCount: schoolsAllotment?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -426,8 +425,9 @@ const SchoolAllotView = () => {
       </div>
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolsAllotment?.from || 0} to {schoolsAllotment?.to || 0}{" "}
-          of {schoolsAllotment?.total || 0} schools
+          Showing {schoolsAllotment?.data?.from || 0} to{" "}
+          {schoolsAllotment?.data?.to || 0} of{" "}
+          {schoolsAllotment?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

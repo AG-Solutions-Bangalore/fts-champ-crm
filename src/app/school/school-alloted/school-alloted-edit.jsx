@@ -46,13 +46,6 @@ const SchoolAllotEdit = () => {
   const queryClient = useQueryClient();
   const donorId = decryptId(id);
   const donorYear = decryptId(year);
-  // const [schoolalot, setSchoolalot] = useState({
-  //   schoolalot_financial_year: "",
-  //   schoolalot_from_date: "",
-  //   schoolalot_to_date: "",
-  //   schoolalot_school_id: "",
-  //   rept_fin_year: "",
-  // });
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -68,7 +61,6 @@ const SchoolAllotEdit = () => {
     pageIndex: 0,
     pageSize: 10,
   });
-  // console.log(selectedSchoolIds, "selectedSchoolIds");
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
     return () => clearTimeout(timer);
@@ -95,16 +87,16 @@ const SchoolAllotEdit = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
-  const schoolData = schoolListRes || [];
+  const schoolData = schoolListRes?.data || [];
   useEffect(() => {
     if (!donorId || !donorYear) return;
 
-    if (schoolalot && schoolListRes?.data) {
-      const savedIds = (schoolalot?.schoolalot_school_id || "")
+    if (schoolalot?.data && schoolListRes?.data) {
+      const savedIds = (schoolalot?.data?.schoolalot_school_id || "")
         .split(",")
         .map((id) => id.trim());
 
-      const school = schoolListRes.data || [];
+      const school = schoolListRes?.data?.data || [];
 
       const defaultSelectedIds = school
         .filter((s) => savedIds.includes(s.school_code.trim()))
@@ -275,11 +267,12 @@ const SchoolAllotEdit = () => {
 
     const payload = {
       donor_related_id: donorId,
-      schoolalot_financial_year: schoolalot?.schoolalot_financial_year ?? "",
-      schoolalot_from_date: schoolalot?.schoolalot_from_date ?? "",
-      schoolalot_to_date: schoolalot?.schoolalot_to_date ?? "",
+      schoolalot_financial_year:
+        schoolalot?.data?.schoolalot_financial_year ?? "",
+      schoolalot_from_date: schoolalot?.data?.schoolalot_from_date ?? "",
+      schoolalot_to_date: schoolalot?.data?.schoolalot_to_date ?? "",
       schoolalot_school_id: selectedSchoolIds.join(","),
-      rept_fin_year: schoolalot?.rept_fin_year ?? "",
+      rept_fin_year: schoolalot?.data?.rept_fin_year ?? "",
     };
     try {
       const res = await Updatetrigger({
@@ -288,7 +281,7 @@ const SchoolAllotEdit = () => {
         data: payload,
       });
 
-      if (res?.code === 201) {
+      if (res?.code == 201) {
         toast.success(res.message);
         navigate("/school/alloted");
       } else {
@@ -374,19 +367,26 @@ const SchoolAllotEdit = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label required>School Allot Year</Label>
-          <Input value={schoolalot?.schoolalot_financial_year} disabled />
+          <Input
+            value={schoolalot?.data?.schoolalot_financial_year || ""}
+            disabled
+          />
         </div>
         <div>
           <Label required>From Date</Label>
           <Input
-            value={schoolalot?.schoolalot_from_date}
+            value={schoolalot?.data?.schoolalot_from_date || ""}
             disabled
             type="date"
           />
         </div>
         <div>
           <Label required>To Date</Label>
-          <Input value={schoolalot?.schoolalot_to_date} disabled type="date" />
+          <Input
+            value={schoolalot?.data?.schoolalot_to_date || ""}
+            disabled
+            type="date"
+          />
         </div>
       </div>
 

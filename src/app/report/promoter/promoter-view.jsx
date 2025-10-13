@@ -18,8 +18,8 @@ const PromoterView = ({
     isError: error,
     refetch,
   } = useGetMutation(
-    "donor-summary-view",
-    `${PROMOTER_SUMMARY_VIEW}/${indicompFullName}/${receiptFromDate}/${receiptToDate}`,
+    `donor-summary-view${indicompFullName}`,
+    `${PROMOTER_SUMMARY_VIEW}/${indicompFullName}&from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -34,9 +34,10 @@ const PromoterView = ({
       onLoadingChange(loader);
     }
   }, [loader, onLoadingChange]);
-  const donorsummary = data?.receipt || [];
-  const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || [];
-  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || [];
+  const donorsummary = data?.data?.receipt || [];
+  const receiptsummaryfooterOTS = data?.data?.receipt_grand_total_ots || [];
+  const receiptsummaryfootertotal =
+    data?.data?.receipt_grand_total_amount || [];
 
   const groupedData = useMemo(() => {
     const result = {};
@@ -96,67 +97,82 @@ const PromoterView = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {donorsummary.map((dataSumm) => (
-                        <tr key={dataSumm.id}>
-                          <td className="border border-black px-4 py-2 text-xs">
-                            {dataSumm.indicomp_promoter}
-                          </td>
-                          <td className="border border-black px-4 py-2 text-xs">
-                            {dataSumm.indicomp_full_name}
-                          </td>
-                          <td className="border border-black px-4 py-2 text-xs">
-                            {dataSumm.indicomp_com_contact_name}
-                          </td>
-                          <td className="border border-black px-4 py-2 text-xs">
-                            {dataSumm.indicomp_mobile_phone}
-                          </td>
-                          <td className="border border-black text-center text-xs">
-                            {dataSumm.receipt_no}
-                          </td>
-                          <td className="border border-black text-center text-xs">
-                            {Moment(dataSumm.receipt_date).format("DD-MM-YYYY")}
-                          </td>
-                          <td className="border border-black text-center text-xs">
-                            {dataSumm.receipt_financial_year}
-                          </td>
-                          <td className="border border-black text-center text-xs">
-                            {dataSumm.receipt_donation_type}
-                          </td>
-                          <td className="border border-black text-center text-xs">
-                            {dataSumm.receipt_no_of_ots}
-                          </td>
-                          <td className="border border-black text-right px-4 text-xs">
-                            {dataSumm.receipt_total_amount}
+                      {donorsummary && donorsummary.length > 0 ? (
+                        donorsummary.map((dataSumm) => (
+                          <tr key={dataSumm.id}>
+                            <td className="border border-black px-4 py-2 text-xs">
+                              {dataSumm.indicomp_promoter}
+                            </td>
+                            <td className="border border-black px-4 py-2 text-xs">
+                              {dataSumm.indicomp_full_name}
+                            </td>
+                            <td className="border border-black px-4 py-2 text-xs">
+                              {dataSumm.indicomp_com_contact_name}
+                            </td>
+                            <td className="border border-black px-4 py-2 text-xs">
+                              {dataSumm.indicomp_mobile_phone}
+                            </td>
+                            <td className="border border-black text-center text-xs">
+                              {dataSumm.receipt_no}
+                            </td>
+                            <td className="border border-black text-center text-xs">
+                              {Moment(dataSumm.receipt_date).format(
+                                "DD-MM-YYYY"
+                              )}
+                            </td>
+                            <td className="border border-black text-center text-xs">
+                              {dataSumm.receipt_financial_year}
+                            </td>
+                            <td className="border border-black text-center text-xs">
+                              {dataSumm.receipt_donation_type}
+                            </td>
+                            <td className="border border-black text-center text-xs">
+                              {dataSumm.receipt_no_of_ots}
+                            </td>
+                            <td className="border border-black text-right px-4 text-xs">
+                              {dataSumm.receipt_total_amount}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={10}
+                            className="border border-black text-center py-4 text-xs"
+                          >
+                            No data available
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
-                    <tfoot>
-                      <tr>
-                        <td
-                          colSpan={7}
-                          className="border border-black text-center font-bold text-xs"
-                        >
-                          Total
-                        </td>
-                        {receiptsummaryfooterOTS.map((footv, key) => (
+                    {donorsummary && donorsummary.length > 0 && (
+                      <tfoot>
+                        <tr>
                           <td
-                            key={key}
-                            className="border border-black text-center text-xs font-bold"
+                            colSpan={7}
+                            className="border border-black text-center font-bold text-xs"
                           >
-                            {footv.total_no_of_ots}
+                            Total
                           </td>
-                        ))}
-                        {receiptsummaryfootertotal.map((foota, key) => (
-                          <td
-                            key={key}
-                            className="border border-black text-right px-4 text-xs font-bold"
-                          >
-                            {foota.total_grand_amount}
-                          </td>
-                        ))}
-                      </tr>
-                    </tfoot>
+                          {receiptsummaryfooterOTS.map((footv, key) => (
+                            <td
+                              key={key}
+                              className="border border-black text-center text-xs font-bold"
+                            >
+                              {footv.total_no_of_ots}
+                            </td>
+                          ))}
+                          {receiptsummaryfootertotal.map((foota, key) => (
+                            <td
+                              key={key}
+                              className="border border-black text-right px-4 text-xs font-bold"
+                            >
+                              {foota.total_grand_amount}
+                            </td>
+                          ))}
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
 
                   <div className="mt-6">
@@ -181,63 +197,76 @@ const PromoterView = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {Object.keys(groupedData).map((year) => (
-                            <tr key={year}>
-                              <td className="border border-black px-2 py-1">
-                                {year}
-                              </td>
-                              {donationTypes.map((type, index) => (
-                                <td
-                                  key={index}
-                                  className="border border-black px-2 py-1"
-                                >
-                                  {groupedData[year][type] || 0}
+                          {Object.keys(groupedData).length > 0 ? (
+                            Object.keys(groupedData).map((year) => (
+                              <tr key={year}>
+                                <td className="border border-black px-2 py-1">
+                                  {year}
                                 </td>
-                              ))}
-                              <td className="border border-black px-2 py-1">
-                                {Object.values(groupedData[year]).reduce(
-                                  (total, amount) => total + amount,
+                                {donationTypes.map((type, index) => (
+                                  <td
+                                    key={index}
+                                    className="border border-black px-2 py-1"
+                                  >
+                                    {groupedData[year][type] || 0}
+                                  </td>
+                                ))}
+                                <td className="border border-black px-2 py-1">
+                                  {Object.values(groupedData[year]).reduce(
+                                    (total, amount) => total + amount,
+                                    0
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={donationTypes.length + 2}
+                                className="border border-black text-center py-4"
+                              >
+                                No data available
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                        {Object.keys(groupedData).length > 0 && (
+                          <tfoot>
+                            <tr>
+                              <td className="border border-black px-2 py-1 font-bold">
+                                Grand Total:
+                              </td>
+                              {donationTypes.map((type, index) => {
+                                const totalForType = Object.keys(
+                                  groupedData
+                                ).reduce(
+                                  (total, year) =>
+                                    total + (groupedData[year][type] || 0),
+                                  0
+                                );
+                                return (
+                                  <td
+                                    key={index}
+                                    className="border border-black px-2 py-1 font-bold"
+                                  >
+                                    {totalForType}
+                                  </td>
+                                );
+                              })}
+                              <td className="border border-black px-2 py-1 font-bold">
+                                {Object.values(groupedData).reduce(
+                                  (grandTotal, dt) =>
+                                    grandTotal +
+                                    Object.values(dt).reduce(
+                                      (sum, amt) => sum + amt,
+                                      0
+                                    ),
                                   0
                                 )}
                               </td>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr>
-                            <td className="border border-black px-2 py-1 font-bold">
-                              Grand Total:
-                            </td>
-                            {donationTypes.map((type, index) => {
-                              const totalForType = Object.keys(
-                                groupedData
-                              ).reduce(
-                                (total, year) =>
-                                  total + (groupedData[year][type] || 0),
-                                0
-                              );
-                              return (
-                                <td
-                                  key={index}
-                                  className="border border-black px-2 py-1 font-bold"
-                                >
-                                  {totalForType}
-                                </td>
-                              );
-                            })}
-                            <td className="border border-black px-2 py-1 font-bold">
-                              {Object.values(groupedData).reduce(
-                                (grandTotal, dt) =>
-                                  grandTotal +
-                                  Object.values(dt).reduce(
-                                    (sum, amt) => sum + amt,
-                                    0
-                                  ),
-                                0
-                              )}
-                            </td>
-                          </tr>
-                        </tfoot>
+                          </tfoot>
+                        )}
                       </table>
                     </div>
                   </div>
