@@ -192,16 +192,14 @@ const DuplicateDonor = () => {
         },
       });
 
-      if (response.data.code === 200) {
+      if (response.data.code === 201) {
         toast.success(response.data.message);
         refetch();
-      } else if (response.data.code === 400) {
+      }  else {
         toast.error(response.data.message);
-      } else {
-        toast.error("Unexpected Error");
       }
     } catch (error) {
-      toast.error( error.response.data.message|| "An error occurred ");
+      toast.error( error.response.data.message|| "Error while deleting donor duplicate");
     } finally {
       handleCloseDeleteDialog();
     }

@@ -14,7 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -24,7 +35,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search, SquarePlus } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search, SquarePlus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
@@ -33,6 +44,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { Link, useNavigate } from "react-router-dom";
 import { navigateToCreateReceipt } from "@/api";
+import { toast } from "sonner";
 
 const DonorList = () => {
   const queryClient = useQueryClient();
@@ -162,6 +174,36 @@ const DonorList = () => {
       }
     }
   }, [pagination.pageIndex, debouncedSearchTerm, queryClient, donorsData?.last_page]);
+  //delete muattaion
+  // const deleteMutation = useMutation({
+  //     mutationFn: async (id) => {
+  //       const token = Cookies.get("token");
+  //       const response = await axios.delete(
+  //         `${BASE_URL}/api/donor/${id}`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
+  //       return response.data;
+  //     },
+  //     onSuccess: (data) => {
+  //       toast.success(data.message || "Donor deleted successfully");
+  //       refetch();
+  //       setOpen(false);
+  //     },
+  //     onError: (error) => {
+  //       toast.error(
+  //         error.response?.data?.message || "Failed to delete Donor type"
+  //       );
+  //     },
+  //   });
+  
+  
+    // const [open, setOpen] = useState(false);
+    // const [selectedId, setSelectedId] = useState(null);
+
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({
@@ -315,7 +357,26 @@ const DonorList = () => {
     </TooltipContent>
   </Tooltip>
 </TooltipProvider>
-
+  {/* <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                               
+                                onClick={() => {
+                                  setSelectedId(id);
+                                  setOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete Donor</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider> */}
           </div>
         );
       },
@@ -634,6 +695,31 @@ const DonorList = () => {
           </Button>
         </div>
       </div>
+      {/* <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Ots</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this Ots Expensive Type? This
+                    action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteMutation.isPending}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate(selectedId)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {deleteMutation.isPending ? "Deleting..." : "Confirm"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog> */}
     </div>
   );
 };

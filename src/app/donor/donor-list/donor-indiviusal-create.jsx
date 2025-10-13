@@ -18,7 +18,6 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +39,7 @@ import donor_type from '@/utils/donor-type';
 import belongs_to from '@/utils/belongs-to';
 import honorific from '@/utils/honorific';
 import { MemoizedSelect } from '@/components/common/memoized-select';
+import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use-api';
 
 // Constants
 const gender = [
@@ -100,41 +100,17 @@ const DonorIndiviusalCreate = () => {
     indicomp_corr_preffer: "Residence",
   });
 
-  // Fetch states, datasource, and promoters
-  const { data: additionalData, isLoading } = useQuery({
-    queryKey: ['donor-create-data'],
-    queryFn: async () => {
-      const [statesRes, datasourceRes, promoterRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/panel-fetch-state`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        axios.get(`${BASE_URL}/api/data-source`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        axios.get(`${BASE_URL}/api/promoter-active`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        })
-      ]);
-      
-      return {
-        states: statesRes.data?.data || [],
-        datasource: datasourceRes.data?.data || [],
-        promoter: promoterRes.data?.data || []
-      };
-    },
-    retry: 2,
-     staleTime: 30 * 60 * 1000,
-    cacheTime: 60 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-
   
-  const states = additionalData?.states || [];
-  const datasource = additionalData?.datasource || [];
-  const promoter = additionalData?.promoter || [];
+  
 
+  const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
+    const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
+    const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
+    const isLoading = isLoadingStates || isLoadingDataSource || isLoadingPromoter;
+
+   const states = statesHooks?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
   const validateOnlyDigits = (inputtxt) => {
     const phoneno = /^\d+$/;
     return inputtxt.match(phoneno) || inputtxt.length === 0;
@@ -231,15 +207,15 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-    if (!donor.indicomp_promoter) {
-      newErrors.indicomp_promoter = 'Promoter is required';
-      isValid = false;
-    }
+    // if (!donor.indicomp_promoter) {
+    //   newErrors.indicomp_promoter = 'Promoter is required';
+    //   isValid = false;
+    // }
 
-    if (donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-      newErrors.indicomp_newpromoter = 'Please specify promoter';
-      isValid = false;
-    }
+    // if (donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
+    //   newErrors.indicomp_newpromoter = 'Please specify promoter';
+    //   isValid = false;
+    // }
 
     if (!donor.indicomp_mobile_phone || !/^\d{10}$/.test(donor.indicomp_mobile_phone)) {
       newErrors.indicomp_mobile_phone = 'Valid 10-digit Mobile Number is required';
@@ -266,16 +242,12 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-    // is promoter 
-    if (donor.indicomp_is_promoter === "Yes" && !donor.indicomp_promoter) {
-  newErrors.indicomp_promoter = 'Promoter is required';
-  isValid = false;
-}
+ 
 
-if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-  newErrors.indicomp_newpromoter = 'Please specify promoter';
-  isValid = false;
-}
+// if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
+//   newErrors.indicomp_newpromoter = 'Please specify promoter';
+//   isValid = false;
+// }
 
     setErrors(newErrors);
     return { isValid, errors: newErrors };
@@ -292,10 +264,10 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
-        // Invalidate and refetch donor list
+      if (data.code === 201) {
+
         queryClient.invalidateQueries(['donors']);
-        toast.success(data.msg);
+        toast.success(data.message || 'Donor created successfully');
         
         // Reset form
         setDonor({
@@ -333,23 +305,29 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
           indicomp_off_branch_state: "",
           indicomp_off_branch_pin_code: "",
           indicomp_corr_preffer: "Residence",
+          indicomp_is_promoter :'No'
         });
         
         navigate('/donor/donors');
-      } else if (data.code === 400) {
-        toast.error(data.msg);
-      } else {
-        toast.error("Unexpected Error");
+      }  else {
+        toast.error(data.message || "Unexpected Error");
       }
     },
     onError: (error) => {
-      console.error("Submission error:", error);
-      toast.error("An error occurred during submission");
+      console.error("Donor Indiviusal Creation Error:", error.response.data.message);
+      toast.error(error.response.data.message||"Donor Indiviusal Creation Error");
     },
     onSettled: () => {
       setIsButtonDisabled(false);
     }
   });
+
+  const handlePromoterNotList = () => {
+    setDonor(prev => ({
+      ...prev,
+      indicomp_remarks: prev.indicomp_remarks + (prev.indicomp_remarks ? ' ' : '') + 'Promoter not in list'
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -691,16 +669,25 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
 </div>
 
                 {/* Promoter */}
-                {donor.indicomp_is_promoter === "Yes" && (
-                <div className=" ">
-                  <Label htmlFor="indicomp_promoter" className="text-xs  font-medium">
-                    Promoter *
+          
+                <div className="  flex flex-col justify-between">
+                  <Label htmlFor="indicomp_promoter" className="text-xs  flex flex-row items-center justify-between  font-medium">
+                    <span>Promoter</span>   <span className='hover:cursor-pointer hover:text-red-900 text-red-500' onClick={handlePromoterNotList} >
+      Not in List!
+    </span>
                   </Label>
                  
                    <MemoizedSelect
     value={donor.indicomp_promoter}
-    onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
-    options={promoter.map((option) => ({
+    // onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
+    onChange={(value) => {
+      const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
+      setDonor(prev => ({
+        ...prev,
+        indicomp_promoter: selectedPromoter?.indicomp_fts_id || '', 
+      }));
+    }}
+    options={promoter?.map((option) => ({
       value: option.indicomp_promoter,
       label: option.indicomp_promoter
     }))}
@@ -710,8 +697,9 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                     <p className="text-red-500 text-xs">{errors.indicomp_promoter}</p>
                   )}
                 </div>
-)}
+
                 {/* New Promoter (if Other selected) */}
+                {/*
                 {donor.indicomp_promoter === "Other" && (
                   <div className=" ">
                     <Label htmlFor="indicomp_newpromoter" className="text-xs  font-medium">
@@ -729,7 +717,7 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                     )}
                   </div>
                 )}
-
+ */}
                 {/* Belong To */}
                 <div className=" ">
                   <Label htmlFor="indicomp_belongs_to" className="text-xs  font-medium">

@@ -55,16 +55,22 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
   const { data: donorData = [], isLoading } = useQuery({
     queryKey: ['donors'],
     queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-donors`, {
+      const response = await axios.get(`${BASE_URL}/api/donor-active`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      return response.data.individualCompanies.map(donor => ({
+      return response.data.data.map(donor => ({
         name: donor.indicomp_full_name,
         phone: donor.indicomp_mobile_phone,
         id: donor.indicomp_related_id,
       }));
     },
+    retry: 2,
+    staleTime: 30 * 60 * 1000,
+   cacheTime: 60 * 60 * 1000,
+   refetchOnMount: false,
+   refetchOnWindowFocus: false,
+   refetchOnReconnect: false,
   });
 
   const addMemberToGroup = async (relativeId) => {

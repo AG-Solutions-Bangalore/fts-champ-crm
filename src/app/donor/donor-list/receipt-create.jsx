@@ -45,6 +45,7 @@ import {
 import BASE_URL from '@/config/base-url';
 import { DONOR_LIST_CREATE_RECEIPT, fetchDonorDataInCreateReceiptById } from '@/api';
 import ReceiptDraft from './receipt-draft';
+import { useFetchDataSource, useFetchMembershipYear, useFetchReceiptControl, useFetchSchoolAllotmentYear } from '@/hooks/use-api';
 
 const exemptionOptions = [
   { value: '80G', label: '80G' },
@@ -119,10 +120,10 @@ const [draftData, setDraftData] = useState(null);
     receipt_csr: 'No',
   });
 
-  const [dataSources, setDataSources] = useState([]);
-  const [membershipYears, setMembershipYears] = useState([]);
-  const [schoolAllotYears, setSchoolAllotYears] = useState([]);
-  const [receiptControl, setReceiptControl] = useState({});
+  // const [dataSources, setDataSources] = useState([]);
+  // const [membershipYears, setMembershipYears] = useState([]);
+  // const [schoolAllotYears, setSchoolAllotYears] = useState([]);
+  // const [receiptControl, setReceiptControl] = useState({});
 
   
   const { data: donorData, isLoading } = useQuery({
@@ -138,39 +139,50 @@ const [draftData, setDraftData] = useState(null);
   const userdata = donorData?.data || {};
 
  
-  const { data: additionalData } = useQuery({
-    queryKey: ['receipt-additional-data'],
-    queryFn: async () => {
-      const [dataSourcesRes, membershipYearsRes, schoolAllotYearsRes, receiptControlRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/data-source`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${BASE_URL}/api/fetch-membership-year`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${BASE_URL}/api/fetch-school-allotment-year`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${BASE_URL}/api/fetch-receipt-control`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
+  // const { data: additionalData } = useQuery({
+  //   queryKey: ['receipt-additional-data'],
+  //   queryFn: async () => {
+  //     const [dataSourcesRes, membershipYearsRes, schoolAllotYearsRes, receiptControlRes] = await Promise.all([
+  //       axios.get(`${BASE_URL}/api/data-source`, { headers: { Authorization: `Bearer ${token}` } }),
+  //       axios.get(`${BASE_URL}/api/fetch-membership-year`, { headers: { Authorization: `Bearer ${token}` } }),
+  //       axios.get(`${BASE_URL}/api/fetch-school-allotment-year`, { headers: { Authorization: `Bearer ${token}` } }),
+  //       axios.get(`${BASE_URL}/api/fetch-receipt-control`, { headers: { Authorization: `Bearer ${token}` } })
+  //     ]);
 
-      return {
-        dataSources: dataSourcesRes.data.data,
-        membershipYears: membershipYearsRes.data.data,
-        schoolAllotYears: schoolAllotYearsRes.data.data,
-        receiptControl: receiptControlRes.data.data
-      };
-    },
-    retry: 2,
-      staleTime: 30 * 60 * 1000,
-    cacheTime: 60 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  //     return {
+  //       dataSources: dataSourcesRes.data.data,
+  //       membershipYears: membershipYearsRes.data.data,
+  //       schoolAllotYears: schoolAllotYearsRes.data.data,
+  //       receiptControl: receiptControlRes.data.data
+  //     };
+  //   },
+  //   retry: 2,
+  //     staleTime: 30 * 60 * 1000,
+  //   cacheTime: 60 * 60 * 1000,
+  //   refetchOnMount: false,
+  //   refetchOnWindowFocus: false,
+  //   refetchOnReconnect: false,
+  // });
+const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSource();
+    const { data: membershipYearHook, isLoading: isLoadingMembershipYear } = useFetchMembershipYear();
+    const { data: schoolAllotYearHook, isLoading: isLoadingSchoolAllotYear } = useFetchSchoolAllotmentYear();
+    const { data: receiptControlHook, isLoading: isLoadingReceiptControl } = useFetchReceiptControl();
+    const isLoadingHook = isLoadingDatasource || isLoadingMembershipYear || isLoadingSchoolAllotYear || isLoadingReceiptControl ;
 
-  useEffect(() => {
-    if (additionalData) {
-      setDataSources(additionalData.dataSources);
-      setMembershipYears(additionalData.membershipYears);
-      setSchoolAllotYears(additionalData.schoolAllotYears);
-      setReceiptControl(additionalData.receiptControl);
-    }
-  }, [additionalData]);
+
+    const dataSources = datasourceHook?.data || [];
+    const membershipYears = membershipYearHook?.data || [];
+    const schoolAllotYears = schoolAllotYearHook?.data || [];
+    const receiptControl = receiptControlHook?.data || [];
+
+  // useEffect(() => {
+  //   if (additionalData) {
+  //     setDataSources(additionalData.dataSources);
+  //     setMembershipYears(additionalData.membershipYears);
+  //     setSchoolAllotYears(additionalData.schoolAllotYears);
+  //     setReceiptControl(additionalData.receiptControl);
+  //   }
+  // }, [additionalData]);
 
   const handleButtonGroupChange = (stateName, value) => {
     if (stateName === 'receipt_exemption_type' && value === '80G') {
@@ -325,7 +337,7 @@ const [draftData, setDraftData] = useState(null);
     onSuccess: (data) => {
       if (data.code == 201) {
         toast.success(data.message);
-        navigate(`/receipt-view/${data.r_id}`);
+        navigate(`/receipt-view/${data.id}`);
         setIsButtonDisabled(false);
       } else if (data.code == 422) {
         toast.error(data.message);
@@ -432,7 +444,7 @@ const [draftData, setDraftData] = useState(null);
   };
   const pan = userdata.indicomp_pan_no == '' ? 'NA' : userdata.indicomp_pan_no;
 
-  if (isLoading) {
+  if (isLoading && isLoadingHook) {
     return (
       <div className="w-full space-y-4 p-4">
         <Card className="p-4">

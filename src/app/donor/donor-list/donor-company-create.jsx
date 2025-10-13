@@ -42,6 +42,7 @@ import belongs_to from '@/utils/belongs-to';
 import honorific from '@/utils/honorific';
 import company_type from '@/utils/company-type';
 import { MemoizedSelect } from '@/components/common/memoized-select';
+import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use-api';
 
 // Constants
 const gender = [
@@ -88,7 +89,7 @@ const DonorCompanyCreate = () => {
     indicomp_mobile_phone: "",
     indicomp_mobile_whatsapp: "",
     indicomp_email: "",
-     indicomp_is_promoter: "No",
+   
     indicomp_website: "",
     indicomp_res_reg_address: "",
     indicomp_res_reg_area: "",
@@ -106,40 +107,21 @@ const DonorCompanyCreate = () => {
     indicomp_csr: "",
   });
 
-  // Fetch states, datasource, and promoters
-  const { data: additionalData, isLoading } = useQuery({
-    queryKey: ['donor-company-create-data'],
-    queryFn: async () => {
-      const [statesRes, datasourceRes, promoterRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/panel-fetch-state`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        axios.get(`${BASE_URL}/api/data-source`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        axios.get(`${BASE_URL}/api/promoter-active`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        })
-      ]);
-      
-      return {
-        states: statesRes.data?.data || [],
-        datasource: datasourceRes.data?.data || [],
-        promoter: promoterRes.data?.data || []
-      };
-    },
-    retry: 2,
-     staleTime: 30 * 60 * 1000,
-    cacheTime: 60 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
+  const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
+  const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
+  const isLoading = isLoadingStates || isLoadingDataSource || isLoadingPromoter;
 
-  const states = additionalData?.states || [];
-  const datasource = additionalData?.datasource || [];
-  const promoter = additionalData?.promoter || [];
+ const states = statesHooks?.data || [];
+const datasource = datasourceHook?.data || [];
+const promoter = promoterHook?.data || [];
 
+  const handlePromoterNotList = () => {
+    setDonor(prev => ({
+      ...prev,
+      indicomp_remarks: prev.indicomp_remarks + (prev.indicomp_remarks ? ' ' : '') + 'Promoter not in list'
+    }));
+  };
   const validateOnlyDigits = (inputtxt) => {
     const phoneno = /^\d+$/;
     return inputtxt.match(phoneno) || inputtxt.length === 0;
@@ -251,15 +233,15 @@ const DonorCompanyCreate = () => {
       isValid = false;
     }
 
-    if (!donor.indicomp_promoter) {
-      newErrors.indicomp_promoter = 'Promoter is required';
-      isValid = false;
-    }
+    // if (!donor.indicomp_promoter) {
+    //   newErrors.indicomp_promoter = 'Promoter is required';
+    //   isValid = false;
+    // }
 
-    if (donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-      newErrors.indicomp_newpromoter = 'Please specify promoter';
-      isValid = false;
-    }
+    // if (donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
+    //   newErrors.indicomp_newpromoter = 'Please specify promoter';
+    //   isValid = false;
+    // }
 
     if (!donor.indicomp_mobile_phone || !/^\d{10}$/.test(donor.indicomp_mobile_phone)) {
       newErrors.indicomp_mobile_phone = 'Valid 10-digit Mobile Number is required';
@@ -286,16 +268,7 @@ const DonorCompanyCreate = () => {
       isValid = false;
     }
 
-       // is promoter 
-    if (donor.indicomp_is_promoter === "Yes" && !donor.indicomp_promoter) {
-  newErrors.indicomp_promoter = 'Promoter is required';
-  isValid = false;
-}
-
-if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-  newErrors.indicomp_newpromoter = 'Please specify promoter';
-  isValid = false;
-}
+     
 
     setErrors(newErrors);
     return { isValid, errors: newErrors };
@@ -312,10 +285,10 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
+      if (data.code === 201) {
         // Invalidate and refetch donor list
         queryClient.invalidateQueries(['donor-list']);
-        toast.success(data.msg);
+        toast.success(data.message|| 'Company Created Successfully');
         
         // Reset form
         setDonor({
@@ -355,15 +328,13 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
         });
         
         navigate('/donor/donors');
-      } else if (data.code === 400) {
-        toast.error(data.msg);
       } else {
-        toast.error("Unexpected Error");
+        toast.error(data.message || "Company Creation Error");
       }
     },
     onError: (error) => {
-      console.error("Submission error:", error);
-      toast.error("An error occurred during submission");
+      console.error("Donor Company Creation Error:", error.response.data.message);
+      toast.error(error.response.data.message || "Donor Company Creation Error");
     },
     onSettled: () => {
       setIsButtonDisabled(false);
@@ -390,14 +361,14 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
       const formData = new FormData();
       formData.append("indicomp_full_name", donor.indicomp_full_name || "");
       formData.append("title", donor.title || "");
-        formData.append("indicomp_is_promoter", donor.indicomp_is_promoter);
+       
       formData.append("indicomp_type", donor.indicomp_type || "");
       formData.append("indicomp_com_contact_name", donor.indicomp_com_contact_name || "");
       formData.append("indicomp_com_contact_designation", donor.indicomp_com_contact_designation || "");
       formData.append("indicomp_gender", donor.indicomp_gender || "");
       formData.append("indicomp_dob_annualday", donor.indicomp_dob_annualday || "");
       formData.append("indicomp_pan_no", donor.indicomp_pan_no || "");
-      formData.append("indicomp_image_logo", donor.indicomp_image_logo || null);
+      formData.append("indicomp_image_logo", donor.indicomp_image_logo);
       formData.append("indicomp_remarks", donor.indicomp_remarks || "");
       formData.append("indicomp_promoter", donor.indicomp_promoter || "");
       formData.append("indicomp_newpromoter", donor.indicomp_newpromoter || "");
@@ -511,11 +482,11 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                     value={donor.indicomp_full_name}
                     onChange={onInputChange}
                     className={isDuplicate ? 'border-red-500' : ''}
-                    placeholder="Enter company name"
+                    placeholder="Company name (don't add title)"
                   />
-                  <p className="text-xs text-gray-500">
+                  {/* <p className="text-xs text-gray-500">
                     Please don't add M/s before name
-                  </p>
+                  </p> */}
                   {errors?.indicomp_full_name && (
                     <p className="text-red-500 text-xs">{errors.indicomp_full_name}</p>
                   )}
@@ -668,7 +639,7 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                 {/* Upload Logo */}
                 <div className="">
                   <Label htmlFor="indicomp_image_logo" className="text-xs  font-medium">
-                    Upload Logo
+                    Upload Company Logo
                   </Label>
                   <Input
                     id="indicomp_image_logo"
@@ -680,7 +651,7 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                       indicomp_image_logo: e.target.files[0] 
                     }))}
                   />
-                  <p className="text-xs text-gray-500">Upload Company Logo</p>
+                  {/* <p className="text-xs text-gray-500">Upload Company Logo</p> */}
                 </div>
 
                 {/* Remarks */}
@@ -697,34 +668,25 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                   />
                 </div>
 
-<div className=" ">
-  <Label htmlFor="indicomp_is_promoter" className="text-xs font-medium">
-    Is Promoter?
-  </Label>
-  <Select 
-    value={donor.indicomp_is_promoter} 
-    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_is_promoter: value }))}
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Select" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="Yes">Yes</SelectItem>
-      <SelectItem value="No">No</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
 
 
-                {/* Promoter */}
-                    {donor.indicomp_is_promoter === "Yes" && (
-                <div className="">
-                  <Label htmlFor="indicomp_promoter" className="text-xs  font-medium">
-                    Promoter *
-                  </Label>
+                
+                <div className="flex flex-col justify-between">
+                 <Label htmlFor="indicomp_promoter" className="text-xs  flex flex-row items-center justify-between  font-medium">
+                                    <span>Promoter</span>   <span className='hover:cursor-pointer hover:text-red-900 text-red-500' onClick={handlePromoterNotList} >
+                      Not in List!
+                    </span>
+                                  </Label>
                  <MemoizedSelect
                     value={donor.indicomp_promoter}
-                    onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
+                    // onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
+                    onChange={(value) => {
+                      const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
+                      setDonor(prev => ({
+                        ...prev,
+                        indicomp_promoter: selectedPromoter?.indicomp_fts_id || '',
+                      }));
+                    }}
                     options={promoter.map((option) => ({
                       value: option.indicomp_promoter,
                       label: option.indicomp_promoter
@@ -735,10 +697,10 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                     <p className="text-red-500 text-xs">{errors.indicomp_promoter}</p>
                   )}
                 </div>
-                    )}
+                 
 
                 {/* New Promoter (if Other selected) */}
-                {donor.indicomp_promoter === "Other" && (
+                {/* {donor.indicomp_promoter === "Other" && (
                   <div className="">
                     <Label htmlFor="indicomp_newpromoter" className="text-xs  font-medium">
                       Promoter Details
@@ -754,7 +716,7 @@ if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' 
                       <p className="text-red-500 text-xs">{errors.indicomp_newpromoter}</p>
                     )}
                   </div>
-                )}
+                )} */}
 
                 {/* Belong To */}
                 <div className="">

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import * as XLSX from 'xlsx';
 import {
   Table,
   TableBody,
@@ -92,6 +93,35 @@ const DonorDownload = () => {
     }
   });
 
+  // const viewMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch donor data');
+  //   }
+  // });
+
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
@@ -100,27 +130,61 @@ const DonorDownload = () => {
       });
       return response.data;
     },
-    onSuccess: async (blob) => {
-      const text = await blob.text();
-      const rows = text.split('\n').filter(Boolean);
-      const headers = rows[0].split(',');
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        const obj = {};
-        headers.forEach((header, idx) => {
-          const cleanHeader = header.replace(/^"|"$/g, '');
-          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-          obj[cleanHeader] = cleanValue;
-        });
-        return obj;
-      });
-      setJsonData(data);
-    },
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from CSV file.');
+      }
+    } catch (error) {
+      console.error('Failed to read Excel/CSV blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
     onError: () => {
-      toast.error('Failed to fetch donor data');
+      toast.error('Failed to fetch receipt data');
     }
   });
-
+  
+  function parseCSVAndSetData(text) {
+    const rows = text.split('\n').filter(Boolean);
+    if (!rows.length) {
+      toast.error('No receipt data found');
+      return;
+    }
+  
+    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',');
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+  
+    setJsonData(data);
+  }
+  
   const handleSelectChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -435,7 +499,7 @@ const DonorDownload = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto border rounded-md shadow-sm">
+    <div className="max-w-full mx-auto border rounded-md shadow-sm">
       <div className="p-4 border-b bg-muted/50">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <Download className="w-5 h-5" />
@@ -525,7 +589,7 @@ const DonorDownload = () => {
             </div>
 
             {/* Table */}
-            <div className="rounded-none border min-h-[20rem] flex flex-col overflow-x-auto">
+            <div className="rounded-none border min-h-[20rem] grid grid-cols-1 overflow-x-auto">
               <Table className="flex-1 ">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (

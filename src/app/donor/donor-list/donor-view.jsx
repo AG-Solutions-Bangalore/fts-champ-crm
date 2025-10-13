@@ -62,7 +62,7 @@ const getAuthHeaders = () => {
 };
 
 const fetchDonorById = async (id) => {
-  const { data } = await axios.get(`${BASE_URL}/api/fetch-donor-by-id/${id}`, getAuthHeaders());
+  const { data } = await axios.get(`${BASE_URL}/api/donor-view/${id}`, getAuthHeaders());
   return data;
 };
 
@@ -72,7 +72,7 @@ const fetchOldReceipts = async (id) => {
 };
 
 const fetchDonorReceipts = async (id) => {
-  const { data } = await axios.get(`${BASE_URL}/api/fetch-donor-receipt-by-id/${id}`, getAuthHeaders());
+  const { data } = await axios.get(`${BASE_URL}/api/donor-all-receipts/${id}`, getAuthHeaders());
   return data;
 };
 
@@ -81,14 +81,14 @@ const DonorView = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const { data: donorData, isLoading: donorLoading, error: donorError } = useQuery({
-    queryKey: ['donor', id],
+    queryKey: ['donor-view', id],
     queryFn: () => fetchDonorById(id),
   });
 
-  const { data: oldReceiptsData, isLoading: oldReceiptsLoading } = useQuery({
-    queryKey: ['oldReceipts', id],
-    queryFn: () => fetchOldReceipts(id),
-  });
+  // const { data: oldReceiptsData, isLoading: oldReceiptsLoading } = useQuery({
+  //   queryKey: ['oldReceipts', id],
+  //   queryFn: () => fetchOldReceipts(id),
+  // });
 
   const { data: donorReceiptsData, isLoading: donorReceiptsLoading } = useQuery({
     queryKey: ['donorReceipts', id],
@@ -96,37 +96,37 @@ const DonorView = () => {
   });
 
   const statistics = useMemo(() => {
-    if (!donorData || !oldReceiptsData || !donorReceiptsData) return null;
+    if (!donorData  || !donorReceiptsData) return null;
 
-    const oldReceipts = oldReceiptsData?.receipts || [];
+   
     const donorReceipts = donorReceiptsData?.donor_receipts || [];
     const membershipDetails = donorReceiptsData?.membership_details || [];
     const familyDetails = donorData?.family_details || [];
     const companyDetails = donorData?.company_details || [];
-
-    const totalDonations = donorReceipts.reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
-    const totalOldReceiptsAmount = oldReceipts.reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
-    const totalMembershipAmount = membershipDetails.reduce((sum, member) => sum + (member.receipt_total_amount || 0), 0);
+    const toNumber = (val) => Number(val) || 0;
+    const totalDonations = donorReceipts.reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
+  
+    const totalMembershipAmount = membershipDetails.reduce((sum, member) => sum + (toNumber(member.receipt_total_amount) || 0), 0);
     
     const currentYear = new Date().getFullYear();
     const previousYear = currentYear - 1;
 
     const currentYearDonations = donorReceipts
       .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(currentYear))
-      .reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
+      .reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
 
     const previousYearDonations = donorReceipts
     .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(previousYear.toString()))
-    .reduce((sum, receipt) => sum + (receipt.receipt_total_amount || 0), 0);
+    .reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
 
     const avgDonation = donorReceipts.length > 0 ? totalDonations / donorReceipts.length : 0;
-    const largestDonation = donorReceipts.length > 0 ? Math.max(...donorReceipts.map(r => r.receipt_total_amount || 0)) : 0;
+    const largestDonation = donorReceipts.length > 0 ? Math.max(...donorReceipts.map(r => toNumber(r.receipt_total_amount) || 0)) : 0;
 
     return {
-      totalDonations: totalDonations + totalOldReceiptsAmount + totalMembershipAmount,
+      totalDonations: totalDonations  + totalMembershipAmount,
       currentYearDonations,
       previousYearDonations,
-      totalReceipts: donorReceipts.length + oldReceipts.length,
+      totalReceipts: donorReceipts.length ,
       totalFamilyMembers: familyDetails.length,
       totalCompanies: companyDetails.length,
       totalMemberships: membershipDetails.length,
@@ -135,9 +135,9 @@ const DonorView = () => {
       membershipAmount: totalMembershipAmount,
       donationGrowth: previousYearDonations > 0 ? ((currentYearDonations - previousYearDonations) / previousYearDonations * 100) : 0
     };
-  }, [donorData, oldReceiptsData, donorReceiptsData]);
+  }, [donorData, donorReceiptsData]);
 
-  if (donorLoading || oldReceiptsLoading || donorReceiptsLoading) {
+  if (donorLoading || donorReceiptsLoading) {
     return <LoadingSkeleton />;
   }
 
@@ -158,7 +158,7 @@ const DonorView = () => {
   }
 
   const { individualCompany, family_details = [], company_details = [], related_group, image_url } = donorData || {};
-  const oldReceipts = oldReceiptsData?.receipts || [];
+  // const oldReceipts = oldReceiptsData?.receipts || [];
   const donorReceipts = donorReceiptsData?.donor_receipts || [];
   const membershipDetails = donorReceiptsData?.membership_details || [];
 
@@ -279,7 +279,7 @@ const DonorView = () => {
             title="Last Year Donation"
             value={formatCurrency(statistics?.previousYearDonations)}
             icon={<BarChart3 className="h-4 w-4" />}
-            description="Per transaction"
+            description="prev transaction"
             trend="neutral"
           />
           <StatCard
@@ -642,7 +642,7 @@ const DonorView = () => {
 
           {/* Donations Tab with Advanced Tables */}
           <TabsContent value="donations" className="space-y-2">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1  gap-3">
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Donations</CardTitle>
@@ -689,7 +689,7 @@ const DonorView = () => {
                   </Table>
                 </CardContent>
               </Card>
-
+{/*
               <Card>
                 <CardHeader>
                   <CardTitle>Old Receipts</CardTitle>
@@ -727,6 +727,7 @@ const DonorView = () => {
                   </Table>
                 </CardContent>
               </Card>
+               */}
             </div>
           </TabsContent>
 

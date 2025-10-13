@@ -7,7 +7,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import * as XLSX from 'xlsx';
 import { Label } from '@/components/ui/label';
 import {
   Table,
@@ -36,6 +36,8 @@ import Cookies from 'js-cookie';
 import BASE_URL from '@/config/base-url';
 import { MemoizedSelect } from '@/components/common/memoized-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFetchChapterActive, useFetchDataSource, useFetchPromoter } from '@/hooks/use-api';
+import { DOWNLOAD_ALL_RECEIPT } from '@/api';
 
 const AllReceiptDownload = () => {
   const token = Cookies.get('token');
@@ -92,60 +94,17 @@ const AllReceiptDownload = () => {
   ];
 
 
-  const {
-    data: datasource = [],
-    isLoading: datasourceLoading,
-    isError: datasourceError,
-    error: datasourceErr,
-  } = useQuery({
-    queryKey: ["all-receipt-datasource"],
-    enabled: !!token,
-    retry: 0,
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-datasource`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Datasource response:", response.data);
-      return response.data.datasource || [];
-    },
-  });
-  
-  const {
-    data: chapters = [],
-    isLoading: chaptersLoading,
-    isError: chaptersError,
-    error: chaptersErr,
-  } = useQuery({
-    queryKey: ["all-receipt-chapters"],
-    enabled: !!token,
-    retry: 0,
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-chapters`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Chapters response:", response.data);
-      return response.data.chapters || [];
-    },
-  });
+  const { data: chapterActiveHook, isLoading: chaptersLoading, isError: chaptersError} = useFetchChapterActive();
+  const { data: datasourceHook, isLoading: datasourceLoading ,isError:datasourceError} = useFetchDataSource();
+  const { data: promoterHook, isLoading: promoterLoading ,isError:promoterError} = useFetchPromoter();
+  const isLoading = chaptersLoading || datasourceLoading || promoterLoading;
+  const isError = chaptersError || datasourceError || promoterError;
+
+  const chapters = chapterActiveHook?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
 
 
-  const {
-    data: promoter = [],
-    isLoading: promoterLoading,
-    isError: promoterError,
-    error: promoterErr,
-  } = useQuery({
-    queryKey: ["all-receipt-promoter"],
-    enabled: !!token,
-    retry: 0,
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-promoter`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Promoter response:", response.data);
-      return response.data.promoter || [];
-    },
-  });
 
   const downloadMutation = useMutation({
     mutationFn: async (downloadData) => {
@@ -185,35 +144,98 @@ const AllReceiptDownload = () => {
     }
   });
 
+  // const viewMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch all receipt data');
+  //   }
+  // });
+
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
-      const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
+      const response = await axios.post(DOWNLOAD_ALL_RECEIPT, downloadData, {
         headers: { 'Authorization': `Bearer ${token}` },
         responseType: 'blob'
       });
       return response.data;
     },
-    onSuccess: async (blob) => {
-      const text = await blob.text();
-      const rows = text.split('\n').filter(Boolean);
-      const headers = rows[0].split(',');
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        const obj = {};
-        headers.forEach((header, idx) => {
-          const cleanHeader = header.replace(/^"|"$/g, '');
-          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-          obj[cleanHeader] = cleanValue;
-        });
-        return obj;
-      });
-      setJsonData(data);
-    },
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from CSV file.');
+      }
+    } catch (error) {
+      console.error('Failed to read Excel/CSV blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
     onError: () => {
-      toast.error('Failed to fetch all receipt data');
+      toast.error('Failed to fetch receipt data');
     }
   });
-
+  
+  function parseCSVAndSetData(text) {
+    const rows = text.split('\n').filter(Boolean);
+    if (!rows.length) {
+      toast.error('No receipt data found');
+      return;
+    }
+  
+    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',');
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+  
+    setJsonData(data);
+  }
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -350,7 +372,7 @@ const AllReceiptDownload = () => {
     ));
   };
   
-    if (datasourceLoading || chaptersLoading || promoterLoading ) {
+    if (isLoading ) {
     return (
       <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
         <div className="p-4 border-b bg-muted/50">
@@ -371,8 +393,8 @@ const AllReceiptDownload = () => {
     );
   }
 
-  if (datasourceError || chaptersError || promoterError) {
-    console.error("Errors:", { datasourceErr, chaptersErr, promoterErr });
+  if (isError) {
+   
     return (
       <div className="p-6 text-red-500">
         Failed to load dropdown data. Please check console logs.
