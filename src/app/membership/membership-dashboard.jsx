@@ -36,6 +36,11 @@ const MemberDashboard = () => {
       return response.data;
     },
     retry: 2,
+    staleTime: 30 * 60 * 1000,
+   cacheTime: 60 * 60 * 1000,
+   refetchOnMount: false,
+   refetchOnWindowFocus: false,
+   refetchOnReconnect: false,
   });
 
   const sendBulkEmailMutation = useMutation({
@@ -67,7 +72,7 @@ const MemberDashboard = () => {
     }
   });
 
-  const members = dashboardData?.individualCompanies || [];
+  const members = dashboardData?.data || [];
   const memberEmailStats = dashboardData?.memberEmail || [];
 
   const membersByYear = members.reduce((acc, member) => {

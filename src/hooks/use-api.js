@@ -27,17 +27,39 @@ const createQueryConfig = (queryKey, endpoint, options = {}) => {
     queryFn: () => fetchData(endpoint, token),
     staleTime: STALE_TIME,
     cacheTime: CACHE_TIME,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: 2,
     ...options,
   };
 };
 
 export const useFetchState = () => {
-  return useQuery(createQueryConfig(["states"], "/api/fetch-states"));
+  return useQuery(createQueryConfig(["states"], "/api/panel-fetch-state"));
 };
 export const useFetchDataSource = () => {
-  return useQuery(createQueryConfig(["datasource"], "/api/fetch-datasource"));
+  return useQuery(createQueryConfig(["data-source"], "/api/data-source"));
 };
 export const useFetchPromoter = () => {
-  return useQuery(createQueryConfig(["promoter"], "/api/fetch-promoter"));
+  return useQuery(createQueryConfig(["promoter"], "/api/promoter-active"));
+};
+export const useFetchChapterActive = () => {
+  return useQuery(createQueryConfig(["chapter-active"], "/api/chapter-active"));
+};
+
+
+
+
+export const useFetchMembershipYear = () => {
+  return useQuery(createQueryConfig(["memership-year"], "/api/fetch-membership-year"));
+};
+
+export const useFetchSchoolAllotmentYear = () => {
+  return useQuery(createQueryConfig(["school-allotment-year"], "/api/fetch-school-allotment-year"));
+};
+
+
+export const useFetchReceiptControl = () => {
+  return useQuery(createQueryConfig(["receipt-control"], "/api/fetch-receipt-control"));
 };

@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MemoizedSelect } from '@/components/common/memoized-select';
 
 // Constants
 const gender = [
@@ -53,6 +54,7 @@ const DonorEditIndv = () => {
     indicomp_spouse_name: "",
     indicomp_dob_annualday: "",
     indicomp_doa: "",
+    indicomp_is_promoter: "No",
     indicomp_pan_no: "",
     indicomp_image_logo: "",
     indicomp_remarks: "",
@@ -85,9 +87,14 @@ const DonorEditIndv = () => {
   const [showModal, setShowModal] = useState(false);
 
   // API calls with TanStack Query
-  const {data:statesHook} = useFetchState()
-  const {data:datasourceHook} = useFetchDataSource()
-  const {data:promoterHook} = useFetchPromoter()
+  const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
+    const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
+    const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
+    const isLoadingHook = isLoadingStates || isLoadingDataSource || isLoadingPromoter;
+
+    const states = statesHooks?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
 
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor', id],
@@ -96,7 +103,7 @@ const DonorEditIndv = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const donorData = response.data?.individualCompany;
+      const donorData = response.data?.data;
       const cleanedData = {};
       
       Object.keys(donorData).forEach(key => {
@@ -138,19 +145,17 @@ useEffect(() => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
-        toast.success(data.msg);
+      if (data.code === 201) {
+        toast.success(data.message);
         queryClient.invalidateQueries(['donor', id]);
         navigate('/donor/donors');
-      } else if (data.code === 400) {
-        toast.error(data.msg);
       } else {
-        toast.error('Unexpected Error');
+        toast.error(data.message);
       }
     },
     onError: (error) => {
-      console.error('Update error:', error);
-      toast.error('An error occurred during updating');
+      console.error('Update error:', error.response.data.message);
+      toast.error(error.response.data.message|| 'An error occurred during updating');
     },
   });
 
@@ -180,7 +185,12 @@ useEffect(() => {
     const phoneno = /^\d+$/;
     return inputtxt.match(phoneno) || inputtxt.length === 0;
   };
-
+  const handlePromoterNotList = () => {
+    setDonor(prev => ({
+      ...prev,
+      indicomp_remarks: prev.indicomp_remarks + (prev.indicomp_remarks ? ' ' : '') + 'Promoter not in list'
+    }));
+  };
   const onInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -216,12 +226,12 @@ useEffect(() => {
     if (!donor.indicomp_gender) {
       newErrors.indicomp_gender = "Gender is required";
     }
-    if (!donor.indicomp_promoter) {
-      newErrors.indicomp_promoter = "Promoter is required";
-    }
-    if (donor.indicomp_promoter === "Other" && !donor.indicomp_newpromoter?.trim()) {
-      newErrors.indicomp_newpromoter = "Please specify promoter";
-    }
+    // if (!donor.indicomp_promoter) {
+    //   newErrors.indicomp_promoter = "Promoter is required";
+    // }
+    // if (donor.indicomp_promoter === "Other" && !donor.indicomp_newpromoter?.trim()) {
+    //   newErrors.indicomp_newpromoter = "Please specify promoter";
+    // }
     if (!donor.indicomp_mobile_phone || !/^\d{10}$/.test(donor.indicomp_mobile_phone)) {
       newErrors.indicomp_mobile_phone = "Valid 10-digit Mobile Number is required";
     }
@@ -262,6 +272,7 @@ useEffect(() => {
 
     formData.append("indicomp_full_name", processValue(donor.indicomp_full_name));
     formData.append("title", processValue(donor.title));
+    formData.append("indicomp_is_promoter", processValue(donor.indicomp_is_promoter));
     formData.append("indicomp_type", processValue(donor.indicomp_type));
     formData.append("indicomp_father_name", processValue(donor.indicomp_father_name));
     formData.append("indicomp_mother_name", processValue(donor.indicomp_mother_name));
@@ -313,7 +324,7 @@ useEffect(() => {
     familyGroupMutation.mutate(data);
   };
 
-  if (isLoading) {
+  if (isLoading && isLoadingHook) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -565,26 +576,50 @@ useEffect(() => {
                   />
                 </div>
 
+<div className=" ">
+  <Label htmlFor="indicomp_is_promoter" className="text-xs font-medium">
+    Is Promoter?
+  </Label>
+  <Select 
+    value={donor.indicomp_is_promoter} 
+    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_is_promoter: value }))}
+  >
+    <SelectTrigger>
+      <SelectValue placeholder="Select" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="Yes">Yes</SelectItem>
+      <SelectItem value="No">No</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
                 {/* Promoter */}
                 <div className="">
-                  <Label htmlFor="indicomp_promoter" className="text-xs font-medium">
-                    Promoter *
-                  </Label>
-                  <Select 
-                    value={donor.indicomp_promoter} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Promoter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {promoterHook?.promoter.map((option) => (
-                        <SelectItem key={option.indicomp_promoter} value={option.indicomp_promoter}>
-                          {option.indicomp_promoter}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <Label htmlFor="indicomp_promoter" className="text-xs  flex flex-row items-center justify-between  font-medium">
+                                      <span>Promoter</span>   <span className='hover:cursor-pointer hover:text-red-900 text-red-500' onClick={handlePromoterNotList} >
+                        Not in List!
+                      </span>
+                                    </Label>
+                                   
+                 
+                      <MemoizedSelect
+                      value={donor.indicomp_promoter}
+                
+                      onChange={(value) => {
+                        const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
+                        setDonor(prev => ({
+                          ...prev,
+                          indicomp_promoter: selectedPromoter?.indicomp_fts_id || '', 
+                        }));
+                      }}
+                      options={promoter?.map((option) => ({
+                        value: option.indicomp_promoter,
+                        label: option.indicomp_promoter
+                      }))}
+                      placeholder="Select Promoter"
+                    />
+                   
+
                   {errors?.indicomp_promoter && (
                     <p className="text-red-500 text-xs">{errors.indicomp_promoter}</p>
                   )}
@@ -644,7 +679,7 @@ useEffect(() => {
                       <SelectValue placeholder="Select Source" />
                     </SelectTrigger>
                     <SelectContent>
-                      {datasourceHook?.datasource.map((option) => (
+                      {datasource?.map((option) => (
                         <SelectItem key={option.id} value={option.data_source_type}>
                           {option.data_source_type}
                         </SelectItem>
@@ -844,7 +879,7 @@ useEffect(() => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {statesHook?.states.map((state) => (
+                      {states?.map((state) => (
                         <SelectItem key={state.id} value={state.state_name}>
                           {state.state_name}
                         </SelectItem>
@@ -953,7 +988,7 @@ useEffect(() => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {statesHook?.states.map((state) => (
+                      {states?.map((state) => (
                         <SelectItem key={state.id} value={state.state_name}>
                           {state.state_name}
                         </SelectItem>

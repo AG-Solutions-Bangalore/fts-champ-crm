@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import * as XLSX from 'xlsx';
 import {
   Table,
   TableBody,
@@ -283,6 +284,36 @@ const SchoolDownload = () => {
     }
   });
 
+  // const viewAllottedMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(DOWNLOAD_SCHOOL_ALLOTED, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //     setDataType('allotted');
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch school allotted data');
+  //   }
+  // });
+
   const viewAllottedMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_SCHOOL_ALLOTED, downloadData, {
@@ -291,28 +322,60 @@ const SchoolDownload = () => {
       });
       return response.data;
     },
-    onSuccess: async (blob) => {
-      const text = await blob.text();
-      const rows = text.split('\n').filter(Boolean);
-      const headers = rows[0].split(',');
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        const obj = {};
-        headers.forEach((header, idx) => {
-          const cleanHeader = header.replace(/^"|"$/g, '');
-          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-          obj[cleanHeader] = cleanValue;
-        });
-        return obj;
-      });
-      setJsonData(data);
-      setDataType('allotted');
-    },
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from CSV file.');
+      }
+    } catch (error) {
+      console.error('Failed to read Excel/CSV blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
     onError: () => {
-      toast.error('Failed to fetch school allotted data');
+      toast.error('Failed to fetch receipt data');
     }
   });
-
+  
+  function parseCSVAndSetData(text) {
+    const rows = text.split('\n').filter(Boolean);
+    if (!rows.length) {
+      toast.error('No receipt data found');
+      return;
+    }
+  
+    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',');
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+  
+    setJsonData(data);
+  }
   const viewUnallottedMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_SCHOOL_UNALLOTED, downloadData, {
@@ -321,27 +384,68 @@ const SchoolDownload = () => {
       });
       return response.data;
     },
-    onSuccess: async (blob) => {
-      const text = await blob.text();
-      const rows = text.split('\n').filter(Boolean);
-      const headers = rows[0].split(',');
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        const obj = {};
-        headers.forEach((header, idx) => {
-          const cleanHeader = header.replace(/^"|"$/g, '');
-          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-          obj[cleanHeader] = cleanValue;
-        });
-        return obj;
-      });
-      setJsonData(data);
-      setDataType('unallotted');
-    },
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from CSV file.');
+      }
+    } catch (error) {
+      console.error('Failed to read Excel/CSV blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
     onError: () => {
-      toast.error('Failed to fetch school unallotted data');
+      toast.error('Failed to fetch receipt data');
     }
   });
+  // const viewUnallottedMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(DOWNLOAD_SCHOOL_UNALLOTED, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //     setDataType('unallotted');
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch school unallotted data');
+  //   }
+  // });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

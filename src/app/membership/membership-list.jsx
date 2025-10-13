@@ -68,13 +68,13 @@ const MembershipList = () => {
 
   const sendEmailMutation = useMutation({
     mutationFn: async (memberId) => {
-      const response = await axios.get(`${BASE_URL}/api/send-membership-renew/${memberId}`, {
+      const response = await axios.get(`${BASE_URL}/api/send-membership-renewal-email/${memberId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return response.data;
     },
     onSuccess: (data, memberId) => {
-      toast.success(data.msg || 'Email sent successfully');
+      toast.success(data.message || 'Email sent successfully');
       setMailSending(prev => ({ ...prev, [memberId]: false }));
     },
     onError: (error, memberId) => {

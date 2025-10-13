@@ -1,1024 +1,690 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import numWords from "num-words";
-import moment from "moment";
-import { useReactToPrint } from "react-to-print";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import Moment from 'moment';
+import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as XLSX from 'xlsx';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 
-// Shadcn components
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Cookies from 'js-cookie';
+import BASE_URL from '@/config/base-url';
+import { MemoizedSelect } from '@/components/common/memoized-select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useFetchChapterActive, useFetchDataSource, useFetchPromoter } from '@/hooks/use-api';
+import { DOWNLOAD_ALL_RECEIPT } from '@/api';
 
-// Lucide React icons
-import { 
-  ArrowLeft, 
-  FileType, 
-  Mail, 
-  Printer, 
-  FileText, 
-  Loader2, 
-  MailPlus,
-  X,
-  History
-} from "lucide-react";
-
-// Assets
-import Logo1 from "../../assets/receipt/fts_log.png";
-import Logo2 from "../../assets/receipt/top.png";
-import Logo3 from "../../assets/receipt/ekal.png";
-import tallyImg from "../../assets/tally.svg";
-import mailSentGif from "../../assets/mail-sent.gif";
-
-
-import axios from "axios";
-import BASE_URL from "@/config/base-url";
-import Cookies from "js-cookie";
-import TimelineReceipt from "./timeline-receipt";
-
-const ReceiptOne = () => {
-  const tableRef = useRef(null);
-  const containerRef = useRef();
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-  const token = Cookies.get("token");
-  const [donor1, setDonor1] = useState({ indicomp_email: "" });
-  const [open, setOpen] = useState(false);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [isSavingPDF, setIsSavingPDF] = useState(false);
-  const [isPrintingReceipt, setIsPrintingReceipt] = useState(false);
-  const [isPrintingLetter, setIsPrintingLetter] = useState(false);
-
-  // Fetch receipt data
-  const { data: receiptData, isLoading } = useQuery({
-    queryKey: ['receiptView', id],
-    queryFn: async () => {
-      const { data } = await axios.get(
-        `${BASE_URL}/api/receipt-view/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return data;
-    },
-    enabled: !!id,
-    refetchOnWindowFocus: false,  
-  refetchOnReconnect: false,     
-  refetchOnMount: false,        
-  staleTime: 1000 * 60 * 5, 
-  });
-
-  const receipts = receiptData?.receipt || {};
-  const chapter = receiptData?.chapter || {};
-  const authsign = receiptData?.auth_sign || [];
-  const country = receiptData?.country || [];
-  const amountInWords = numWords(receipts.receipt_total_amount || 0);
+const AllReceiptDownload = () => {
+  const token = Cookies.get('token');
 
   
-  const { data: receiptControl } = useQuery({
-    queryKey: ['receiptControl'],
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-receipt-control`, {
-        headers: {
-          Authorization: `Bearer ${Cookies.get("token")}`,
-        },
+  const [formData, setFormData] = useState({
+    receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
+    receipt_to_date: Moment().format('YYYY-MM-DD'),
+    receipt_donation_type: '',
+    receipt_exemption_type: '',
+    receipt_amount_range: '0-100000000',
+    receipt_ots_range_from: '0',
+    receipt_ots_range_to: '5000',
+    indicomp_donor_type: '',
+    indicomp_promoter: '',
+    chapter_id: '',
+    indicomp_source: ''
+  });
+
+  const [jsonData, setJsonData] = useState(null);
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [globalFilter, setGlobalFilter] = useState('');
+
+  const donationTypes = [
+    { value: 'One Teacher School', label: 'EV' },
+    { value: 'General', label: 'General' },
+    { value: 'Membership', label: 'Membership' }
+  ];
+
+  const exemptionTypes = [
+    { value: '80G', label: '80G' },
+    { value: 'Non 80G', label: 'Non 80G' },
+    { value: 'FCRA', label: 'FCRA' },
+    { value: 'CSR', label: 'CSR' },
+  ];
+
+  const donorTypes = [
+    { value: 'Member', label: 'Member' },
+    { value: 'Donor', label: 'Donor' },
+    { value: 'Member+Donor', label: 'Member+Donor' },
+    { value: 'None', label: 'None' }
+  ];
+
+  const amountRanges = [
+    { value: '0-100000000', label: 'All' },
+    { value: '1-10000', label: '1-10000' },
+    { value: '10001-20000', label: '10000-20000' },
+    { value: '20001-30000', label: '20001-30000' },
+    { value: '30001-50000', label: '30001-50000' },
+    { value: '50001-100000', label: '50001-100000' },
+    { value: '100001-100000000', label: '100001-Above' }
+  ];
+
+
+  const { data: chapterActiveHook, isLoading: chaptersLoading, isError: chaptersError} = useFetchChapterActive();
+  const { data: datasourceHook, isLoading: datasourceLoading ,isError:datasourceError} = useFetchDataSource();
+  const { data: promoterHook, isLoading: promoterLoading ,isError:promoterError} = useFetchPromoter();
+  const isLoading = chaptersLoading || datasourceLoading || promoterLoading;
+  const isError = chaptersError || datasourceError || promoterError;
+
+  const chapters = chapterActiveHook?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
+
+
+
+  const downloadMutation = useMutation({
+    mutationFn: async (downloadData) => {
+      const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        responseType: 'blob'
       });
-      return response.data.data;
+      return response.data;
     },
-  });
-
- 
-  const sendEmailMutation = useMutation({
-  mutationFn: async () => {
-    const response = await axios.get(
-      `${BASE_URL}/api/send-receipt/${id}?id=${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${Cookies.get("token")}`,
-        },
-      }
-    );
-    return response.data; 
-  },
-
-  onSuccess: (response) => {
-    if (response?.code === 200) {
-      queryClient.invalidateQueries(["receiptView", id]);
-      toast.success(response.msg);
-    } else {
-      toast.error(response.msg);
-    }
-  },
-
-  onError: (error) => {
-    toast.error(error.response?.data?.message || "Sent mail error");
-  },
-});
-
-
-  
-  const updateEmailMutation = useMutation({
-    mutationFn: (formData) => 
-      axios.put(`${BASE_URL}/api/update-donor-email/${Cookies.get("ftsid")}`, formData, {
-        headers: {
-          Authorization: `Bearer ${Cookies.get("token")}`,
-        },
-      }),
-    onSuccess: (response) => {
-      if (response?.data.code == 200) {
-        handleClose();
-        queryClient.invalidateQueries(['receiptView', id]);
-        toast.success(response?.data.msg);
-        setDonor1({ indicomp_email: "" });
-      } else {
-        toast.error(response?.data.msg);
-      }
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'all_receipt_list.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('All receipts downloaded successfully!');
+      setFormData({
+        receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
+        receipt_to_date: Moment().format('YYYY-MM-DD'),
+        receipt_donation_type: '',
+        receipt_exemption_type: '',
+        receipt_amount_range: '0-100000000',
+        receipt_ots_range_from: '0',
+        receipt_ots_range_to: '5000',
+        indicomp_donor_type: '',
+        indicomp_promoter: '',
+        chapter_id: '',
+        indicomp_source: ''
+      });
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || "Error on updating the mail");
-    },
-    onSettled: () => {
-      setIsButtonDisabled(false);
-    },
+      toast.error('Failed to download all receipts');
+      console.error('Download error:', error);
+    }
   });
 
-  const handleSavePDF = () => {
-    const input = tableRef.current;
-    if (!input) return;
+  // const viewMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch all receipt data');
+  //   }
+  // });
 
-    setIsSavingPDF(true);
-    const originalStyle = input.style.cssText;
-
-    input.style.width = "210mm";
-    input.style.minWidth = "210mm";
-    input.style.margin = "2mm";
-    input.style.padding = "2mm";
-    input.style.boxSizing = "border-box";
-    input.style.position = "absolute";
-    input.style.left = "0";
-    input.style.top = "0";
-
-    const clone = input.cloneNode(true);
-    clone.style.position = "absolute";
-    clone.style.left = "-9999px";
-    clone.style.top = "0";
-    clone.style.visibility = "visible";
-    document.body.appendChild(clone);
-
-    html2canvas(clone, {
-      scale: 2,
-      width: 210 * 3.78,
-      windowWidth: 210 * 3.78,
-      scrollX: 0,
-      scrollY: 0,
-      imageTimeout: 0,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#FFFFFF",
-    })
-      .then((canvas) => {
-        document.body.removeChild(clone);
-        input.style.cssText = originalStyle;
-
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-        });
-
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const margin = 2;
-        const imgWidth = pdfWidth - 2 * margin;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
-        pdf.save("Receipt.pdf");
-      })
-      .catch((error) => {
-        console.error("Error generating PDF: ", error);
-        document.body.removeChild(clone);
-        input.style.cssText = originalStyle;
-      })
-      .finally(() => {
-        setIsSavingPDF(false);
+  const viewMutation = useMutation({
+    mutationFn: async (downloadData) => {
+      const response = await axios.post(DOWNLOAD_ALL_RECEIPT, downloadData, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        responseType: 'blob'
       });
-  };
-
-  const handleClickOpen = () => {
-    setOpen(true);
-    Cookies.set("ftsid", receipts.indicomp_fts_id + "");
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const onInputChange = (e) => {
-    setDonor1({
-      ...donor1,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handlPrintPdf = useReactToPrint({
-    content: () => containerRef.current,
-    documentTitle: "letter-view",
-    pageStyle: `
-      @page {
-        size: auto;
-        margin: 1mm;
+      return response.data;
+    },
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from CSV file.');
       }
-      @media print {
-        body {
-          border: 0px solid #000;
-          margin: 2mm;
-          padding: 2mm;
-          min-height: 100vh;
-        }
-        .print-hide {
-          display: none;
-        }
-        .page-break {
-          page-break-before: always;
-        }
-      }
-    `,
-    onBeforeGetContent: () => setIsPrintingLetter(true),
-    onAfterPrint: () => setIsPrintingLetter(false),
+    } catch (error) {
+      console.error('Failed to read Excel/CSV blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
+    onError: () => {
+      toast.error('Failed to fetch receipt data');
+    }
   });
-
-  const handlReceiptPdf = useReactToPrint({
-    content: () => tableRef.current,
-    documentTitle: "receipt-view",
-    pageStyle: `
-      @page {
-        size: auto;
-        margin: 2mm;
-      }
-      @media print {
-        body {
-          border: 0px solid #000;
-          margin: 2mm;
-          padding: 2mm;
-          min-height: 100vh;
-        }
-        .print-hide {
-          display: none;
-        }
-        .page-break {
-          page-break-before: always;
-        }
-      }
-    `,
-    onBeforeGetContent: () => setIsPrintingReceipt(true),
-    onAfterPrint: () => setIsPrintingReceipt(false),
-  });
-
-  const sendEmail = (e) => {
-    e.preventDefault();
-    sendEmailMutation.mutate();
-  };
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    if (!e.target.checkValidity()) {
-      e.target.reportValidity();
+  
+  function parseCSVAndSetData(text) {
+    const rows = text.split('\n').filter(Boolean);
+    if (!rows.length) {
+      toast.error('No receipt data found');
       return;
     }
-    setIsButtonDisabled(true);
-    updateEmailMutation.mutate(donor1);
+  
+    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',');
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+  
+    setJsonData(data);
+  }
+  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    if ((name === 'receipt_ots_range_from' || name === 'receipt_ots_range_to') && value !== '') {
+      if (!/^[0-9\b]+$/.test(value)) {
+        return;
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const tallyReceipt = receipts?.tally_status;
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  if (isLoading) {
+  const handleSubmitDownload = (e) => {
+    e.preventDefault();
+    if (!formData.receipt_from_date || !formData.receipt_to_date) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
+    downloadMutation.mutate(formData);
+  };
+
+  const handleSubmitView = (e) => {
+    e.preventDefault();
+    if (!formData.receipt_from_date || !formData.receipt_to_date) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
+    viewMutation.mutate(formData);
+  };
+
+ 
+  const columns = [
+    {
+      id: 'S. No.',
+      header: 'S. No.',
+      cell: ({ row }) => {
+        const globalIndex = row.index + 1;
+        return <div className="text-xs font-medium">{globalIndex}</div>;
+      },
+      size: 60,
+    },
+    {
+      accessorKey: 'Donor Name',
+      id: 'Donor Name',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="px-2 h-8 text-xs"
+        >
+          Donor Name
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Name')}</div>,
+      size: 150,
+    },
+    {
+      accessorKey: 'Contact Name',
+      id: 'Contact Name',
+      header: 'Contact Name',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Contact Name')}</div>,
+      size: 150,
+    },
+    {
+      accessorKey: 'Mobile',
+      id: 'Mobile',
+      header: 'Mobile',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Mobile')}</div>,
+      size: 120,
+    },
+    {
+      accessorKey: 'Email',
+      id: 'Email',
+      header: 'Email',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Email')}</div>,
+      size: 180,
+    },
+    
+    {
+      accessorKey: 'Promoter',
+      id: 'Promoter',
+      header: 'Promoter',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Promoter')}</div>,
+      size: 120,
+    },
+    {
+      accessorKey: 'Donor Type',
+      id: 'Donor Type',
+      header: 'Donor Type',
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Type')}</div>,
+      size: 120,
+    },
+  ];
+
+  const table = useReactTable({
+    data: jsonData || [],
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+      columnVisibility,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
+
+  const TableShimmer = () => {
+    return Array.from({ length: 10 }).map((_, index) => (
+      <TableRow key={index} className="animate-pulse h-11">
+        {table.getVisibleFlatColumns().map((column) => (
+          <TableCell key={column.id} className="py-1">
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
+          </TableCell>
+        ))}
+      </TableRow>
+    ));
+  };
+  
+    if (isLoading ) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
+        <div className="p-4 border-b bg-muted/50">
+          <Skeleton className="h-6 w-48" />
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[...Array(8)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-4 w-20 mb-1" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-9 w-32 mt-4" />
+        </div>
       </div>
     );
   }
 
-  return (
-    <TooltipProvider>
-      <div className=" ">
-      
-
-
-      {receiptControl?.download_open === "Yes" && Cookies.get("user_type_id") != 4 && (
-  <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
-    <Card className="p-3 shadow-2xl border border-white/30 backdrop-blur-lg bg-white/80 rounded-2xl hover:bg-white/90 transition-all duration-300">
-      <div className="flex items-center gap-2">
-      {tallyReceipt == "True" && (
-        <div className="flex items-center pr-2  border-r border-gray-300/50 mr-1">
-    
-            <img src={tallyImg} alt="tallyImg" className="h-6 mr-1 opacity-90" />
-        
-        </div>
-      )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSavePDF}
-              disabled={isSavingPDF}
-              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-            >
-              {isSavingPDF ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <FileType className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Download PDF</TooltipContent>
-        </Tooltip>
-
-        {receipts?.individual_company?.indicomp_email ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={sendEmail}
-                disabled={sendEmailMutation.isPending}
-                className=" rounded-md relative transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-              >
-                {!sendEmailMutation.isPending && (
-                  <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
-                    {receipts.receipt_email_count || 0}
-                  </span>
-                )}
-                {sendEmailMutation.isPending ? (
-                  <img src={mailSentGif} alt="Sending..." className="h-5 w-5" />
-                ) : (
-                  <Mail className="h-5 w-5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Send Mail</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleClickOpen}
-                className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-              >
-                <MailPlus className="h-5 w-5 text-red-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add Mail</TooltipContent>
-          </Tooltip>
-        )}
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlReceiptPdf}
-              disabled={isPrintingReceipt}
-              className="h-11 w-11 rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
-            >
-              {isPrintingReceipt ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Printer className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Print Receipt</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlPrintPdf}
-              disabled={isPrintingLetter}
-              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-            >
-              {isPrintingLetter ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <FileText className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Print Letter</TooltipContent>
-        </Tooltip>
-
-
-        <TimelineReceipt />
+  if (isError) {
+   
+    return (
+      <div className="p-6 text-red-500">
+        Failed to load dropdown data. Please check console logs.
       </div>
-    </Card>
-  </div>
-)}
+    );
+  }
+  
+  return (
+    <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
+      <div className="p-4 border-b bg-muted/50">
+        <div className="flex items-center gap-2 text-lg font-semibold">
+          <Download className="w-5 h-5" />
+          Download All Receipts
+        </div>
+        <div className="text-sm text-muted-foreground mt-0.5">
+          Leave fields blank to get all records
+        </div>
+      </div>
 
-        {/* Main Content - 66/33 Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-          {/* Receipt Section - Left Side */}
-          <Card className="p-4 col-span-1 lg:col-span-2 rounded-md">
-            <div ref={tableRef} className="relative">
-              <img
-                src={Logo1}
-                alt="water mark"
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10 w-auto h-56"
-              />
-
-              <div className="flex justify-between items-center border-t border-r border-l border-black">
-                <img src={Logo1} alt="FTS logo" className="m-3 ml-12 w-auto h-16" />
-                <div className="flex-1 text-center mr-24">
-                  <img src={Logo2} alt="Top banner" className="mx-auto mb-0 w-80" />
-                  <h2 className="text-xl font-bold mt-1">{chapter.chapter_name}</h2>
-                </div>
-                <img src={Logo3} alt="Ekal logo" className="m-3 mr-12 w-16 h-16" />
-              </div>
-
-              <div className="text-center border-x border-b border-black p-1 h-14">
-                <p className="text-sm font-semibold mx-auto max-w-[90%]">
-                  {`${chapter?.chapter_address || ""}, ${chapter?.chapter_city || ""} - ${
-                    chapter?.chapter_pin || ""
-                  }, ${chapter?.chapter_state || ""} 
-                  ${chapter?.chapter_email ? `Email: ${chapter.chapter_email} |` : ""} 
-                  ${chapter?.chapter_website ? `${chapter.chapter_website} |` : ""} 
-                  ${chapter?.chapter_phone ? `Ph: ${chapter.chapter_phone} |` : ""} 
-                  ${chapter?.chapter_whatsapp ? `Mob: ${chapter.chapter_whatsapp}` : ""}`}
-                </p>
-              </div>
-
-              <div className="text-center border-x h-7 border-black p-1">
-                <p className="text-[11px] font-medium mx-auto">
-                  Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road, Kolkata-26. 
-                  Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13 PAN: AAAAF0290L
-                </p>
-              </div>
-
-              <table className="w-full border-t border-black border-collapse text-[12px]">
-                <tbody>
-                  <tr>
-                    <td className="border-l border-black p-1">Received with thanks from :</td>
-                    <td className="border-l border-black p-1">Receipt No.</td>
-                    <td className="p-2">:</td>
-                    <td className="border-r border-black p-1">
-                      <span className="font-bold">{receipts.receipt_ref_no}</span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-black" rowSpan="2">
-                      {Object.keys(receipts).length !== 0 && (
-                        <div className="ml-6 font-bold">
-                          <p className="text-sm leading-tight">
-                            {receipts.individual_company.indicomp_type !== "Individual" && "M/s"}
-                            {receipts.individual_company.indicomp_type === "Individual" &&
-                              receipts.individual_company.title}{" "}
-                            {receipts.individual_company.indicomp_full_name}
-                          </p>
-
-                          {receipts.individual_company.indicomp_off_branch_address && (
-                            <div>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_address}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_area}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_ladmark}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                                {receipts.individual_company.indicomp_off_branch_pin_code},
-                                {receipts.individual_company.indicomp_off_branch_state}
-                              </p>
-                            </div>
-                          )}
-
-                          {receipts.individual_company.indicomp_res_reg_address && (
-                            <div>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_address}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_area}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_ladmark}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                                {receipts.individual_company.indicomp_res_reg_pin_code},
-                                {receipts.individual_company.indicomp_res_reg_state}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="border-l border-t border-black p-1">Date</td>
-                    <td className="p-1 border-t border-black">:</td>
-                    <td className="border-r border-t border-black p-1">
-                      <span className="font-bold">
-                        {moment(receipts.receipt_date).format("DD-MM-YYYY")}
-                      </span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-t border-black p-1">On account of</td>
-                    <td className="p-1 border-t border-black">:</td>
-                    <td className="border-r border-t border-black p-1">
-                      <span className="font-bold">{receipts.receipt_donation_type}</span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-black p-1">
-                      <div className="flex items-center">
-                        <span>
-                          {country.find((coustate) => coustate.state_country === "India") && "PAN No :"}
-                        </span>
-                        <span className="font-bold ml-2">
-                          {country.find((coustate) => coustate.state_country === "India") &&
-                            receipts.individual_company.indicomp_pan_no}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="border-l border-t border-black p-1">Pay Mode</td>
-                    <td className="p-1 border-t border-black">:</td>
-                    <td className="border-r border-t border-black p-1">
-                      <span className="font-bold">{receipts.receipt_tran_pay_mode}</span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-t border-b border-black p-1">
-                      Amount in words :
-                      <span className="font-bold capitalize"> {amountInWords} Only</span>
-                    </td>
-                    <td className="border-l border-b border-t border-black p-1">Amount</td>
-                    <td className="p-1 border-b border-t border-black">:</td>
-                    <td className="border-r border-b border-t border-black p-1">
-                      Rs. <span className="font-bold">{receipts.receipt_total_amount}</span> /-
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-b border-r border-black p-1" colSpan="4">
-                      Reference :
-                      <span className="font-bold text-sm">{receipts.receipt_tran_pay_details}</span>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="border-l border-b border-black p-1" colSpan="1">
-                      {receipts.receipt_exemption_type === "80G" && (
-                        <div className="text-[12px]">
-                          {receipts.receipt_date > "2021-05-27" ? (
-                            <>
-                              Donation is exempt U/Sec.80G of the
-                              <br />
-                              Income Tax Act 1961 vide Order No.
-                              AAAAF0290LF20214 Dt. 28-05-2021.
-                            </>
-                          ) : (
-                            <>
-                              This donation is eligible for deduction U/S 80(G) of the
-                              <br />
-                              Income Tax Act 1961 vide order
-                              NO:DIT(E)/3260/8E/73/89-90 Dt. 13-12-2011.
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="border-b border-r border-black p-1 text-right text-[12px]" colSpan="3">
-                      For Friends of Tribals Society
-                      <br />
-                      <br />
-                      <br />
-                      {authsign.length > 0 && (
-                        <div className="signature-section">
-                          <div className="flex flex-col items-end">
-                            {authsign.map((sig, key) => (
-                              <div key={key} className="text-center">
-                                {sig.signature_image && (
-                                  <img
-                                    src={sig.signature_image}
-                                    alt={`${sig.indicomp_full_name}'s signature`}
-                                    className="h-12 mb-1"
-                                  />
-                                )}
-                                <span className="font-semibold">{sig.indicomp_full_name}</span>
-                                {chapter.auth_sign ? (
-                                  <div className="text-sm text-gray-600">{chapter.auth_sign}</div>
-                                ) : (
-                                  <div className="text-sm text-gray-500">Authorized Signatory</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+      <div className="p-4">
+        <form className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
+              <Input id="receipt_from_date" name="receipt_from_date" type="date" value={formData.receipt_from_date} onChange={handleInputChange} required className="h-9" />
             </div>
-          </Card>
 
-          {/* Letter Section - Right Side */}
-          <Card className="p-4 rounded-md">
-  <div>
-    <div className="flex justify-between">
-      <div className="text-[#464D69] md:text-base text-sm">
-        <p className="font-serif text-base">
-          Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
-        </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_to_date" className="text-sm">To Date *</Label>
+              <Input id="receipt_to_date" name="receipt_to_date" type="date" value={formData.receipt_to_date} onChange={handleInputChange} required className="h-9" />
+            </div>
 
-        {Object.keys(receipts).length !== 0 && (
-          <div className="mt-1 space-y-1">
-            {receipts.receipt_donation_type !== "Membership" &&
-              receipts.individual_company.indicomp_type !== "Individual" && (
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.title}{" "}
-                  {receipts.individual_company.indicomp_com_contact_name}
-                </p>
-              )}
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_donation_type" className="text-sm">Purpose</Label>
+              <Select value={formData.receipt_donation_type} onValueChange={(value) => handleSelectChange('receipt_donation_type', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Purpose" />
+                </SelectTrigger>
+                <SelectContent>
+                  {donationTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {receipts.individual_company.indicomp_type !== "Individual" && (
-              <p className="font-serif text-sm">
-                M/s {receipts.individual_company.indicomp_full_name}
-              </p>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_exemption_type" className="text-sm">Category</Label>
+              <Select value={formData.receipt_exemption_type} onValueChange={(value) => handleSelectChange('receipt_exemption_type', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exemptionTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {receipts.individual_company.indicomp_type === "Individual" && (
-              <p className="font-serif text-sm">
-                {receipts.individual_company.title}{" "}
-                {receipts.individual_company.indicomp_full_name}
-              </p>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="indicomp_donor_type" className="text-sm">Donor Type</Label>
+              <Select value={formData.indicomp_donor_type} onValueChange={(value) => handleSelectChange('indicomp_donor_type', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Donor Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {donorTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {receipts.individual_company.indicomp_off_branch_address && (
-              <div className="space-y-0.5">
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_address}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_area}
-                </p>
-                <p className="text-sm">
-                  {receipts.individual_company.indicomp_off_branch_ladmark}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                  {receipts.individual_company.indicomp_off_branch_pin_code},{" "}
-                  {receipts.individual_company.indicomp_off_branch_state}
-                </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="indicomp_promoter" className="text-sm">Promoter</Label>
+              {/* <Select value={formData.indicomp_promoter} onValueChange={(value) => handleSelectChange('indicomp_promoter', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Promoter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {promoter.map(item => <SelectItem key={item.indicomp_promoter} value={item.indicomp_promoter}>{item.indicomp_promoter}</SelectItem>)}
+                </SelectContent>
+              </Select> */}
+              <MemoizedSelect
+value={formData.indicomp_promoter}
+onChange={(value) =>
+  handleSelectChange("indicomp_promoter", value)
+}
+options={
+    promoter?.map((item) => ({
+    value: item.indicomp_promoter,
+    label: item.indicomp_promoter,
+  })) || []
+}
+placeholder="Select Promoter"
+/>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_ots_range_from" className="text-sm">OTS Range From</Label>
+              <Input 
+                id="receipt_ots_range_from" 
+                name="receipt_ots_range_from" 
+                type="text" 
+                value={formData.receipt_ots_range_from} 
+                onChange={handleInputChange} 
+                placeholder="Enter OTS Range From"
+                className="h-9" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_ots_range_to" className="text-sm">OTS Range To</Label>
+              <Input 
+                id="receipt_ots_range_to" 
+                name="receipt_ots_range_to" 
+                type="text" 
+                value={formData.receipt_ots_range_to} 
+                onChange={handleInputChange} 
+                placeholder="Enter OTS Range To"
+                className="h-9" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="receipt_amount_range" className="text-sm">Amount Range</Label>
+              <Select value={formData.receipt_amount_range} onValueChange={(value) => handleSelectChange('receipt_amount_range', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Amount Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {amountRanges.map(range => <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="indicomp_source" className="text-sm">Source</Label>
+              <Select value={formData.indicomp_source} onValueChange={(value) => handleSelectChange('indicomp_source', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  {datasource.map(item => <SelectItem key={item.data_source_type} value={item.data_source_type}>{item.data_source_type}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="chapter_id" className="text-sm">Chapter</Label>
+              <Select value={formData.chapter_id} onValueChange={(value) => handleSelectChange('chapter_id', value)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select Chapter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chapters.map(item => <SelectItem key={item.id} value={item.id}>{item.chapter_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="button" onClick={handleSubmitDownload} disabled={downloadMutation.isPending} className="flex items-center gap-2 h-9">
+              <Download className="w-4 h-4" />
+              {downloadMutation.isPending ? 'Downloading...' : 'Download'}
+            </Button>
+
+            <Button type="button" onClick={handleSubmitView} disabled={viewMutation.isPending} className="flex items-center gap-2 h-9">
+              <Eye className="w-4 h-4" />
+              {viewMutation.isPending ? 'Loading...' : 'View'}
+            </Button>
+          </div>
+        </form>
+
+        {/* Table display */}
+        {jsonData && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between py-1 mb-3">
+              <div className="relative w-72">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Search all receipts..."
+                  value={table.getState().globalFilter || ''}
+                  onChange={(event) => table.setGlobalFilter(event.target.value)}
+                  className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+                />
               </div>
-            )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    Columns <ChevronDown className="ml-2 h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="text-xs capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-            {receipts.individual_company.indicomp_res_reg_address && (
-              <div className="space-y-0.5">
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_address}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_area}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_ladmark}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                  {receipts.individual_company.indicomp_res_reg_pin_code},{" "}
-                  {receipts.individual_company.indicomp_res_reg_state}
-                </p>
+            {/* Table */}
+            <div className="rounded-none border min-h-[20rem] flex flex-col">
+              <Table className="flex-1">
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead 
+                          key={header.id} 
+                          className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
+                          style={{ width: header.column.columnDef.size }}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                
+                <TableBody>
+                  {viewMutation.isPending ? (
+                    <TableShimmer />
+                  ) : table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="h-2 hover:bg-gray-50"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="px-3 py-1">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow className="h-12">
+                      <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                        No receipts found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                Total Receipts: {table.getFilteredRowModel().rows.length}
               </div>
-            )}
-          </div>
-        )}
-
-        <p className="my-2 font-serif text-sm">
-          {receipts.individual_company?.indicomp_gender === "Female" &&
-            "Respected Madam,"}
-          {receipts.individual_company?.indicomp_gender === "Male" &&
-            "Respected Sir,"}
-          {receipts.individual_company?.indicomp_gender === null &&
-            "Respected Sir,"}
-        </p>
-
-        {/* One Teacher School */}
-        {receipts.receipt_donation_type === "One Teacher School" && (
-          <div className="mt-1 text-justify space-y-2">
-            <p className="font-serif text-sm text-center">
-              Sub: Adoption of One Teacher School
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We acknowledge with thanks the receipt of Rs.
-              {receipts.receipt_total_amount}/- Rupees {amountInWords} Only via{" "}
-              {receipts.receipt_tran_pay_mode == "Cash" ? (
-                <>Cash for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-              ) : (
-                <>{receipts.receipt_tran_pay_details} being for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-              )}
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We convey our sincere thanks and gratitude for your kind support towards
-              the need of our tribals...
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We would like to state that our efforts are not only for mitigating the
-              hardship...
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We are pleased to enclose herewith our money receipt no.{" "}
-              {receipts.receipt_ref_no} dated{" "}
-              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
-            </p>
-          </div>
-        )}
-
-        {/* General Donation */}
-        {receipts.receipt_donation_type === "General" && (
-          <div className="mt-1 space-y-2">
-            <p className="font-serif text-sm leading-tight">
-              We thankfully acknowledge the receipt of Rs.
-              {receipts.receipt_total_amount}/- via your{" "}
-              {receipts.receipt_tran_pay_mode === "Cash"
-                ? "Cash"
-                : receipts.receipt_tran_pay_details}{" "}
-              being Donation for Education.
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We are pleased to enclose herewith our money receipt no.{" "}
-              {receipts.receipt_ref_no} dated{" "}
-              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
-            </p>
-          </div>
-        )}
-
-        {/* Membership */}
-        {receipts.receipt_donation_type === "Membership" && (
-          <div>
-            <p className="font-serif text-sm leading-tight">
-              We acknowledge with thanks receipt of your membership subscription upto{" "}
-              {receipts?.m_ship_vailidity}.
-            </p>
-          </div>
-        )}
-
-        {/* Closing Lines */}
-        {receipts.receipt_donation_type !== "Membership" && (
-          <div className="space-y-1 mt-2">
-            <p className="font-serif text-sm">Thanking you once again</p>
-            <p className="font-serif text-sm">Yours faithfully,</p>
-            <p className="font-serif text-sm">For Friends of Tribals Society</p>
-            <p className="font-serif text-sm mt-4">
-              {authsign.map((sig, key) => (
-                <span key={key}>{sig.indicomp_full_name}</span>
-              ))}
-            </p>
-            <p className="font-serif text-sm">{chapter.auth_sign}</p>
-            <p className="font-serif text-sm">Encl: As stated above</p>
-          </div>
-        )}
-
-        {receipts.receipt_donation_type === "Membership" && (
-          <div className="space-y-1 mt-2">
-            <p className="font-serif text-sm">With Best regards</p>
-            <p className="font-serif text-sm">Yours sincerely</p>
-            <p className="font-serif text-sm">
-              {authsign.map((sig, key) => (
-                <span key={key}>{sig.indicomp_full_name}</span>
-              ))}
-            </p>
-            <p className="font-serif text-sm">{chapter.auth_sign}</p>
-            <p className="font-serif text-sm">Encl: As stated above</p>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
     </div>
-  </div>
-</Card>
-
-
-
-          {/* only for print  */}
-          <Card className="p-6 hidden ">
-            <div ref={containerRef}>
-              <div className="flex justify-between p-6 mt-44">
-                <div className="text-[#464D69] md:text-xl text-sm">
-                  <p className="font-serif text-[20px]">
-                    Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
-                  </p>
-
-                  {Object.keys(receipts).length !== 0 && (
-                    <div className="mt-2">
-                      {receipts.receipt_donation_type !== "Membership" &&
-                        receipts.individual_company.indicomp_type !== "Individual" && (
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.title}{" "}
-                            {receipts.individual_company.indicomp_com_contact_name}
-                          </p>
-                        )}
-
-                      {receipts.individual_company.indicomp_type !== "Individual" && (
-                        <p className="font-serif text-[18px]">
-                          M/s {receipts.individual_company.indicomp_full_name}
-                        </p>
-                      )}
-
-                      {receipts.individual_company.indicomp_type === "Individual" && (
-                        <p className="font-serif text-[18px]">
-                          {receipts.individual_company.title}{" "}
-                          {receipts.individual_company.indicomp_full_name}
-                        </p>
-                      )}
-
-                      {receipts.individual_company.indicomp_off_branch_address && (
-                        <div>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_address}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_area}
-                          </p>
-                          <p className="mb-0 text-xl">
-                            {receipts.individual_company.indicomp_off_branch_ladmark}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_off_branch_city} -{" "}
-                            {receipts.individual_company.indicomp_off_branch_pin_code},
-                            {receipts.individual_company.indicomp_off_branch_state}
-                          </p>
-                        </div>
-                      )}
-
-                      {receipts.individual_company.indicomp_res_reg_address && (
-                        <div>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_address}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_area}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_ladmark}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.individual_company.indicomp_res_reg_city} -{" "}
-                            {receipts.individual_company.indicomp_res_reg_pin_code},
-                            {receipts.individual_company.indicomp_res_reg_state}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <p className="my-6 font-serif text-[18px] text-justify">
-                    {receipts.individual_company?.indicomp_gender === "Female" && "Respected Madam,"}
-                    {receipts.individual_company?.indicomp_gender === "Male" && "Respected Sir,"}
-                    {receipts.individual_company?.indicomp_gender === null && "Respected Sir,"}
-                  </p>
-
-                  {receipts.receipt_donation_type === "One Teacher School" && (
-                    <div className="mt-2 text-justify">
-                      <p className="font-serif text-[18px] flex justify-center my-6">
-                        Sub: Adoption of One Teacher School
-                      </p>
-                      <p className="font-serif text-[18px] text-justify leading-[1.2rem]">
-                        We acknowledge with thanks the receipt of Rs.
-                        {receipts.receipt_total_amount}/- Rupees {amountInWords} Only via{" "}
-                        {receipts.receipt_tran_pay_mode == "Cash" ? (
-                          <>Cash for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-                        ) : (
-                          <>{receipts.receipt_tran_pay_details} being for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-                        )}
-                      </p>
-
-                      <p className="my-4 font-serif text-[18px] text-justify leading-[1.2rem]">
-                        We convey our sincere thanks and gratitude for your kind support towards the need of our tribals and also the efforts being made by our Society for achieving comprehensive development of our tribals brethren particularly the literacy of their children and health & economic welfare.
-                      </p>
-                      <p className="font-serif text-[18px] text-justify leading-[1.2rem]">
-                        We would like to state that our efforts are not only for mitigating the hardship and problems of our tribals but we are also trying to inculcate national character among them.
-                      </p>
-                      <p className="my-4 font-serif text-[18px] text-justify leading-[1.2rem]">
-                        We are pleased to enclose herewith our money receipt no. {receipts.receipt_ref_no} dated{" "}
-                        {moment(receipts.receipt_date).format("DD-MM-YYYY")} for the said amount together with a certificate U/sec. 80(G) of the I.T.Act. 1961.
-                      </p>
-                    </div>
-                  )}
-
-                  {receipts.receipt_donation_type === "General" && (
-                    <div className="mt-2">
-                      <p className="font-serif text-[18px] text-justify my-5 leading-[1.2rem]">
-                        We thankfully acknowledge the receipt of Rs.
-                        {receipts.receipt_total_amount}/- via your{" "}
-                        {receipts.receipt_tran_pay_mode === "Cash" ? "Cash" : receipts.receipt_tran_pay_details}{" "}
-                        being Donation for Education.
-                      </p>
-
-                      <p className="font-serif text-[18px] text-justify leading-[1.2rem]">
-                        We are pleased to enclose herewith our money receipt no. {receipts.receipt_ref_no} dated{" "}
-                        {moment(receipts.receipt_date).format("DD-MM-YYYY")} for the said amount.
-                      </p>
-                    </div>
-                  )}
-
-                  {receipts.receipt_donation_type === "Membership" && (
-                    <div>
-                      <p className="font-serif text-[18px] text-justify my-5 leading-[1.2rem]">
-                        We acknowledge with thanks receipt of your membership subscription upto {receipts?.m_ship_vailidity}. Our receipt for the same is enclosed herewith.
-                      </p>
-                    </div>
-                  )}
-
-                  {receipts.receipt_donation_type !== "Membership" && (
-                    <div>
-                      <p className="my-3 font-serif text-[18px]">Thanking you once again</p>
-                      <p className="font-serif text-[18px]">Yours faithfully, </p>
-                      <p className="my-3 font-serif text-[18px]">For Friends of Tribals Society</p>
-                      <p className="font-serif text-[18px] mt-10">
-                        {authsign.map((sig, key) => (
-                          <span key={key}>{sig.indicomp_full_name}</span>
-                        ))}
-                      </p>
-                      <p className="font-serif text-[18px]">{chapter.auth_sign} </p>
-                      <p className="my-2 font-serif text-[18px]">Encl: As stated above</p>
-                    </div>
-                  )}
-
-                  {receipts.receipt_donation_type === "Membership" && (
-                    <div>
-                      <p className="font-serif text-[18px] text-justify my-5">With Best regards </p>
-                      <p className="font-serif text-[18px] text-justify my-5">Yours sincerely </p>
-                      <p className="font-serif text-[18px] text-justify my-5">
-                        {authsign.map((sig, key) => (
-                          <span key={key}>{sig.indicomp_full_name}</span>
-                        ))}
-                      </p>
-                      <p className="font-serif text-[18px] text-justify my-5">{chapter.auth_sign} </p>
-                      <p className="font-serif text-[18px] text-justify my-5">Encl: As stated above</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Email Dialog */}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Donor Email</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={onSubmit} autoComplete="off">
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="indicomp_email">Email *</Label>
-                  <Input
-                    type="email"
-                    id="indicomp_email"
-                    name="indicomp_email"
-                    value={donor1.indicomp_email}
-                    onChange={onInputChange}
-                    required
-                    placeholder="Enter donor email"
-                  />
-                </div>
-                <div className="flex justify-center">
-                  <Button type="submit" disabled={isButtonDisabled}>
-                    {isButtonDisabled ? "Submitting..." : "Submit"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </TooltipProvider>
   );
 };
 
-export default ReceiptOne;
-
-download-receipt
+export default AllReceiptDownload;

@@ -38,12 +38,12 @@ export function Breadcrumbs({ onBack }) {
                     </Link>
                   ) : (
                     <span className="font-medium text-foreground capitalize">
-                      {name.replace(/-/g, " ")}
+                      {/* {name.replace(/-/g, " ")} */}
                     </span>
                   )}
-                  {!isLast && (
+                  {/* {!isLast && (
                     <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" />
-                  )}
+                  )} */}
                 </div>
               );
             })}

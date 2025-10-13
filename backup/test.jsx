@@ -1,16 +1,7 @@
-
-import React, { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import Moment from 'moment';
-import * as XLSX from 'xlsx';
-import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -18,13 +9,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MemoizedSelect } from '@/components/common/memoized-select';
+import { useQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -32,284 +27,418 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { DOWNLOAD_RECEIPT, DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE } from '@/api';
-import Cookies from 'js-cookie';
+} from "@tanstack/react-table";
+import axios from "axios";
+import { ArrowLeft, ArrowUpDown, Search, Loader2, User, Merge, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import Cookies from "js-cookie";
+import { fetchDuplicateEditById, fetchDuplicateEditByIdUpdate } from "@/api";
+import BASE_URL from "@/config/base-url";
 
-const ReceiptDownload = () => {
-  const token = Cookies.get('token');
-  const [formData, setFormData] = useState({
-    receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-    receipt_to_date: Moment().format('YYYY-MM-DD'),
-    receipt_donation_type: '',
-    receipt_exemption_type: '',
-    indicomp_source: ''
+const DuplicateDonorEdit = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  const [donor, setDonor] = useState({
+    indicomp_fts_id: "",
+    indicomp_full_name: "",
+    indicomp_type: "",
+    indicomp_com_contact_name: "",
+    indicomp_spouse_name: "",
+    indicomp_mobile_phone: "",
+    indicomp_email: "",
+    indicomp_donor_type: "",
+    indicomp_related_id: "",
+  });
+  
+  const [selectedDonorId, setSelectedDonorId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
+
+  // Fetch duplicate donor details
+  const { data: donorData, isLoading: donorLoading, isError } = useQuery({
+    queryKey: ["duplicateEdit", id],
+    queryFn: async () => {
+      const data = await fetchDuplicateEditById(id);
+      return data.data;
+    },
   });
 
-  const [jsonData, setJsonData] = useState(null);
+  // Fetch donors for select
+  const { data: donors = [] } = useQuery({
+    queryKey: ["donorsSelect"],
+    queryFn: async () => {
+      const token = Cookies.get("token");
+      const response = await axios.get(
+        `${BASE_URL}/api/donor`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data?.individualCompanies || [];
+    },
+  });
+
+  // useEffect to populate state
+  useEffect(() => {
+    if (donorData && !isInitialDataLoaded) {
+      setDonor({
+        indicomp_fts_id: donorData.indicomp_fts_id || "",
+        indicomp_full_name: donorData.indicomp_full_name || "",
+        indicomp_type: donorData.indicomp_type || "",
+        indicomp_com_contact_name: donorData.indicomp_com_contact_name || "",
+        indicomp_spouse_name: donorData.indicomp_spouse_name || "",
+        indicomp_mobile_phone: donorData.indicomp_mobile_phone || "",
+        indicomp_email: donorData.indicomp_email || "",
+        indicomp_donor_type: donorData.indicomp_donor_type || "",
+        indicomp_related_id: donorData.indicomp_related_id || "",
+      });
+      setIsInitialDataLoaded(true);
+    }
+  }, [donorData, isInitialDataLoaded]);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!donor?.indicomp_fts_id || !selectedDonorId) {
+      toast.error("Please select a donor to merge with.");
+      return;
+    }
+
+    const data = {
+      indicomp_fts_id: donor.indicomp_fts_id,
+      new_indicomp_fts_id: selectedDonorId,
+      indicomp_status: "0",
+    };
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetchDuplicateEditByIdUpdate(id, data);
+
+      if (response.data.code === 200) {
+        toast.success(response.data.msg);
+        navigate("/donor/duplicate");
+      } else {
+        toast.error(response.data.msg);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.msg || "Network error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (donorLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-600">Loading donor details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex justify-center items-center min-h-96">
+        <div className="text-center">
+          <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+          <p className="text-sm text-red-600">Failed to load donor details</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-2"
+            variant="outline"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4 max-w-7xl">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/donor/duplicate")}
+          className="flex items-center gap-2 h-8"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Back
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Merge Duplicate Donor</h1>
+          <p className="text-xs text-gray-600 mt-1">
+            Resolve duplicate donor records by merging with existing donor
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row items-center w-full  ">
+        {/* Left Column - Donor Information */}
+        <div className=" flex flex-col md:flex-row">
+          {/* Duplicate Donor Card */}
+       
+          <div className="border-l-2 border-l-orange-500 border-t border-b relative rounded-l-lg bg-white">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-orange-500" />
+                <CardTitle className="text-base">{donor.indicomp_full_name}</CardTitle>
+                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
+                  Duplicate
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-1 text-sm">
+                <CompactInfoRow label="FTS ID" value={donor.indicomp_fts_id} />
+           
+                <CompactInfoRow label="Type" value={donor.indicomp_type} />
+                <CompactInfoRow label="Donor Type" value={donor.indicomp_donor_type} />
+                <CompactInfoRow label="Contact Name" value={donor.indicomp_com_contact_name} />
+                <CompactInfoRow label="Mobile" value={donor.indicomp_mobile_phone} />
+                <CompactInfoRow label="Email" value={donor.indicomp_email} />
+                <CompactInfoRow label="Spouse Name" value={donor.indicomp_spouse_name} />
+              </div>
+            </CardContent>
+
+            <div className="bg-blue-50 border-blue-200 absolute bottom-0 rounded-b-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Important Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
+                <li>Duplicate criteria: Same Mobile or Donor Name</li>
+                <li>Review carefully before merging</li>
+                <li>This action cannot be undone</li>
+              </ul>
+            </CardContent>
+          </div>
+          </div>
+ {/* Donors Table */}
+ <div className="bg-white border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Available Donors</CardTitle>
+              <CardDescription className="text-xs">
+                Browse and select from all available donor records
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3">
+              <CompactDonorSelectTable 
+                onDonorSelect={(id) => setSelectedDonorId(id)}
+                selectedDonorId={selectedDonorId}
+              />
+            </CardContent>
+          </div>
+         
+       
+          
+          <div className="bg-white border-r border-t border-b rounded-r-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Merge className="h-4 w-4 text-blue-600" />
+                Merge Action
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Select a donor to merge this duplicate record with
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <form onSubmit={onSubmit} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700">
+                    Select Donor to Merge With <span className="text-red-500">*</span>
+                  </label>
+                  <MemoizedSelect
+                    value={selectedDonorId}
+                    onChange={(value) => setSelectedDonorId(value)}
+                    options={
+                      donors?.map((item) => ({
+                        value: item.indicomp_fts_id,
+                        label: `${item.indicomp_full_name} (${item.indicomp_fts_id})`,
+                      })) || []
+                    }
+                    placeholder="Select donor to merge with"
+                  />
+                </div>
+
+                {selectedDonorId && (
+                  <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800 font-medium">
+                    Selected: {donors.find(d => d.indicomp_fts_id === selectedDonorId)?.indicomp_full_name}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !selectedDonorId}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 h-8 text-xs"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Merging...
+                      </>
+                    ) : (
+                      <>
+                        <Merge className="h-3 w-3" />
+                        Merge Donors
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/donor/duplicate")}
+                    className="h-8 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </div>
+
+         
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Compact Info Row Component
+const CompactInfoRow = ({ label, value }) => (
+  <div className="flex justify-between items-center py-0.5">
+    <span className="font-medium text-gray-600 text-sm">{label}:</span>
+    <span className="text-gray-900 text-sm">{value || "N/A"}</span>
+  </div>
+);
+
+// Compact Donor Select Table Component
+const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId }) => {
+  const {
+    data: donors = [],
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["donorsList"],
+    queryFn: async () => {
+      const token = Cookies.get("token");
+      const response = await axios.get(
+        `${BASE_URL}/api/donor`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data?.individualCompanies || [];
+    },
+    keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
 
-  const exemptionTypes = [
-    { value: '80G', label: '80G' },
-    { value: 'Non 80G', label: 'Non 80G' },
-    { value: 'FCRA', label: 'FCRA' },
-    { value: 'CSR', label: 'CSR' }
-  ];
-
-  const donationTypes = [
-    { value: 'One Teacher School', label: 'EV' },
-    { value: 'General', label: 'General' },
-    { value: 'Membership', label: 'Membership' }
-  ];
-
-  const { data: datasource = [], isLoading } = useQuery({
-    queryKey: ['receipt-download-datasource'],
-    queryFn: async () => {
-      const response = await axios.get(DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      return response.data.data || [];
-    },
-    retry: 2,
-  });
-
-  const downloadMutation = useMutation({
-    mutationFn: async (downloadData) => {
-      const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        responseType: 'blob'
-      });
-      return response.data;
-    },
-    onSuccess: (blob) => {
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'receipt_list.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success('Receipt downloaded successfully!');
-      setFormData({
-        receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-        receipt_to_date: Moment().format('YYYY-MM-DD'),
-        receipt_donation_type: '',
-        receipt_exemption_type: '',
-        indicomp_source: ''
-      });
-    },
-    onError: (error) => {
-      toast.error('Failed to download receipt');
-      console.error('Download error:', error);
-    }
-  });
-
-const viewMutation = useMutation({
-  mutationFn: async (downloadData) => {
-    const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      responseType: 'blob'
-    });
-    return response.data;
-  },
- onSuccess: async (blob) => {
-  try {
-    const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
-    const text = await innerBlob.text();
-
-    if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
-      if (typeof XLSX === 'undefined') {
-        toast.error('Excel parser not loaded. Please reload the page.');
-        return;
-      }
-
-      const arrayBuffer = await innerBlob.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(sheet);
-
-      setJsonData(json);
-      toast.success(`Loaded ${json.length} receipts from Excel file.`);
-    } else {
-      parseCSVAndSetData(text);
-      toast.success('Loaded receipts from CSV file.');
-    }
-  } catch (error) {
-    console.error('Failed to read Excel/CSV blob:', error);
-    toast.error('Unable to preview receipt file.');
-  }
-}
-,
-  onError: () => {
-    toast.error('Failed to fetch receipt data');
-  }
-});
-
-function parseCSVAndSetData(text) {
-  const rows = text.split('\n').filter(Boolean);
-  if (!rows.length) {
-    toast.error('No receipt data found');
-    return;
-  }
-
-  const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-  const data = rows.slice(1).map(row => {
-    const values = row.split(',');
-    const obj = {};
-    headers.forEach((header, idx) => {
-      const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
-      obj[header] = cleanValue;
-    });
-    return obj;
-  });
-
-  setJsonData(data);
-}
-
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitDownload = (e) => {
-    e.preventDefault();
-    if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
-      return;
-    }
-    downloadMutation.mutate(formData);
-  };
-
-  const handleSubmitView = (e) => {
-    e.preventDefault();
-    if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
-      return;
-    }
-    viewMutation.mutate(formData);
-  };
-
-  // Define columns for the table
- // Replace the columns array with this:
-const columns = [
+  const columns = [
     {
-      id: 'S. No.',
-      header: 'S. No.',
+      id: "S. No.",
+      header: "#",
       cell: ({ row }) => {
         const globalIndex = row.index + 1;
-        return <div className="text-xs font-medium">{globalIndex}</div>;
+        return <div className="text-xs font-medium text-gray-600">{globalIndex}</div>;
       },
-      size: 60,
+      size: 50,
     },
     {
-      accessorKey: 'Receipt No', // Removed quotes
-      id: 'Receipt No',
+      accessorKey: "indicomp_fts_id",
+      id: "FTS ID",
       header: ({ column }) => (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="px-2 h-8 text-xs"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-2 h-7 text-xs font-medium text-gray-700"
         >
-          Receipt No
+          FTS ID
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt No')}</div>,
+      cell: ({ row }) => (
+        <div className="text-xs font-mono font-medium bg-gray-50 px-1 py-0.5 rounded">
+          {row.getValue("FTS ID")}
+        </div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Date', // Removed quotes
-      id: 'Date',
-      header: 'Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Date')}</div>,
-      size: 120,
+      accessorKey: "indicomp_full_name",
+      id: "Donor Name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-2 h-7 text-xs font-medium text-gray-700"
+        >
+          Donor Name
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Donor Name")}</div>,
+      size: 150,
     },
     {
-      accessorKey: 'Exemption Type', // Removed quotes
-      id: 'Exemption Type',
-      header: 'Exemption Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Exemption Type')}</div>,
-      size: 120,
+      accessorKey: "indicomp_mobile_phone",
+      id: "Mobile",
+      header: "Mobile",
+      cell: ({ row }) => <div className="text-xs">{row.getValue("Mobile")}</div>,
+      size: 110,
     },
     {
-      accessorKey: 'Financial Year', // Removed quotes
-      id: 'Financial Year',
-      header: 'Financial Year',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Financial Year')}</div>,
-      size: 120,
+      accessorKey: "indicomp_type",
+      id: "Type",
+      header: "Type",
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs">
+          {row.getValue("Type")}
+        </Badge>
+      ),
+      size: 80,
     },
     {
-      accessorKey: 'Amount', // Removed quotes
-      id: 'Amount',
-      header: 'Amount',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Amount')}</div>,
-      size: 100,
-    },
-    {
-      accessorKey: 'Realization Date', // Removed quotes
-      id: 'Realization Date',
-      header: 'Realization Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Realization Date')}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: 'Donation Type', // Removed quotes
-      id: 'Donation Type',
-      header: 'Donation Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donation Type')}</div>,
-      size: 140,
-    },
-    {
-      accessorKey: 'Pay Mode', // Removed quotes
-      id: 'Pay Mode',
-      header: 'Pay Mode',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pay Mode')}</div>,
-      size: 100,
-    },
-    {
-      accessorKey: 'Pay Details', // Removed quotes
-      id: 'Pay Details',
-      header: 'Pay Details',
-      cell: ({ row }) => {
-        const payDetails = row.getValue('Pay Details') || '';
-        const shortPayDetails = payDetails.length > 50 ? payDetails.slice(0, 50) + '…' : payDetails;
-        return <div className="text-xs font-medium">{shortPayDetails}</div>;
-      },
-      size: 200,
-    },
-    {
-      accessorKey: 'Remarks', // Removed quotes
-      id: 'Remarks',
-      header: 'Remarks',
-      cell: ({ row }) => {
-        const remarks = row.getValue('Remarks') || '';
-        const shortRemarks = remarks.length > 50 ? remarks.slice(0, 50) + '…' : remarks;
-        return <div className="text-xs font-medium">{shortRemarks}</div>;
-      },
-      size: 200,
-    },
-    {
-      accessorKey: 'Data Source', // Removed quotes
-      id: 'Data Source',
-      header: 'Data Source',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Data Source')}</div>,
-      size: 120,
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => (
+        <Button
+          variant={selectedDonorId === row.original.indicomp_fts_id ? "default" : "outline"}
+          size="sm"
+          onClick={() => onDonorSelect(row.original.indicomp_fts_id)}
+          className="h-6 text-xs px-2"
+        >
+          {selectedDonorId === row.original.indicomp_fts_id ? "Selected" : "Select"}
+        </Button>
+      ),
+      size: 80,
     },
   ];
 
   const table = useReactTable({
-    data: jsonData || [],
+    data: donors,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -318,249 +447,149 @@ const columns = [
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
     state: {
       sorting,
       columnFilters,
       globalFilter,
-      columnVisibility,
     },
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 6,
       },
     },
   });
 
   const TableShimmer = () => {
-    return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11">
+    return Array.from({ length: 6 }).map((_, index) => (
+      <TableRow key={index} className="animate-pulse h-10">
         {table.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div>
+            <div className="h-3 bg-gray-200 rounded w-full"></div>
           </TableCell>
         ))}
       </TableRow>
     ));
   };
 
-  if (isLoading) {
+  if (isError) {
     return (
-      <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
-        <div className="p-4 border-b bg-muted/50">
-          <Skeleton className="h-6 w-48" />
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i}>
-                <Skeleton className="h-4 w-20 mb-1" />
-                <Skeleton className="h-9 w-full" />
-              </div>
-            ))}
+      <div className="flex items-center justify-center h-24">
+        <div className="text-center">
+          <div className="text-red-500 font-medium mb-1 text-xs">
+            Error Fetching Donors
           </div>
-          <Skeleton className="h-9 w-32 mt-4" />
+          <Button onClick={() => refetch()} variant="outline" size="sm" className="h-6 text-xs">
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-full mx-auto border rounded-md shadow-sm">
-      <div className="p-4 border-b bg-muted/50">
-        <div className="flex items-center gap-2 text-lg font-semibold">
-          <Download className="w-5 h-5" />
-          Download Receipts
+    <div className="space-y-3">
+      {/* Search */}
+      <div className="flex justify-between items-center">
+        <div className="relative w-60">
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+          <Input
+            placeholder="Search donors..."
+            value={table.getState().globalFilter || ""}
+            onChange={(event) => table.setGlobalFilter(event.target.value)}
+            className="pl-7 h-7 text-xs bg-white border-gray-300"
+          />
         </div>
-        <div className="text-sm text-muted-foreground mt-0.5">
-          Leave fields blank to get all records
+        <div className="text-xs text-gray-600">
+          {table.getFilteredRowModel().rows.length} donors
         </div>
       </div>
 
-      <div className="p-4">
-        <form className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
-              <Input id="receipt_from_date" name="receipt_from_date" type="date" value={formData.receipt_from_date} onChange={handleInputChange} required className="h-9" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="receipt_to_date" className="text-sm">To Date *</Label>
-              <Input id="receipt_to_date" name="receipt_to_date" type="date" value={formData.receipt_to_date} onChange={handleInputChange} required className="h-9" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="receipt_donation_type" className="text-sm">Purpose</Label>
-              <Select value={formData.receipt_donation_type} onValueChange={(value) => handleSelectChange('receipt_donation_type', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Purpose" />
-                </SelectTrigger>
-                <SelectContent>
-                  {donationTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="receipt_exemption_type" className="text-sm">Category</Label>
-              <Select value={formData.receipt_exemption_type} onValueChange={(value) => handleSelectChange('receipt_exemption_type', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {exemptionTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="indicomp_source" className="text-sm">Source</Label>
-              <Select value={formData.indicomp_source} onValueChange={(value) => handleSelectChange('indicomp_source', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  {datasource.map(item => <SelectItem key={item.data_source_type} value={item.data_source_type}>{item.data_source_type}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button type="button" onClick={handleSubmitDownload} disabled={downloadMutation.isPending} className="flex items-center gap-2 h-9">
-              <Download className="w-4 h-4" />
-              {downloadMutation.isPending ? 'Downloading...' : 'Download'}
-            </Button>
-
-            <Button type="button" onClick={handleSubmitView} disabled={viewMutation.isPending} className="flex items-center gap-2 h-9">
-              <Eye className="w-4 h-4" />
-              {viewMutation.isPending ? 'Loading...' : 'View'}
-            </Button>
-          </div>
-        </form>
-
-        {/* Table display */}
-        {jsonData && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between py-1 mb-3">
-              <div className="relative w-72">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search receipts..."
-                  value={table.getState().globalFilter || ''}
-                  onChange={(event) => table.setGlobalFilter(event.target.value)}
-                  className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-                />
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9">
-                    Columns <ChevronDown className="ml-2 h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="text-xs capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-none border min-h-[20rem] flex flex-col">
-              <Table className="flex-1">
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead 
-                          key={header.id} 
-                          className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
-                          style={{ width: header.column.columnDef.size }}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
+      {/* Table */}
+      <div className="rounded-md border h-[20rem]">
+        <Table>
+          <TableHeader className="bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead 
+                    key={header.id} 
+                    className="h-8 px-2 text-xs font-semibold text-gray-700"
+                    style={{ width: header.column.columnDef.size }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          
+          <TableBody>
+            {isFetching && !table.getRowModel().rows.length ? (
+              <TableShimmer />
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className={`h-10 hover:bg-gray-50 ${
+                    selectedDonorId === row.original.indicomp_fts_id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="px-2 py-1">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
-                </TableHeader>
-                
-                <TableBody>
-                  {viewMutation.isPending ? (
-                    <TableShimmer />
-                  ) : table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                        className="h-2 hover:bg-gray-50"
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className="px-3 py-1">
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow className="h-12">
-                      <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                        No receipts found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-20 text-center">
+                  <div className="text-gray-500 text-xs">
+                    No donors found
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-end space-x-2 py-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                Total Receipts: {table.getFilteredRowModel().rows.length}
-              </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Compact Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-gray-600">
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+        </div>
+        <div className="flex gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="h-7 text-xs px-2"
+          >
+            Prev
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="h-7 text-xs px-2"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default ReceiptDownload;
+export default DuplicateDonorEdit;

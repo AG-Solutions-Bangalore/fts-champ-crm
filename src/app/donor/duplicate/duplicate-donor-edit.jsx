@@ -60,7 +60,7 @@ const DuplicateDonorEdit = () => {
     queryKey: ["duplicateEdit", id],
     queryFn: async () => {
       const data = await fetchDuplicateEditById(id);
-      return data.individualCompanies;
+      return data.data;
     },
   });
 
@@ -70,14 +70,14 @@ const DuplicateDonorEdit = () => {
     queryFn: async () => {
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/donor`,
+        `${BASE_URL}/api/donor-active`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      return response.data?.individualCompanies || [];
+      return response.data?.data || [];
     },
   });
 
@@ -337,14 +337,14 @@ const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId }) => {
     queryFn: async () => {
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/fetch-donors`,
+        `${BASE_URL}/api/donor-active`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      return response.data?.individualCompanies || [];
+      return response.data?.data || [];
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -505,7 +505,7 @@ const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId }) => {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border h-[20rem]">
         <Table>
           <TableHeader className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (

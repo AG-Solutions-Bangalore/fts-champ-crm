@@ -64,20 +64,20 @@ export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `/api/update-promoter`;
 
 export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
 export const DONOR_COMPANY_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
-export const DONOR_INDIVISUAL_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
+export const DONOR_INDIVISUAL_UPDATE_SUMBIT = `${BASE_URL}/api/donor/`;
 export const DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor/`;
 export const DONOR_COMPANY_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor/`;
 export const DONOR_COMPANY_EDIT_FETCH = `${BASE_URL}/api/fetch-donor-for-edit`;
-export const DONOR_INDIVISUAL_EDIT_FETCH = `${BASE_URL}/api/fetch-donor-for-edit`;
+export const DONOR_INDIVISUAL_EDIT_FETCH = `${BASE_URL}/api/donor`;
 // pending
 
 //MEMBERS
 export const MEMBERS_LIST = `${BASE_URL}/api/fetch-members`;
 export const SEND_EMAIL = `${BASE_URL}/api/send-membership-renew?id=`;
 
-export const MEMBER_DASHBOARD = `${BASE_URL}/api/fetch-members-new`;
+export const MEMBER_DASHBOARD = `${BASE_URL}/api/member`;
 
-export const SEND_BULK_EMAIL = `${BASE_URL}/api/create-membership-email`;
+export const SEND_BULK_EMAIL = `${BASE_URL}/api/member`;
 
 //VIEWVER
 export const VIEWVER_LIST = `${BASE_URL}/api/superadmin-get-all-viewers`;
@@ -91,7 +91,7 @@ export const VIEWVER_EDIT_UPDATE = `${BASE_URL}/api/update-viewer`;
 //DUPLICATE
 export const DUPLICATE_LIST = `${BASE_URL}/api/donor-duplicate`;
 export const DUPLICATE_DELETE = `${BASE_URL}/api/delete-donor-duplicate/`;
-export const DUPLICATE_EDIT_BY_ID = `${BASE_URL}/api/fetch-donors-duplicate-by-id`;
+export const DUPLICATE_EDIT_BY_ID = `${BASE_URL}/api/donor`;
 export const DUPLICATE_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-donors-duplicate`;
 
 /*--------------------------Donor-end----------------------------------- */
