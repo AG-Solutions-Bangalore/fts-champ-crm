@@ -36,7 +36,6 @@ function School() {
     "school-summary-dropdown",
     SUMMARY_SOURCE_DROPDOWN
   );
-
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
     setDonorDownload({ ...downloadDonor, [field]: value });
@@ -168,7 +167,7 @@ function School() {
                   value={downloadDonor?.indicomp_full_name}
                   onChange={(e) => handleInputChange(e, "indicomp_full_name")}
                   options={
-                    SourceData?.schoolallot?.map((item) => ({
+                    SourceData?.data?.map((item) => ({
                       label: item.indicomp_full_name,
                       value: item.id,
                     })) || []

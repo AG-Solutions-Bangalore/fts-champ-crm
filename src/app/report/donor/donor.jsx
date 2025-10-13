@@ -208,7 +208,7 @@ const Donor = () => {
                   value={donorSummary?.indicomp_full_name}
                   onChange={(e) => handleInputChange(e, "indicomp_full_name")}
                   options={
-                    donorsData?.individualCompanies?.map((item) => ({
+                    donorsData?.data?.map((item) => ({
                       label: item.indicomp_full_name,
                       value: item.indicomp_fts_id,
                     })) || []

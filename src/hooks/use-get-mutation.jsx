@@ -57,7 +57,7 @@ export const useGetMutation = (key, url, params = {}, options = {}) => {
     queryFn: async () => {
       const finalUrl = buildUrl(url, params);
       const response = await trigger({ url: finalUrl });
-      return response.data || [];
+      return response || [];
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -71,7 +71,7 @@ export const useGetMutation = (key, url, params = {}, options = {}) => {
       queryKey: [key, { ...params, ...extraParams }],
       queryFn: async () => {
         const response = await trigger({ url: finalUrl });
-        return response.data || [];
+        return response || [];
       },
       staleTime: 5 * 60 * 1000,
     });

@@ -82,15 +82,16 @@ const SchoolAlloted = () => {
     isError,
     isFetching,
     prefetchPage,
+    refetch,
   } = useGetMutation("schoolallotmentlist", SCHOOL_ALLOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
   useEffect(() => {
-    if (!schoolData?.last_page) return;
+    if (!schoolData?.data?.last_page) return;
 
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.last_page;
+    const totalPages = schoolData?.data?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -100,10 +101,9 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.last_page,
+    schoolData?.data?.last_page,
     prefetchPage,
   ]);
-  console.log(schoolData, "schoolData");
   const columns = [
     {
       id: "serialNo",
@@ -264,7 +264,7 @@ const SchoolAlloted = () => {
     },
   ];
   const table = useReactTable({
-    data: schoolData?.data || [],
+    data: schoolData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -275,9 +275,7 @@ const SchoolAlloted = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.school?.last_page || -1,
-    manualPagination: true,
-    pageCount: schoolData?.last_page || -1,
+    pageCount: schoolData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -529,9 +527,8 @@ const SchoolAlloted = () => {
 
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.from || 0} to{" "}
-          {schoolData?.to || 0} of {schoolData?.total || 0}{" "}
-          schools
+          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
+          of {schoolData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

@@ -22,8 +22,8 @@ const DonorGroupView = ({
     isError,
     refetch,
   } = useGetMutation(
-    "donor-summary-group",
-    `${DONOR_SUMMARY_GROUP_VIEW}/${indicompFullName}/${receiptFromDate}/${receiptToDate}`,
+    `donor-summary-group${indicompFullName}`,
+    `${DONOR_SUMMARY_GROUP_VIEW}/${indicompFullName}?${receiptFromDate}&${receiptToDate}`,
     {},
     {
       enabled: false,
@@ -35,11 +35,13 @@ const DonorGroupView = ({
     }
   }, [indicompFullName, receiptFromDate, receiptToDate]);
 
-  const donorsummary = data?.receipt || [];
-  const individual = data?.individual_Company || [];
-  const receiptsummary = data?.receipt_total || [];
-  const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || [];
-  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || [];
+  const donorsummary = data?.data?.receipt || [];
+  console.log(donorsummary, "donorsummary");
+  const individual = data?.data?.individual_Company || [];
+  const receiptsummary = data?.data?.receipt_total || [];
+  const receiptsummaryfooterOTS = data?.data?.receipt_grand_total_ots || [];
+  const receiptsummaryfootertotal =
+    data?.data?.receipt_grand_total_amount || [];
 
   return (
     <>
@@ -57,7 +59,6 @@ const DonorGroupView = ({
                   <ReportHeader title="DONOR GROUP SUMMARY" />
                   {individual.map((individ, key) => (
                     <div className="flex  justify-between mb-6" key={key}>
-                      {/* Left Section */}
                       <div className="mb-4 md:mb-0">
                         <p className="font-bold mb-1">
                           Full Name:{" "}
@@ -140,107 +141,111 @@ const DonorGroupView = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {donorsummary.map((dataSumm) => (
-                          <tr key={dataSumm.id}>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {Moment(dataSumm.receipt_date).format(
-                                "DD-MM-YYYY"
-                              )}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.receipt_no}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.indicomp_full_name}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.indicomp_promoter}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.receipt_financial_year}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.receipt_total_amount}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_exemption_type}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_donation_type}{" "}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_no_of_ots}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_tran_pay_mode}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_tran_pay_details}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_realization_date != null && (
-                                <>
-                                  {Moment(
-                                    dataSumm.receipt_realization_date
-                                  ).format("DD-MM-YYYY")}
-                                </>
-                              )}
-                              {dataSumm.receipt_realization_date == null && (
-                                <>{dataSumm.receipt_realization_date}</>
-                              )}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_reason}
-                            </td>
-                            <td className="border border-black text-center text-xs">
-                              {dataSumm.receipt_remarks}
+                        {donorsummary && donorsummary.length > 0 ? (
+                          donorsummary.map((dataSumm) => (
+                            <tr key={dataSumm.id}>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {Moment(dataSumm.receipt_date).format(
+                                  "DD-MM-YYYY"
+                                )}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {dataSumm.receipt_no}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {dataSumm.indicomp_full_name}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {dataSumm.indicomp_promoter}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {dataSumm.receipt_financial_year}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-xs">
+                                {dataSumm.receipt_total_amount}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_exemption_type}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_donation_type}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_no_of_ots}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_tran_pay_mode}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_tran_pay_details}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_realization_date != null
+                                  ? Moment(
+                                      dataSumm.receipt_realization_date
+                                    ).format("DD-MM-YYYY")
+                                  : "-"}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_reason}
+                              </td>
+                              <td className="border border-black text-center text-xs">
+                                {dataSumm.receipt_remarks}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={14} className="text-center py-4">
+                              No data available
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
-                      <tfoot>
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="border border-black text-center font-bold text-sm p-2"
-                          >
-                            Total
-                          </td>
-                          {receiptsummaryfootertotal.map((footv, key) => (
-                            <td className="border border-black text-center text-sm p-2 font-bold">
-                              {footv.total_grand_amount}
+                      {donorsummary.length > 0 && (
+                        <tfoot>
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="border border-black text-center font-bold text-sm p-2"
+                            >
+                              Total
                             </td>
-                          ))}
+                            {receiptsummaryfootertotal.map((footv, key) => (
+                              <td className="border border-black text-center text-sm p-2 font-bold">
+                                {footv.total_grand_amount}
+                              </td>
+                            ))}
 
-                          <td
-                            className="border border-black text-right px-4 text-sm p-2 md:text-base font-bold"
-                            colSpan={2}
-                          ></td>
+                            <td
+                              className="border border-black text-right px-4 text-sm p-2 md:text-base font-bold"
+                              colSpan={2}
+                            ></td>
 
-                          {receiptsummaryfooterOTS.map((footv, key) => (
-                            <td className="border border-black text-center text-xs font-bold">
-                              {footv.total_no_of_ots}
-                            </td>
-                          ))}
+                            {receiptsummaryfooterOTS.map((footv, key) => (
+                              <td className="border border-black text-center text-xs font-bold">
+                                {footv.total_no_of_ots}
+                              </td>
+                            ))}
 
-                          <td
-                            className="border border-black text-right px-4 text-xs font-bold"
-                            colSpan={5}
-                          ></td>
-                        </tr>
-                      </tfoot>
+                            <td
+                              className="border border-black text-right px-4 text-xs font-bold"
+                              colSpan={5}
+                            ></td>
+                          </tr>
+                        </tfoot>
+                      )}
                     </table>
                   </div>
-                  {/* //TABLE BELOW */}
                   <div className="flex justify-center items-center  ">
                     <b className="text-xl text-[#464D69]">TOTAL</b>
                   </div>
 
-                  <div ref={componentRef} className="my-5 ">
+                  <div ref={componentRef} className="my-5">
                     <table className="min-w-full border-collapse border border-black">
                       <thead>
                         <tr className="bg-gray-200">
-                          {["Year", "Total  Amount"].map((header) => (
+                          {["Year", "Total Amount"].map((header) => (
                             <th
                               key={header}
                               className="border border-black px-4 py-2 text-center text-sm md:text-base"
@@ -251,16 +256,27 @@ const DonorGroupView = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {receiptsummary.map((dataSumm) => (
-                          <tr key={dataSumm.id}>
-                            <td className="border border-black px-4 py-2 text-sm md:text-base text-center">
-                              {dataSumm.receipt_financial_year}
-                            </td>
-                            <td className="border border-black px-4 py-2 text-sm md:text-base text-center">
-                              {dataSumm.receipt_total_amount}
+                        {receiptsummary && receiptsummary.length > 0 ? (
+                          receiptsummary.map((dataSumm) => (
+                            <tr key={dataSumm.id}>
+                              <td className="border border-black px-4 py-2 text-sm md:text-base text-center">
+                                {dataSumm.receipt_financial_year}
+                              </td>
+                              <td className="border border-black px-4 py-2 text-sm md:text-base text-center">
+                                {dataSumm.receipt_total_amount}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={2}
+                              className="border border-black text-center py-4 text-sm md:text-base"
+                            >
+                              No data available
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>

@@ -17,11 +17,11 @@ const DonationView = ({
     refetch,
   } = useGetMutation(
     "donation-summary-view",
-    `${DONATION_SUMMARY_VIEW}/${receiptFromDate}/${receiptToDate}`,
+    `${DONATION_SUMMARY_VIEW}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
-
+  console.log(data, "data");
   useEffect(() => {
     if (receiptFromDate && receiptToDate) {
       refetch();
@@ -29,7 +29,7 @@ const DonationView = ({
   }, [receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.receipt || [];
-
+  console.log(donorsummary, "donorsummary");
   // --- Pivot Table logic here ---
   const groupedData = useMemo(() => {
     const result = {};
@@ -116,8 +116,6 @@ const DonationView = ({
               <Card className="p-6 overflow-x-auto">
                 <div ref={componentRef} className="my-5">
                   <ReportHeader title="DONATION SUMMARY" />
-
-                  {/* Pivot Table Inline */}
                   <table
                     border="1"
                     style={{
@@ -210,175 +208,193 @@ const DonationView = ({
                     </thead>
 
                     <tbody className="text-xs">
-                      {Object.keys(groupedData).map((year) => (
-                        <tr key={year}>
+                      {Object.keys(groupedData).length === 0 ? (
+                        <tr>
                           <td
+                            colSpan={donationTypes.length * 3 + 1 + 3} // columns for all donation types + financial year + grand total
                             style={{
-                              border: "1px solid black",
+                              textAlign: "center",
                               padding: "8px",
+                              border: "1px solid black",
                             }}
                           >
-                            {year}
-                          </td>
-                          {donationTypes.map((type, index) => (
-                            <React.Fragment key={index}>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {groupedData[year][type]?.donationCount || 0}
-                              </td>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {groupedData[year][type]?.otsCount || 0}
-                              </td>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                {groupedData[year][type]?.totalAmount || 0}
-                              </td>
-                            </React.Fragment>
-                          ))}
-                          <td
-                            style={{
-                              border: "1px solid black",
-                              padding: "8px",
-                              textAlign: "right",
-                            }}
-                          >
-                            {grandTotalDonations}
-                          </td>
-                          <td
-                            style={{
-                              border: "1px solid black",
-                              padding: "8px",
-                              textAlign: "right",
-                            }}
-                          >
-                            {grandTotalOTS}
-                          </td>
-                          <td
-                            style={{
-                              border: "1px solid black",
-                              padding: "8px",
-                              textAlign: "right",
-                            }}
-                          >
-                            {grandTotalAmount}
+                            No data available
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        Object.keys(groupedData).map((year) => (
+                          <tr key={year}>
+                            <td
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                              }}
+                            >
+                              {year}
+                            </td>
+                            {donationTypes.map((type, index) => (
+                              <React.Fragment key={index}>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  {groupedData[year][type]?.donationCount || 0}
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  {groupedData[year][type]?.otsCount || 0}
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  {groupedData[year][type]?.totalAmount || 0}
+                                </td>
+                              </React.Fragment>
+                            ))}
+                            <td
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                                textAlign: "right",
+                              }}
+                            >
+                              {grandTotalDonations}
+                            </td>
+                            <td
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                                textAlign: "right",
+                              }}
+                            >
+                              {grandTotalOTS}
+                            </td>
+                            <td
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                                textAlign: "right",
+                              }}
+                            >
+                              {grandTotalAmount}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
 
-                    <tfoot className="text-xs">
-                      <tr>
-                        <td
-                          style={{
-                            border: "1px solid black",
-                            padding: "8px",
-                            textAlign: "left",
-                          }}
-                        >
-                          <strong>Grand Total:</strong>
-                        </td>
-                        {donationTypes.map((type, index) => {
-                          const totalDonationsForType = Object.keys(
-                            groupedData
-                          ).reduce(
-                            (total, year) =>
-                              total +
-                              (groupedData[year][type]?.donationCount || 0),
-                            0
-                          );
-                          const totalOTSForType = Object.keys(
-                            groupedData
-                          ).reduce(
-                            (total, year) =>
-                              total + (groupedData[year][type]?.otsCount || 0),
-                            0
-                          );
-                          const totalAmountForType = Object.keys(
-                            groupedData
-                          ).reduce(
-                            (total, year) =>
-                              total +
-                              (groupedData[year][type]?.totalAmount || 0),
-                            0
-                          );
+                    {Object.keys(groupedData).length > 0 && (
+                      <tfoot className="text-xs">
+                        <tr>
+                          <td
+                            style={{
+                              border: "1px solid black",
+                              padding: "8px",
+                              textAlign: "left",
+                            }}
+                          >
+                            <strong>Grand Total:</strong>
+                          </td>
+                          {donationTypes.map((type, index) => {
+                            const totalDonationsForType = Object.keys(
+                              groupedData
+                            ).reduce(
+                              (total, year) =>
+                                total +
+                                (groupedData[year][type]?.donationCount || 0),
+                              0
+                            );
+                            const totalOTSForType = Object.keys(
+                              groupedData
+                            ).reduce(
+                              (total, year) =>
+                                total +
+                                (groupedData[year][type]?.otsCount || 0),
+                              0
+                            );
+                            const totalAmountForType = Object.keys(
+                              groupedData
+                            ).reduce(
+                              (total, year) =>
+                                total +
+                                (groupedData[year][type]?.totalAmount || 0),
+                              0
+                            );
 
-                          return (
-                            <React.Fragment key={index}>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                <strong>{totalDonationsForType}</strong>
-                              </td>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                <strong>{totalOTSForType}</strong>
-                              </td>
-                              <td
-                                style={{
-                                  border: "1px solid black",
-                                  padding: "8px",
-                                  textAlign: "right",
-                                }}
-                              >
-                                <strong>{totalAmountForType}</strong>
-                              </td>
-                            </React.Fragment>
-                          );
-                        })}
-                        <td
-                          style={{
-                            border: "1px solid black",
-                            padding: "8px",
-                            textAlign: "right",
-                          }}
-                        >
-                          <strong>{grandTotalDonations}</strong>
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid black",
-                            padding: "8px",
-                            textAlign: "right",
-                          }}
-                        >
-                          <strong>{grandTotalOTS}</strong>
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid black",
-                            padding: "8px",
-                            textAlign: "right",
-                          }}
-                        >
-                          <strong>{grandTotalAmount}</strong>
-                        </td>
-                      </tr>
-                    </tfoot>
+                            return (
+                              <React.Fragment key={index}>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  <strong>{totalDonationsForType}</strong>
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  <strong>{totalOTSForType}</strong>
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  <strong>{totalAmountForType}</strong>
+                                </td>
+                              </React.Fragment>
+                            );
+                          })}
+                          <td
+                            style={{
+                              border: "1px solid black",
+                              padding: "8px",
+                              textAlign: "right",
+                            }}
+                          >
+                            <strong>{grandTotalDonations}</strong>
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid black",
+                              padding: "8px",
+                              textAlign: "right",
+                            }}
+                          >
+                            <strong>{grandTotalOTS}</strong>
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid black",
+                              padding: "8px",
+                              textAlign: "right",
+                            }}
+                          >
+                            <strong>{grandTotalAmount}</strong>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               </Card>

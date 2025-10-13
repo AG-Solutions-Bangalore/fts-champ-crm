@@ -34,6 +34,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Cookies from "js-cookie";
 import {
   ChevronDown,
   ChevronLeft,
@@ -46,8 +47,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { TableShimmer } from "../loadingtable/TableShimmer";
-import { useCurrentYear } from "@/hooks/use-current-year";
-import Cookies from "js-cookie";
 
 const AllotedList = () => {
   const queryClient = useQueryClient();
@@ -93,7 +92,7 @@ const AllotedList = () => {
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.last_page || 1;
+    const totalPages = schoolData?.data?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -104,7 +103,7 @@ const AllotedList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.last_page,
+    schoolData?.data?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
@@ -143,7 +142,7 @@ const AllotedList = () => {
       id: "serialNo",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = row.index + 1; 
+        const globalIndex = row.index + 1;
         return (
           <div className="text-xs font-medium text-center">{globalIndex}</div>
         );
@@ -248,7 +247,7 @@ const AllotedList = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.schoolAllot || [],
+    data: schoolData?.data?.schoolAllot || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -259,7 +258,7 @@ const AllotedList = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.last_page || -1,
+    pageCount: schoolData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -499,8 +498,8 @@ const AllotedList = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.from || 0} to {schoolData?.to || 0}{" "}
-          of {schoolData?.total || 0} schools
+          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
+          of {schoolData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

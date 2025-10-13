@@ -1,8 +1,7 @@
 import {
   DB_DOCUMENT_DOWNLOAD,
-  DB_DOCUMENT_VIEW_GROUP,
-  DB_DOCUMENT_VIEW_NO_PAN,
-  DONATION_SUMMARY_DOWNLOAD,
+  DB_DOCUMENT_DOWNLOAD_GROUP,
+  DB_DOCUMENT_DOWNLOAD_NO_PAN,
 } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,23 +16,15 @@ import {
 import { useApiMutation } from "@/hooks/use-mutation";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import {
-  Download,
-  FileText,
-  FileType,
-  Loader,
-  Printer,
-  View,
-} from "lucide-react";
+import { Download, FileType, Printer } from "lucide-react";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
 import DbStatementAll from "./db-statement-all-view";
-import DbStatementNoPan from "./db-statement-nopan-view";
 import DbStatementGroup from "./db-statement-group-view";
+import DbStatementNoPan from "./db-statement-nopan-view";
 import DbStatementLoading from "./loading";
-// import DonationView from "./donation-view";
 const DBStatement = () => {
   const todayback = moment().format("YYYY-MM-DD");
   const firstdate = moment().startOf("month").format("YYYY-MM-DD");
@@ -45,6 +36,7 @@ const DBStatement = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [viewType, setViewType] = useState(null);
+  const [viewText, setViewText] = useState(null);
   const { trigger } = useApiMutation();
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
@@ -58,6 +50,7 @@ const DBStatement = () => {
     e.preventDefault();
     if (downloadDonor.receipt_from_date && downloadDonor.receipt_to_date) {
       setViewType("all");
+      setViewText("ALL");
     }
   };
 
@@ -65,12 +58,14 @@ const DBStatement = () => {
     e.preventDefault();
     if (downloadDonor.receipt_from_date && downloadDonor.receipt_to_date) {
       setViewType("nopan");
+      setViewText("NO PAN");
     }
   };
   const handleGroupViewClick = (e) => {
     e.preventDefault();
     if (downloadDonor.receipt_from_date && downloadDonor.receipt_to_date) {
       setViewType("group");
+      setViewText("GROUP");
     }
   };
   const handlePrintPdf = useReactToPrint({
@@ -156,12 +151,12 @@ const DBStatement = () => {
       };
 
       let url = "";
-      if (viewType === "all") {
+      if (viewType == "all") {
         url = DB_DOCUMENT_DOWNLOAD;
-      } else if (viewType === "nopan") {
-        url = DB_DOCUMENT_VIEW_NO_PAN;
-      } else if (viewType === "group") {
-        url = DB_DOCUMENT_VIEW_GROUP;
+      } else if (viewType == "nopan") {
+        url = DB_DOCUMENT_DOWNLOAD_NO_PAN;
+      } else if (viewType == "group") {
+        url = DB_DOCUMENT_DOWNLOAD_GROUP;
       }
 
       const res = await trigger({
@@ -327,6 +322,7 @@ const DBStatement = () => {
             receiptFromDate={downloadDonor?.receipt_from_date}
             receiptToDate={downloadDonor?.receipt_to_date}
             componentRef={componentRef}
+            viewText={viewText}
           />
         </div>
       )}
@@ -336,6 +332,7 @@ const DBStatement = () => {
             receiptFromDate={downloadDonor?.receipt_from_date}
             receiptToDate={downloadDonor?.receipt_to_date}
             componentRef={componentRef}
+            viewText={viewText}
           />
         </div>
       )}
@@ -345,6 +342,7 @@ const DBStatement = () => {
             receiptFromDate={downloadDonor?.receipt_from_date}
             receiptToDate={downloadDonor?.receipt_to_date}
             componentRef={componentRef}
+            viewText={viewText}
           />
         </div>
       )}
