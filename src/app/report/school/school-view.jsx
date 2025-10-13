@@ -1,4 +1,4 @@
-import { SUMMARY_VIEW } from "@/api";
+import { SCHOOL_ALLOT_LETTER } from "@/api";
 import ReportHeader from "@/components/common/report-header";
 import { Card } from "@/components/ui/card";
 import { useGetMutation } from "@/hooks/use-get-mutation";
@@ -11,8 +11,8 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
     isError: error,
     refetch,
   } = useGetMutation(
-    "school-summary-view",
-    `${SUMMARY_VIEW}/${indicompFullName}`,
+    `school-summary-view${indicompFullName}`,
+    `${SCHOOL_ALLOT_LETTER}/${indicompFullName}`,
     {},
     { enabled: false }
   );
@@ -28,7 +28,6 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
     }
   }, [loader, onLoadingChange]);
   const SchoolAlotReceipt = data?.SchoolAlotReceipt || {};
-  const chapter = data?.chapter || {};
   const SchoolAlotView = data?.SchoolAlotView || [];
   const OTSReceipts = data?.OTSReceipts || [];
   return (

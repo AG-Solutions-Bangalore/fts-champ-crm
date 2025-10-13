@@ -120,7 +120,7 @@ const SchoolAllotLetter = () => {
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching School List Data
+              Error Fetching School Letter Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -130,9 +130,9 @@ const SchoolAllotLetter = () => {
       </div>
     );
   }
-  const SchoolAlotReceipt = schoolLetter?.SchoolAlotReceipt || {};
-  const SchoolAlotView = schoolLetter?.SchoolAlotView || [];
-  const OTSReceipts = schoolLetter?.OTSReceipts || [];
+  const SchoolAlotReceipt = schoolLetter?.data?.SchoolAlotReceipt || {};
+  const SchoolAlotView = schoolLetter?.data?.SchoolAlotView || [];
+  const OTSReceipts = schoolLetter?.data?.OTSReceipts || [];
 
   return (
     <div className="invoice-wrapper overflow-x-auto grid md:grid-cols-1 1fr">

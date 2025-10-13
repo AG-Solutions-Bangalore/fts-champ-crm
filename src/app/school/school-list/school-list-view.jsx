@@ -34,10 +34,10 @@ const SchoolListView = () => {
     `school-full-list-view${decryptedId}`,
     `${SCHOOL_FULL_LIST_VIEW}/${decryptedId}`
   );
-  const school = schoolviewdata?.schools || {};
- 
-  const schoolAdoption = schoolviewdata?.data?.schoolsadoption || [];
-  console.log('schoolAdoption',schoolAdoption)
+  console.log(schoolviewdata);
+  const school = schoolviewdata?.data?.schools || {};
+
+  const schoolAdoption = schoolviewdata?.data?.schoolsadoption?.donor || [];
   if (isLoading) {
     return <SchoolViewLoading />;
   }
@@ -54,10 +54,10 @@ const SchoolListView = () => {
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-blue-600">
-                  {school.msid_fund}
+                  {school.msid_fund || ""}
                 </h3>
                 <p>
-                  {school.village}, {school.district}
+                  {school.village || ""}, {school.district || ""}
                 </p>
               </div>
             </div>
@@ -65,7 +65,7 @@ const SchoolListView = () => {
             <div>
               <InfoField
                 label="School"
-                value={`${school.village} (${school.school_id})`}
+                value={`${school.village || ""} (${school.school_id || ""})`}
               />
               <InfoField
                 label="Opening Date"
@@ -77,27 +77,33 @@ const SchoolListView = () => {
               />
               <InfoField
                 label="Region"
-                value={`${school.region} (${school.region_code})`}
+                value={`${school.region || ""} (${school.region_code || ""})`}
               />
               <InfoField
                 label="Acchal"
-                value={`${school.achal} (${school.achal_code})`}
+                value={`${school.achal || ""} (${school.achal_code || ""})`}
               />
               <InfoField
                 label="Cluster"
-                value={`${school.cluster} (${school.cluster_code})`}
+                value={`${school.cluster || ""} (${school.cluster_code || ""})`}
               />
               <InfoField
                 label="Sub Cluster"
-                value={`${school.sub_cluster} (${school.sub_cluster_code})`}
+                value={`${school.sub_cluster || ""} (${
+                  school.sub_cluster_code || ""
+                })`}
               />
               <InfoField
                 label="Teacher Name"
-                value={`${school.teacher} (${school.teacher_gender})`}
+                value={`${school.teacher || ""} (${
+                  school.teacher_gender || ""
+                })`}
               />
               <InfoField
                 label="Total Students (Boys/Girls)"
-                value={`${school.total} (${school.boys} / ${school.girls})`}
+                value={`${school.total || ""} (${school.boys || ""} / ${
+                  school.girls || ""
+                })`}
               />
             </div>
           </Card>
@@ -109,15 +115,15 @@ const SchoolListView = () => {
               <div className="mt-4">
                 <InfoField
                   label="Samiti Pramukh"
-                  value={school.vidyalaya_samity_pramukh}
+                  value={school.vidyalaya_samity_pramukh || ""}
                 />
                 <InfoField
                   label="VCF"
-                  value={`${school.vcf_name} (${school.vcf_phone})`}
+                  value={`${school.vcf_name || ""} (${school.vcf_phone || ""})`}
                 />
                 <InfoField
                   label="SCF"
-                  value={`${school.scf_name} (${school.scf_phone})`}
+                  value={`${school.scf_name || ""} (${school.scf_phone || ""})`}
                 />
               </div>
             </Card>
@@ -125,14 +131,17 @@ const SchoolListView = () => {
             <Card className="p-6 shadow">
               <SectionHeader title="Village Statistics" />
               <div className="mt-4">
-                <InfoField label="Total Population" value={school.population} />
+                <InfoField
+                  label="Total Population"
+                  value={school.population || ""}
+                />
                 <InfoField
                   label="Male Literacy"
-                  value={school.literacy_rate_male}
+                  value={school.literacy_rate_male || ""}
                 />
                 <InfoField
                   label="Female Literacy"
-                  value={school.literacy_rate_female}
+                  value={school.literacy_rate_female || ""}
                 />
               </div>
             </Card>
@@ -158,19 +167,19 @@ const SchoolListView = () => {
               </TableHeader>
 
               <TableBody>
-                {schoolAdoption.map((adoption, idx) => (
+                {schoolAdoption?.map((adoption, idx) => (
                   <TableRow
                     key={idx}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="px-4 py-2 text-sm font-medium text-gray-700">
-                      {adoption?.individual_company.indicomp_fts_id}
+                      {adoption?.individual_company.indicomp_fts_id || ""}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
-                      {adoption?.individual_company.indicomp_full_name}
+                      {adoption?.individual_company.indicomp_full_name || ""}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
-                      {adoption.schoolalot_financial_year}
+                      {adoption.schoolalot_financial_year || ""}
                     </TableCell>
                   </TableRow>
                 ))}

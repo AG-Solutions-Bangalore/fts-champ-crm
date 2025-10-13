@@ -28,9 +28,7 @@ const SuspenseSummary = () => {
     "supense-summary-view",
     SUSPENSE_SUMMARY_VIEW
   );
-
-  // Get the actual summary array from API response
-  const donorsummary = data?.receipt || [];
+  const donorsummary = data?.data || [];
 
   const handlePrintPdf = useReactToPrint({
     content: () => componentRef.current,
@@ -105,95 +103,97 @@ const SuspenseSummary = () => {
   }
   return (
     <div className="p-6 bg-white shadow rounded-md">
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2 z-50">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handlePrintPdf}
-                variant="ghost"
-                size="icon"
-                className="border hover:shadow-md"
-              >
-                <Printer className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Print PDF</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleSavePDF}
-                variant="ghost"
-                size="icon"
-                className="border hover:shadow-md"
-              >
-                <Download className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Download PDF</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleDownload}
-                variant="ghost"
-                size="icon"
-                className="border hover:shadow-md"
-              >
-                {loading ? (
-                  <Loader className="h-5 w-5 animate-spin" />
-                ) : (
-                  <FileType className="h-5 w-5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Download Excel</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
-      {/* Summary Table */}
       {donorsummary.length > 0 ? (
-        <div ref={componentRef} className="overflow-x-auto">
-          <ReportHeader title="SUSPENSE SUMMARY" />
-          <table className="min-w-full border-collapse border border-black">
-            <thead>
-              <tr className="bg-gray-200">
-                {["CHAPTER", "YEAR", "TOTAL"].map((header) => (
-                  <th
-                    key={header}
-                    className="border border-black px-4 py-2 text-center"
+        <>
+          <div className="flex justify-end gap-2 z-50">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handlePrintPdf}
+                    variant="ghost"
+                    size="icon"
+                    className="border hover:shadow-md"
                   >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {donorsummary.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="border border-black px-4 py-2 text-center">
-                    {item.chapter_name}
-                  </td>
-                  <td className="border border-black px-4 py-2 text-center">
-                    {item.receipt_financial_year}
-                  </td>
-                  <td className="border border-black px-4 py-2 text-center">
-                    {item.receipt_total_count}
-                  </td>
+                    <Printer className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Print PDF</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSavePDF}
+                    variant="ghost"
+                    size="icon"
+                    className="border hover:shadow-md"
+                  >
+                    <Download className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Download PDF</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleDownload}
+                    variant="ghost"
+                    size="icon"
+                    className="border hover:shadow-md"
+                  >
+                    {loading ? (
+                      <Loader className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <FileType className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Download Excel</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          {/* Summary Table */}
+
+          <div ref={componentRef} className="overflow-x-auto">
+            <ReportHeader title="SUSPENSE SUMMARY" />
+            <table className="min-w-full border-collapse border border-black">
+              <thead>
+                <tr className="bg-gray-200">
+                  {["CHAPTER", "YEAR", "TOTAL"].map((header) => (
+                    <th
+                      key={header}
+                      className="border border-black px-4 py-2 text-center"
+                    >
+                      {header}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {donorsummary.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="border border-black px-4 py-2 text-center">
+                      {item.chapter_name}
+                    </td>
+                    <td className="border border-black px-4 py-2 text-center">
+                      {item.receipt_financial_year}
+                    </td>
+                    <td className="border border-black px-4 py-2 text-center">
+                      {item.receipt_total_count}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       ) : (
         <p className="text-center text-gray-500">No data available.</p>
       )}

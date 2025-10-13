@@ -201,9 +201,12 @@ export const DONATION_SUMMARY_VIEW = `/api/fetch-donationsummary-by-id`;
 //DONOR SUMMARY
 export const DONOR_SUMMARY_VIEW = `/api/fetch-donorsummary-by-id`;
 export const DONOR_SUMMARY_DOWNLOAD = `/api/download-donor-summary`;
+
+// export const DONOR_SUMMARY_GROUP_VIEW = `/api/fetch-donorgroupsummary-by-id`;
 export const DONOR_SUMMARY_GROUP_VIEW = `/api/fetch-donorgroupsummary-by-id`;
 export const DONOR_SUMMARY_GROUP_DOWNLOAD = `/api/download-donor-groupsummary`;
-export const DONOR_SUMMARY_FETCH_DONOR = `/api/fetch-donors`;
+// export const DONOR_SUMMARY_FETCH_DONOR = `/api/fetch-donors`;
+export const DONOR_SUMMARY_FETCH_DONOR = `/api/donor-active`;
 
 //PAYMENT SUMMARY
 export const PAYMENT_SUMMARY_VIEW = `${BASE_URL}/api/fetch-teacher-payment-summary-by-date`;
@@ -211,7 +214,8 @@ export const PAYMENT_SUMMARY_DOWNLOAD = `${BASE_URL}/api/download-teacher-paymen
 
 //PROMOTER SUMMARY
 export const PROMOTER_SUMMARY_DOWNLOAD = `/api/download-promoter-summary`;
-export const PROMOTER_SUMMARY_DROPDOWN = `/api/fetch-promoter`;
+// export const PROMOTER_SUMMARY_DROPDOWN = `/api/fetch-promoter`;
+export const PROMOTER_SUMMARY_DROPDOWN = `/api/promoter-active`;
 export const PROMOTER_SUMMARY_VIEW = `/api/fetch-promotersummary-by-id`;
 
 //RECEIPT SUMMARY

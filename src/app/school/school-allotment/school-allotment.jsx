@@ -79,7 +79,7 @@ const SchoolToAllot = () => {
   });
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schooltoallotData?.last_page || 1;
+    const totalPages = schooltoallotData?.data?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -90,7 +90,7 @@ const SchoolToAllot = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schooltoallotData?.last_page,
+    schooltoallotData?.data?.last_page,
     prefetchPage,
   ]);
   const [sorting, setSorting] = useState([]);
@@ -233,7 +233,7 @@ const SchoolToAllot = () => {
     },
   ];
   const table = useReactTable({
-    data: schooltoallotData?.data || [],
+    data: schooltoallotData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -244,7 +244,7 @@ const SchoolToAllot = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schooltoallotData?.last_page || -1,
+    pageCount: schooltoallotData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -485,8 +485,9 @@ const SchoolToAllot = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schooltoallotData?.from || 0} to {schooltoallotData?.to || 0}{" "}
-          of {schooltoallotData?.total || 0} schools
+          Showing {schooltoallotData?.data?.from || 0} to{" "}
+          {schooltoallotData?.data?.to || 0} of{" "}
+          {schooltoallotData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

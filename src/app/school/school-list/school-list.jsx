@@ -82,10 +82,10 @@ const SchoolList = () => {
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
   useEffect(() => {
-    if (!schoolData?.school?.last_page) return;
+    if (!schoolData?.data?.school?.last_page) return;
 
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.school?.last_page;
+    const totalPages = schoolData?.data?.school?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -95,7 +95,7 @@ const SchoolList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.school?.last_page,
+    schoolData?.data?.school?.last_page,
     prefetchPage,
   ]);
 
@@ -228,7 +228,7 @@ const SchoolList = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.school?.data || [],
+    data: schoolData?.data?.school?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -239,7 +239,7 @@ const SchoolList = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.school?.last_page || -1,
+    pageCount: schoolData?.data?.school?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -378,11 +378,11 @@ const SchoolList = () => {
 
   return (
     <div className="max-w-full p-2">
-      {schoolData?.schoolcount?.length > 0 && (
+      {schoolData?.data?.schoolcount?.length > 0 && (
         <div className="text-base font-semibold">
-          {schoolData?.schoolcount[0].chapter_name}{" "}
+          {schoolData?.data?.schoolcount[0].chapter_name}{" "}
           <span className="text-sm font-medium text-primary">
-            ({schoolData?.schoolcount[0].school_count} schools)
+            ({schoolData?.data?.schoolcount[0].school_count} schools)
           </span>
         </div>
       )}
@@ -483,9 +483,9 @@ const SchoolList = () => {
 
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.school?.from || 0} to{" "}
-          {schoolData?.school?.to || 0} of {schoolData?.school?.total || 0}{" "}
-          schools
+          Showing {schoolData?.data?.school?.from || 0} to{" "}
+          {schoolData?.data?.school?.to || 0} of{" "}
+          {schoolData?.data?.school?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">

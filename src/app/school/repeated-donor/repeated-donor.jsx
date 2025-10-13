@@ -86,10 +86,9 @@ const RepeatDonor = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
-  console.log(repeatData, "repeatData");
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = repeatData?.last_page || 1;
+    const totalPages = repeatData?.data?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -100,7 +99,7 @@ const RepeatDonor = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    repeatData?.last_page,
+    repeatData?.data?.last_page,
     prefetchPage,
   ]);
 
@@ -185,7 +184,7 @@ const RepeatDonor = () => {
   ];
 
   const table = useReactTable({
-    data: repeatData?.data || [],
+    data: repeatData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -196,7 +195,7 @@ const RepeatDonor = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: repeatData?.last_page || -1,
+    pageCount: repeatData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -436,8 +435,8 @@ const RepeatDonor = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {repeatData?.from || 0} to {repeatData?.to || 0} of{" "}
-          {repeatData?.total || 0} schools
+          Showing {repeatData?.data?.from || 0} to {repeatData?.data?.to || 0}{" "}
+          of {repeatData?.data?.total || 0} schools
         </div>
 
         <div className="flex items-center space-x-2">
