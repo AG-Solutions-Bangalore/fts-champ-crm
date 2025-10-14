@@ -86,7 +86,7 @@ const DonorEditIndv = () => {
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
 
-  // API calls with TanStack Query
+ 
   const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
     const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
     const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
@@ -126,10 +126,10 @@ const DonorEditIndv = () => {
     enabled: !!id,
     refetchOnWindowFocus: false, 
   });
-useEffect(() => {
-    const isDirty = JSON.stringify(donor) !== JSON.stringify(initialDonor);
-    setIsFormDirty(isDirty);
-  }, [donor, initialDonor]);
+// useEffect(() => {
+//     const isDirty = JSON.stringify(donor) !== JSON.stringify(initialDonor);
+//     setIsFormDirty(isDirty);
+//   }, [donor, initialDonor]);
   // Mutations
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
@@ -163,20 +163,20 @@ useEffect(() => {
     mutationFn: async (data) => {
       const response = await axios({
         url: `${DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE}${id}`,
-        method: 'PUT',
+        method: 'PATCH',
         data,
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success(data.msg||'Data Successfully Updated');
+      toast.success(data.message||'Data Successfully Updated');
 
       setShowModal(false);
       queryClient.invalidateQueries(['donor', id]);
     },
     onError: (error) => {
-      toast.error('Failed to update family group');
+      toast.error(error.response.data.message || 'Failed to update family group');
     },
   });
 
@@ -197,21 +197,23 @@ useEffect(() => {
     if (['indicomp_mobile_phone', 'indicomp_mobile_whatsapp', 'indicomp_res_reg_pin_code', 'indicomp_off_branch_pin_code'].includes(name)) {
       if (validateOnlyDigits(value)) {
         setDonor(prev => ({ ...prev, [name]: value }));
+        setIsFormDirty(true);
       }
     } else if (name === "indicomp_image_logo") {
       const file = e.target.files[0];
       setDonor(prev => ({ ...prev, indicomp_image_logo: file }));
+      setIsFormDirty(true);
     } else {
       setDonor(prev => ({ ...prev, [name]: value }));
+      setIsFormDirty(true);
     }
   };
 
-  const onSelectChange = (name, value) => {
-    setDonor(prev => ({ ...prev, [name]: value }));
-  };
+  
 
   const onChangePanNumber = (e) => {
     setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value }));
+    setIsFormDirty(true);
   };
 
   const validateForm = () => {
@@ -283,12 +285,15 @@ useEffect(() => {
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
 
     // Handle file upload
-    if (donor.indicomp_image_logo instanceof File) {
-      formData.append("indicomp_image_logo", donor.indicomp_image_logo);
-    } else if (donor.indicomp_image_logo) {
-      formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
-    }
+    // if (donor.indicomp_image_logo instanceof File) {
+    //   formData.append("indicomp_image_logo", donor.indicomp_image_logo);
+    // } else if (donor.indicomp_image_logo) {
+    //   formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
+    // }
 
+if (donor.indicomp_image_logo instanceof File) {
+  formData.append("indicomp_image_logo", donor.indicomp_image_logo);
+}
     formData.append("indicomp_remarks", processValue(donor.indicomp_remarks));
     formData.append("indicomp_promoter", processValue(donor.indicomp_promoter));
     formData.append("indicomp_newpromoter", processValue(donor.indicomp_newpromoter));
@@ -319,12 +324,12 @@ useEffect(() => {
   const familyGroupStatus = (status) => {
     const data = status === "add_to_family_group" 
       ? { indicomp_related_id: donor.indicomp_related_id }
-      : { leave_family_group: true };
+      : { leave_family_group: 'true' };
     
     familyGroupMutation.mutate(data);
   };
 
-  if (isLoading && isLoadingHook) {
+  if (isLoading || isLoadingHook) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -601,23 +606,30 @@ useEffect(() => {
                       </span>
                                     </Label>
                                    
-                 
-                      <MemoizedSelect
-                      value={donor.indicomp_promoter}
-                
-                      onChange={(value) => {
-                        const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
-                        setDonor(prev => ({
-                          ...prev,
-                          indicomp_promoter: selectedPromoter?.indicomp_fts_id || '', 
-                        }));
-                      }}
-                      options={promoter?.map((option) => ({
-                        value: option.indicomp_promoter,
-                        label: option.indicomp_promoter
-                      }))}
-                      placeholder="Select Promoter"
-                    />
+                 {isLoadingPromoter ? (
+
+<div className="animate-pulse">
+      <div className="h-10 bg-gray-200 rounded-md w-full"></div>
+    </div>
+                 ):(
+  <MemoizedSelect
+  value={donor.indicomp_promoter}
+
+  onChange={(value) => {
+    const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
+    setDonor(prev => ({
+      ...prev,
+      indicomp_promoter: selectedPromoter?.indicomp_fts_id || '', 
+    }));
+  }}
+  options={promoter?.map((option) => ({
+    value: option.indicomp_promoter,
+    label: option.indicomp_promoter
+  }))}
+  placeholder="Select Promoter"
+/>
+               )} 
+                    
                    
 
                   {errors?.indicomp_promoter && (
@@ -1114,12 +1126,14 @@ useEffect(() => {
           </div>
         </div>
       )} */}
-      <AddToGroup
-  id={donor.id}
-  page="indivisual"
-  isOpen={showModal}
-  closegroupModal={() => setShowModal(false)}
-/>
+       {showModal &&(
+    <AddToGroup
+    id={donor.id}
+    page="indivisual"
+    isOpen={showModal}
+    closegroupModal={() => setShowModal(false)}
+   />
+         )}
     </div>
   );
 };

@@ -298,7 +298,7 @@ const Viewer = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-none border min-h-[31rem] flex flex-col">
+      <div className="rounded-none border min-h-[31rem] grid grid-cols-1">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

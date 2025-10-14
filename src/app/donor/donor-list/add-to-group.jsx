@@ -53,7 +53,7 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
   const [globalFilter, setGlobalFilter] = useState('');
 
   const { data: donorData = [], isLoading } = useQuery({
-    queryKey: ['donors'],
+    queryKey: ['donor-active'],
     queryFn: async () => {
       const response = await axios.get(`${BASE_URL}/api/donor-active`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -71,13 +71,14 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
    refetchOnMount: false,
    refetchOnWindowFocus: false,
    refetchOnReconnect: false,
+   enabled: isOpen,
   });
 
   const addMemberToGroup = async (relativeId) => {
     try {
       await axios({
-        url: `${BASE_URL}/api/update-donor/${id}`,
-        method: 'PUT',
+        url: `${BASE_URL}/api/update-donor-addtogroup/${id}`,
+        method: 'PATCH',
         data: { indicomp_related_id: relativeId },
         headers: { Authorization: `Bearer ${token}` },
       });

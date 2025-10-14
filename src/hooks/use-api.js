@@ -42,7 +42,7 @@ export const useFetchDataSource = () => {
   return useQuery(createQueryConfig(["data-source"], "/api/data-source"));
 };
 export const useFetchPromoter = () => {
-  return useQuery(createQueryConfig(["promoter"], "/api/promoter-active"));
+  return useQuery(createQueryConfig(["promoter-active"], "/api/promoter-active"));
 };
 export const useFetchChapterActive = () => {
   return useQuery(createQueryConfig(["chapter-active"], "/api/chapter-active"));

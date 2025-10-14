@@ -52,15 +52,15 @@ const StateEdit = ({ state }) => {
     try {
       const token = Cookies.get("token");
       const response = await axios.put(
-        `${BASE_URL}/api/panel-update-state//${state.id}`,
+        `${BASE_URL}/api/panel-update-state/${state.id}`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response?.data.code == 200) {
-        toast.success(response.data.msg || "State updated successfully");
+      if (response?.data.code == 201) {
+        toast.success(response.data.message || "State updated successfully");
 
         setFormData({
           state_name: "",
@@ -75,7 +75,7 @@ const StateEdit = ({ state }) => {
         
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to update state");
+        toast.error(response.data.message || "Failed to update state");
       }
     } catch (error) {
       toast.error(

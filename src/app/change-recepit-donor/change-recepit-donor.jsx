@@ -226,8 +226,8 @@ const SuperReceiptDonor = () => {
     
     try {
       const res = await updateDonor({
-        url: `${UPDATE_CHANGE_RECEPIT}/${receiptData[0].id}`,
-        method: "put",
+        url: `${UPDATE_CHANGE_RECEPIT}`,
+        method: "post",
         data: {
           indicomp_fts_id: selectedDonor.indicomp_fts_id,
           receipt_ref_no: receiptRefNo,
@@ -606,7 +606,7 @@ const SuperReceiptDonor = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-accent/10 rounded-xl shadow-md p-4 border-l-2 border-accent"
+                  className="bg-gradient-to-r from-background via-primary/5 to-primary/10 rounded-xl shadow-md p-4 border-l-2 border-accent"
                 >
                   {/* Title */}
                   <div className="flex items-center gap-2 mb-1">
