@@ -286,7 +286,7 @@ export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/notice`;
 
 // export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
 export const RECEIPT_ZERO_LIST = `/api/receipt-zero`;
-export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/fetch-receipts-all-list`;
+export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/receipt`;
 export const DOWNLOAD_MULTI_RECEIPT = `/api/download-receipts-multi`;
 // export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
 // export const RECEIPT_NON_ZERO_LIST = `/api/receipt-zero`;
@@ -295,6 +295,7 @@ export const RECEIPT_SUPER_SUMBIT = `/api/receipt-zero`;
 export const CHANGE_RECEPIT_DONOR = `/api/fetch-change-receipts-donor`;
 export const CHANGE_DONOR = `/api/fetch-change-donors`;
 export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
+export const RECEPIT_SUP_DOWNLOAD = `/api/receipt-view`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 
