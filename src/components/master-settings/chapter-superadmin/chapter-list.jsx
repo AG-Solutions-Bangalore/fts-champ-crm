@@ -36,7 +36,7 @@ import { Link, useNavigate } from "react-router-dom";
 const ChapterList = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate()
-  
+  const userType = Cookies.get('user_type_id')
   const {
     data: chaptersData,
     isLoading,
@@ -44,7 +44,7 @@ const ChapterList = () => {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["chapters"],
+    queryKey: ["chapters",userType],
     queryFn: async () => {
       const token = Cookies.get("token");
       

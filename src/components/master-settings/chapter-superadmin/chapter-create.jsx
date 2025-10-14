@@ -30,6 +30,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import BASE_URL from '@/config/base-url';
 import { ADD_CHAPTER_SUMBIT } from '@/api';
+import { useFetchState } from '@/hooks/use-api';
 
 const ChapterCreate = () => {
   const navigate = useNavigate();
@@ -55,19 +56,9 @@ const ChapterCreate = () => {
   });
 
   // Fetch states
-  const { data: statesData, isLoading } = useQuery({
-    queryKey: ['chapter-states'],
-    queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-states`, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
-      return response.data?.states || [];
-    },
-    retry: 2,
-  });
 
-  const states = statesData || [];
-
+ const { data: statesHooks, isLoading } = useFetchState();
+ const states = statesHooks?.data || [];
   const validateOnlyDigits = (inputtxt) => {
     const phoneno = /^\d+$/;
     return inputtxt.match(phoneno) || inputtxt.length === 0;
@@ -154,10 +145,10 @@ const ChapterCreate = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
+      if (data.code === 201) {
         
         queryClient.invalidateQueries(['chapters']);
-        toast.success(data.msg);
+        toast.success(data.message);
         
         
        
@@ -177,15 +168,13 @@ const ChapterCreate = () => {
             chapter_date_of_incorporation: "",
             chapter_region_code: "",
           });
-      } else if (data.code === 400) {
-        toast.error(data.msg);
       } else {
-        toast.error("Unexpected Error");
+        toast.error(data.message || "Unexpected Error");
       }
     },
     onError: (error) => {
-      console.error("Submission error:", error);
-      toast.error("An error occurred during submission");
+      console.error("Create chapter error:", error.response.data.message);
+      toast.error(error.response.data.message ||"An error occurred during create chapter");
     },
     onSettled: () => {
       setIsButtonDisabled(false);
