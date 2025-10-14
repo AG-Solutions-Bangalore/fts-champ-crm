@@ -1,4 +1,4 @@
-import { DB_DOCUMENT_VIEW } from "@/api";
+  import { DB_DOCUMENT_VIEW } from "@/api";
 import ReportHeader from "@/components/common/report-header";
 import { Card } from "@/components/ui/card";
 import { useGetMutation } from "@/hooks/use-get-mutation";

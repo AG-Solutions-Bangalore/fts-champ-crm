@@ -3,18 +3,17 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { 
-  Building, 
-  Search, 
+import {
+  Building,
+  Search,
   Star,
   Clock,
   CheckCircle2,
   Heart,
-  History
+  History,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-
 import BASE_URL from "@/config/base-url";
 
 const ChapterSelection = () => {
@@ -26,18 +25,19 @@ const ChapterSelection = () => {
   const [favorites, setFavorites] = useState([]);
   const containerRef = useRef(null);
 
+  // Fetch chapters
   const {
     data: chapters = [],
     isFetching,
-    refetch,
   } = useQuery({
     queryKey: ["chapter-selection"],
     queryFn: async () => {
       const res = await axios.get(`${BASE_URL}/api/fetch-profile-chapter`, {
         headers: { Authorization: `Bearer ${Cookies.get("token")}` },
       });
-      return res.data.chapter || [];
+      return res.data.data || [];
     },
+    retry: 2,
     staleTime: 30 * 60 * 1000,
     cacheTime: 60 * 60 * 1000,
     refetchOnMount: false,
@@ -45,7 +45,7 @@ const ChapterSelection = () => {
     refetchOnReconnect: false,
   });
 
-  // Restore data
+  // Restore data from cookies
   useEffect(() => {
     const storedName = Cookies.get("selected_chapter_name");
     const recent = Cookies.get("recent_chapters");
@@ -56,7 +56,7 @@ const ChapterSelection = () => {
     if (favs) setFavorites(JSON.parse(favs));
   }, []);
 
-  // Close when clicking outside
+  // Close panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -69,45 +69,51 @@ const ChapterSelection = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Filtered chapters for search
   const filteredChapters = chapters.filter((c) =>
     c.chapter_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Add to recent chapters
   const addToRecent = (chapter) => {
-    const updated = [chapter, ...recentChapters.filter(c => c.id !== chapter.id)].slice(0, 2);
+    const updated = [
+      chapter,
+      ...recentChapters.filter((c) => c.chapter_code !== chapter.chapter_code),
+    ].slice(0, 2);
     setRecentChapters(updated);
     Cookies.set("recent_chapters", JSON.stringify(updated), { expires: 30 });
   };
 
+  // Toggle favorite
   const toggleFavorite = (chapter, e) => {
     e.stopPropagation();
-    const isFav = favorites.some(f => f.id === chapter.id);
-    const updated = isFav 
-      ? favorites.filter(f => f.id !== chapter.id)
+    const isFav = favorites.some((f) => f.chapter_code === chapter.chapter_code);
+    const updated = isFav
+      ? favorites.filter((f) => f.chapter_code !== chapter.chapter_code)
       : [chapter, ...favorites].slice(0, 3);
-    
+
     setFavorites(updated);
     Cookies.set("favorite_chapters", JSON.stringify(updated), { expires: 30 });
-    
-    if (!isFav) {
-      toast.success("Added to favorites");
-    } else {
-      toast.success("Removed from favorites");
-    }
+
+    if (!isFav) toast.success("Added to favorites");
+    else toast.success("Removed from favorites");
   };
 
+  // Select chapter mutation
   const selectChapterMutation = useMutation({
-    mutationFn: async (id) =>
+    mutationFn: async (chapter_code) =>
       axios.post(
         `${BASE_URL}/api/update-profile-chapter`,
-        { viewer_chapter_ids: id },
+        { viewer_chapter_ids: chapter_code },
         { headers: { Authorization: `Bearer ${Cookies.get("token")}` } }
       ),
-    onSuccess: (res, id) => {
-      const selected = chapters.find((it) => it.id === id);
-      if (res.data?.code === 200 && selected) {
+    onSuccess: (res, chapter_code) => {
+      const selected = chapters.find((it) => it.chapter_code === chapter_code);
+      if (res.data?.code === 201 && selected) {
         if (selected.chapter_name !== selectedChapterName) {
-          Cookies.set("selected_chapter_name", selected.chapter_name, { expires: 7 });
+          Cookies.set("selected_chapter_name", selected.chapter_name, {
+            expires: 7,
+          });
           setSelectedChapterName(selected.chapter_name);
           addToRecent(selected);
           toast.success(`Switched to ${selected.chapter_name}`);
@@ -123,6 +129,7 @@ const ChapterSelection = () => {
     onError: () => toast.error("Something went wrong"),
   });
 
+  // Clear selected chapter
   const clearChapterMutation = useMutation({
     mutationFn: async () =>
       axios.post(
@@ -131,7 +138,7 @@ const ChapterSelection = () => {
         { headers: { Authorization: `Bearer ${Cookies.get("token")}` } }
       ),
     onSuccess: (res) => {
-      if (res.data?.code === 200) {
+      if (res.data?.code === 201) {
         Cookies.remove("selected_chapter_name");
         setSelectedChapterName("All Chapter");
         toast.success("Back to all chapters");
@@ -155,19 +162,20 @@ const ChapterSelection = () => {
           className={`
             w-full h-8 rounded-md px-2 relative transition-all duration-200 shadow-lg hover:shadow-xl
             flex items-center justify-center
-            ${isExpanded 
-              ? "bg-amber-500 scale-110" 
-              : "bg-gradient-to-br from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500"
+            ${
+              isExpanded
+                ? "bg-amber-500 scale-110"
+                : "bg-gradient-to-br from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500"
             }
           `}
         >
           <Building className="h-4 w-4 text-white" />
           <div className="flex items-center ">
-                  <div className="w-2 h-2  rounded-full" />
-                  <span className="font-semibold text-xs text-amber-900 dark:text-amber-100 truncate max-w-[120px]">
-                    {selectedChapterName}
-                  </span>
-                </div>
+            <div className="w-2 h-2  rounded-full" />
+            <span className="font-semibold text-xs text-amber-900 dark:text-amber-100 truncate max-w-[120px]">
+              {selectedChapterName}
+            </span>
+          </div>
           {selectedChapterName !== "All Chapter" && (
             <div className="absolute -top-0.5 -right-0.5">
               <div className="w-2 h-2 bg-green-400 rounded-md border border-white" />
@@ -175,7 +183,7 @@ const ChapterSelection = () => {
           )}
         </button>
 
-        {/* Expanded Panel with Light Tone Palette */}
+        {/* Expanded Panel */}
         {isExpanded && (
           <div className="absolute top-11 right-0 w-72 bg-amber-50 dark:bg-amber-950/30 rounded-xl shadow-xl border border-amber-200 dark:border-amber-800 overflow-hidden animate-in zoom-in-95">
             {/* Header */}
@@ -217,7 +225,7 @@ const ChapterSelection = () => {
               {/* Quick Access Sections */}
               {!searchTerm && (
                 <div className="space-y-1 p-1">
-                  {/* Favorites Section */}
+                  {/* Favorites */}
                   {favorites.length > 0 && (
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1 px-1.5 pt-1">
@@ -228,11 +236,13 @@ const ChapterSelection = () => {
                       </div>
                       {favorites.map((chapter) => (
                         <button
-                          key={`fav-${chapter.id}`}
-                          onClick={() => selectChapterMutation.mutate(chapter.id)}
+                          key={`fav-${chapter.chapter_code}`}
+                          onClick={() =>
+                            selectChapterMutation.mutate(chapter.chapter_code)
+                          }
                           className="w-full flex items-center gap-1.5 p-1.5 rounded text-xs hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors group border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
                         >
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+                          <Star className="h-4 w-4 fill-amber-400 text-amber-400 flex-shrink-0" />
                           <span className="truncate flex-1 text-left text-amber-900 dark:text-amber-100">
                             {chapter.chapter_name}
                           </span>
@@ -248,7 +258,7 @@ const ChapterSelection = () => {
                     </div>
                   )}
 
-                  {/* Recently Visited Section */}
+                  {/* Recently Visited */}
                   {recentChapters.length > 0 && (
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1 px-1.5 pt-1">
@@ -259,8 +269,10 @@ const ChapterSelection = () => {
                       </div>
                       {recentChapters.map((chapter) => (
                         <button
-                          key={`recent-${chapter.id}`}
-                          onClick={() => selectChapterMutation.mutate(chapter.id)}
+                          key={`recent-${chapter.chapter_code}`}
+                          onClick={() =>
+                            selectChapterMutation.mutate(chapter.chapter_code)
+                          }
                           className="w-full flex items-center gap-1.5 p-1.5 rounded text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors group border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
                         >
                           <Clock className="h-3 w-3 text-blue-400 flex-shrink-0" />
@@ -272,8 +284,11 @@ const ChapterSelection = () => {
                               <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
                             ) : (
                               <Star
-                                className={`h-3 w-3 transition-all ${
-                                  favorites.some(f => f.id === chapter.id)
+                                className={`h-4 w-4 transition-all ${
+                                  favorites.some(
+                                    (f) =>
+                                      f.chapter_code === chapter.chapter_code
+                                  )
                                     ? "fill-amber-400 text-amber-400"
                                     : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
                                 }`}
@@ -288,7 +303,7 @@ const ChapterSelection = () => {
                 </div>
               )}
 
-              {/* All Chapters Section */}
+              {/* All Chapters */}
               <div className="p-1">
                 <div className="flex items-center gap-1 px-1.5 mb-1">
                   <Building className="h-3 w-3 text-amber-600 dark:text-amber-400" />
@@ -304,28 +319,39 @@ const ChapterSelection = () => {
                 ) : filteredChapters.length > 0 ? (
                   <div className="space-y-0.5">
                     {filteredChapters.map((chapter) => {
-                      const isFavorite = favorites.some(f => f.id === chapter.id);
-                      const isRecent = recentChapters.some(r => r.id === chapter.id);
-                      const isActive = selectedChapterName === chapter.chapter_name;
+                      const isFavorite = favorites.some(
+                        (f) => f.chapter_code === chapter.chapter_code
+                      );
+                      const isActive =
+                        selectedChapterName === chapter.chapter_name;
 
                       return (
                         <button
-                          key={chapter.id}
-                          onClick={() => selectChapterMutation.mutate(chapter.id)}
+                          key={chapter.chapter_code}
+                          onClick={() =>
+                            selectChapterMutation.mutate(chapter.chapter_code)
+                          }
                           disabled={isActive}
                           className={`
                             w-full flex items-center gap-1.5 p-1.5 rounded text-xs transition-all group border
-                            ${isActive
-                              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 cursor-default"
-                              : "hover:bg-amber-100 dark:hover:bg-amber-900/30 border-transparent hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer"
+                            ${
+                              isActive
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 cursor-default"
+                                : "hover:bg-amber-100 dark:hover:bg-amber-900/30 border-transparent hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer"
                             }
-                            ${selectChapterMutation.isLoading ? "opacity-50 pointer-events-none" : ""}
+                            ${
+                              selectChapterMutation.isLoading
+                                ? "opacity-50 pointer-events-none"
+                                : ""
+                            }
                           `}
                         >
-                          <Building className={`h-3 w-3 flex-shrink-0 ${
-                            isActive ? "text-green-600" : "text-amber-500"
-                          }`} />
-                          
+                          <Building
+                            className={`h-3 w-3 flex-shrink-0 ${
+                              isActive ? "text-green-600" : "text-amber-500"
+                            }`}
+                          />
+
                           <span className="truncate flex-1 text-left text-amber-900 dark:text-amber-100">
                             {chapter.chapter_name}
                           </span>
@@ -335,9 +361,9 @@ const ChapterSelection = () => {
                               <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
                             ) : (
                               <Star
-                                className={`h-3 w-3 transition-all ${
-                                  isFavorite 
-                                    ? "fill-amber-400 text-amber-400 opacity-100" 
+                                className={`h-4 w-4 transition-all ${
+                                  isFavorite
+                                    ? "fill-amber-400 text-amber-400 opacity-100"
                                     : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
                                 }`}
                                 onClick={(e) => toggleFavorite(chapter, e)}

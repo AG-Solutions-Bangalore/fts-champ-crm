@@ -7,7 +7,7 @@ import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
 /*--------------------------Master-start----------------------------------- */
 // CHAPTER
 export const CHAPTER_LIST = `${BASE_URL}/api/fetch-chapters`;
-export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/create-chapter`;
+export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/chapter`;
 // (view)-- add school pending
 export const CHAPTER_VIEW_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
 export const CHAPTER_VIEW_CREATE_USER = `${BASE_URL}/api/create-user`;
