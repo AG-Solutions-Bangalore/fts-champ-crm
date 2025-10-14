@@ -103,81 +103,79 @@ const SuspenseSummary = () => {
   }
   return (
     <div className="p-6 bg-white shadow rounded-md">
-      {donorsummary.length > 0 ? (
-        <>
-          <div className="flex justify-end gap-2 z-50">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={handlePrintPdf}
-                    variant="ghost"
-                    size="icon"
-                    className="border hover:shadow-md"
+      <>
+        <div className="flex justify-end gap-2 z-50">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handlePrintPdf}
+                  variant="ghost"
+                  size="icon"
+                  className="border hover:shadow-md"
+                >
+                  <Printer className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Print PDF</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleSavePDF}
+                  variant="ghost"
+                  size="icon"
+                  className="border hover:shadow-md"
+                >
+                  <Download className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Download PDF</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleDownload}
+                  variant="ghost"
+                  size="icon"
+                  className="border hover:shadow-md"
+                >
+                  {loading ? (
+                    <Loader className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <FileType className="h-5 w-5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Download Excel</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div ref={componentRef} className="overflow-x-auto">
+          <ReportHeader title="SUSPENSE SUMMARY" />
+          <table className="min-w-full border-collapse border border-black">
+            <thead>
+              <tr className="bg-gray-200">
+                {["CHAPTER", "YEAR", "TOTAL"].map((header) => (
+                  <th
+                    key={header}
+                    className="border border-black px-4 py-2 text-center"
                   >
-                    <Printer className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Print PDF</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={handleSavePDF}
-                    variant="ghost"
-                    size="icon"
-                    className="border hover:shadow-md"
-                  >
-                    <Download className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Download PDF</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={handleDownload}
-                    variant="ghost"
-                    size="icon"
-                    className="border hover:shadow-md"
-                  >
-                    {loading ? (
-                      <Loader className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <FileType className="h-5 w-5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Download Excel</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {/* Summary Table */}
-
-          <div ref={componentRef} className="overflow-x-auto">
-            <ReportHeader title="SUSPENSE SUMMARY" />
-            <table className="min-w-full border-collapse border border-black">
-              <thead>
-                <tr className="bg-gray-200">
-                  {["CHAPTER", "YEAR", "TOTAL"].map((header) => (
-                    <th
-                      key={header}
-                      className="border border-black px-4 py-2 text-center"
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {donorsummary.map((item, idx) => (
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.isArray(donorsummary) && donorsummary.length > 0 ? (
+                donorsummary.map((item, idx) => (
                   <tr key={idx}>
                     <td className="border border-black px-4 py-2 text-center">
                       {item.chapter_name}
@@ -189,14 +187,21 @@ const SuspenseSummary = () => {
                       {item.receipt_total_count}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      ) : (
-        <p className="text-center text-gray-500">No data available.</p>
-      )}
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="3"
+                    className="border border-black px-4 py-3 text-center text-gray-500 text-sm"
+                  >
+                    No data available
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </>
     </div>
   );
 };

@@ -178,21 +178,20 @@ const RecepitNonZeroList = () => {
         );
       },
     },
-    // {
-    //   accessorKey: "receipt_ref_no",
-    //   id: "Receipt Ref",
-    //   header: "Receipt Ref",
-    //   cell: ({ row }) => {
-    //     const receiptNo =
-    //       row.original?.receipt_ref_no || row.getValue("receipt_ref_no");
-    //     return receiptNo ? (
-    //       <div className="text-xs">{receiptNo}</div>
-    //     ) : (
-    //       <div className="text-gray-400 text-xs">—</div>
-    //     );
-    //   },
-    // },
-
+    {
+      accessorKey: "receipt_ref_no",
+      id: "Receipt Ref",
+      header: "Receipt Ref",
+      cell: ({ row }) => {
+        const receiptNo =
+          row.original?.receipt_ref_no || row.getValue("receipt_ref_no");
+        return receiptNo ? (
+          <div className="text-xs">{receiptNo}</div>
+        ) : (
+          <div className="text-gray-400 text-xs">—</div>
+        );
+      },
+    },
     {
       accessorKey: "receipt_exemption_type",
       id: "Exemption Type",

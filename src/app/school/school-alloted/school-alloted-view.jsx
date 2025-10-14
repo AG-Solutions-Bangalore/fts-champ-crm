@@ -37,6 +37,7 @@ import { useParams } from "react-router-dom";
 import { SCHOOL_ALLOT_VIEW_LIST } from "../../../api";
 import { TableShimmer } from "../loadingtable/TableShimmer";
 import { useQueryClient } from "@tanstack/react-query";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 const SchoolAllotView = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
@@ -73,7 +74,6 @@ const SchoolAllotView = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
-
   const keyDown = useNumericInput();
   useEffect(() => {
     if (!schoolsAllotment?.data?.last_page) return;
@@ -201,7 +201,7 @@ const SchoolAllotView = () => {
   ];
 
   const table = useReactTable({
-    data: schoolsAllotment?.data || [],
+    data: schoolsAllotment?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -373,7 +373,7 @@ const SchoolAllotView = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-none border flex flex-col">
+      <div className="rounded-none border min-h-[25rem] flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -423,55 +423,61 @@ const SchoolAllotView = () => {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          Showing {schoolsAllotment?.data?.from || 0} to{" "}
-          {schoolsAllotment?.data?.to || 0} of{" "}
-          {schoolsAllotment?.data?.total || 0} schools
-        </div>
+      {isFetching ? (
+        <PaginationShimmer />
+      ) : (
+        schoolsAllotment?.data?.data?.length > 0 && (
+          <div className="flex items-center justify-between py-1">
+            <div className="text-sm text-muted-foreground">
+              Showing {schoolsAllotment?.data?.from || 0} to{" "}
+              {schoolsAllotment?.data?.to || 0} of{" "}
+              {schoolsAllotment?.data?.total || 0} schools
+            </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                disabled={!table.getCanPreviousPage()}
+                className="h-8 px-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
 
-          <div className="flex items-center space-x-1">
-            {generatePageButtons()}
+              <div className="flex items-center space-x-1">
+                {generatePageButtons()}
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <span>Go to</span>
+                <Input
+                  type="tel"
+                  min="1"
+                  max={table.getPageCount()}
+                  value={pageInput}
+                  onChange={handlePageInput}
+                  onBlur={() => setPageInput("")}
+                  onKeyDown={keyDown}
+                  className="w-16 h-8 text-sm"
+                  placeholder="Page"
+                />
+                <span>of {table.getPageCount()}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                disabled={!table.getCanNextPage()}
+                className="h-8 px-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Go to</span>
-            <Input
-              type="tel"
-              min="1"
-              max={table.getPageCount()}
-              value={pageInput}
-              onChange={handlePageInput}
-              onBlur={() => setPageInput("")}
-              onKeyDown={keyDown}
-              className="w-16 h-8 text-sm"
-              placeholder="Page"
-            />
-            <span>of {table.getPageCount()}</span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={!table.getCanNextPage()}
-            className="h-8 px-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        )
+      )}
     </div>
   );
 };

@@ -64,6 +64,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                         ))}
                       </tr>
                     </thead>
+
                     <tbody>
                       {donorsummary.length > 0 ? (
                         donorsummary.map((dataSumm) => (
