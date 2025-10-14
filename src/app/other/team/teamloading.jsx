@@ -60,7 +60,7 @@ const TeamLoading = () => {
               key={i}
               className="p-4 flex items-center gap-4 border border-gray-200 rounded-xl"
             >
-              <Skeleton className="w-16 h-16 rounded-full" />
+              <Skeleton className="w-16 h-16 rounded-md" />
               <div className="flex flex-col gap-2 flex-1">
                 <Skeleton className="h-4 w-3/4 rounded" />
                 <Skeleton className="h-3 w-1/2 rounded" />

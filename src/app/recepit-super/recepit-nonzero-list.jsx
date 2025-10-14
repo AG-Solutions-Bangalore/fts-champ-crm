@@ -1,7 +1,6 @@
 import {
-  RECEIPT_NON_ZERO_LIST,
   RECEIPT_SUPER_SUMBIT,
-  RECEIPT_ZERO_LIST,
+  RECEIPT_ZERO_LIST
 } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useApiMutation } from "@/hooks/use-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -42,16 +42,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit,
-  Eye,
   Loader,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TableShimmer } from "../school/loadingtable/TableShimmer";
-import { useApiMutation } from "@/hooks/use-mutation";
-import { useParams } from "react-router-dom";
-import { decryptId } from "@/utils/encyrption/encyrption";
 import { toast } from "sonner";
+import { TableShimmer } from "../school/loadingtable/TableShimmer";
+import { decryptId } from "@/utils/encyrption/encyrption";
+import { useParams } from "react-router-dom";
 
 const RecepitNonZeroList = () => {
   const { id } = useParams();
@@ -61,12 +59,17 @@ const RecepitNonZeroList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const { trigger } = useApiMutation();
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const [pageInput, setPageInput] = useState("");
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState();
+  const [rowSelection, setRowSelection] = useState({});
+  const [loading, setLoading] = useState(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -84,14 +87,14 @@ const RecepitNonZeroList = () => {
     isFetching,
     prefetchPage,
     refetch,
-  } = useGetMutation("recepit-nonzero-list", `${RECEIPT_NON_ZERO_LIST}`, {
+  } = useGetMutation("recepit-nonzero-list", `${RECEIPT_ZERO_LIST}?type=1`, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = receiptData?.schools?.last_page || 1;
+    const totalPages = receiptData?.data?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -102,14 +105,10 @@ const RecepitNonZeroList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    receiptData?.schools?.last_page,
+    receiptData?.data?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState();
-  const [rowSelection, setRowSelection] = useState({});
-  const [loading, setLoading] = useState(null);
+
   const onSubmit = async (refno) => {
     if (!refno) {
       toast.warning("Please select required Fields.");
@@ -179,20 +178,20 @@ const RecepitNonZeroList = () => {
         );
       },
     },
-    {
-      accessorKey: "receipt_ref_no",
-      id: "Receipt Ref",
-      header: "Receipt Ref",
-      cell: ({ row }) => {
-        const receiptNo =
-          row.original?.receipt_ref_no || row.getValue("receipt_ref_no");
-        return receiptNo ? (
-          <div className="text-xs">{receiptNo}</div>
-        ) : (
-          <div className="text-gray-400 text-xs">—</div>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "receipt_ref_no",
+    //   id: "Receipt Ref",
+    //   header: "Receipt Ref",
+    //   cell: ({ row }) => {
+    //     const receiptNo =
+    //       row.original?.receipt_ref_no || row.getValue("receipt_ref_no");
+    //     return receiptNo ? (
+    //       <div className="text-xs">{receiptNo}</div>
+    //     ) : (
+    //       <div className="text-gray-400 text-xs">—</div>
+    //     );
+    //   },
+    // },
 
     {
       accessorKey: "receipt_exemption_type",
@@ -251,7 +250,7 @@ const RecepitNonZeroList = () => {
                     disabled={loading}
                     onClick={() => onSubmit(refno)}
                   >
-                    {loading == refno ? (  
+                    {loading === refno ? (
                       <Loader className="h-4 w-4 animate-spin" />
                     ) : (
                       <Edit className="h-4 w-4" />
@@ -271,7 +270,7 @@ const RecepitNonZeroList = () => {
   ];
 
   const table = useReactTable({
-    data: receiptData?.receipts || [],
+    data: receiptData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -281,8 +280,8 @@ const RecepitNonZeroList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.schools?.last_page || -1,
+    manualPagination: true,
+    pageCount: receiptData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -313,16 +312,25 @@ const RecepitNonZeroList = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {

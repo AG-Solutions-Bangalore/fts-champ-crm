@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,23 +13,19 @@ import { useApiMutation } from "@/hooks/use-mutation";
 import { ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-    OTHER_TEAM_COMMITTEE_CREATE_IMAGE
-} from "../../../api";
+import { OTHER_TEAM_COMMITTEE_CREATE_IMAGE } from "../../../api";
 
-const CommitteeList = ({ committeeResponse }) => {
+const CommitteeList = ({ committeeResponse, refetch }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDonorId, setSelectedDonorId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-
   const { trigger, loading: isSubmitting } = useApiMutation();
-  const committeeData = committeeResponse?.committeeData || [];
+  const committeeData = committeeResponse?.data || [];
   const userImageBase =
-    committeeResponse?.image_url?.find((i) => i.image_for === "Donor")
+    committeeResponse?.image_url?.find((i) => i.image_for == "Donor")
       ?.image_url || "";
-
   const noImageUrl =
-    committeeResponse?.image_url?.find((i) => i.image_for === "No Image")
+    committeeResponse?.image_url?.find((i) => i.image_for == "No Image")
       ?.image_url || "";
   const groupedCommittees = committeeData.reduce((acc, item) => {
     const type = item.committee_type || "Others";
@@ -71,9 +67,10 @@ const CommitteeList = ({ committeeResponse }) => {
         },
       });
 
-      if (res?.code === 200) {
+      if (res?.code === 201) {
         toast.success(res.msg || "Image uploaded successfully");
         handleCloseDialog();
+        refetch();
       } else {
         toast.error(res?.msg || "Failed to upload image");
       }
@@ -113,11 +110,9 @@ const CommitteeList = ({ committeeResponse }) => {
               >
                 {groupedCommittees[type].length > 0 ? (
                   groupedCommittees[type].map((member) => {
-                    const company = member?.individual_company;
-                    const img = company?.indicomp_image_logo
-                      ? `${userImageBase}${company.indicomp_image_logo}`
+                    const img = member?.indicomp_image_logo
+                      ? `${userImageBase}${member.indicomp_image_logo}`
                       : noImageUrl;
-
                     return (
                       <Card
                         key={member?.id}
@@ -126,14 +121,14 @@ const CommitteeList = ({ committeeResponse }) => {
                         <div className="relative shrink-0">
                           <img
                             src={img}
-                            alt={company?.indicomp_full_name}
+                            alt={member?.indicomp_full_name}
                             className="w-16 h-16 rounded-md object-cover border"
                             onError={(e) => (e.currentTarget.src = noImageUrl)}
                           />
                           <button
                             type="button"
                             onClick={() =>
-                              handleOpenDialog(company?.indicomp_fts_id)
+                              handleOpenDialog(member?.indicomp_fts_id)
                             }
                             className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-md shadow-md hover:scale-105 transition"
                           >
@@ -142,7 +137,7 @@ const CommitteeList = ({ committeeResponse }) => {
                         </div>
                         <div className="flex flex-col justify-center">
                           <p className="text-sm font-semibold text-gray-800 leading-tight">
-                            {company?.indicomp_full_name || "Unnamed"}
+                            {member?.indicomp_full_name || "Unnamed"}
                           </p>
                           <p className="text-xs text-gray-600 font-medium">
                             {member?.designation || "—"}

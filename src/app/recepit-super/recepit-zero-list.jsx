@@ -55,15 +55,19 @@ const RecepitZeroList = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [debouncedPage, setDebouncedPage] = useState("");
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedReceiptId, setSelectedReceiptId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState();
+  const [rowSelection, setRowSelection] = useState({});
+  const [pageInput, setPageInput] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -87,7 +91,7 @@ const RecepitZeroList = () => {
   });
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = receiptData?.schools?.last_page || 1;
+    const totalPages = receiptData?.data?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -98,13 +102,10 @@ const RecepitZeroList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    receiptData?.schools?.last_page,
+    receiptData?.data?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState();
-  const [rowSelection, setRowSelection] = useState({});
+
   const columns = [
     {
       id: "serialNo",
@@ -212,7 +213,10 @@ const RecepitZeroList = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigateToNonZero(navigate, row?.original?.id)}
+                  onClick={() => {
+                    // console.log("Row data:", row);
+                    navigateToNonZero(navigate, row?.original?.id);
+                  }}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -251,7 +255,7 @@ const RecepitZeroList = () => {
   ];
 
   const table = useReactTable({
-    data: receiptData?.receipts || [],
+    data: receiptData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -261,8 +265,8 @@ const RecepitZeroList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.schools?.last_page || -1,
+    manualPagination: true,
+    pageCount: receiptData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -293,18 +297,26 @@ const RecepitZeroList = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
-  };
+  }, [debouncedPage]);
 
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
+  };
   const generatePageButtons = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
@@ -544,9 +556,8 @@ const RecepitZeroList = () => {
         </div>
       </div>
       <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-      
         <DialogContent
-          hideOverlay 
+          hideOverlay
           className="max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] h-[85vh] p-0 absolute opacity-0 pointer-events-none -z-50 overflow-hidden bg-white rounded-xl [&>button]:hidden"
           aria-describedby={undefined}
         >
