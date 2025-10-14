@@ -261,14 +261,19 @@ export const OTHER_FAQ = `${BASE_URL}/api/faq`;
 export const OTHER_FAQ_DOWNLOAD = `${BASE_URL}/api/download-faq`;
 
 //TEAM
-export const OTHER_TEAM_DESIGNATION_DROPDOWN = `/api/fetch-designation`;
+// export const OTHER_TEAM_DESIGNATION_DROPDOWN = `/api/fetch-designation`;
+export const OTHER_TEAM_DESIGNATION_DROPDOWN = `/api/designation`;
 export const OTHER_TEAM_COMMITTEE_DROPDOWN = `/api/fetch-committee-date`;
-export const OTHER_TEAM_CREATE = `/api/create-committee`;
-export const OTHER_TEAM_MEMBER_SELECT_LIST = `/api/fetch-ind-donors`;
-export const OTHER_TEAM_COMMITTEE_LIST = `/api/fetch-commitee`;
+// export const OTHER_TEAM_CREATE = `/api/create-committee`;
+export const OTHER_TEAM_CREATE = `/api/committee`;
+// ----Not --Using---------
+// export const OTHER_TEAM_MEMBER_SELECT_LIST = `/api/fetch-ind-donors`;
+export const OTHER_TEAM_COMMITTEE_LIST = `/api/committee`;
+// export const OTHER_TEAM_COMMITTEE_LIST = `/api/fetch-commitee`;
 //not used
 export const OTHER_TEAM_COMMITTEE_DELETE = `${BASE_URL}/api/delete-commitee`;
-export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/create-committee-image`;
+// export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/create-committee-image`;
+export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/committee-image`;
 
 //NOTIFICATION
 export const OTHER_NOTIFICATION_SUPERADMIN = `${BASE_URL}/api/superadmin-fetch-notices`;
@@ -279,7 +284,8 @@ export const OTHER_NOTIFICATION_SUMBIT_NOTICE = `${BASE_URL}/api/notice`;
 
 /*--------------------------Receipt-Super-start----------------------------------- */
 
-export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
+// export const RECEIPT_ZERO_LIST = `/api/fetch-receipts-zero-list`;
+export const RECEIPT_ZERO_LIST = `/api/receipt-zero`;
 export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/fetch-receipts-all-list`;
 export const DOWNLOAD_MULTI_RECEIPT = `/api/download-receipts-multi`;
 export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
@@ -287,6 +293,13 @@ export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
 export const CHANGE_RECEPIT_DONOR = `/api/change-receipts-donor`;
 export const CHANGE_DONOR = `/api/change-donors`;
 export const UPDATE_CHANGE_RECEPIT = `/api/update-change-donors`;
+// export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
+// export const RECEIPT_NON_ZERO_LIST = `/api/receipt-zero`;
+// export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
+// export const RECEIPT_SUPER_SUMBIT = `/api/receipt-zero`;
+// export const CHANGE_RECEPIT_DONOR = `/api/fetch-change-receipts-donor`;
+// export const CHANGE_DONOR = `/api/fetch-change-donors`;
+// export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 
