@@ -3,7 +3,6 @@ import BASE_URL from "@/config/base-url";
 
 import Cookies from "js-cookie";
 import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
-
 /*--------------------------Master-start----------------------------------- */
 // CHAPTER
 export const CHAPTER_LIST = `${BASE_URL}/api/fetch-chapters`;
@@ -12,7 +11,7 @@ export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/chapter`;
 export const CHAPTER_VIEW_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
 export const CHAPTER_VIEW_CREATE_USER = `${BASE_URL}/api/create-user`;
 export const CHAPTER_VIEW_UPDATE_USER = `${BASE_URL}/api/update-user`;
-//(edit)
+//(Edit)
 export const CHAPTER_EDIT_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
 export const CHAPTER_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-chapter`;
 export const CHAPTER_EDIT_STATES_DROPDOWN = `${BASE_URL}/api/fetch-states`;
@@ -22,7 +21,6 @@ export const CHAPTER_DATASOURCE_CREATE = `${BASE_URL}/api/create-datasources`;
 export const CHAPTER_DATASOURCE_UPDATE_BY_ID = `${BASE_URL}/api/update-datasources`;
 
 //STATES
-
 export const STATES_LIST = `${BASE_URL}/api/fetch-states`;
 export const CREATE_STATES = `${BASE_URL}/api/create-states`;
 export const UPDATES_STATES = `${BASE_URL}/api/update-states`;
