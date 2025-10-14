@@ -63,11 +63,11 @@ export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
 export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `/api/update-promoter`;
 
 export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
-export const DONOR_COMPANY_UPDATE_SUMBIT = `${BASE_URL}/api/update-donor/`;
+export const DONOR_COMPANY_UPDATE_SUMBIT = `${BASE_URL}/api/donor/`;
 export const DONOR_INDIVISUAL_UPDATE_SUMBIT = `${BASE_URL}/api/donor/`;
-export const DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor/`;
-export const DONOR_COMPANY_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor/`;
-export const DONOR_COMPANY_EDIT_FETCH = `${BASE_URL}/api/fetch-donor-for-edit`;
+export const DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor-leavegroup/`;
+export const DONOR_COMPANY_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor-leavegroup/`;
+export const DONOR_COMPANY_EDIT_FETCH = `${BASE_URL}/api/donor`;
 export const DONOR_INDIVISUAL_EDIT_FETCH = `${BASE_URL}/api/donor`;
 // pending
 

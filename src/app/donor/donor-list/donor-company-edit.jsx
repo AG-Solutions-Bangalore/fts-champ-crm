@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MemoizedSelect } from '@/components/common/memoized-select';
 
 // Constants
 const gender = [
@@ -90,9 +91,23 @@ const DonorCompanyEdit = () => {
   const [errors, setErrors] = useState({});
 
 
-  const { data: statesHook } = useFetchState()
-  const { data: datasourceHook } = useFetchDataSource()
-  const { data: promoterHook } = useFetchPromoter()
+ const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
+    const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
+    const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
+    const isLoadingHook = isLoadingStates || isLoadingDataSource || isLoadingPromoter;
+
+    const states = statesHooks?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
+
+
+
+
+
+
+
+
+
 
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor-company', id],
@@ -101,7 +116,7 @@ const DonorCompanyEdit = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const donorData = response.data?.individualCompany;
+      const donorData = response.data?.data;
       const cleanedData = {};
       
       Object.keys(donorData).forEach(key => {
@@ -146,12 +161,12 @@ const DonorCompanyEdit = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
-        toast.success(data.msg);
+      if (data.code === 201) {
+        toast.success(data.message);
         queryClient.invalidateQueries(['donor-company', id]);
         navigate('/donor/donors');
       } else if (data.code === 400) {
-        toast.error(data.msg);
+        toast.error(data.message);
       } else {
         toast.error('Unexpected Error');
       }
@@ -166,7 +181,7 @@ const DonorCompanyEdit = () => {
     mutationFn: async (data) => {
       const response = await axios({
         url: `${DONOR_COMPANY_FAMILY_GROUP_UPDATE}${id}`,
-        method: 'PUT',
+        method: 'PATCH',
         data,
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -287,12 +302,14 @@ const DonorCompanyEdit = () => {
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
 
     // Handle file upload
+    // if (donor.indicomp_image_logo instanceof File) {
+    //   formData.append("indicomp_image_logo", donor.indicomp_image_logo);
+    // } else if (donor.indicomp_image_logo) {
+    //   formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
+    // }
     if (donor.indicomp_image_logo instanceof File) {
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
-    } else if (donor.indicomp_image_logo) {
-      formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
     }
-
     formData.append("indicomp_remarks", processValue(donor.indicomp_remarks));
     formData.append("indicomp_promoter", processValue(donor.indicomp_promoter));
     formData.append("indicomp_newpromoter", processValue(donor.indicomp_newpromoter));
@@ -324,12 +341,12 @@ const DonorCompanyEdit = () => {
   const familyGroupStatus = (status) => {
     const data = status === "add_to_family_group" 
       ? { indicomp_related_id: donor.indicomp_related_id }
-      : { leave_family_group: true };
+      : { leave_family_group: 'true' };
     
     familyGroupMutation.mutate(data);
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingHook) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -591,7 +608,7 @@ const DonorCompanyEdit = () => {
                   <Label htmlFor="indicomp_promoter" className="text-xs font-medium">
                     Promoter *
                   </Label>
-                  <Select 
+                  {/* <Select 
                     value={donor.indicomp_promoter} 
                     onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
                   >
@@ -599,13 +616,36 @@ const DonorCompanyEdit = () => {
                       <SelectValue placeholder="Select Promoter" />
                     </SelectTrigger>
                     <SelectContent>
-                      {promoterHook?.promoter.map((option) => (
+                      {promoter?.map((option) => (
                         <SelectItem key={option.indicomp_promoter} value={option.indicomp_promoter}>
                           {option.indicomp_promoter}
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
+                  </Select> */}
+                   {isLoadingPromoter ? (
+                  
+                  <div className="animate-pulse">
+                        <div className="h-10 bg-gray-200 rounded-md w-full"></div>
+                      </div>
+                                   ):(
+                    <MemoizedSelect
+                    value={donor.indicomp_promoter}
+                  
+                    onChange={(value) => {
+                      const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
+                      setDonor(prev => ({
+                        ...prev,
+                        indicomp_promoter: selectedPromoter?.indicomp_fts_id || '', 
+                      }));
+                    }}
+                    options={promoter?.map((option) => ({
+                      value: option.indicomp_promoter,
+                      label: option.indicomp_promoter
+                    }))}
+                    placeholder="Select Promoter"
+                  />
+                                 )} 
                   {errors?.indicomp_promoter && (
                     <p className="text-red-500 text-xs">{errors.indicomp_promoter}</p>
                   )}
@@ -665,7 +705,7 @@ const DonorCompanyEdit = () => {
                       <SelectValue placeholder="Select Source" />
                     </SelectTrigger>
                     <SelectContent>
-                      {datasourceHook?.datasource.map((option) => (
+                      {datasource?.map((option) => (
                         <SelectItem key={option.id} value={option.data_source_type}>
                           {option.data_source_type}
                         </SelectItem>
@@ -874,7 +914,7 @@ const DonorCompanyEdit = () => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {statesHook?.states.map((state) => (
+                      {states.map((state) => (
                         <SelectItem key={state.id} value={state.state_name}>
                           {state.state_name}
                         </SelectItem>
@@ -983,7 +1023,7 @@ const DonorCompanyEdit = () => {
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {statesHook?.states.map((state) => (
+                      {states?.map((state) => (
                         <SelectItem key={state.id} value={state.state_name}>
                           {state.state_name}
                         </SelectItem>
@@ -1107,12 +1147,14 @@ const DonorCompanyEdit = () => {
           </div>
         </div>
       )} */}
+        {showModal &&(
           <AddToGroup
         id={donor.id}
         page="indivisual"
         isOpen={showModal}
         closegroupModal={() => setShowModal(false)}
       />
+        )}
     </div>
   );
 };
