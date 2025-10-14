@@ -4,6 +4,7 @@ import {
   navigateToSchoolAllotView,
   SCHOOL_ALLOT_LIST,
 } from "@/api";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -468,7 +469,7 @@ const SchoolAlloted = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-none border min-h-[31rem] flex flex-col">
+      <div className="rounded-none border min-h-[25rem] flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -524,55 +525,61 @@ const SchoolAlloted = () => {
           </TableBody>
         </Table>
       </div>
+      {isFetching ? (
+        <PaginationShimmer />
+      ) : (
+        schoolData?.data?.data?.length > 0 && (
+          <div className="flex items-center justify-between py-1">
+            <div className="text-sm text-muted-foreground">
+              Showing {schoolData?.data?.from || 0} to{" "}
+              {schoolData?.data?.to || 0} of {schoolData?.data?.total || 0}{" "}
+              schools
+            </div>
 
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
-        </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                disabled={!table.getCanPreviousPage()}
+                className="h-8 px-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+              <div className="flex items-center space-x-1">
+                {generatePageButtons()}
+              </div>
 
-          <div className="flex items-center space-x-1">
-            {generatePageButtons()}
+              <div className="flex items-center space-x-2 text-sm">
+                <span>Go to</span>
+                <Input
+                  type="tel"
+                  min="1"
+                  max={table.getPageCount()}
+                  value={pageInput}
+                  onChange={handlePageInput}
+                  onBlur={() => setPageInput("")}
+                  onKeyDown={keyDown}
+                  className="w-16 h-8 text-sm"
+                  placeholder="Page"
+                />
+                <span>of {table.getPageCount()}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                disabled={!table.getCanNextPage()}
+                className="h-8 px-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Go to</span>
-            <Input
-              type="tel"
-              min="1"
-              max={table.getPageCount()}
-              value={pageInput}
-              onChange={handlePageInput}
-              onBlur={() => setPageInput("")}
-              onKeyDown={keyDown}
-              className="w-16 h-8 text-sm"
-              placeholder="Page"
-            />
-            <span>of {table.getPageCount()}</span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={!table.getCanNextPage()}
-            className="h-8 px-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        )
+      )}
     </div>
   );
 };

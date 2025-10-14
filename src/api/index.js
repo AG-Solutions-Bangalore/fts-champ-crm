@@ -22,13 +22,12 @@ export const CHAPTER_DATASOURCE_CREATE = `${BASE_URL}/api/create-datasources`;
 export const CHAPTER_DATASOURCE_UPDATE_BY_ID = `${BASE_URL}/api/update-datasources`;
 
 //STATES
-
 export const STATES_LIST = `${BASE_URL}/api/fetch-states`;
 export const CREATE_STATES = `${BASE_URL}/api/create-states`;
 export const UPDATES_STATES = `${BASE_URL}/api/update-states`;
 
-//DESIGNATION
 
+//DESIGNATION
 export const DESIGNATION_LIST = `${BASE_URL}/api/fetch-designation`;
 export const CREATE_DESIGNATION = `${BASE_URL}/api/create-designation`;
 export const UPDATES_DESIGNATION = `${BASE_URL}/api/update-designation`;

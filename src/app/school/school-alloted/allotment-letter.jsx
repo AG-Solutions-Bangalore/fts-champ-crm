@@ -137,7 +137,6 @@ const SchoolAllotLetter = () => {
   return (
     <div className="invoice-wrapper overflow-x-auto grid md:grid-cols-1 1fr">
       <div className="flex flex-col items-center">
-        {/* Floating Action Buttons */}
         <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
           <Card className="p-3 shadow-2xl border border-white/30 backdrop-blur-lg bg-white/80 rounded-2xl hover:bg-white/90 transition-all duration-300">
             <div className="flex items-center gap-2">
@@ -462,16 +461,16 @@ const SchoolAllotLetter = () => {
                         {[
                           "STATE",
                           "ANCHAL  CLUSTER",
-                          "STATE",
+                          "CLUSTER",
                           "SUB CLUSTER",
                           "VILLAGE",
                           "TEACHER",
                           "BOYS",
                           "GIRLS  ",
                           "TOTAL",
-                        ].map((header) => (
+                        ].map((header,index) => (
                           <th
-                            key={header}
+                             key={`${header}-${index}`} 
                             className="border border-black px-1 py-1 text-center text-[10px]"
                           >
                             {header}

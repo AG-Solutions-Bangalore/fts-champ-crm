@@ -109,6 +109,7 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
                       </thead>
                       <tbody>
                         {Array.isArray(SchoolAlotView) &&
+                        SchoolAlotView.length > 0 ? (
                           SchoolAlotView.map((dataSumm) => (
                             <tr key={dataSumm.id}>
                               <td className="border border-black px-4 py-2 text-xs">
@@ -139,7 +140,17 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
                                 {dataSumm.total}
                               </td>
                             </tr>
-                          ))}
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan="9"
+                              className="border border-black px-4 py-3 text-center text-sm text-gray-500"
+                            >
+                              No data available
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>

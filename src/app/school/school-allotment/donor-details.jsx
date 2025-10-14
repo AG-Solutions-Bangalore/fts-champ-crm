@@ -40,6 +40,7 @@ import {
   SCHOOL_TO_ALOT_LIST,
 } from "../../../api";
 import { TableShimmer } from "../loadingtable/TableShimmer";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 const DonorDetails = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -97,7 +98,6 @@ const DonorDetails = () => {
     refetchchooluser();
     refetchchoolallotyeaar();
   }, [donorId, donorYear]);
-  console.log(schoolData?.data?.school?.last_page, "schoolData");
   useEffect(() => {
     if (!schoolData?.data?.school?.last_page) return;
 
@@ -423,7 +423,7 @@ const DonorDetails = () => {
           <Label htmlFor="from-date">From Date*</Label>
           <Input
             id="from-date"
-            value={dateschool.school_allot_from}
+            value={dateschool.school_allot_from ?? ""}
             disabled
             type="date"
           />
@@ -432,7 +432,7 @@ const DonorDetails = () => {
           <Label htmlFor="to-date">To Date*</Label>
           <Input
             id="to-date"
-            value={dateschool.school_allot_to}
+            value={dateschool.school_allot_to ?? ""}
             disabled
             type="date"
           />
@@ -445,7 +445,7 @@ const DonorDetails = () => {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search school allotment..."
-            value={searchTerm}
+            value={searchTerm ?? ""}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
@@ -530,57 +530,61 @@ const DonorDetails = () => {
           </TableBody>
         </Table>
       </div>
+      {isFetching ? (
+        <PaginationShimmer />
+      ) : (
+        schoolData?.data?.school?.data?.length > 0 && (
+          <div className="flex items-center justify-between py-1">
+            <div className="text-sm text-muted-foreground">
+              Showing {schoolData?.data?.school?.from || 0} to{" "}
+              {schoolData?.data?.school?.to || 0} of{" "}
+              {schoolData?.data?.school?.total || 0} schools
+            </div>
 
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.school?.from || 0} to{" "}
-          {schoolData?.data?.school?.to || 0} of{" "}
-          {schoolData?.data?.school?.total || 0} schools
-        </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                disabled={!table.getCanPreviousPage()}
+                className="h-8 px-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+              <div className="flex items-center space-x-1">
+                {generatePageButtons()}
+              </div>
 
-          <div className="flex items-center space-x-1">
-            {generatePageButtons()}
+              <div className="flex items-center space-x-2 text-sm">
+                <span>Go to</span>
+                <Input
+                  type="tel"
+                  min="1"
+                  max={table.getPageCount()}
+                  value={pageInput ?? ""}
+                  onChange={handlePageInput}
+                  onBlur={() => setPageInput("")}
+                  onKeyDown={keyDown}
+                  className="w-16 h-8 text-sm"
+                  placeholder="Page"
+                />
+                <span>of {table.getPageCount()}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                disabled={!table.getCanNextPage()}
+                className="h-8 px-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Go to</span>
-            <Input
-              type="tel"
-              min="1"
-              max={table.getPageCount()}
-              value={pageInput}
-              onChange={handlePageInput}
-              onBlur={() => setPageInput("")}
-              onKeyDown={keyDown}
-              className="w-16 h-8 text-sm"
-              placeholder="Page"
-            />
-            <span>of {table.getPageCount()}</span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={!table.getCanNextPage()}
-            className="h-8 px-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+        )
+      )}
       {/* Submit */}
       <div className="flex justify-end mt-4">
         <Button onClick={onSubmit} disabled={submitloading}>

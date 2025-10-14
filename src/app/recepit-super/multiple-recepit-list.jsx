@@ -44,6 +44,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TableShimmer } from "../school/loadingtable/TableShimmer";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 
 const MultipleRecepitList = () => {
   const queryClient = useQueryClient();
@@ -75,6 +76,7 @@ const MultipleRecepitList = () => {
   }, [searchTerm]);
   const {
     data: receiptMultipleData,
+
     isError,
     isFetching,
     prefetchPage,
@@ -495,7 +497,7 @@ const MultipleRecepitList = () => {
         </div>
       </div>
       {/* Table */}
-      <div className="rounded-none border flex flex-col">
+      <div className="rounded-none border min-h-[25rem] flex flex-col">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -551,55 +553,61 @@ const MultipleRecepitList = () => {
           </TableBody>
         </Table>
       </div>
-      {/*  Pagination */}
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          Showing {receiptData?.from || 0} to {receiptData?.to || 0}{" "}
-          of {receiptData?.total || 0} recepits
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+      {isFetching ? (
+        <PaginationShimmer />
+      ) : (
+        receiptData?.data?.length > 0 && (
+          <div className="flex items-center justify-between py-1">
+            <div className="text-sm text-muted-foreground">
+              Showing {receiptData?.from || 0} to {receiptData?.to || 0} of{" "}
+              {receiptData?.total || 0} receipts
+            </div>
 
-          <div className="flex items-center space-x-1">
-            {generatePageButtons()}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                disabled={!table.getCanPreviousPage()}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <div className="flex items-center space-x-1">
+                {generatePageButtons()}
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <span>Go to</span>
+                <Input
+                  type="tel"
+                  min="1"
+                  max={table.getPageCount()}
+                  value={pageInput}
+                  onChange={handlePageInput}
+                  onBlur={() => setPageInput("")}
+                  onKeyDown={keyDown}
+                  className="w-16 h-8 text-sm"
+                  placeholder="Page"
+                />
+                <span>of {table.getPageCount()}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                disabled={!table.getCanNextPage()}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Go to</span>
-            <Input
-              type="tel"
-              min="1"
-              max={table.getPageCount()}
-              value={pageInput}
-              onChange={handlePageInput}
-              onBlur={() => setPageInput("")}
-              onKeyDown={keyDown}
-              className="w-16 h-8 text-sm"
-              placeholder="Page"
-            />
-            <span>of {table.getPageCount()}</span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={!table.getCanNextPage()}
-            className="h-8 px-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        )
+      )}
     </div>
   );
 };
