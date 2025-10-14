@@ -7,7 +7,7 @@ import { decryptId, encryptId } from "@/utils/encyrption/encyrption";
 /*--------------------------Master-start----------------------------------- */
 // CHAPTER
 export const CHAPTER_LIST = `${BASE_URL}/api/fetch-chapters`;
-export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/create-chapter`;
+export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/chapter`;
 // (view)-- add school pending
 export const CHAPTER_VIEW_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
 export const CHAPTER_VIEW_CREATE_USER = `${BASE_URL}/api/create-user`;
@@ -284,9 +284,9 @@ export const RECEIPT_SUPER_MULTI_RECEIPT_LIST = `/api/fetch-receipts-all-list`;
 export const DOWNLOAD_MULTI_RECEIPT = `/api/download-receipts-multi`;
 export const RECEIPT_NON_ZERO_LIST = `/api/fetch-receipts-zero`;
 export const RECEIPT_SUPER_SUMBIT = `/api/update-receipts-zero-by-id`;
-export const CHANGE_RECEPIT_DONOR = `/api/fetch-change-receipts-donor`;
-export const CHANGE_DONOR = `/api/fetch-change-donors`;
-export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
+export const CHANGE_RECEPIT_DONOR = `/api/change-receipts-donor`;
+export const CHANGE_DONOR = `/api/change-donors`;
+export const UPDATE_CHANGE_RECEPIT = `/api/update-change-donors`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 

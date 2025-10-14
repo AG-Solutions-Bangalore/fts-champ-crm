@@ -128,7 +128,7 @@ const ReceiptOne = () => {
   
   const updateEmailMutation = useMutation({
     mutationFn: (formData) => 
-      axios.put(`${BASE_URL}/api/update-donor-email/${Cookies.get("ftsid")}`, formData, {
+      axios.patch(`${BASE_URL}/api/update-donor-email/${Cookies.get("ftsid")}`, formData, {
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
         },
