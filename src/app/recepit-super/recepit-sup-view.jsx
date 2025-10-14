@@ -1,7 +1,6 @@
 import numWords from "num-words";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -9,7 +8,6 @@ import moment from "moment";
 import Logo3 from "../../assets/receipt/ekal.png";
 import Logo1 from "../../assets/receipt/fts_log.png";
 import Logo2 from "../../assets/receipt/top.png";
-import tallyImg from "../../assets/tally.svg";
 
 const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
   const tableRef = useRef(null);

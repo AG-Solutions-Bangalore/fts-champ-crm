@@ -30,6 +30,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+
 import {
   ArrowUpDown,
   ChevronDown,
@@ -41,8 +42,8 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { TableShimmer } from "../school/loadingtable/TableShimmer";
 import { toast } from "sonner";
+import { TableShimmer } from "../school/loadingtable/TableShimmer";
 
 const MultipleRecepitList = () => {
   const queryClient = useQueryClient();
