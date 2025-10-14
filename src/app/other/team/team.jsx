@@ -1,21 +1,22 @@
-import React, { useState } from "react";
-import { MemoizedSelect } from "@/components/common/memoized-select";
-import { Label } from "@/components/ui/label";
 import {
+  DONOR_SUMMARY_FETCH_DONOR,
   OTHER_TEAM_COMMITTEE_DROPDOWN,
   OTHER_TEAM_COMMITTEE_LIST,
   OTHER_TEAM_CREATE,
   OTHER_TEAM_DESIGNATION_DROPDOWN,
-  OTHER_TEAM_MEMBER_SELECT_LIST,
 } from "@/api";
-import { useGetMutation } from "@/hooks/use-get-mutation";
-import { Card, CardContent } from "@/components/ui/card";
+import { MemoizedSelect } from "@/components/common/memoized-select";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useState } from "react";
 
-import moment from "moment";
-import TeamLoading from "./teamloading";
 import { useApiMutation } from "@/hooks/use-mutation";
+import moment from "moment";
+import { toast } from "sonner";
 import CommitteeList from "./committee-list";
+import TeamLoading from "./teamloading";
 
 const commiteeOptions = [
   { value: "Executive Committee", label: "Executive Committee" },
@@ -34,12 +35,15 @@ const Team = () => {
     receipt_to_date: "",
     indicomp_full_name_dummy: "",
   });
-  const { trigger, loading } = useApiMutation();
-  const { data: committeeResponse, isLoading: committeeLoading } =
-    useGetMutation("teamCommitteeList", OTHER_TEAM_COMMITTEE_LIST);
+  const { trigger, loading: updateloading } = useApiMutation();
+  const {
+    data: committeeResponse,
+    isLoading: committeeLoading,
+    refetch,
+  } = useGetMutation("teamCommitteeList", OTHER_TEAM_COMMITTEE_LIST);
+  console.log(committeeResponse, "committeeResponse");
   const { data: designationOptions, isLoading: designationloading } =
     useGetMutation("teamdesignation", OTHER_TEAM_DESIGNATION_DROPDOWN);
-
   const { data: teamcommittes, isLoading: committesloading } = useGetMutation(
     "teamcommitte",
     OTHER_TEAM_COMMITTEE_DROPDOWN
@@ -47,13 +51,13 @@ const Team = () => {
 
   const { data: memberdata, isLoading: membersloading } = useGetMutation(
     "memberdata",
-    OTHER_TEAM_MEMBER_SELECT_LIST
+    DONOR_SUMMARY_FETCH_DONOR
   );
 
   const handleInputChange = (value, field) => {
     if (field === "indicomp_full_name_dummy") {
-      const selected = memberdata?.individualCompanies?.find(
-        (item) => item.indicomp_fts_id === value
+      const selected = memberdata?.data?.find(
+        (item) => item.indicomp_fts_id == value
       );
       if (selected) {
         setCommittee((prev) => ({
@@ -80,20 +84,26 @@ const Team = () => {
   }
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (
-      !committee.committee_type ||
-      !committee.designation ||
-      !committee.indicomp_full_name_dummy
-    ) {
-      toast.warning("Please select required Fields.");
+    if (!committee.committee_type) {
+      toast.warning("Please select Committee Type.");
+      return;
+    }
+
+    if (!committee.designation) {
+      toast.warning("Please select Designation.");
+      return;
+    }
+
+    if (!committee.indicomp_full_name_dummy) {
+      toast.warning("Please select Indicomp Full Name.");
       return;
     }
 
     const payload = {
       committee_type: committee.committee_type,
       designation: committee.designation,
-      start_date: teamcommittes?.committeDate?.committee_from,
-      end_date: teamcommittes?.committeDate?.committee_to,
+      start_date: teamcommittes?.data?.committee_from,
+      end_date: teamcommittes?.data?.committee_to,
       indicomp_fts_id: committee.indicomp_full_name,
       indicomp_full_name_dummy: committee.indicomp_full_name_dummy,
     };
@@ -108,7 +118,22 @@ const Team = () => {
         toast.warning("No response from server.");
         return;
       }
-      toast.success(res?.msg || "Team created successfully!");
+      if (res.code == 201) {
+        toast.success(res?.msg || "Team created successfully!");
+        setCommittee({
+          committee_type: "",
+          designation: "",
+          indicomp_fts_id: "",
+          indicomp_full_name: "",
+          receipt_from_date: "",
+          receipt_to_date: "",
+          indicomp_full_name_dummy: "",
+        });
+      } else {
+        toast.success(
+          res?.msg || "Something went wrong while creating the team!"
+        );
+      }
     } catch (err) {
       console.error("Error creating team:", err);
       toast.error(
@@ -128,16 +153,16 @@ const Team = () => {
                 <div className="flex gap-2 text-sm text-gray-600 mt-1">
                   <span className="font-medium">From:</span>
                   <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
-                    {teamcommittes?.committeDate?.committee_from
-                      ? moment(
-                          teamcommittes.committeDate.committee_from
-                        ).format("DD MMM YYYY")
+                    {teamcommittes?.data?.committee_from
+                      ? moment(teamcommittes.data.committee_from).format(
+                          "DD MMM YYYY"
+                        )
                       : "—"}
                   </span>
                   <span className="font-medium">To:</span>
                   <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
-                    {teamcommittes?.committeDate?.committee_to
-                      ? moment(teamcommittes.committeDate.committee_to).format(
+                    {teamcommittes?.data?.committee_to
+                      ? moment(teamcommittes.data.committee_to).format(
                           "DD MMM YYYY"
                         )
                       : "—"}
@@ -168,7 +193,7 @@ const Team = () => {
                   value={committee?.designation}
                   onChange={(e) => handleInputChange(e, "designation")}
                   options={
-                    designationOptions?.designation?.map((item) => ({
+                    designationOptions?.data?.map((item) => ({
                       label: item.designation_type,
                       value: item.designation_type,
                     })) || []
@@ -192,7 +217,7 @@ const Team = () => {
                     handleInputChange(e, "indicomp_full_name_dummy")
                   }
                   options={
-                    memberdata?.individualCompanies?.map((item) => ({
+                    memberdata?.data?.map((item) => ({
                       label: `${item.indicomp_full_name} (${item.indicomp_type})`,
                       value: item.indicomp_fts_id,
                     })) || []
@@ -203,14 +228,17 @@ const Team = () => {
 
               <div className="flex items-end gap-4 mt-2">
                 <Button className="text-white" type="submit">
-                  Update
+                  {updateloading ? "Updating" : "Update"}
                 </Button>
               </div>
             </div>
           </form>
         </CardContent>
       </Card>
-      <CommitteeList committeeResponse={committeeResponse} />
+      <CommitteeList
+        committeeResponse={committeeResponse || []}
+        refetch={refetch}
+      />
     </>
   );
 };
