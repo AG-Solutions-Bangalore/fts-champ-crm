@@ -1,24 +1,18 @@
-import numWords from "num-words";
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { RECEPIT_SUP_DOWNLOAD } from "@/api";
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import moment from "moment";
+import numWords from "num-words";
+import { useEffect, useRef } from "react";
 import Logo3 from "../../assets/receipt/ekal.png";
 import Logo1 from "../../assets/receipt/fts_log.png";
 import Logo2 from "../../assets/receipt/top.png";
-import tallyImg from "../../assets/tally.svg";
+import { toast } from "sonner";
+``;
 
 const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
   const tableRef = useRef(null);
-  //   const [receipts, setReceipts] = useState({});
-  //   const [chapter, setChapter] = useState({});
-  //   const [authsign, setSign] = useState({});
-  //   const [loader, setLoader] = useState(true);
-  //   const [country, setCountry] = useState({});
-  const navigate = useNavigate();
   const handleSavePDF = () => {
     const input = tableRef.current;
 
@@ -64,7 +58,6 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
           });
 
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
 
           const margin = 2;
 
@@ -73,6 +66,7 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
 
           pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
           pdf.save("Receipt.pdf");
+          toast.success("PDF generated successfully");
         })
         .catch((error) => {
           console.error("Error generating PDF: ", error);
@@ -83,75 +77,48 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
   };
   const {
     data: receiptData,
-    isError,
-    isLoading:loader,
-    isFetching,
+    isLoading: loader,
     refetch,
-  } = useGetMutation(`recepit-sup-view${id}`, `/api/fetch-receipt-by-id/${id}`);
-  const receipts = receiptData?.receipt;
+  } = useGetMutation(`recepit-sup-view${id}`, `${RECEPIT_SUP_DOWNLOAD}/${id}`);
+  const receipts = receiptData?.data;
   const chapter = receiptData?.chapter;
   const authsign = receiptData?.auth_sign;
   const country = receiptData?.country;
   const amountInWords = numWords(receipts?.receipt_total_amount);
-
-  //   useEffect(() => {
-  //     const fetchData = async () => {
-  //       try {
-  //         const token = localStorage.getItem("token");
-  //         const response = await axios.get(
-  //           `${BASE_URL}/api/fetch-receipt-by-id/${id}`,
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${token}`,
-  //             },
-  //           }
-  //         );
-  //         setReceipts(response.data.receipt);
-  //         setChapter(response.data.chapter);
-  //         setSign(response.data.auth_sign);
-  //         setCountry(response.data.country);
-  //         setLoader(false);
-  //       } catch (error) {
-  //         toast.error("Failed to fetch viewer details");
-  //       }
-  //     };
-
-  //     fetchData();
-  //   }, [id]);
-
   useEffect(() => {
     refetch();
   }, [id]);
-  
 
-    useEffect(() => {
-      let timer;
-      if (isDialog && !loader) {
-        const downloadAndClose = async () => {
-          try {
-            await handleSavePDF();
-            setTimeout(() => {
-              onClose();
-            }, 100);
-          } catch (error) {
-            console.error("Error during PDF generation:", error);
-            onClose();
-          }
-        };
-
-        timer = setTimeout(downloadAndClose, 500);
+  useEffect(() => {
+    let timer;
+    if (isDialog && !loader && receiptData?.data) {
+      if (!receipts) {
+        toast.error("No data found for the given ID");
+        onClose();
+        return;
       }
-
-      return () => {
-        if (timer) clearTimeout(timer);
+      const downloadAndClose = async () => {
+        try {
+          await handleSavePDF();
+          setTimeout(() => {
+            onClose();
+          }, 100);
+        } catch (error) {
+          console.error("Error during PDF generation:", error);
+          onClose();
+        }
       };
-    }, [isDialog, loader, onClose]);
 
+      timer = setTimeout(downloadAndClose, 500);
+    }
 
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isDialog, loader, onClose]);
   return (
     <>
-      
-      <div className="overflow-x-auto  grid md:grid-cols-1 1fr">
+      <div className="overflow-x-auto file:grid md:grid-cols-1 1fr">
         {"2022-04-01" <= receipts?.receipt_date && (
           <div className="flex justify-center">
             <div className="p-6 mt-5 bg-white shadow-md rounded-lg">
@@ -240,92 +207,54 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
                           {Object.keys(receipts).length !== 0 && (
                             <div className=" ml-6  font-bold">
                               <p className="text-sm leading-tight">
-                                {receipts.individual_company.indicomp_type !==
+                                {receipts.donor.indicomp_type !==
                                   "Individual" && "M/s"}
-                                {receipts.individual_company.indicomp_type ===
-                                  "Individual" &&
-                                  receipts.individual_company.title}{" "}
-                                {receipts.individual_company.indicomp_full_name}
+                                {receipts.donor.indicomp_type ===
+                                  "Individual" && receipts.donor.title}{" "}
+                                {receipts.donor.indicomp_full_name}
                               </p>
 
-                              {receipts.individual_company.hasOwnProperty(
+                              {receipts.donor.hasOwnProperty(
                                 "indicomp_off_branch_address"
                               ) && (
                                 <div>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_off_branch_address
-                                    }
+                                    {receipts.donor.indicomp_off_branch_address}
                                   </p>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_off_branch_area
-                                    }
+                                    {receipts.donor.indicomp_off_branch_area}
                                   </p>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_off_branch_ladmark
-                                    }
+                                    {receipts.donor.indicomp_off_branch_ladmark}
                                   </p>
                                   <p className="text-sm leading-tight">
+                                    {receipts.donor.indicomp_off_branch_city}-{" "}
                                     {
-                                      receipts.individual_company
-                                        .indicomp_off_branch_city
-                                    }
-                                    -{" "}
-                                    {
-                                      receipts.individual_company
+                                      receipts.donor
                                         .indicomp_off_branch_pin_code
                                     }
-                                    ,
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_off_branch_state
-                                    }
+                                    ,{receipts.donor.indicomp_off_branch_state}
                                   </p>
                                 </div>
                               )}
 
-                              {receipts.individual_company.hasOwnProperty(
+                              {receipts.donor.hasOwnProperty(
                                 "indicomp_res_reg_address"
                               ) && (
                                 <div>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_address
-                                    }
+                                    {receipts.donor.indicomp_res_reg_address}
                                   </p>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_area
-                                    }
+                                    {receipts.donor.indicomp_res_reg_area}
                                   </p>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_ladmark
-                                    }
+                                    {receipts.donor.indicomp_res_reg_ladmark}
                                   </p>
                                   <p className="text-sm leading-tight">
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_city
-                                    }
-                                    -{" "}
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_pin_code
-                                    }
-                                    ,
-                                    {
-                                      receipts.individual_company
-                                        .indicomp_res_reg_state
-                                    }
+                                    {receipts.donor.indicomp_res_reg_city}-{" "}
+                                    {receipts.donor.indicomp_res_reg_pin_code},
+                                    {receipts.donor.indicomp_res_reg_state}
                                   </p>
                                 </div>
                               )}
@@ -371,10 +300,7 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
                                   (coustate1, key) =>
                                     coustate1.state_country === "India" && (
                                       <span key={key}>
-                                        {
-                                          receipts.individual_company
-                                            .indicomp_pan_no
-                                        }
+                                        {receipts.donor.indicomp_pan_no}
                                       </span>
                                     )
                                 )}
@@ -462,8 +388,7 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
                           <br />
                           <br />
                           {authsign.length > 0 && (
-                            <div className="signature-section">
-                              {/* Signature row */}
+                            <div className="signature-section mb-2">
                               <div className="flex flex-col items-end">
                                 {authsign.map((sig, key) => (
                                   <div key={key} className="text-center">
@@ -486,7 +411,6 @@ const ReceiptSuperView = ({ id, isDialog = false, onClose }) => {
                                 ))}
                               </div>
 
-                              {/* Optional: Add authorized signatory text */}
                               <div className="text-sm text-gray-500 mt-0">
                                 Authorized Signatory
                               </div>

@@ -27,6 +27,7 @@ import {
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
+import { decryptId } from "@/utils/encyrption/encyrption";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -46,10 +47,9 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { TableShimmer } from "../school/loadingtable/TableShimmer";
-import { decryptId } from "@/utils/encyrption/encyrption";
-import { useParams } from "react-router-dom";
 
 const RecepitNonZeroList = () => {
   const { id } = useParams();

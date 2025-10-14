@@ -30,6 +30,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+
 import {
   ArrowUpDown,
   ChevronDown,
@@ -41,21 +42,26 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { TableShimmer } from "../school/loadingtable/TableShimmer";
 import { toast } from "sonner";
+import { TableShimmer } from "../school/loadingtable/TableShimmer";
 
 const MultipleRecepitList = () => {
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const { trigger, loading } = useApiMutation();
+  const [range, setRange] = useState({ from_id: "", to_id: "" });
+  const [pageInput, setPageInput] = useState("");
+  const [sorting, setSorting] = useState([]);
+  const [debouncedPage, setDebouncedPage] = useState("");
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState();
+  const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
-  const { trigger, loading } = useApiMutation();
-  const [range, setRange] = useState({ from_id: "", to_id: "" });
-  const [pageInput, setPageInput] = useState("");
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -68,7 +74,7 @@ const MultipleRecepitList = () => {
     };
   }, [searchTerm]);
   const {
-    data: receiptData,
+    data: receiptMultipleData,
     isError,
     isFetching,
     prefetchPage,
@@ -81,9 +87,10 @@ const MultipleRecepitList = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
+  const receiptData = receiptMultipleData?.data;
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = receiptData?.schools?.last_page || 1;
+    const totalPages = receiptData?.last_page || 1;
 
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
@@ -94,13 +101,10 @@ const MultipleRecepitList = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    receiptData?.schools?.last_page,
+    receiptData?.last_page,
     prefetchPage,
   ]);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState();
-  const [rowSelection, setRowSelection] = useState({});
+
   const columns = [
     {
       id: "serialNo",
@@ -156,7 +160,7 @@ const MultipleRecepitList = () => {
       id: "Donor Name",
       header: "Donor Name",
       cell: ({ row }) => {
-        const fullName = row.original?.individual_company?.indicomp_full_name;
+        const fullName = row.original?.indicomp_full_name;
         return fullName ? (
           <div className="text-xs">{fullName}</div>
         ) : (
@@ -199,7 +203,7 @@ const MultipleRecepitList = () => {
       id: "Chapter Name",
       header: "Chapter Name",
       cell: ({ row }) => {
-        const chapterName = row.original?.chapter?.chapter_name;
+        const chapterName = row.original?.chapter_name;
         return chapterName ? (
           <div className="text-xs">{chapterName}</div>
         ) : (
@@ -210,7 +214,7 @@ const MultipleRecepitList = () => {
   ];
 
   const table = useReactTable({
-    data: receiptData?.receipts || [],
+    data: receiptData?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -220,8 +224,8 @@ const MultipleRecepitList = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    // manualPagination: true,
-    // pageCount: schoolData?.schools?.last_page || -1,
+    manualPagination: true,
+    pageCount: receiptData?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -258,16 +262,25 @@ const MultipleRecepitList = () => {
     }
   };
 
-  const handlePageInput = (e) => {
-    const value = e.target.value;
-    setPageInput(value);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPage(pageInput);
+    }, 500);
 
-    if (value && !isNaN(value)) {
-      const pageNum = parseInt(value);
+    return () => clearTimeout(timer);
+  }, [pageInput]);
+
+  useEffect(() => {
+    if (debouncedPage && !isNaN(debouncedPage)) {
+      const pageNum = parseInt(debouncedPage);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
         handlePageChange(pageNum - 1);
       }
     }
+  }, [debouncedPage]);
+
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
   };
 
   const generatePageButtons = () => {
@@ -541,8 +554,8 @@ const MultipleRecepitList = () => {
       {/*  Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {receiptData?.data?.from || 0} to {receiptData?.data?.to || 0}{" "}
-          of {receiptData?.data?.total || 0} recepits
+          Showing {receiptData?.from || 0} to {receiptData?.to || 0}{" "}
+          of {receiptData?.total || 0} recepits
         </div>
 
         <div className="flex items-center space-x-2">
