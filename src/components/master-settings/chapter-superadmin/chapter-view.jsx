@@ -55,6 +55,7 @@ const ChapterViewSuperAdmin = () => {
     chapter_date_of_incorporation: "",
     chapter_region_code: "",
     auth_sign: "",
+    chapter_status: "",
   });
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [initialFormData, setInitialFormData] = useState({});
@@ -66,7 +67,7 @@ const ChapterViewSuperAdmin = () => {
       const response = await axios.get(CHAPTER_EDIT_STATES_DROPDOWN, {
         headers: { Authorization: `Bearer ${Cookies.get('token')}` },
       });
-      return response.data?.states || [];
+      return response.data?.data || [];
     },
   });
   const states = statesData || [];
@@ -83,12 +84,13 @@ const ChapterViewSuperAdmin = () => {
 
 
   const users = chapterData?.users || [];
+  const dataSource = chapterData?.dataSource || [];
   const ImageUrl = chapterData?.image_url;
   const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code
 
   useEffect(() => {
-    if (chapterData?.chapter) {
-      const chapter = chapterData.chapter;
+    if (chapterData?.data) {
+      const chapter = chapterData.data;
       const newFormData = {
         chapter_name: chapter.chapter_name || "",
         chapter_code: chapter.chapter_code || "",
@@ -103,6 +105,7 @@ const ChapterViewSuperAdmin = () => {
         chapter_date_of_incorporation: chapter.chapter_date_of_incorporation || "",
         chapter_region_code: chapter.chapter_region_code || "",
         auth_sign: chapter.auth_sign || "",
+        chapter_status: chapter.chapter_status || "",
       };
       
       setFormData(newFormData);
@@ -118,17 +121,15 @@ const ChapterViewSuperAdmin = () => {
   const updateMutation = useMutation({
     mutationFn: (data) => fetchChapterUpdateEditById(id, data),
     onSuccess: (response) => {
-      if (response.data.code === 200) {
-        toast.success(response.data.msg);
+      if (response.data.code === 201) {
+        toast.success(response.data.message);
         queryClient.invalidateQueries(['chapters', id]);
         navigate('/master/chapter');
-      } else if (response.data.code === 400) {
-        toast.error(response.data.msg);
-      } else {
-        toast.error('Unexpected error occurred');
+      }  else {
+        toast.error(response.data.message || 'Unexpected error occurred');
       }
     },
-    onError: () => toast.error('Failed to update chapter'),
+    onError: (error) => toast.error(error.response.data.message || 'Failed to update chapter'),
   });
 
   const handleInputChange = (field, value) => {
@@ -442,6 +443,28 @@ const ChapterViewSuperAdmin = () => {
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">Committee Member</p>
                   </div>
+                  <div className="space-y-1">
+  <Label htmlFor="chapter_status" className="text-xs font-medium">
+    Chapter Status <span className="text-red-500">*</span>
+  </Label>
+  <Select
+    value={formData.chapter_status}
+    onValueChange={(value) => handleInputChange('chapter_status', value)}
+    required
+  >
+    <SelectTrigger className="h-8 text-xs">
+      <SelectValue placeholder="Select status" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="Active" className="text-xs">
+        Active
+      </SelectItem>
+      <SelectItem value="Inactive" className="text-xs">
+        Inactive
+      </SelectItem>
+    </SelectContent>
+  </Select>
+</div>
                 </div>
               </CardContent>
 
@@ -498,7 +521,7 @@ const ChapterViewSuperAdmin = () => {
 
       
         <TabsContent value="datasources" className="">
-        <DatasourceListSuperadmin id={id}/>
+        <DatasourceListSuperadmin datasources={dataSource} id={id}/>
           
           
        

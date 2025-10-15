@@ -43,9 +43,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TableShimmer } from "../loadingtable/TableShimmer";
 import PaginationShimmer from "@/components/common/pagination-schimmer";
+import Cookies from "js-cookie";
 
 const SchoolToAllot = () => {
   const navigate = useNavigate();
+   const userType = Cookies.get('user_type_id');
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
@@ -184,6 +186,9 @@ const SchoolToAllot = () => {
       },
       size: 100,
     },
+    ...(userType !== '4'? [
+
+    
     {
       id: "actions",
       header: "Actions",
@@ -231,6 +236,7 @@ const SchoolToAllot = () => {
       },
       size: 80,
     },
+  ] : []),
   ];
   const table = useReactTable({
     data: schooltoallotData?.data?.data || [],

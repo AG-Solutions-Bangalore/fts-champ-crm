@@ -42,7 +42,7 @@ import CreateDatasourceSuperadmin from './create-datasource-superadmin';
 import EditDatasourceSuperadmin from './edit-datasource-superadmin';
 import { decryptId } from '@/utils/encyrption/encyrption';
 
-const DatasourceListSuperadmin = ({id}) => {
+const DatasourceListSuperadmin = ({id,datasources}) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users");
@@ -50,13 +50,13 @@ const DatasourceListSuperadmin = ({id}) => {
 
   const decryptedId = decryptId(id);
 
-  const { data: datasourceData, isLoading: isDatasourceLoading, isError: isDatasourceError, refetch: refetchDatasource } = useQuery({
-    queryKey: ['chapter-datasource', id],
-    queryFn: () => fetchChapterDatasourceById(id),
-    enabled: !!id,
-  });
+  // const { data: datasourceData, isLoading: isDatasourceLoading, isError: isDatasourceError, refetch: refetchDatasource } = useQuery({
+  //   queryKey: ['chapter-datasource', id],
+  //   queryFn: () => fetchChapterDatasourceById(id),
+  //   enabled: !!id,
+  // });
 
-  const datasources = datasourceData?.datasource || [];
+  // const datasources = datasourceData?.datasource || [];
 
   // -----------------------------------------------Datasource List -----------
   const [datasourceSorting, setDatasourceSorting] = useState([]);
@@ -163,33 +163,33 @@ const DatasourceListSuperadmin = ({id}) => {
     ));
   };
 
-  if (isDatasourceError) {
-    return (
-      <div className="w-full p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-destructive font-medium mb-2">
-              Error Fetching datasource Data
-            </div>
-            <Button onClick={() => refetchDatasource()} variant="outline" size="sm">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (isDatasourceError) {
+  //   return (
+  //     <div className="w-full p-4">
+  //       <div className="flex items-center justify-center h-64">
+  //         <div className="text-center">
+  //           <div className="text-destructive font-medium mb-2">
+  //             Error Fetching datasource Data
+  //           </div>
+  //           <Button onClick={() => refetchDatasource()} variant="outline" size="sm">
+  //             Try Again
+  //           </Button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
-  if (isDatasourceLoading) {
-    return (
-      <div className="min-h-[20rem] bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading datasource data...</span>
-        </div>
-      </div>
-    );
-  }
+  // if (isDatasourceLoading) {
+  //   return (
+  //     <div className="min-h-[20rem] bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
+  //       <div className="flex items-center gap-2">
+  //         <Loader2 className="w-6 h-6 animate-spin" />
+  //         <span>Loading datasource data...</span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="pt-1">
@@ -233,9 +233,7 @@ const DatasourceListSuperadmin = ({id}) => {
           </TableHeader>
           
           <TableBody>
-            {isDatasourceLoading && !datasourceTable.getRowModel().rows.length ? (
-              <DatasourceTableShimmer />
-            ) : datasourceTable.getRowModel().rows?.length ? (
+            { datasourceTable.getRowModel().rows?.length ? (
               datasourceTable.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

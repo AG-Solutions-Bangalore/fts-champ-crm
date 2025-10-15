@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MemoizedSelect } from '@/components/common/memoized-select';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -38,7 +38,7 @@ import BASE_URL from "@/config/base-url";
 const DuplicateDonorEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+   const queryClient = useQueryClient();
   const [donor, setDonor] = useState({
     indicomp_fts_id: "",
     indicomp_full_name: "",
@@ -66,11 +66,12 @@ const DuplicateDonorEdit = () => {
 
   // Fetch donors for select
   const { data: donors = [] } = useQuery({
-    queryKey: ["donorsSelect"],
+    queryKey: ["donorsSelect", donor.indicomp_full_name, donor.indicomp_mobile_phone],
     queryFn: async () => {
+      if (!donor.indicomp_full_name && !donor.indicomp_mobile_phone) return [];
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/donor-active`,
+        `${BASE_URL}/api/donor-duplicate-change?indicomp_full_name=${donor.indicomp_full_name}&indicomp_mobile_phone=${donor.indicomp_mobile_phone}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -117,14 +118,15 @@ const DuplicateDonorEdit = () => {
       setIsSubmitting(true);
       const response = await fetchDuplicateEditByIdUpdate(id, data);
 
-      if (response.data.code === 200) {
-        toast.success(response.data.msg);
+      if (response.data.code === 201) {
+        toast.success(response.data.message);
         navigate("/donor/duplicate");
+        queryClient.invalidateQueries(['duplicateList']);
       } else {
-        toast.error(response.data.msg);
+        toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.msg || "Network error occurred.");
+      toast.error(error.response?.data?.message || "Duplicate Update Error Occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -236,6 +238,8 @@ const DuplicateDonorEdit = () => {
               <CompactDonorSelectTable 
                 onDonorSelect={(id) => setSelectedDonorId(id)}
                 selectedDonorId={selectedDonorId}
+                donorName={donor.indicomp_full_name}
+                donorPhone={donor.indicomp_mobile_phone}
               />
             </CardContent>
           </div>
@@ -325,7 +329,7 @@ const CompactInfoRow = ({ label, value }) => (
 );
 
 // Compact Donor Select Table Component
-const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId }) => {
+const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId ,donorName,donorPhone}) => {
   const {
     data: donors = [],
     isLoading,
@@ -333,11 +337,13 @@ const CompactDonorSelectTable = ({ onDonorSelect, selectedDonorId }) => {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["donorsList"],
+  
+    queryKey: ["donorsList", donorName, donorPhone],
     queryFn: async () => {
+      if (!donorName && !donorPhone) return [];
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/donor-active`,
+        `${BASE_URL}/api/donor-duplicate-change?indicomp_full_name=${encodeURIComponent(donorName)}&indicomp_mobile_phone=${encodeURIComponent(donorPhone)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

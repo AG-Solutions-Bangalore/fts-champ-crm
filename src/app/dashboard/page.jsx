@@ -25,7 +25,7 @@ import { ArrowLeft, Building, ChevronsUpDown, Key, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ChangePassword from "../auth/change-password";
 import { useState } from "react";
-import logo from "../../assets/el.png"
+
 import Cookies from "js-cookie";
 import { Breadcrumbs } from "@/components/new/breadcrumbs";
 import ChapterSelection from "@/components/common/chapter-selection";

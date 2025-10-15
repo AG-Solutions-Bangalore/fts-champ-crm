@@ -39,6 +39,7 @@ const MembershipList = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = Cookies.get('token');
+   const userType = Cookies.get('user_type_id');
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [mailSending, setMailSending] = React.useState({});
@@ -258,6 +259,8 @@ const MembershipList = () => {
         </div>
       ),
     },
+    ...(userType !== '4'
+      ? [
     {
         id: 'actions',
         header: 'Actions',
@@ -290,6 +293,8 @@ const MembershipList = () => {
           );
         },
       }
+    ]
+    : []),
       
   ];
 

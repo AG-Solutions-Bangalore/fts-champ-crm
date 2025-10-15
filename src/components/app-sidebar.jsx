@@ -304,7 +304,8 @@ const USER_ROLE_PERMISSIONS = {
   5: {
     navMain: [
       'DASHBOARD',
-      'MASTER_SETTINGS_LIMITED'
+      'CHAPTER',
+    
     ],
     navMainReport: [
       'SETTINGS',

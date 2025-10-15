@@ -48,6 +48,7 @@ import PaginationShimmer from "@/components/common/pagination-schimmer";
 const RepeatDonor = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+     const userType = Cookies.get('user_type_id');
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -156,6 +157,7 @@ const RepeatDonor = () => {
       },
       size: 200,
     },
+    ...(userType !== '4' ? [
     {
       id: "actions",
       header: "Actions",
@@ -182,6 +184,7 @@ const RepeatDonor = () => {
       },
       size: 100,
     },
+  ]:[])
   ];
 
   const table = useReactTable({

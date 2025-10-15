@@ -11,7 +11,7 @@ import belongs_to from '@/utils/belongs-to';
 import donor_type from '@/utils/donor-type';
 import company_type from '@/utils/company-type';
 import { DONOR_COMPANY_EDIT_FETCH, DONOR_COMPANY_FAMILY_GROUP_UPDATE, DONOR_COMPANY_UPDATE_SUMBIT } from '@/api';
-
+import InputMask from "react-input-mask"; 
 import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use-api';
 
 // Shadcn Components
@@ -172,8 +172,8 @@ const DonorCompanyEdit = () => {
       }
     },
     onError: (error) => {
-      console.error('Update error:', error);
-      toast.error('An error occurred during updating');
+      console.error('Update error:', error.response.data.message);
+      toast.error(error.response.data.message||'An error occurred during updating');
     },
   });
 
@@ -224,8 +224,10 @@ const DonorCompanyEdit = () => {
   };
 
   const onChangePanNumber = (e) => {
-    setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value.toUpperCase() }));
-  };
+    const panValue = e.target.value;
+    // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
+    setDonor({ ...donor, indicomp_pan_no: panValue });
+  }
 
   const validateForm = () => {
     const newErrors = {};
@@ -542,7 +544,7 @@ const DonorCompanyEdit = () => {
 
                 {/* PAN Number */}
                 <div className="">
-                  <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
+                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
                     PAN Number *
                   </Label>
                   <Input
@@ -552,7 +554,30 @@ const DonorCompanyEdit = () => {
                     onChange={onChangePanNumber}
                     placeholder="Enter PAN number"
                     className="uppercase"
-                  />
+                  /> */}
+                   <InputMask
+                                  mask="aaaaa9999a"
+                                  value={donor.indicomp_pan_no}
+                                  onChange={(e) => onChangePanNumber(e)}
+                                  formatChars={{
+                                    9: "[0-9]",
+                                    a: "[A-Z]",
+                                  }}
+                                >
+                                  {() => (
+                                    <div>
+                               <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
+                                      PAN Number
+                                    </Label>
+                                      <Input
+                                        type="text"
+                                        label="PAN Number"
+                                        name="panNumber"
+                                       placeholder="Enter PAN number"
+                                      />
+                                    </div>
+                                  )}
+                                </InputMask>
                   {errors?.indicomp_pan_no && (
                     <p className="text-red-500 text-xs">{errors.indicomp_pan_no}</p>
                   )}

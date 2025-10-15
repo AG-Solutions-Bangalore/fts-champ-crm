@@ -47,6 +47,7 @@ import { navigateToCreateReceipt } from "@/api";
 import { toast } from "sonner";
 
 const DonorList = () => {
+     const userType = Cookies.get('user_type_id');
   const queryClient = useQueryClient();
   const keyDown = useNumericInput()
   const navigate = useNavigate()
@@ -299,24 +300,56 @@ const DonorList = () => {
 
         return (
           <div className="flex flex-row">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToCreateReceipt(navigate, id)}
-                  >
-                    <ReceiptText />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Receipt Creation</p>
-                </TooltipContent>
-              </Tooltip>
+            {userType !== '4' && (
+                  <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigateToCreateReceipt(navigate, id)}
+                      >
+                        <ReceiptText />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Receipt Creation</p>
+                    </TooltipContent>
+                  </Tooltip>
+    
+                  <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (row.original.indicomp_type === "Individual") {
+                navigate(`/donor/donor-edit-indivisual/${id}`);
+              } else {
+                navigate(`/donor/donor-edit-company/${id}`);
+              }
+            }}
+          >
+            <Edit />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Donor Edit</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+                 
+                </TooltipProvider>
+            )}
+        
 
-             
-            </TooltipProvider>
+
+
+
+
+
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -335,28 +368,8 @@ const DonorList = () => {
 
              
             </TooltipProvider>
-          <TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          if (row.original.indicomp_type === "Individual") {
-            navigate(`/donor/donor-edit-indivisual/${id}`);
-          } else {
-            navigate(`/donor/donor-edit-company/${id}`);
-          }
-        }}
-      >
-        <Edit />
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent>
-      <p>Donor Edit</p>
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
+
+            
   {/* <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -573,6 +586,8 @@ const DonorList = () => {
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {userType !== '4' && (
+            <>
           <Link 
           to='/donor/donors-indiviusal-create'
           >
@@ -587,6 +602,8 @@ const DonorList = () => {
           <SquarePlus className="h-3 w-3 mr-2" /> Company
         </Button>
         </Link>
+        </>
+          )}
        </div>
       </div>
       
