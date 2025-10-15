@@ -283,7 +283,9 @@ const DonorDetails = () => {
       });
       if (res.code == 201) {
         toast.success(res.message);
-        navigate("/school/to-allot");
+        // navigate("/school/alloted");
+        navigate("/school/alloted", { state: { refetch: true } });
+
       } else {
         toast.error(res.message || "Unexpected error");
       }
