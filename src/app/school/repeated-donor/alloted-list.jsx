@@ -47,6 +47,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { TableShimmer } from "../loadingtable/TableShimmer";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 
 const AllotedList = () => {
   const queryClient = useQueryClient();
@@ -57,7 +58,7 @@ const AllotedList = () => {
   const [debouncedPage, setDebouncedPage] = useState("");
   const { id } = useParams();
   const [pageInput, setPageInput] = useState("");
-  const { trigger: submitDetails, loading: submitloading } = useApiMutation();
+  const { trigger: submitDetails } = useApiMutation();
   const currentYear = Cookies.get("currentYear");
   const donorId = decryptId(id);
   const [pagination, setPagination] = useState({
@@ -247,7 +248,7 @@ const AllotedList = () => {
   ];
 
   const table = useReactTable({
-    data: schoolData?.data?.schoolAllot || [],
+    data: schoolData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -494,56 +495,61 @@ const AllotedList = () => {
           </TableBody>
         </Table>
       </div>
+      {isFetching ? (
+        <PaginationShimmer />
+      ) : (
+        schoolData?.data?.data?.length > 0 && (
+          <div className="flex items-center justify-between py-1">
+            <div className="text-sm text-muted-foreground">
+              Showing {schoolData?.data?.from || 0} to{" "}
+              {schoolData?.data?.to || 0} of {schoolData?.data?.total || 0}{" "}
+              schools
+            </div>
 
-      {/*  Pagination */}
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          Showing {schoolData?.data?.from || 0} to {schoolData?.data?.to || 0}{" "}
-          of {schoolData?.data?.total || 0} schools
-        </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                disabled={!table.getCanPreviousPage()}
+                className="h-8 px-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex - 1)}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+              <div className="flex items-center space-x-1">
+                {generatePageButtons()}
+              </div>
 
-          <div className="flex items-center space-x-1">
-            {generatePageButtons()}
+              <div className="flex items-center space-x-2 text-sm">
+                <span>Go to</span>
+                <Input
+                  type="tel"
+                  min="1"
+                  max={table.getPageCount()}
+                  value={pageInput}
+                  onChange={handlePageInput}
+                  onBlur={() => setPageInput("")}
+                  onKeyDown={keyDown}
+                  className="w-16 h-8 text-sm"
+                  placeholder="Page"
+                />
+                <span>of {table.getPageCount()}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                disabled={!table.getCanNextPage()}
+                className="h-8 px-2"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center space-x-2 text-sm">
-            <span>Go to</span>
-            <Input
-              type="tel"
-              min="1"
-              max={table.getPageCount()}
-              value={pageInput}
-              onChange={handlePageInput}
-              onBlur={() => setPageInput("")}
-              onKeyDown={keyDown}
-              className="w-16 h-8 text-sm"
-              placeholder="Page"
-            />
-            <span>of {table.getPageCount()}</span>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(pagination.pageIndex + 1)}
-            disabled={!table.getCanNextPage()}
-            className="h-8 px-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        )
+      )}
     </div>
   );
 };
