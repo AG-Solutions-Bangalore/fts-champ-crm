@@ -49,9 +49,10 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const SchoolAlloted = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
@@ -88,6 +89,11 @@ const SchoolAlloted = () => {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
+  useEffect(() => {
+    if (location.state?.refetch) {
+      refetch();
+    }
+  }, [location.state, refetch]);
   useEffect(() => {
     if (!schoolData?.data?.last_page) return;
 
