@@ -24,6 +24,7 @@ import { MEMBER_DASHBOARD, SEND_BULK_EMAIL } from '@/api';
 
 const MemberDashboard = () => {
   const token = Cookies.get('token');
+  const userType = Cookies.get('user_type_id');
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -326,7 +327,7 @@ const MemberDashboard = () => {
 
         <div className="flex justify-between items-center">
        
-          {!yearExistsInMemberEmail && (
+          {(!yearExistsInMemberEmail && userType !== '4') && (
             <Button
               onClick={(e) => handleSendEmail(year, e)}
               disabled={sendBulkEmailMutation.isPending}

@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
+import InputMask from "react-input-mask"; 
+ 
 import { ArrowLeft, Info, User, Mail, MapPin, Building,Phone } from 'lucide-react';
 import AddToGroup from './add-to-group';
 import honorific from '@/utils/honorific';
@@ -96,6 +98,8 @@ const DonorEditIndv = () => {
   const datasource = datasourceHook?.data || [];
   const promoter = promoterHook?.data || [];
 
+  // console.log('promoterlength',promoter.length)
+
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor', id],
     queryFn: async () => {
@@ -126,10 +130,10 @@ const DonorEditIndv = () => {
     enabled: !!id,
     refetchOnWindowFocus: false, 
   });
-// useEffect(() => {
-//     const isDirty = JSON.stringify(donor) !== JSON.stringify(initialDonor);
-//     setIsFormDirty(isDirty);
-//   }, [donor, initialDonor]);
+useEffect(() => {
+    const isDirty = JSON.stringify(donor) !== JSON.stringify(initialDonor);
+    setIsFormDirty(isDirty);
+  }, [donor, initialDonor]);
   // Mutations
   const updateMutation = useMutation({
     mutationFn: async (formData) => {
@@ -197,25 +201,29 @@ const DonorEditIndv = () => {
     if (['indicomp_mobile_phone', 'indicomp_mobile_whatsapp', 'indicomp_res_reg_pin_code', 'indicomp_off_branch_pin_code'].includes(name)) {
       if (validateOnlyDigits(value)) {
         setDonor(prev => ({ ...prev, [name]: value }));
-        setIsFormDirty(true);
+  
       }
     } else if (name === "indicomp_image_logo") {
       const file = e.target.files[0];
       setDonor(prev => ({ ...prev, indicomp_image_logo: file }));
-      setIsFormDirty(true);
+
     } else {
       setDonor(prev => ({ ...prev, [name]: value }));
-      setIsFormDirty(true);
+
     }
   };
 
   
 
+  // const onChangePanNumber = (e) => {
+  //   setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value }));
+ 
+  // };
   const onChangePanNumber = (e) => {
-    setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value }));
-    setIsFormDirty(true);
-  };
-
+    const panValue = e.target.value;
+    // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
+    setDonor({ ...donor, indicomp_pan_no: panValue });
+  }
   const validateForm = () => {
     const newErrors = {};
 
@@ -524,7 +532,7 @@ if (donor.indicomp_image_logo instanceof File) {
 
                 {/* PAN Number */}
                 <div className="">
-                  <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
+                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
                     PAN Number
                   </Label>
                   <Input
@@ -534,7 +542,30 @@ if (donor.indicomp_image_logo instanceof File) {
                     onChange={onChangePanNumber}
                     placeholder="Enter PAN number"
                     className="uppercase"
-                  />
+                  /> */}
+                   <InputMask
+                                  mask="aaaaa9999a"
+                                  value={donor.indicomp_pan_no}
+                                  onChange={(e) => onChangePanNumber(e)}
+                                  formatChars={{
+                                    9: "[0-9]",
+                                    a: "[A-Z]",
+                                  }}
+                                >
+                                  {() => (
+                                    <div>
+                               <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
+                                      PAN Number
+                                    </Label>
+                                      <Input
+                                        type="text"
+                                        label="PAN Number"
+                                        name="panNumber"
+                                       placeholder="Enter PAN number"
+                                      />
+                                    </div>
+                                  )}
+                                </InputMask>
                 </div>
 
                 {/* Upload Image */}

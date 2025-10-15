@@ -38,6 +38,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Cookies from "js-cookie";
 import {
   ChevronDown,
   ChevronLeft,
@@ -54,6 +55,7 @@ import { useNavigate } from "react-router-dom";
 const SchoolAlloted = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+     const userType = Cookies.get('user_type_id');
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -203,6 +205,7 @@ const SchoolAlloted = () => {
     },
 
     // Actions
+    ...(userType !== '4'? [
     {
       id: "actions",
       header: "Actions",
@@ -263,6 +266,7 @@ const SchoolAlloted = () => {
       },
       size: 120,
     },
+  ]:[])
   ];
   const table = useReactTable({
     data: schoolData?.data?.data || [],

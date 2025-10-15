@@ -2,61 +2,61 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import Logo from "../../assets/receipt/fts1.png";
-import Action from "../../assets/help/action.jpg";
-import Add_Group from "../../assets/help/add group.png";
-import Add_Group2 from "../../assets/help/add group-2.png";
-import Company_donor from "../../assets/help/company donor.png";
-import Create_receipt from "../../assets/help/create receipt.png";
-import Dashboard from "../../assets/help/dashboard.png";
-import Dashboard2 from "../../assets/help/dashboard-2.png";
-import Donor_detail from "../../assets/help/donor detail.png";
-// import Donor_detail2 from "../../assets/help/donor detail-2.png";
-import Donor_group from "../../assets/help/donor group.png";
-import Donor from "../../assets/help/donor.png";
-import Duplicate from "../../assets/help/duplicate.png";
-import Duplicate2 from "../../assets/help/duplicate-2.png";
-import Individual_donor from "../../assets/help/individual donor.png";
-import Login_page from "../../assets/help/login-page.png";
-import Member from "../../assets/help/member.png";
-import Reset_page from "../../assets/help/reset-page.png";
-import Receipt_list from "../../assets/help/receipts_list.png";
-import Form from "../../assets/help/form.png";
-import Bill from "../../assets/help/bill.png";
-import Suspense from "../../assets/help/suspense.png";
-import Schools_list from "../../assets/help/schools list.png";
-import School_detail from "../../assets/help/school detail.png";
-import School_allot from "../../assets/help/school allot.png";
-import School_donor from "../../assets/help/school donor.png";
-import School_allotment from "../../assets/help/school allotment.png";
-import School_donor_detail from "../../assets/help/school donor detail.png";
-import Allotment_letter from "../../assets/help/allotment letter.png";
-import Repeat_donor from "../../assets/help/repeat donor.png";
-import Donor_summary from "../../assets/help/donor summary.png";
-import Promoter_summary from "../../assets/help/promoter summary.png";
-import Receipt_summary from "../../assets/help/receipt summary.png";
-import Donation_summary from "../../assets/help/donation summary.png";
-import School_summary from "../../assets/help/school summary.png";
-import Receipt_document from "../../assets/help/receipt document.png";
-import Suspense_summary from "../../assets/help/suspense summary.png";
-import Payment_summary from "../../assets/help/payment summary.png";
-import Download_receipts from "../../assets/help/download receipts.png";
-import Download_donor from "../../assets/help/download donor.png";
-import Download_school from "../../assets/help/download school.png";
-import Download_ots from "../../assets/help/download ots.png";
-import Download_team from "../../assets/help/download team.png";
-import Download_all from "../../assets/help/download all.png";
-import Faq from "../../assets/help/faq.png";
-import Team from "../../assets/help/team.png";
-import Notices from "../../assets/help/notices.png";
-import Basic from "../../assets/help/basic.jpg";
-import Fundamental from "../../assets/help/fundamental.jpg";
-import User_profile from "../../assets/help/user profile.png";
-import Password from "../../assets/help/password.png";
-import Find_fts from "../../assets/help/find fts.png";
-import New_user from "../../assets/help/new user.png";
-import Create_user from "../../assets/help/create user.png";
-import Any_action from "../../assets/help/any action.jpg";
-import Clear from "../../assets/help/clear.png";
+import Action from "/help/action.jpg";
+import Add_Group from "/help/add group.png";
+import Add_Group2 from "/help/add group-2.png";
+import Company_donor from "/help/company donor.png";
+import Create_receipt from "/help/create receipt.png";
+import Dashboard from "/help/dashboard.png";
+import Dashboard2 from "/help/dashboard-2.png";
+import Donor_detail from "/help/donor detail.png";
+// import Donor_detail2 from "/help/donor detail-2.png";
+import Donor_group from "/help/donor group.png";
+import Donor from "/help/donor.png";
+import Duplicate from "/help/duplicate.png";
+import Duplicate2 from "/help/duplicate-2.png";
+import Individual_donor from "/help/individual donor.png";
+import Login_page from "/help/login-page.png";
+import Member from "/help/member.png";
+import Reset_page from "/help/reset-page.png";
+import Receipt_list from "/help/receipts_list.png";
+import Form from "/help/form.png";
+import Bill from "/help/bill.png";
+import Suspense from "/help/suspense.png";
+import Schools_list from "/help/schools list.png";
+import School_detail from "/help/school detail.png";
+import School_allot from "/help/school allot.png";
+import School_donor from "/help/school donor.png";
+import School_allotment from "/help/school allotment.png";
+import School_donor_detail from "/help/school donor detail.png";
+import Allotment_letter from "/help/allotment letter.png";
+import Repeat_donor from "/help/repeat donor.png";
+import Donor_summary from "/help/donor summary.png";
+import Promoter_summary from "/help/promoter summary.png";
+import Receipt_summary from "/help/receipt summary.png";
+import Donation_summary from "/help/donation summary.png";
+import School_summary from "/help/school summary.png";
+import Receipt_document from "/help/receipt document.png";
+import Suspense_summary from "/help/suspense summary.png";
+import Payment_summary from "/help/payment summary.png";
+import Download_receipts from "/help/download receipts.png";
+import Download_donor from "/help/download donor.png";
+import Download_school from "/help/download school.png";
+import Download_ots from "/help/download ots.png";
+import Download_team from "/help/download team.png";
+import Download_all from "/help/download all.png";
+import Faq from "/help/faq.png";
+import Team from "/help/team.png";
+import Notices from "/help/notices.png";
+import Basic from "/help/basic.jpg";
+import Fundamental from "/help/fundamental.jpg";
+import User_profile from "/help/user profile.png";
+import Password from "/help/password.png";
+import Find_fts from "/help/find fts.png";
+import New_user from "/help/new user.png";
+import Create_user from "/help/create user.png";
+import Any_action from "/help/any action.jpg";
+import Clear from "/help/clear.png";
 import { useNavigate } from 'react-router-dom';
 
 const DocSetting = () => {
@@ -81,7 +81,7 @@ const DocSetting = () => {
                    <div className="p-4 bg-white rounded-b-xl">
                      {/* Logo Section */}
                      <div className="flex justify-center mb-4">
-                       <img src={Logo} alt="FTS Logo" className="w-60 h-auto" />
+                       <img loading="lazy"   src={Logo} alt="FTS Logo" className="w-60 h-auto" />
                      </div>
      
                      {/* Content Section */}
@@ -603,7 +603,7 @@ const DocSetting = () => {
                              credentials, consisting of a unique username and a
                              confidential password.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Login_page}
                              alt="Login Page Screenshot"
                              className="login-img mx-auto"
@@ -627,7 +627,7 @@ const DocSetting = () => {
                              reset password page, where they can reset the password
                              by entering their username and email ID.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Reset_page}
                              alt="Reset Page Screenshot"
                              className="reset-img mx-auto"
@@ -660,12 +660,12 @@ const DocSetting = () => {
                              provide an overview of key information and
                              functionalities, as shown below.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Dashboard}
                              alt="Dashboard Screenshot"
                              className="dash-img mx-auto"
                            />
-                           <img
+                           <img loading="lazy"  
                              src={Dashboard2}
                              alt="Dashboard Screenshot 2"
                              className="dash-img mx-auto"
@@ -744,7 +744,7 @@ const DocSetting = () => {
                              view, edit, and receipt button where users can view,
                              edit their details or get the receipt of the donation.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Donor}
                              alt="donor Screenshot"
                              className="donor-img-1 mx-auto my-4 p-6"
@@ -755,12 +755,12 @@ const DocSetting = () => {
                              Company’ buttons on the top right of the screen based on
                              the donor type.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Company_donor}
                              alt="company donor Screenshot"
                              className="donor-img-2 mx-auto my-4"
                            />
-                           <img
+                           <img loading="lazy"  
                              src={Individual_donor}
                              alt="individual donor Screenshot"
                              className="donor-img-3 mx-auto my-4"
@@ -777,7 +777,7 @@ const DocSetting = () => {
                              Receipts’ for that donor, and see ‘Receipt Details’
                              which includes family group or company receipts.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Donor_detail}
                              alt="donor Screenshot"
                              className="donor-img-4 mx-auto my-4"
@@ -786,7 +786,7 @@ const DocSetting = () => {
                              Scrolling further in the donor details page reveals
                              family and company details of the donors.
                            </li>
-                           {/* <img
+                           {/* <img loading="lazy"  
                              src={Donor_detail2}
                              alt="donor Screenshot"
                              className="donor-img-5 mx-auto my-4"
@@ -801,7 +801,7 @@ const DocSetting = () => {
                              donor pays ₹1000, they are subscribed for 1 year. If
                              they pay ₹2000, it covers 2 years.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Member}
                              alt="member Screenshot"
                              className="member-img mx-auto my-4"
@@ -810,7 +810,7 @@ const DocSetting = () => {
                              <b>Duplicate:</b> This list shows donors with duplicate
                              entries, based on matching phone numbers or names.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Duplicate}
                              alt="duplicate Screenshot"
                              className="duplicate-img mx-auto my-4"
@@ -828,7 +828,7 @@ const DocSetting = () => {
                                  retain the preferred entry and note the FTS ID, then
                                  use the edit button to remove duplicates.
                                </li>
-                               <img
+                               <img loading="lazy"  
                                  src={Duplicate2}
                                  alt="duplicate Screenshot"
                                  className="duplicate-img-2 mx-auto my-4"
@@ -874,7 +874,7 @@ const DocSetting = () => {
                              donor. These details will also be visible in the donors
                              list.
                            </li>
-                           {/* <img
+                           {/* <img loading="lazy"  
                              src={Donor_detail2}
                              alt="donor Screenshot"
                              className="donor-detail-2 mx-auto my-4"
@@ -888,7 +888,7 @@ const DocSetting = () => {
                              Click on the ‘Edit’ button in the ‘actions’ column, and
                              the screen as shown below appears.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Donor_group}
                              alt="donor Screenshot"
                              className="donor-group mx-auto my-4"
@@ -899,7 +899,7 @@ const DocSetting = () => {
                              donor group for attachment. Click ‘Add’ to assign them
                              to the respective donor group.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Add_Group}
                              alt="donor Screenshot"
                              className="add-group mx-auto my-4"
@@ -909,7 +909,7 @@ const DocSetting = () => {
                              will appear together in the ‘receipt details’ section as
                              shown below.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Add_Group2}
                              alt="donor Screenshot"
                              className="add-group-2 mx-auto my-4"
@@ -942,7 +942,7 @@ const DocSetting = () => {
                              Actions adjacent to the donor whose receipt needs to be
                              created.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Action}
                              alt="action Screenshot"
                              className="action mx-auto my-4"
@@ -951,7 +951,7 @@ const DocSetting = () => {
                              <b>Step 4:</b> Fill in the required details in the form
                              that appears as shown below.
                            </li>
-                           <img
+                           <img loading="lazy"  
                              src={Create_receipt}
                              alt="create receipt Screenshot"
                              className="create-receipt mx-auto my-4"
@@ -1086,7 +1086,7 @@ const DocSetting = () => {
                                Receipts number, Name, Date, Exemption type, Donation
                                type, Amount, and Action.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Receipt_list}
                                alt="list screenshot"
                                className="receipts-list"
@@ -1106,12 +1106,12 @@ const DocSetting = () => {
                                printed.
                              </li>
                              <li>The reference images are shown below.</li>
-                             <img
+                             <img loading="lazy"  
                                src={Form}
                                alt="form screenshot"
                                className="form-img"
                              />
-                             <img
+                             <img loading="lazy"  
                                src={Bill}
                                alt="bill screenshot"
                                className="bill-img"
@@ -1153,7 +1153,7 @@ const DocSetting = () => {
                                date as the donation, avoiding any confusions in
                                donation and receipt dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Suspense}
                                alt="suspense screenshot"
                                className="suspense-img"
@@ -1180,7 +1180,7 @@ const DocSetting = () => {
                                Cluster, Sub-Cluster, Village, School Code, Status,
                                and Action.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Schools_list}
                                alt="school screenshot"
                                className="schools-list"
@@ -1190,7 +1190,7 @@ const DocSetting = () => {
                                details and the Donor’s FTS ID who has donated for
                                that school.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={School_detail}
                                alt="school screenshot"
                                className="school-detail"
@@ -1216,12 +1216,12 @@ const DocSetting = () => {
                                and to be allotted. The user can choose the schools to
                                allot to the donor.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={School_allot}
                                alt="school screenshot"
                                className="school-allot"
                              />
-                             <img
+                             <img loading="lazy"  
                                src={School_donor}
                                alt="school screenshot"
                                className="school-donor"
@@ -1237,7 +1237,7 @@ const DocSetting = () => {
                                School Allot Year, From Date, To Date, OTS Received,
                                Schools Allotted, Pending, and Action.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={School_allotment}
                                alt="school screenshot"
                                className="school-allotment"
@@ -1249,12 +1249,12 @@ const DocSetting = () => {
                                view, download the PDF, and print the acknowledgment
                                letter along with its receipt.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={School_donor_detail}
                                alt="school screenshot"
                                className="school-detail"
                              />
-                             <img
+                             <img loading="lazy"  
                                src={Allotment_letter}
                                alt="school screenshot"
                                className="allotment-letter"
@@ -1268,7 +1268,7 @@ const DocSetting = () => {
                                The repeated donors who contribute more than once can
                                be viewed and created under 'Repeat Donors'.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Repeat_donor}
                                alt="school screenshot"
                                className="repeat-donor"
@@ -1298,7 +1298,7 @@ const DocSetting = () => {
                                ‘Group View’ to look at the kind of report he/she
                                wants.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Donor_summary}
                                alt="Donor summary report screenshot"
                                className="donor-summary"
@@ -1316,7 +1316,7 @@ const DocSetting = () => {
                                reports of the promoters by clicking on the buttons
                                below.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Promoter_summary}
                                alt="Promoter summary report screenshot"
                                className="promoter-summary"
@@ -1331,7 +1331,7 @@ const DocSetting = () => {
                                selected date period. The user can view and download
                                the report between the selected dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Receipt_summary}
                                alt="Receipt summary report screenshot"
                                className="receipt-summary"
@@ -1346,7 +1346,7 @@ const DocSetting = () => {
                                provision to view and download any report of donations
                                made between two specific dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Donation_summary}
                                alt="Donation summary report screenshot"
                                className="donation-summary"
@@ -1363,7 +1363,7 @@ const DocSetting = () => {
                                all the details of the schools he/she has donated to
                                so far.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={School_summary}
                                alt="School summary report screenshot"
                                className="school-summary"
@@ -1383,7 +1383,7 @@ const DocSetting = () => {
                                Group and View Group where the user can view or
                                download the reports groupwise.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Receipt_document}
                                alt="10BD statement report screenshot"
                                className="receipt-document"
@@ -1397,7 +1397,7 @@ const DocSetting = () => {
                                This tab gives out the report of the Chapter, Year,
                                and Number of suspense donations in total.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Suspense_summary}
                                alt="Suspense summary report screenshot"
                                className="suspense-summary"
@@ -1412,7 +1412,7 @@ const DocSetting = () => {
                                reports of all the payments between selected dates as
                                per their requirement.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Payment_summary}
                                alt="Payment summary report screenshot"
                                className="payment-summary"
@@ -1439,7 +1439,7 @@ const DocSetting = () => {
                                selected dates, along with the required purpose,
                                category, and source of the receipt.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_receipts}
                                alt="Download receipts screenshot"
                                className="download-receipts"
@@ -1454,7 +1454,7 @@ const DocSetting = () => {
                                selecting the type of donors in the dropdown list
                                provided.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_donor}
                                alt="Download donor screenshot"
                                className="download-donor"
@@ -1469,7 +1469,7 @@ const DocSetting = () => {
                                allotted schools or the unallotted schools within the
                                starting and ending dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_school}
                                alt="Download school screenshot"
                                className="download-school"
@@ -1483,7 +1483,7 @@ const DocSetting = () => {
                                The user can download the records of the ‘One Teacher
                                Schools’ between the selected range of dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_ots}
                                alt="Download OTS screenshot"
                                className="download-ots"
@@ -1497,7 +1497,7 @@ const DocSetting = () => {
                                The user can download the records of Teams between the
                                selected dates.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_team}
                                alt="Download team screenshot"
                                className="download-team"
@@ -1514,7 +1514,7 @@ const DocSetting = () => {
                                type, promoter, the OTS range, amount range, and the
                                source of the donations.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Download_all}
                                alt="Download all receipts screenshot"
                                className="download-all"
@@ -1537,7 +1537,7 @@ const DocSetting = () => {
                                This tab contains the frequently asked questions and
                                their answers.
                              </li>
-                             <img src={Faq} alt="FAQ screenshot" className="faq" />
+                             <img loading="lazy"   src={Faq} alt="FAQ screenshot" className="faq" />
                            </ul>
                          </li>
                          <li id="Team">
@@ -1548,7 +1548,7 @@ const DocSetting = () => {
                                of the team. The committee list is right under the
                                creation form.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Team}
                                alt="Team screenshot"
                                className="team"
@@ -1563,7 +1563,7 @@ const DocSetting = () => {
                                users can be viewed in this tab. The user should
                                acknowledge these notices mandatorily.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Notices}
                                alt="Notices screenshot"
                                className="notices"
@@ -1585,7 +1585,7 @@ const DocSetting = () => {
                          seamlessly facilitate easy access or quick options for the
                          user.
                        </p>
-                       <img
+                       <img loading="lazy"  
                          src={Basic}
                          alt="Basic fundamentals screenshot"
                          className="basic-img"
@@ -1647,7 +1647,7 @@ const DocSetting = () => {
                                The right button is used to view the application in
                                full screen.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Fundamental}
                                alt="Basic fundamentals screenshot"
                                className="fundamental"
@@ -1664,7 +1664,7 @@ const DocSetting = () => {
                                Profile’ to save the changes. However, the email ID
                                cannot be edited.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={User_profile}
                                alt="User profile screenshot"
                                className="user-profile"
@@ -1677,7 +1677,7 @@ const DocSetting = () => {
                                click on the update profile button to save the
                                changes.
                              </li>
-                             <img
+                             <img loading="lazy"  
                                src={Password}
                                alt="Password screenshot"
                                className="password"
@@ -1699,7 +1699,7 @@ const DocSetting = () => {
                          <h1 className="text-2xl font-bold">
                            How to Find Donor FTS ID
                          </h1>
-                         <img
+                         <img loading="lazy"  
                            src={Find_fts}
                            alt="FTS ID illustration"
                            className="fts-img mx-auto my-4"
@@ -1724,12 +1724,12 @@ const DocSetting = () => {
                            <li>
                              To create new users, view and edit existing user
                              details.
-                             <img
+                             <img loading="lazy"  
                                src={New_user}
                                alt="New user creation"
                                className="new-user mx-auto my-4"
                              />
-                             <img
+                             <img loading="lazy"  
                                src={Create_user}
                                alt="Create new user"
                                className="create-user mx-auto my-4"
@@ -1746,7 +1746,7 @@ const DocSetting = () => {
                              To edit the details in the receipts of donors. The
                              secretary must mandatorily mention the reason for
                              editing the details.
-                             <img
+                             <img loading="lazy"  
                                src={Any_action}
                                alt="Edit action"
                                className="action-img mx-auto my-4"
@@ -1780,7 +1780,7 @@ const DocSetting = () => {
                            <li>
                              There is also a ‘Clear’ button next to it, which allows
                              the viewer to clear the selected chapter.
-                             <img
+                             <img loading="lazy"  
                                src={Clear}
                                alt="Clear button screenshot"
                                className="clear-img mx-auto my-4"

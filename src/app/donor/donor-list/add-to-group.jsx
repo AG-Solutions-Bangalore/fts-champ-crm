@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table';
 
 import BASE_URL from '@/config/base-url';
-import { ArrowLeft, ArrowUpDown, ChevronDown, Search, SquarePlus } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, ChevronDown, Loader2, Search, SquarePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState('');
+  const [loadingId,setLoadingId] = useState(null)
 
   const { data: donorData = [], isLoading } = useQuery({
     queryKey: ['donor-active'],
@@ -75,6 +76,7 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
   });
 
   const addMemberToGroup = async (relativeId) => {
+    setLoadingId(relativeId)
     try {
       await axios({
         url: `${BASE_URL}/api/update-donor-addtogroup/${id}`,
@@ -98,6 +100,8 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
     } catch (error) {
       console.error('Error adding member to group:', error);
       toast.error('Failed to add member to group');
+    }finally {
+      setLoadingId(null);
     }
   };
 
@@ -143,6 +147,7 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
       id: "actions",
       header: "Action",
       cell: ({ row }) => {
+        const isLoading = loadingId === row.original.id;
         return (
           <div className="flex flex-row">
             <TooltipProvider>
@@ -151,13 +156,18 @@ const AddToGroup = ({ id, closegroupModal, page, isOpen }) => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={isLoading}
                     onClick={() => addMemberToGroup(row.original.id)}
                   >
+                   {isLoading ?(
+                    <Loader2 className='h-4 w-4 animate-spin text-primary '/>
+                   ):(
                     <SquarePlus className="h-4 w-4" />
+                   )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Add to Group</p>
+                  <p>{isLoading ? "Adding...":"Add to Group"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

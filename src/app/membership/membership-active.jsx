@@ -37,6 +37,7 @@ import { toast } from "sonner";
 const MembershipActive = () => {
   const currentYear = Cookies.get('currentYear');
   const token = Cookies.get('token');
+     const userType = Cookies.get('user_type_id');
   const activeYear = currentYear ? currentYear.split("-")[0] : "2025"; // Default to 2025 if not available
   const [mailSending, setMailSending] = React.useState({});
   const {
@@ -227,7 +228,7 @@ const [searchValue, setSearchValue] = useState("");
     },
     {
       accessorKey: "last_payment_date",
-      id: "Last Payment Date",
+      id: "Last Pay Date",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -235,16 +236,16 @@ const [searchValue, setSearchValue] = useState("");
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Last Payment Date
+          Last Pay Date
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Last Payment Date") || "-"}</div>,
+      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Last Pay Date") || "-"}</div>,
       
     },
     {
       accessorKey: "payment_count",
-      id: "Payment Count",
+      id: "Pay Count",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -252,13 +253,15 @@ const [searchValue, setSearchValue] = useState("");
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Payment Count
+         Pay Count
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Payment Count") || "0"}</div>,
+      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Pay Count") || "0"}</div>,
       
     },
+    ...(userType !== '4'
+      ? [
      {
             id: 'actions',
             header: 'Actions',
@@ -291,6 +294,8 @@ const [searchValue, setSearchValue] = useState("");
               );
             },
           }
+        ]
+        : []),
   ];
 
   const table = useReactTable({

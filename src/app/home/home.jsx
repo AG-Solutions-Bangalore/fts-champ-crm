@@ -11,7 +11,7 @@ import {
   RefreshCcw, 
   User, 
   IndianRupee,
-  MoreVertical
+  MoreVertical,
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
@@ -139,12 +139,12 @@ const Home = () => {
   const [open, setOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState(null);
 
-  const currentYear = Cookies.get('currentYear');
 
 
   const { 
     data: noticesData, 
     isLoading: loadingNotices,
+    isFetching:fetchingNotices,
     refetch: refetchNotices 
   } = useQuery({
     queryKey: ['dashboard-notices', userTypeId],
@@ -165,6 +165,7 @@ const Home = () => {
   const { 
     data: dashboardData, 
     isLoading: loadingDashboardData,
+    isFetching:fetchingDashbpardData,
     refetch: refetchDashboard 
   } = useQuery({
     queryKey: ['dashboard-data'],
@@ -299,6 +300,7 @@ const Home = () => {
   ];
 
   const isLoading = loadingNotices || loadingDashboardData;
+  const isFetching = fetchingNotices || fetchingDashbpardData;
 
   const handleRefresh = () => {
     refetchDashboard();
@@ -367,7 +369,12 @@ const Home = () => {
           variant="outline"
           className="h-8"
         >
-          <RefreshCcw className="h-3 w-3 mr-1" />
+          {isFetching ? (
+   <RefreshCcw className="h-3 w-3 mr-1 animate-spin" />
+          ):(
+            <RefreshCcw className="h-3 w-3 mr-1" />
+          )}
+       
           Refresh
         </Button>
       </div>

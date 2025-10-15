@@ -14,8 +14,10 @@ import { ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { OTHER_TEAM_COMMITTEE_CREATE_IMAGE } from "../../../api";
+import Cookies from "js-cookie";
 
 const CommitteeList = ({ committeeResponse, refetch }) => {
+  const userType = Cookies.get('user_type_id')
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDonorId, setSelectedDonorId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -118,6 +120,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                         key={member?.id}
                         className="hover:shadow-md transition-all rounded-xl border border-gray-200 bg-white flex items-center gap-4 p-4"
                       >
+                 
                         <div className="relative shrink-0">
                           <img
                             src={img}
@@ -125,6 +128,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                             className="w-16 h-16 rounded-md object-cover border"
                             onError={(e) => (e.currentTarget.src = noImageUrl)}
                           />
+                                     {(userType === '1' || userType === '2') &&(
                           <button
                             type="button"
                             onClick={() =>
@@ -134,7 +138,9 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                           >
                             <ImagePlus size={14} />
                           </button>
+                                 )}
                         </div>
+                 
                         <div className="flex flex-col justify-center">
                           <p className="text-sm font-semibold text-gray-800 leading-tight">
                             {member?.indicomp_full_name || "Unnamed"}

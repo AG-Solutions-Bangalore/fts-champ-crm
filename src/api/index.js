@@ -13,9 +13,9 @@ export const CHAPTER_VIEW_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
 export const CHAPTER_VIEW_CREATE_USER = `${BASE_URL}/api/create-user`;
 export const CHAPTER_VIEW_UPDATE_USER = `${BASE_URL}/api/update-user`;
 //(edit)
-export const CHAPTER_EDIT_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
-export const CHAPTER_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-chapter`;
-export const CHAPTER_EDIT_STATES_DROPDOWN = `${BASE_URL}/api/fetch-states`;
+export const CHAPTER_EDIT_BY_ID = `${BASE_URL}/api/chapter`;
+export const CHAPTER_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/chapter`;
+export const CHAPTER_EDIT_STATES_DROPDOWN = `${BASE_URL}/api/panel-fetch-state`;
 // (datasource)
 export const CHAPTER_DATASOURCE_BY_ID_LIST = `${BASE_URL}/api/fetch-data-sources-by-id`;
 export const CHAPTER_DATASOURCE_CREATE = `${BASE_URL}/api/create-datasources`;
@@ -91,7 +91,7 @@ export const VIEWVER_EDIT_UPDATE = `${BASE_URL}/api/update-viewer`;
 export const DUPLICATE_LIST = `${BASE_URL}/api/donor-duplicate`;
 export const DUPLICATE_DELETE = `${BASE_URL}/api/delete-donor-duplicate/`;
 export const DUPLICATE_EDIT_BY_ID = `${BASE_URL}/api/donor`;
-export const DUPLICATE_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-donors-duplicate`;
+export const DUPLICATE_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/update-donor-duplicate`;
 
 /*--------------------------Donor-end----------------------------------- */
 
@@ -788,7 +788,7 @@ export const fetchDuplicateEditByIdUpdate = async (encryptedId, formData) => {
     const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
-    const response = await axios.put(
+    const response = await axios.patch(
       `${DUPLICATE_EDIT_BY_ID_UPDATE}/${id}`,
       formData,
       {

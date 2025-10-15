@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import InputMask from "react-input-mask";
 import { 
   ArrowLeft, 
   Building, 
@@ -154,8 +155,9 @@ const promoter = promoterHook?.data || [];
 
   const onChangePanNumber = (e) => {
     const panValue = e.target.value;
-    setDonor(prev => ({ ...prev, indicomp_pan_no: panValue }));
-  };
+    // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
+    setDonor({ ...donor, indicomp_pan_no: panValue });
+  }
 
   const checkDuplicateDonor = async () => {
     if (donor.indicomp_full_name && donor.indicomp_mobile_phone?.length === 10) {
@@ -173,13 +175,13 @@ const promoter = promoterHook?.data || [];
           }
         );
 
-        if (response.data.code === 400) {
-          toast.error(response.data.msg);
+        if (response.data.code === 422) {
+          toast.error(response.data.message);
           return false;
         }
         return true;
       } catch (error) {
-        console.error("Error checking duplicate donor", error);
+        console.error("Error checking duplicate donor", error.response.data.message);
         return true;
       }
     }
@@ -620,7 +622,7 @@ const promoter = promoterHook?.data || [];
 
                 {/* PAN Number */}
                 <div className="">
-                  <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
+                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
                     PAN Number *
                   </Label>
                   <Input
@@ -630,7 +632,31 @@ const promoter = promoterHook?.data || [];
                     onChange={onChangePanNumber}
                     placeholder="Enter PAN number"
                     className="uppercase"
-                  />
+                  /> */}
+                    <InputMask
+                mask="aaaaa9999a"
+                value={donor.indicomp_pan_no}
+                onChange={(e) => onChangePanNumber(e)}
+                formatChars={{
+                  9: "[0-9]",
+                  a: "[A-Z]",
+                }}
+              >
+                {() => (
+                  <div>
+             <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
+                    PAN Number *
+                  </Label>
+                    <Input
+                      type="text"
+                      label="PAN Number"
+                      name="panNumber"
+                     placeholder="Enter PAN number"
+                    />
+                  </div>
+                )}
+              </InputMask>
+
                   {errors?.indicomp_pan_no && (
                     <p className="text-red-500 text-xs">{errors.indicomp_pan_no}</p>
                   )}
