@@ -91,8 +91,8 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "User created successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "User created successfully");
 
       
         setUser({
@@ -112,7 +112,7 @@ const CreateUserSuperadmin = ({chapterCodeForCreateUser}) => {
         await queryClient.invalidateQueries(["chapter"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create user");
+        toast.error(response.data.message || "Failed to create user");
       }
     } catch (error) {
       toast.error(

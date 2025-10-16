@@ -98,7 +98,7 @@ const DonorEditIndv = () => {
   const datasource = datasourceHook?.data || [];
   const promoter = promoterHook?.data || [];
 
-  // console.log('promoterlength',promoter.length)
+  console.log('promoterlength',promoter.length)
 
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor', id],
@@ -644,7 +644,9 @@ if (donor.indicomp_image_logo instanceof File) {
     </div>
                  ):(
   <MemoizedSelect
-  value={donor.indicomp_promoter}
+  value={
+    promoter.find(p => p.indicomp_fts_id == donor.indicomp_promoter)?.indicomp_promoter || ""
+  }
 
   onChange={(value) => {
     const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);

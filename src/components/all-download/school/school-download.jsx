@@ -238,7 +238,7 @@ const SchoolDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'school_allotted_summary.csv');
+      link.setAttribute('download', 'school_allotted_summary.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -267,7 +267,7 @@ const SchoolDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'school_unallotted_summary.csv');
+      link.setAttribute('download', 'school_unallotted_summary.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -343,10 +343,10 @@ const SchoolDownload = () => {
         toast.success(`Loaded ${json.length} receipts from Excel file.`);
       } else {
         parseCSVAndSetData(text);
-        toast.success('Loaded receipts from CSV file.');
+        toast.success('Loaded receipts from Excel file.');
       }
     } catch (error) {
-      console.error('Failed to read Excel/CSV blob:', error);
+      console.error('Failed to read Excel blob:', error);
       toast.error('Unable to preview receipt file.');
     }
   }
@@ -405,10 +405,10 @@ const SchoolDownload = () => {
         toast.success(`Loaded ${json.length} receipts from Excel file.`);
       } else {
         parseCSVAndSetData(text);
-        toast.success('Loaded receipts from CSV file.');
+        toast.success('Loaded receipts from Excel file.');
       }
     } catch (error) {
-      console.error('Failed to read Excel/CSV blob:', error);
+      console.error('Failed to read Excel blob:', error);
       toast.error('Unable to preview receipt file.');
     }
   }

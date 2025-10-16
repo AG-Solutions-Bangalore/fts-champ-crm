@@ -29,7 +29,6 @@ const CreateViewer = () => {
     chapter_id: '', 
     user_position: '', 
     chapterIds: '',
-    // New fields
     user_add: "",
     user_birthday: '',
     user_type: "",
@@ -37,6 +36,7 @@ const CreateViewer = () => {
     user_school_ids: "",
   });
   
+  const [errors, setErrors] = useState({});
   const [selectedChapterIds, setSelectedChapterIds] = useState([]);
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
@@ -52,7 +52,6 @@ const CreateViewer = () => {
       return response.data.data || [];
     },
   });
-
 
   const { data: userTypes = [], isLoading: userTypesLoading } = useQuery({
     queryKey: ['user-types'],
@@ -84,26 +83,97 @@ const CreateViewer = () => {
     }
   }, [userTypes]);
 
-  
   useEffect(() => {
     if (formData.chapter_id) {
       const primaryChapterCode = formData.chapter_id.toString();
       
-     
       if (!selectedChapterIds.includes(primaryChapterCode)) {
         const newChapterIds = [...selectedChapterIds, primaryChapterCode];
         setSelectedChapterIds(newChapterIds);
         setFormData(prev => ({ ...prev, chapterIds: newChapterIds.join(',') }));
       }
       
-  
       if (!selectedSchoolIds.includes(primaryChapterCode)) {
         const newSchoolIds = [...selectedSchoolIds, primaryChapterCode];
         setSelectedSchoolIds(newSchoolIds);
         setFormData(prev => ({ ...prev, user_school_ids: newSchoolIds.join(',') }));
       }
     }
-  }, [formData.chapter_id]); 
+  }, [formData.chapter_id]);
+
+  // Custom validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    // First Name validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    } else if (formData.firstName.length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters';
+    }
+
+    // Username validation
+    if (!formData.userName.trim()) {
+      newErrors.userName = 'Username is required';
+    } else if (formData.userName.length < 3) {
+      newErrors.userName = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.userName)) {
+      newErrors.userName = 'Username can only contain letters, numbers, and underscores';
+    }
+
+    // Contact validation
+    if (!formData.contact.trim()) {
+      newErrors.contact = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(formData.contact)) {
+      newErrors.contact = 'Mobile number must be exactly 10 digits';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Designation validation
+    if (!formData.user_position.trim()) {
+      newErrors.user_position = 'Designation is required';
+    }
+
+    // Start Date validation
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required';
+    } else if (new Date(formData.startDate) < new Date().setHours(0, 0, 0, 0)) {
+      newErrors.startDate = 'Start date cannot be in the past';
+    }
+
+    // End Date validation
+    if (!formData.endDate) {
+      newErrors.endDate = 'End date is required';
+    } else if (formData.startDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
+      newErrors.endDate = 'End date must be after start date';
+    }
+
+    // Chapter validation
+    if (!formData.chapter_id) {
+      newErrors.chapter_id = 'Primary chapter is required';
+    }
+
+    // Birthday validation (optional)
+    if (formData.user_birthday && new Date(formData.user_birthday) > new Date()) {
+      newErrors.user_birthday = 'Birthday cannot be in the future';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => {
@@ -142,12 +212,32 @@ const CreateViewer = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate image file type and size
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, image: 'Please select a valid image (JPEG, PNG, GIF)' }));
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        setErrors(prev => ({ ...prev, image: 'Image size must be less than 5MB' }));
+        return;
+      }
+      
       setFormData(prev => ({ ...prev, image: file }));
+      setErrors(prev => ({ ...prev, image: '' }));
       
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -160,6 +250,7 @@ const CreateViewer = () => {
   const removeImage = () => {
     setFormData(prev => ({ ...prev, image: null }));
     setImagePreview(null);
+    setErrors(prev => ({ ...prev, image: '' }));
   
     const fileInput = document.getElementById('image');
     if (fileInput) {
@@ -197,6 +288,11 @@ const CreateViewer = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fix the validation errors before submitting');
+      return;
+    }
     
     const submitData = {
       first_name: formData.firstName,
@@ -267,7 +363,7 @@ const CreateViewer = () => {
         </div>
       </Card>
 
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} noValidate className="space-y-2">
         {/* Personal Details Section */}
         <Card className="p-4">
           <div className="space-y-2">
@@ -288,8 +384,12 @@ const CreateViewer = () => {
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
                   placeholder="Enter first name"
+                  className={errors.firstName ? 'border-red-500' : ''}
                   required
                 />
+                {errors.firstName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+                )}
               </div>
 
               {/* Last Name */}
@@ -302,7 +402,6 @@ const CreateViewer = () => {
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
                   placeholder="Enter last name"
-               
                 />
               </div>
 
@@ -316,8 +415,12 @@ const CreateViewer = () => {
                   value={formData.userName}
                   onChange={(e) => handleInputChange('userName', e.target.value)}
                   placeholder="Enter username"
+                  className={errors.userName ? 'border-red-500' : ''}
                   required
                 />
+                {errors.userName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
+                )}
               </div>
 
               {/* Mobile Number */}
@@ -332,8 +435,12 @@ const CreateViewer = () => {
                   onChange={(e) => handleContactChange(e.target.value)}
                   placeholder="Enter mobile number"
                   maxLength={10}
+                  className={errors.contact ? 'border-red-500' : ''}
                   required
                 />
+                {errors.contact && (
+                  <p className="text-xs text-red-500 mt-1">{errors.contact}</p>
+                )}
               </div>
 
               {/* Email */}
@@ -347,8 +454,12 @@ const CreateViewer = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="Enter email address"
+                  className={errors.email ? 'border-red-500' : ''}
                   required
                 />
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
 
               {/* Password */}
@@ -362,8 +473,12 @@ const CreateViewer = () => {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder="Enter password"
+                  className={errors.password ? 'border-red-500' : ''}
                   required
                 />
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
 
               {/* Designation */}
@@ -376,8 +491,12 @@ const CreateViewer = () => {
                   value={formData.user_position}
                   onChange={(e) => handleInputChange('user_position', e.target.value)}
                   placeholder="Enter designation"
+                  className={errors.user_position ? 'border-red-500' : ''}
                   required
                 />
+                {errors.user_position && (
+                  <p className="text-xs text-red-500 mt-1">{errors.user_position}</p>
+                )}
               </div>
 
               {/* Address */}
@@ -403,10 +522,14 @@ const CreateViewer = () => {
                   type="date"
                   value={formData.user_birthday}
                   onChange={(e) => handleInputChange('user_birthday', e.target.value)}
+                  className={errors.user_birthday ? 'border-red-500' : ''}
                 />
+                {errors.user_birthday && (
+                  <p className="text-xs text-red-500 mt-1">{errors.user_birthday}</p>
+                )}
               </div>
 
-              {/* Image Upload - Now in same row */}
+              {/* Image Upload */}
               <div className="">
                 <Label htmlFor="image" className="text-xs font-medium">
                   Profile Image
@@ -421,6 +544,9 @@ const CreateViewer = () => {
                       className="cursor-pointer"
                     />
                   </div>
+                  {errors.image && (
+                    <p className="text-xs text-red-500 mt-1">{errors.image}</p>
+                  )}
                   {imagePreview && (
                     <div className="flex items-center gap-2 mt-2">
                       <div className="relative">
@@ -456,8 +582,12 @@ const CreateViewer = () => {
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
                   min={getTodayDate()}
+                  className={errors.startDate ? 'border-red-500' : ''}
                   required
                 />
+                {errors.startDate && (
+                  <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>
+                )}
               </div>
 
               {/* End Date */}
@@ -471,8 +601,12 @@ const CreateViewer = () => {
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
                   min={getTodayDate()}
+                  className={errors.endDate ? 'border-red-500' : ''}
                   required
                 />
+                {errors.endDate && (
+                  <p className="text-xs text-red-500 mt-1">{errors.endDate}</p>
+                )}
               </div>
             </div>
 
@@ -491,7 +625,7 @@ const CreateViewer = () => {
                   onValueChange={(value) => handleInputChange("chapter_id", value)}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.chapter_id ? 'border-red-500' : ''}>
                     <SelectValue
                       placeholder="Select primary chapter"
                     >
@@ -513,6 +647,9 @@ const CreateViewer = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.chapter_id && (
+                  <p className="text-xs text-red-500 mt-1">{errors.chapter_id}</p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">This is the main chapter associated with the viewer</p>
               </div>
             </div>
@@ -520,7 +657,7 @@ const CreateViewer = () => {
             <div className="space-y-2 mb-6">
               <Label className="text-sm font-medium">Additional Chapter Access</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {chapters.map((chapter) => (
+                {chapters?.map((chapter) => (
                   <div
                     key={chapter.id}
                     className="flex items-center space-x-3 p-2 border rounded-lg hover:bg-gray-50/50"
@@ -546,7 +683,7 @@ const CreateViewer = () => {
             <div className="space-y-2">
               <Label className="text-sm font-medium">School Chapter Access</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {chapterActive.map((chapter) => (
+                {chapterActive?.map((chapter) => (
                   <div key={chapter.id} className="flex items-center space-x-3 p-2 border rounded-lg hover:bg-gray-50/50">
                     <Checkbox
                       id={`school-${chapter.id}`}

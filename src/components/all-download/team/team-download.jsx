@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import Moment from 'moment';
 import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +71,7 @@ const TeamDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'team_summary.csv');
+      link.setAttribute('download', 'team_summary.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -87,6 +88,40 @@ const TeamDownload = () => {
     }
   });
 
+  // const viewMutation = useMutation({
+  //   mutationFn: async (downloadData) => {
+  //     const response = await axios.post(DOWNLOAD_TEAM, downloadData, {
+  //       headers: { 'Authorization': `Bearer ${token}` },
+  //       responseType: 'blob'
+  //     });
+  //     return response.data;
+  //   },
+  //   onSuccess: async (blob) => {
+  //     const text = await blob.text();
+  //     const rows = text.split('\n').filter(Boolean);
+      
+  //     if (rows.length === 0) {
+  //       setJsonData([]);
+  //       return;
+  //     }
+      
+  //     const headers = rows[0].split(',');
+  //     const data = rows.slice(1).map(row => {
+  //       const values = row.split(',');
+  //       const obj = {};
+  //       headers.forEach((header, idx) => {
+  //         const cleanHeader = header.replace(/^"|"$/g, '');
+  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+  //         obj[cleanHeader] = cleanValue;
+  //       });
+  //       return obj;
+  //     });
+  //     setJsonData(data);
+  //   },
+  //   onError: () => {
+  //     toast.error('Failed to fetch team data');
+  //   }
+  // });
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_TEAM, downloadData, {
@@ -95,33 +130,60 @@ const TeamDownload = () => {
       });
       return response.data;
     },
-    onSuccess: async (blob) => {
-      const text = await blob.text();
-      const rows = text.split('\n').filter(Boolean);
-      
-      if (rows.length === 0) {
-        setJsonData([]);
-        return;
+   onSuccess: async (blob) => {
+    try {
+      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const text = await innerBlob.text();
+  
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+        if (typeof XLSX === 'undefined') {
+          toast.error('Excel parser not loaded. Please reload the page.');
+          return;
+        }
+  
+        const arrayBuffer = await innerBlob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+  
+        setJsonData(json);
+        toast.success(`Loaded ${json.length} receipts from Excel file.`);
+      } else {
+        parseCSVAndSetData(text);
+        toast.success('Loaded receipts from Excel file.');
       }
-      
-      const headers = rows[0].split(',');
-      const data = rows.slice(1).map(row => {
-        const values = row.split(',');
-        const obj = {};
-        headers.forEach((header, idx) => {
-          const cleanHeader = header.replace(/^"|"$/g, '');
-          const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-          obj[cleanHeader] = cleanValue;
-        });
-        return obj;
-      });
-      setJsonData(data);
-    },
+    } catch (error) {
+      console.error('Failed to read Excel blob:', error);
+      toast.error('Unable to preview receipt file.');
+    }
+  }
+  ,
     onError: () => {
-      toast.error('Failed to fetch team data');
+      toast.error('Failed to fetch receipt data');
     }
   });
-
+  
+  function parseCSVAndSetData(text) {
+    const rows = text.split('\n').filter(Boolean);
+    if (!rows.length) {
+      toast.error('No receipt data found');
+      return;
+    }
+  
+    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    const data = rows.slice(1).map(row => {
+      const values = row.split(',');
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+  
+    setJsonData(data);
+  }
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));

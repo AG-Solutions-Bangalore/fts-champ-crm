@@ -18,8 +18,8 @@ export const CHAPTER_EDIT_BY_ID_UPDATE = `${BASE_URL}/api/chapter`;
 export const CHAPTER_EDIT_STATES_DROPDOWN = `${BASE_URL}/api/panel-fetch-state`;
 // (datasource)
 export const CHAPTER_DATASOURCE_BY_ID_LIST = `${BASE_URL}/api/fetch-data-sources-by-id`;
-export const CHAPTER_DATASOURCE_CREATE = `${BASE_URL}/api/create-datasources`;
-export const CHAPTER_DATASOURCE_UPDATE_BY_ID = `${BASE_URL}/api/update-datasources`;
+export const CHAPTER_DATASOURCE_CREATE = `${BASE_URL}/api/data-source`;
+export const CHAPTER_DATASOURCE_UPDATE_BY_ID = `${BASE_URL}/api/data-source`;
 
 //STATES
 export const STATES_LIST = `${BASE_URL}/api/fetch-states`;
@@ -305,10 +305,10 @@ export const RECEPIT_SUP_DOWNLOAD = `/api/receipt-view`;
 
 /*--------------------------Chapter-start(admin)----------------------------------- */
 
-export const ADMIN_CHAPTER_DATA_CHAPTER_LIST = `${BASE_URL}/api/fetch-chapter-by-id`;
+export const ADMIN_CHAPTER_DATA_CHAPTER_LIST = `${BASE_URL}/api/fetch-profile`;
 export const ADMIN_CHAPTER_CREATE = `${BASE_URL}/api/create-user`;
 export const ADMIN_CHAPTER_EDIT_UPDATE = `${BASE_URL}/api/update-user`;
-export const ADMIN_CHAPTER_UPDATE = `${BASE_URL}/api/update-chapter/`;
+export const ADMIN_CHAPTER_UPDATE = `${BASE_URL}/api/chapter/`;
 
 export const ADMIN_CHAPTER_SCHOOL_VIEW_CHAPTER = `${BASE_URL}/api/fetch-chapters`;
 
@@ -318,9 +318,9 @@ export const ADMIN_CHAPTER_SCHOOL_UPDATE = `${BASE_URL}/api/update-school`;
 /*--------------------------Chapter-end(admin)----------------------------------- */
 
 /*--------------------------Datasource-start(admin)----------------------------------- */
-export const ADMIN_DATASOURCE_CREATE = `${BASE_URL}/api/create-datasource`;
+export const ADMIN_DATASOURCE_CREATE = `${BASE_URL}/api/data-source`;
 export const ADMIN_DATASOURCE_LIST = `${BASE_URL}/api/fetch-datasource`;
-export const ADMIN_DATASOURCE_UPDATE = `${BASE_URL}/api/update-datasource`;
+export const ADMIN_DATASOURCE_UPDATE = `${BASE_URL}/api/data-source`;
 
 /*--------------------------Datasource-end(admin)----------------------------------- */
 /*--------------------------Report-end(admin)----------------------------------- */

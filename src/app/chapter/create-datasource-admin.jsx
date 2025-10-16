@@ -54,8 +54,8 @@ const CreateDatasourceAdmin = ({ refetch }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "Data source created successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "Data source created successfully");
 
         // Reset form
         setFormData({
@@ -68,12 +68,12 @@ const CreateDatasourceAdmin = ({ refetch }) => {
         refetch();
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create data source");
+        toast.error(response.data.message || "Failed to create data source");
       }
     } catch (error) {
-      console.error("Error creating data source:", error);
+      console.error("Error creating data source:", error.response?.data?.message);
       toast.error(
-        error.response?.data?.msg || "Failed to create data source"
+        error.response?.data?.message || "Failed to create data source"
       );
     } finally {
       setIsLoading(false);

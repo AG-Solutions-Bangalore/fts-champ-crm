@@ -59,19 +59,19 @@ const EditDatasourceAdmin = ({ datasourceData, open, onClose, refetch }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "Data source updated successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "Data source updated successfully");
         
         await queryClient.invalidateQueries(["chapter-datasource-admin"]);
         refetch();
         onClose();
       } else {
-        toast.error(response.data.msg || "Failed to update data source");
+        toast.error(response.data.message || "Failed to update data source");
       }
     } catch (error) {
-      console.error("Error updating data source:", error);
+      console.error("Error updating data source:",  error.response?.data?.message);
       toast.error(
-        error.response?.data?.msg || "Failed to update data source"
+        error.response?.data?.message || "Failed to update data source"
       );
     } finally {
       setIsLoading(false);

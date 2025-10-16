@@ -112,7 +112,7 @@ export default function LoginAuth() {
           transition={{ duration: 0.5 }}
         >
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">FTS CHAMP DEV</h1>
+            <h1 className="text-3xl font-bold">FTS CHAMP</h1>
             <p className="text-balance text-muted-foreground">
               Enter your credentials below to login to your account
             </p>
