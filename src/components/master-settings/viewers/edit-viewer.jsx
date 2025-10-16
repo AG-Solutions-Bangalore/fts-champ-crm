@@ -48,6 +48,7 @@ const EditViewer = () => {
     user_school_ids: "",
   });
   
+  const [errors, setErrors] = useState({});
   const [selectedChapterIds, setSelectedChapterIds] = useState([]);
   const [selectedSchoolIds, setSelectedSchoolIds] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
@@ -142,6 +143,83 @@ const EditViewer = () => {
     setIsFormDirty(isDirty);
   }, [formData, initialFormData]);
 
+  // Custom validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    // First Name validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    } else if (formData.firstName.length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters';
+    }
+
+    // Username validation
+    if (!formData.userName.trim()) {
+      newErrors.userName = 'Username is required';
+    } else if (formData.userName.length < 3) {
+      newErrors.userName = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.userName)) {
+      newErrors.userName = 'Username can only contain letters, numbers, and underscores';
+    }
+
+    // Contact validation
+    if (!formData.contact.trim()) {
+      newErrors.contact = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(formData.contact)) {
+      newErrors.contact = 'Mobile number must be exactly 10 digits';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Designation validation
+    if (!formData.user_position.trim()) {
+      newErrors.user_position = 'Designation is required';
+    }
+
+    // Start Date validation
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required';
+    }
+
+    // End Date validation
+    if (!formData.endDate) {
+      newErrors.endDate = 'End date is required';
+    } else if (formData.startDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
+      newErrors.endDate = 'End date must be after start date';
+    }
+
+    // Status validation
+    if (!formData.status) {
+      newErrors.status = 'Status is required';
+    }
+
+    // Birthday validation (optional)
+    if (formData.user_birthday && new Date(formData.user_birthday) > new Date()) {
+      newErrors.user_birthday = 'Birthday cannot be in the future';
+    }
+
+    // Image validation
+    if (formData.image) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!validTypes.includes(formData.image.type)) {
+        newErrors.image = 'Please select a valid image (JPEG, PNG, GIF)';
+      } else if (formData.image.size > maxSize) {
+        newErrors.image = 'Image size must be less than 5MB';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const updateMutation = useMutation({
     mutationFn: (data) => {
       const formDataToSend = new FormData();
@@ -181,13 +259,33 @@ const EditViewer = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate image file type and size
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, image: 'Please select a valid image (JPEG, PNG, GIF)' }));
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        setErrors(prev => ({ ...prev, image: 'Image size must be less than 5MB' }));
+        return;
+      }
+      
       setFormData(prev => ({ ...prev, image: file }));
       setCurrentImage(null);
+      setErrors(prev => ({ ...prev, image: '' }));
       
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -201,6 +299,7 @@ const EditViewer = () => {
     setFormData(prev => ({ ...prev, image: null }));
     setImagePreview(null);
     setCurrentImage(null);
+    setErrors(prev => ({ ...prev, image: '' }));
   
     const fileInput = document.getElementById('image');
     if (fileInput) {
@@ -238,6 +337,11 @@ const EditViewer = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fix the validation errors before submitting');
+      return;
+    }
     
     const submitData = {
     
@@ -309,7 +413,7 @@ const EditViewer = () => {
         </div>
       </Card>
 
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} noValidate className="space-y-2">
        
         <Card className="p-4">
           <div className="space-y-2">
@@ -330,8 +434,12 @@ const EditViewer = () => {
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
                   placeholder="Enter first name"
+                  className={errors.firstName ? 'border-red-500' : ''}
                   required
                 />
+                {errors.firstName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+                )}
               </div>
 
               {/* Last Name */}
@@ -357,8 +465,12 @@ const EditViewer = () => {
                   value={formData.userName}
                   onChange={(e) => handleInputChange('userName', e.target.value)}
                   placeholder="Enter username"
+                  className={errors.userName ? 'border-red-500' : ''}
                   required
                 />
+                {errors.userName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
+                )}
               </div>
 
               {/* Mobile Number */}
@@ -373,8 +485,12 @@ const EditViewer = () => {
                   onChange={(e) => handleContactChange(e.target.value)}
                   placeholder="Enter mobile number"
                   maxLength={10}
+                  className={errors.contact ? 'border-red-500' : ''}
                   required
                 />
+                {errors.contact && (
+                  <p className="text-xs text-red-500 mt-1">{errors.contact}</p>
+                )}
               </div>
 
               {/* Email */}
@@ -388,11 +504,13 @@ const EditViewer = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="Enter email address"
+                  className={errors.email ? 'border-red-500' : ''}
                   required
                 />
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
-
-             
 
               {/* Designation */}
               <div className="">
@@ -404,8 +522,12 @@ const EditViewer = () => {
                   value={formData.user_position}
                   onChange={(e) => handleInputChange('user_position', e.target.value)}
                   placeholder="Enter designation"
+                  className={errors.user_position ? 'border-red-500' : ''}
                   required
                 />
+                {errors.user_position && (
+                  <p className="text-xs text-red-500 mt-1">{errors.user_position}</p>
+                )}
               </div>
 
               {/* Address */}
@@ -431,7 +553,11 @@ const EditViewer = () => {
                   type="date"
                   value={formData.user_birthday}
                   onChange={(e) => handleInputChange('user_birthday', e.target.value)}
+                  className={errors.user_birthday ? 'border-red-500' : ''}
                 />
+                {errors.user_birthday && (
+                  <p className="text-xs text-red-500 mt-1">{errors.user_birthday}</p>
+                )}
               </div>
 
               {/* Image Upload */}
@@ -446,9 +572,12 @@ const EditViewer = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="cursor-pointer"
+                      className={`cursor-pointer ${errors.image ? 'border-red-500' : ''}`}
                     />
                   </div>
+                  {errors.image && (
+                    <p className="text-xs text-red-500 mt-1">{errors.image}</p>
+                  )}
                   {(imagePreview || currentImage) && (
                     <div className="flex items-center gap-2 mt-2">
                       <div className="relative">
@@ -485,9 +614,12 @@ const EditViewer = () => {
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  min={getTodayDate()}
+                  className={errors.startDate ? 'border-red-500' : ''}
                   required
                 />
+                {errors.startDate && (
+                  <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>
+                )}
               </div>
 
               {/* End Date */}
@@ -500,9 +632,12 @@ const EditViewer = () => {
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  min={getTodayDate()}
+                  className={errors.endDate ? 'border-red-500' : ''}
                   required
                 />
+                {errors.endDate && (
+                  <p className="text-xs text-red-500 mt-1">{errors.endDate}</p>
+                )}
               </div>
 
               {/* Status */}
@@ -515,7 +650,7 @@ const EditViewer = () => {
                   onValueChange={(value) => handleInputChange('status', value)} 
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.status ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -526,6 +661,9 @@ const EditViewer = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.status && (
+                  <p className="text-xs text-red-500 mt-1">{errors.status}</p>
+                )}
               </div>
             </div>
 

@@ -362,7 +362,7 @@ const useNavigationData = (userType) => {
 
 const TEAMS_CONFIG = [
   {
-    name: "FTS CHAMP DEV",
+    name: "FTS CHAMP",
     logo: GalleryVerticalEnd,
     plan: "",
   },

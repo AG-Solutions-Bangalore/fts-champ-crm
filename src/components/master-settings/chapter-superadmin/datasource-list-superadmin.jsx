@@ -37,12 +37,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import CreateUserSuperadmin from './create-user-superadmin';
 import CreateDatasourceSuperadmin from './create-datasource-superadmin';
 import EditDatasourceSuperadmin from './edit-datasource-superadmin';
 import { decryptId } from '@/utils/encyrption/encyrption';
 
-const DatasourceListSuperadmin = ({id,datasources}) => {
+const DatasourceListSuperadmin = ({id,datasources,chapterCodeForCreateDataSource}) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users");
@@ -99,26 +98,33 @@ const DatasourceListSuperadmin = ({id,datasources}) => {
       header: "Action",
       cell: ({ row }) => {
         const datasource = row.original;
+        const dataEditAccess = row.original.data_source_type
+        const restrictedSources = ["Ekal Run", "Sakranti", "Seva Patra"];
+        const canEdit = !restrictedSources.includes(dataEditAccess);
         return (
           <div className="flex flex-row">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => setEditDatasource(datasource)}
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit Data Source</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+
+{canEdit && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setEditDatasource(datasource)}
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Edit
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Data Source</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+           
           </div>
         );
       },
@@ -204,7 +210,7 @@ const DatasourceListSuperadmin = ({id,datasources}) => {
           />
         </div>
         <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
-          <CreateDatasourceSuperadmin chapterId={decryptedId} />
+          <CreateDatasourceSuperadmin chapterId={chapterCodeForCreateDataSource} />
         </div>
       </div>
 

@@ -86,7 +86,7 @@ const ChapterViewSuperAdmin = () => {
   const users = chapterData?.users || [];
   const dataSource = chapterData?.dataSource || [];
   const ImageUrl = chapterData?.image_url;
-  const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code
+  const chapterCodeForCreateUser = chapterData?.data?.chapter_code
 
   useEffect(() => {
     if (chapterData?.data) {
@@ -521,7 +521,7 @@ const ChapterViewSuperAdmin = () => {
 
       
         <TabsContent value="datasources" className="">
-        <DatasourceListSuperadmin datasources={dataSource} id={id}/>
+        <DatasourceListSuperadmin datasources={dataSource} id={id}  chapterCodeForCreateDataSource={chapterCodeForCreateUser}/>
           
           
        

@@ -53,14 +53,14 @@ const EditDatasourceSuperadmin = ({ datasourceData, open, onClose }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "Data source updated successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "Data source updated successfully");
         
 
         await queryClient.invalidateQueries(["chapter-datasource", datasourceData.chapter_id]);
         onClose();
       } else {
-        toast.error(response.data.msg || "Failed to update data source");
+        toast.error(response.data.message || "Failed to update data source");
       }
     } catch (error) {
       toast.error(

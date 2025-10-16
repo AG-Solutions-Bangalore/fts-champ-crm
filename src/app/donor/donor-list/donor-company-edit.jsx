@@ -655,7 +655,9 @@ const DonorCompanyEdit = () => {
                       </div>
                                    ):(
                     <MemoizedSelect
-                    value={donor.indicomp_promoter}
+                    value={
+                      promoter.find(p => p.indicomp_fts_id == donor.indicomp_promoter)?.indicomp_promoter || ""
+                    }
                   
                     onChange={(value) => {
                       const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);

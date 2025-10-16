@@ -103,17 +103,17 @@ const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "User updated successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "User updated successfully");
       
         refetch();
         onClose(); 
       } else {
-        toast.error(response.data.msg || "Failed to update user");
+        toast.error(response.data.message || "Failed to update user");
       }
     } catch (error) {
-      console.error("Error updating user:", error);
-      toast.error(error.response?.data?.msg || "Failed to update user");
+      console.error("Error updating user:", error.response?.data?.message);
+      toast.error(error.response?.data?.message || "Failed to update user");
     } finally {
       setIsLoading(false);
     }
