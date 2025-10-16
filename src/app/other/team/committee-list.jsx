@@ -17,7 +17,7 @@ import { OTHER_TEAM_COMMITTEE_CREATE_IMAGE } from "../../../api";
 import Cookies from "js-cookie";
 
 const CommitteeList = ({ committeeResponse, refetch }) => {
-  const userType = Cookies.get('user_type_id')
+  const userType = Cookies.get("user_type_id");
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDonorId, setSelectedDonorId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -113,14 +113,15 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                 {groupedCommittees[type].length > 0 ? (
                   groupedCommittees[type].map((member) => {
                     const img = member?.indicomp_image_logo
-                      ? `${userImageBase}${member.indicomp_image_logo}`
+                      ? `${userImageBase}${
+                          member.indicomp_image_logo
+                        }?t=${Date.now()}`
                       : noImageUrl;
                     return (
                       <Card
                         key={member?.id}
                         className="hover:shadow-md transition-all rounded-xl border border-gray-200 bg-white flex items-center gap-4 p-4"
                       >
-                 
                         <div className="relative shrink-0">
                           <img
                             src={img}
@@ -128,19 +129,19 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                             className="w-16 h-16 rounded-md object-cover border"
                             onError={(e) => (e.currentTarget.src = noImageUrl)}
                           />
-                                     {(userType === '1' || userType === '2') &&(
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleOpenDialog(member?.indicomp_fts_id)
-                            }
-                            className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-md shadow-md hover:scale-105 transition"
-                          >
-                            <ImagePlus size={14} />
-                          </button>
-                                 )}
+                          {(userType === "1" || userType === "2") && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenDialog(member?.indicomp_fts_id)
+                              }
+                              className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-md shadow-md hover:scale-105 transition"
+                            >
+                              <ImagePlus size={14} />
+                            </button>
+                          )}
                         </div>
-                 
+
                         <div className="flex flex-col justify-center">
                           <p className="text-sm font-semibold text-gray-800 leading-tight">
                             {member?.indicomp_full_name || "Unnamed"}

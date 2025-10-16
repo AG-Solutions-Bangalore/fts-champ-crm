@@ -48,6 +48,7 @@ const TeamLoading = () => {
           </form>
         </CardContent>
       </Card>
+      //after this is card if it is committe loading ,and committe fetching this need to come she not the above one is like designationloading || committesloading || membersloading this sloading it need to come make it crt
       <div className="space-y-4 mt-4">
         <div className="grid w-full grid-cols-4 gap-2 mb-2 sticky top-16 shadow-sm">
           {[...Array(4)].map((_, i) => (
