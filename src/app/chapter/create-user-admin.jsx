@@ -92,8 +92,8 @@ const CreateUserAdmin = ({ chapterCodeForCreateUser, refetch }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "User created successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "User created successfully");
 
         // Reset form
         setUser({
@@ -113,12 +113,12 @@ const CreateUserAdmin = ({ chapterCodeForCreateUser, refetch }) => {
         refetch();
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create user");
+        toast.error(response.data.message || "Failed to create user");
       }
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error creating user:", error.response.data.message);
       toast.error(
-        error.response?.data?.msg || "Failed to create user"
+        error.response?.data?.message || "Failed to create user"
       );
     } finally {
       setIsLoading(false);

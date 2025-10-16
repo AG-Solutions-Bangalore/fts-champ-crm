@@ -78,7 +78,8 @@ const ReceiptOne = () => {
   });
 
   const receipts = receiptData?.data || {};
-  const chapter = receiptData?.chapter || {};
+  const chapter = receiptData?.data?.chapter || {};
+
   const authsign = receiptData?.auth_sign || [];
   const country = receiptData?.country || [];
   const amountInWords = numWords(receipts.receipt_total_amount || 0);

@@ -118,7 +118,7 @@ const AllReceiptDownload = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'all_receipt_list.csv');
+      link.setAttribute('download', 'all_receipt_list.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -202,10 +202,10 @@ const AllReceiptDownload = () => {
         toast.success(`Loaded ${json.length} receipts from Excel file.`);
       } else {
         parseCSVAndSetData(text);
-        toast.success('Loaded receipts from CSV file.');
+        toast.success('Loaded receipts from Excel file.');
       }
     } catch (error) {
-      console.error('Failed to read Excel/CSV blob:', error);
+      console.error('Failed to read Excel blob:', error);
       toast.error('Unable to preview receipt file.');
     }
   }

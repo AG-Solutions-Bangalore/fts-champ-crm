@@ -32,18 +32,19 @@ import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { navigateToViewerEdit } from "@/api";
 import { Link, useNavigate } from "react-router-dom";
+import { useFetchChapterActive } from "@/hooks/use-api";
 
 const Viewer = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate()
   const {
     data: viewersData,
-    isLoading,
+  
     isError,
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["viewers"],
+    queryKey: ["viewers",],
     queryFn: async () => {
       const token = Cookies.get("token");
       
@@ -61,6 +62,33 @@ const Viewer = () => {
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
+  const {
+    data: chapterActive,
+  
+  
+    isLoading:isLoadingChapter,
+  } = useQuery({
+    queryKey: ["chapter-active",],
+    queryFn: async () => {
+      const token = Cookies.get("token");
+      
+      const response = await axios.get(
+        `${BASE_URL}/api/chapter-active`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+        }
+      );
+      return response.data.data;
+    },
+    keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+
+
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -138,10 +166,39 @@ const Viewer = () => {
     {
       accessorKey: "viewer_chapter_ids",
       id: "Chapter ID",
-      header: "Chapter ID",
-      cell: ({ row }) => <div className="text-xs font-mono w-32 break-words">{row.getValue("Chapter ID") || "-"}</div>,
+      header: "Chapter",
+      cell: ({ row }) => {
+        const value = row.getValue("Chapter ID");
+        const codes = value ? value.toString().split(",") : [];
+    
+    
+        if (isLoadingChapter || !chapterActive?.length) {
+          return (
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24"></div>
+            </div>
+          );
+        }
+        
+    
+        const chapterNames = codes
+          .map((code) => {
+            const match = chapterActive.find(
+              (chapter) => String(chapter.chapter_code) === code.trim()
+            );
+            return match ? match.chapter_name.split(" ")[0] : null;
+          })
+          .filter(Boolean);
+    
+        return (
+          <div className="text-xs font-medium w-32 break-words">
+            {chapterNames.length > 0 ? chapterNames.join(", ") : "-"}
+          </div>
+        );
+      },
       size: 150,
     },
+    
     {
       accessorKey: "viewer_start_date",
       id: "Start Date",
@@ -322,7 +379,7 @@ const Viewer = () => {
           </TableHeader>
           
           <TableBody>
-            {isFetching && !table.getRowModel().rows.length ? (
+            {(isFetching || isLoadingChapter) && !table.getRowModel().rows.length ? (
               <TableShimmer />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (

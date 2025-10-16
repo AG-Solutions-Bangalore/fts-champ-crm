@@ -50,6 +50,7 @@ const ChapterViewAdmin = () => {
     chapter_date_of_incorporation: "",
     chapter_region_code: "",
     auth_sign: "",
+    chapter_status:""
   });
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [initialFormData, setInitialFormData] = useState({});
@@ -58,7 +59,7 @@ const ChapterViewAdmin = () => {
   const { data: chapterData, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['chapter-admin', id],
     queryFn: async () => {
-      const response = await axios.get(`${ADMIN_CHAPTER_DATA_CHAPTER_LIST}/${id}`, {
+      const response = await axios.get(`${ADMIN_CHAPTER_DATA_CHAPTER_LIST}`, {
         headers: {
           Authorization: `Bearer ${Cookies.get('token')}`,
         },
@@ -69,8 +70,10 @@ const ChapterViewAdmin = () => {
   });
 
   const users = chapterData?.users || [];
+  const dataSource = chapterData?.dataSource || []
   const ImageUrl = chapterData?.image_url;
   const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code;
+  const updatemutationId = chapterData?.chapter?.id;
 
   useEffect(() => {
     if (chapterData?.chapter) {
@@ -89,6 +92,7 @@ const ChapterViewAdmin = () => {
         chapter_date_of_incorporation: chapter.chapter_date_of_incorporation || "",
         chapter_region_code: chapter.chapter_region_code || "",
         auth_sign: chapter.auth_sign || "",
+        chapter_status: chapter.chapter_status || "",
       };
       
       setFormData(newFormData);
@@ -103,23 +107,21 @@ const ChapterViewAdmin = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data) => 
-      axios.put(`${ADMIN_CHAPTER_UPDATE}${id}`, data, {
+      axios.put(`${ADMIN_CHAPTER_UPDATE}${updatemutationId}`, data, {
         headers: {
           Authorization: `Bearer ${Cookies.get('token')}`,
         },
       }),
     onSuccess: (response) => {
-      if (response.data.code === 200) {
-        toast.success(response.data.msg);
-        queryClient.invalidateQueries(['chapter', id]);
+      if (response.data.code === 201) {
+        toast.success(response.data.message);
+        queryClient.invalidateQueries(['chapter']);
         refetch();
-      } else if (response.data.code === 400) {
-        toast.error(response.data.msg);
       } else {
-        toast.error('Unexpected error occurred');
+        toast.error(response.data.message || 'Unexpected error occurred');
       }
     },
-    onError: () => toast.error('Failed to update chapter'),
+    onError: (error) => toast.error(error.response.data.message || 'Failed to update chapter'),
   });
 
   const handleInputChange = (field, value) => {
@@ -334,6 +336,28 @@ const ChapterViewAdmin = () => {
                       className="h-8 text-xs"
                     />
                   </div>
+                    <div className="space-y-1">
+                    <Label htmlFor="chapter_status" className="text-xs font-medium">
+                      Chapter Status <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.chapter_status}
+                      onValueChange={(value) => handleInputChange('chapter_status', value)}
+                      required
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active" className="text-xs">
+                          Active
+                        </SelectItem>
+                        <SelectItem value="Inactive" className="text-xs">
+                          Inactive
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
 
@@ -392,7 +416,8 @@ const ChapterViewAdmin = () => {
               </TabsContent>
               <TabsContent value="datasource" className="">
                 <DatasourceListAdmin 
-                  
+                  datasources={dataSource}
+                  refetch={refetch}
                 />
               
               </TabsContent>

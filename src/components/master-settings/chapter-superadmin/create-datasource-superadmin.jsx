@@ -55,8 +55,8 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "Data source created successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "Data source created successfully");
 
      
         setFormData({
@@ -68,7 +68,7 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
         await queryClient.invalidateQueries(["chapterDataSources"]);
         setOpen(false);
       } else {
-        toast.error(response.data.msg || "Failed to create data source");
+        toast.error(response.data.message || "Failed to create data source");
       }
     } catch (error) {
       toast.error(
@@ -99,21 +99,14 @@ const CreateDatasourceSuperadmin = ({ chapterId }) => {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" size="sm" className="ml-2">
-          <SquarePlus className="h-4 w-4 mr-2" /> DataSource
+          <SquarePlus className="h-4 w-4 mr-2" /> DataSource 
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Create Data Source</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(false)}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          
           </DialogTitle>
           <DialogDescription>
             Enter the details for the new data source

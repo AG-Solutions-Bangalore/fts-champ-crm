@@ -93,12 +93,12 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
         }
       );
 
-      if (response?.data.code === 200) {
-        toast.success(response.data.msg || "User updated successfully");
+      if (response?.data.code === 201) {
+        toast.success(response.data.message || "User updated successfully");
         await queryClient.invalidateQueries(["chapter", userData.chapter_id]);
         onClose(); 
       } else {
-        toast.error(response.data.msg || "Failed to update user");
+        toast.error(response.data.message || "Failed to update user");
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update user");
