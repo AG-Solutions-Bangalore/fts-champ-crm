@@ -1,12 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-
-
 const TeamCardLoading = () => {
   return (
     <>
-
       <div className="space-y-4 mt-4">
         <div className="grid w-full grid-cols-4 gap-2 mb-2 sticky top-16 shadow-sm">
           {[...Array(4)].map((_, i) => (

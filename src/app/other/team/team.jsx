@@ -38,7 +38,6 @@ const Team = () => {
     receipt_to_date: "",
     indicomp_full_name_dummy: "",
   });
-  console.log(committee);
   const { trigger, loading: updateloading } = useApiMutation();
   const {
     data: committeeResponse,
@@ -76,17 +75,6 @@ const Team = () => {
       setCommittee((prev) => ({ ...prev, [field]: value }));
     }
   };
-
-  if (
-    designationloading ||
-    committesloading ||
-    membersloading ||
-    committeeLoading ||
-    committeeFetching
-  ) {
-    // if (true) {
-    return <TeamLoading />;
-  }
   const onSubmit = async (e) => {
     e.preventDefault();
     if (!committee.committee_type) {
@@ -150,116 +138,111 @@ const Team = () => {
 
   return (
     <>
-      {/* Form Section */}
-      {designationloading || committesloading || membersloading ? (
-        <TeamFormLoading />
-      ) : (
-        (userType === "1" || userType === "2") && (
-          <Card className="bg-white shadow-md border text-[var(--label-color)] rounded-md">
-            <CardContent className="p-6">
-              <form className="space-y-6" onSubmit={onSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row lg:items-end lg:gap-6 gap-6 flex-wrap">
-                  {/* Active Duration */}
-                  <div className="flex flex-col min-w-[220px] mt-2">
-                    <Label className="font-medium">Active Duration</Label>
-                    <div className="flex gap-2 text-sm text-gray-600 mt-1">
-                      <span className="font-medium">From:</span>
-                      <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
-                        {teamcommittes?.data?.committee_from
-                          ? moment(teamcommittes.data.committee_from).format(
-                              "DD MMM YYYY"
-                            )
-                          : "—"}
-                      </span>
-                      <span className="font-medium">To:</span>
-                      <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
-                        {teamcommittes?.data?.committee_to
-                          ? moment(teamcommittes.data.committee_to).format(
-                              "DD MMM YYYY"
-                            )
-                          : "—"}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Committee Type */}
-                  <div className="flex-1 min-w-[220px]">
-                    <Label className="font-medium" htmlFor="committee_type">
-                      Committee Type <span className="text-red-500">*</span>
-                    </Label>
-                    <MemoizedSelect
-                      name="committee_type"
-                      value={committee?.committee_type || ""}
-                      onChange={(e) => handleInputChange(e, "committee_type")}
-                      options={commiteeOptions}
-                      placeholder="Select Committee Type"
-                    />
-                  </div>
+{/* Form Section */}
+{designationloading || committesloading || membersloading ? (
+  <TeamLoading />
+) : (
+  (userType === "1" || userType === "2") && (
+    <Card className="bg-white shadow-md border  rounded-md">
+      <CardContent className="p-6">
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row lg:items-end lg:gap-6 gap-6 flex-wrap">
+            <div className="flex flex-col min-w-[220px]">
+              <Label className="font-medium ">Active Duration</Label>
+              <div className="flex gap-2 text-sm  mt-1">
+                <span className="font-medium mt-1">From:</span>
+                <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
+                  {teamcommittes?.data?.committee_from
+                    ? moment(teamcommittes.data.committee_from).format(
+                        "DD MMM YYYY"
+                      )
+                    : "—"}
+                </span>
+                <span className="font-medium mt-1">To:</span>
+                <span className="border rounded-md px-2 py-1 bg-gray-50 text-gray-700">
+                  {teamcommittes?.data?.committee_to
+                    ? moment(teamcommittes.data.committee_to).format(
+                        "DD MMM YYYY"
+                      )
+                    : "—"}
+                </span>
+              </div>
+            </div>
 
-                  {/* Designation */}
-                  <div className="flex-1">
-                    <Label className="font-medium" htmlFor="designation">
-                      Designation <span className="text-red-500">*</span>
-                    </Label>
-                    <MemoizedSelect
-                      name="designation"
-                      value={committee?.designation || ""}
-                      onChange={(e) => handleInputChange(e, "designation")}
-                      options={
-                        designationOptions?.data?.map((item) => ({
-                          label: item.designation_type,
-                          value: item.designation_type,
-                        })) || []
-                      }
-                      placeholder="Select Designation"
-                    />
-                  </div>
+            {/* Committee Type */}
+            <div className="flex-1 min-w-[220px]">
+              <Label className="font-medium " htmlFor="committee_type">
+                Committee Type <span className="text-red-500">*</span>
+              </Label>
+              <MemoizedSelect
+                name="committee_type"
+                value={committee?.committee_type || ""}
+                onChange={(e) => handleInputChange(e, "committee_type")}
+                options={commiteeOptions}
+                placeholder="Select Committee Type"
+              />
+            </div>
 
-                  {/* Member's Name */}
-                  <div className="flex-1">
-                    <Label
-                      className="font-medium"
-                      htmlFor="indicomp_full_name_dummy"
-                    >
-                      Member's Name <span className="text-red-500">*</span>
-                    </Label>
-                    <MemoizedSelect
-                      name="indicomp_full_name_dummy"
-                      value={committee?.indicomp_full_name_dummy || ""}
-                      onChange={(e) =>
-                        handleInputChange(e, "indicomp_full_name_dummy")
-                      }
-                      options={
-                        memberdata?.data?.map((item) => ({
-                          label: `${item.indicomp_full_name} (${item.indicomp_type})`,
-                          value: item.indicomp_fts_id,
-                        })) || []
-                      }
-                      placeholder="Select Member's Name"
-                    />
-                  </div>
+            {/* Designation */}
+            <div className="flex-1">
+              <Label className="font-medium" htmlFor="designation">
+                Designation <span className="text-red-500">*</span>
+              </Label>
+              <MemoizedSelect
+                name="designation"
+                value={committee?.designation || ""}
+                onChange={(e) => handleInputChange(e, "designation")}
+                options={
+                  designationOptions?.data?.map((item) => ({
+                    label: item.designation_type,
+                    value: item.designation_type,
+                  })) || []
+                }
+                placeholder="Select Designation"
+              />
+            </div>
 
-                  {/* Update Button */}
-                  <div className="flex items-end gap-4 mt-2">
-                    <Button className="text-white" type="submit">
-                      {updateloading ? "Updating..." : "Update"}
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )
-      )}
+            {/* Member's Name */}
+            <div className="flex-1">
+              <Label className="font-medium" htmlFor="indicomp_full_name_dummy">
+                Member's Name <span className="text-red-500">*</span>
+              </Label>
+              <MemoizedSelect
+                name="indicomp_full_name_dummy"
+                value={committee?.indicomp_full_name_dummy || ""}
+                onChange={(e) => handleInputChange(e, "indicomp_full_name_dummy")}
+                options={
+                  memberdata?.data?.map((item) => ({
+                    label: `${item.indicomp_full_name} (${item.indicomp_type})`,
+                    value: item.indicomp_fts_id,
+                  })) || []
+                }
+                placeholder="Select Member's Name"
+              />
+            </div>
 
-      {committeeLoading || committeeFetching ? (
-        <TeamCardLoading />
-      ) : (
-        <CommitteeList
-          committeeResponse={committeeResponse || []}
-          refetch={refetch}
-        />
-      )}
+            {/* Update Button */}
+            <div className="flex items-end gap-4 mt-2">
+              <Button className="text-white" type="submit">
+                {updateloading ? "Updating..." : "Update"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  )
+)}
+
+<div className="mt-4 w-full">
+  {committeeLoading || committeeFetching ? (
+    <TeamCardLoading />
+  ) : (
+    <CommitteeList committeeResponse={committeeResponse || []} refetch={refetch} />
+  )}
+</div>
+
     </>
   );
 };
