@@ -7,17 +7,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetMutation } from "@/hooks/use-get-mutation";
+import { useApiMutation } from "@/hooks/use-mutation";
 import { decryptId } from "@/utils/encyrption/encyrption";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Download, Loader, Loader2, Mail, Printer } from "lucide-react";
+import moment from "moment";
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
-import { SCHOOL_ALLOT_LETTER } from "../../../api";
-import AllotmentPrintLetter from "./allotment-print-letter";
-import moment from "moment";
+import { toast } from "sonner";
+import { SCHOOL_ALLOT_LETTER, SEND_LETTER_EMAIL } from "../../../api";
 import mailSentGif from "../../../assets/mail-sent.gif";
+import AllotmentPrintLetter from "./allotment-print-letter";
 
 const SchoolAllotLetter = () => {
   const componentRef = useRef();
@@ -26,6 +28,7 @@ const SchoolAllotLetter = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const today = moment().format("DD/MM/YYYY");
+  const { trigger: Mailtrigger, loading: mailloading } = useApiMutation();
 
   const {
     data: schoolLetter,
@@ -36,6 +39,7 @@ const SchoolAllotLetter = () => {
     `schoolletter-${donorId}`,
     `${SCHOOL_ALLOT_LETTER}/${donorId}`
   );
+
   const handlePrintPdf = useReactToPrint({
     content: () => componentRef.current,
     documentTitle: "Allotment_Letter",
@@ -144,6 +148,25 @@ const SchoolAllotLetter = () => {
   const SchoolAlotView = schoolLetter?.data?.SchoolAlotView || [];
   const OTSReceipts = schoolLetter?.data?.OTSReceipts || [];
 
+  const onSubmit = async ({ id }) => {
+    if (!id) return toast.error("Id is Missing, Please try again later");
+
+    try {
+      const res = await Mailtrigger({
+        url: `${SEND_LETTER_EMAIL}/${donorId}`,
+      });
+
+      if (res?.code == 201) {
+        toast.success(res.message);
+        refetch();
+      } else {
+        toast.error(res.message || "Unexpected error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to update");
+    }
+  };
   return (
     <div className="invoice-wrapper overflow-x-auto grid md:grid-cols-1 1fr">
       <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
@@ -176,9 +199,15 @@ const SchoolAllotLetter = () => {
                     variant="ghost"
                     size="icon"
                     type="button"
-                    className="h-11 w-11 rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
+                    className="h-11 w-11 relative rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
+                    onClick={() => onSubmit({ id: donorId })}
                   >
-                    {isProcessing ? (
+                    {SchoolAlotReceipt && (
+                      <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
+                        {SchoolAlotReceipt?.schoolalot_email_count || 0}
+                      </span>
+                    )}
+                    {mailloading ? (
                       <img
                         src={mailSentGif}
                         alt="Sending..."

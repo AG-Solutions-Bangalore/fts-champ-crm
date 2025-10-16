@@ -169,6 +169,7 @@ export const SCHOOL_ALLOT_YEAR_BY_YEAR = `/api/fetch-school-allotment-year-by-ye
 export const DONOR_DETAILS_SUMBIT = `/api/create-school-alot`;
 // export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
 export const UPDATE_DETAILS_SUMBIT = `/api/school-allotment`;
+export const SEND_LETTER_EMAIL = `/api/send-school-alloted-email`;
 
 /*--------------------------School-end----------------------------------- */
 
