@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import numWords from "num-words";
 import moment from "moment";
 import { useReactToPrint } from "react-to-print";
@@ -41,12 +41,22 @@ import axios from "axios";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
 import TimelineReceipt from "./timeline-receipt";
+import useCreateFollowup from "@/hooks/use-create-followup";
+import { getOrdinal } from "@/utils/get-ordinal";
 
 const ReceiptOne = () => {
   const tableRef = useRef(null);
   const containerRef = useRef();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const createFollowupMutation = useCreateFollowup();
+
+  // const { '*': id } = useParams();
+  // console.log('id receipt view',id)
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const id = searchParams.get('ref');
+  
+  console.log('Receipt ref:', id);
   const queryClient = useQueryClient();
   const token = Cookies.get("token");
   const [donor1, setDonor1] = useState({ indicomp_email: "" });
@@ -61,7 +71,7 @@ const ReceiptOne = () => {
     queryKey: ['receiptView', id],
     queryFn: async () => {
       const { data } = await axios.get(
-        `${BASE_URL}/api/receipt-view/${id}`,
+        `${BASE_URL}/api/receipt-view?id=${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,6 +88,9 @@ const ReceiptOne = () => {
   });
 
   const receipts = receiptData?.data || {};
+
+
+
   const chapter = receiptData?.data?.chapter || {};
 
   const authsign = receiptData?.auth_sign || [];
@@ -101,7 +114,7 @@ const ReceiptOne = () => {
   const sendEmailMutation = useMutation({
   mutationFn: async () => {
     const response = await axios.get(
-      `${BASE_URL}/api/send-receipt-email/${id}`,
+      `${BASE_URL}/api/send-receipt-email?id=${id}`,
       {
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
@@ -113,8 +126,43 @@ const ReceiptOne = () => {
 
   onSuccess: (response) => {
     if (response?.code === 201) {
-      queryClient.invalidateQueries(["receiptView", id]);
+    
       toast.success(response.message);
+
+
+
+      // receipts.receipt_email_count
+
+
+
+      const followUpFormData = new FormData();
+      followUpFormData.append('chapter_id', receipts.chapter_id);
+      followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
+      
+      const emailCount = receipts.receipt_email_count || 0;
+      const emailNumber = emailCount + 1;
+      
+    
+
+
+      followUpFormData.append('followup_heading', emailCount === 0 
+        ? `${getOrdinal(emailNumber)} Email Delivered`
+        : `${getOrdinal(emailNumber)} Email Sent`
+      );
+      followUpFormData.append('followup_description', emailCount === 0 
+        ? `Initial receipt email sent to ${receipts.donor.indicomp_email}`
+        : `Follow-up email sent to ${receipts.donor.indicomp_email}`
+      );
+      followUpFormData.append('followup_status', emailCount === 0 
+        ? `Delivered`
+        : `Sent`
+      );
+      
+  
+      createFollowupMutation.mutate(followUpFormData);
+
+      queryClient.invalidateQueries(["receiptView", id]);
+      queryClient.invalidateQueries(["followup-data", receipts.indicomp_fts_id]);
     } else {
       toast.error(response.message);
     }
@@ -205,6 +253,14 @@ const ReceiptOne = () => {
 
         pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
         pdf.save("Receipt.pdf");
+        const followUpFormData = new FormData();
+        followUpFormData.append('chapter_id', receipts.chapter_id);
+        followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
+        followUpFormData.append('followup_heading', "PDF Downloaded");
+        followUpFormData.append('followup_description', `Receipt PDF was downloaded by ${Cookies.get('name')}`);
+        followUpFormData.append('followup_status', "Completed");
+        
+        createFollowupMutation.mutate(followUpFormData);
       })
       .catch((error) => {
         console.error("Error generating PDF: ", error);
@@ -256,7 +312,19 @@ const ReceiptOne = () => {
       }
     `,
     onBeforeGetContent: () => setIsPrintingLetter(true),
-    onAfterPrint: () => setIsPrintingLetter(false),
+    onAfterPrint: () => {
+      setIsPrintingLetter(false);
+      
+  
+      const followUpFormData = new FormData();
+      followUpFormData.append('chapter_id', receipts.chapter_id);
+      followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
+      followUpFormData.append('followup_heading', "Letter Head Printed");
+      followUpFormData.append('followup_description', "Thank you letter was printed for physical copy");
+      followUpFormData.append('followup_status', "Completed");
+      
+      createFollowupMutation.mutate(followUpFormData);
+    },
   });
 
   const handlReceiptPdf = useReactToPrint({
@@ -426,7 +494,7 @@ const ReceiptOne = () => {
         </Tooltip>
 
 
-        <TimelineReceipt />
+        <TimelineReceipt donorId={receipts.indicomp_fts_id} />
       </div>
     </Card>
   </div>
