@@ -46,6 +46,7 @@ import BASE_URL from '@/config/base-url';
 import { DONOR_LIST_CREATE_RECEIPT, fetchDonorDataInCreateReceiptById } from '@/api';
 import ReceiptDraft from './receipt-draft';
 import { useFetchDataSource, useFetchMembershipYear, useFetchReceiptControl, useFetchSchoolAllotmentYear } from '@/hooks/use-api';
+import useCreateFollowup from '@/hooks/use-create-followup';
 
 const exemptionOptions = [
   { value: '80G', label: '80G' },
@@ -81,7 +82,7 @@ const ReceiptCreate = () => {
   const navigate = useNavigate();
   const token = Cookies.get('token');
 
-
+  const createFollowupMutation = useCreateFollowup();
   const today = moment();
   const todayDate = today.format('YYYY-MM-DD');
   const todayback = today.format('YYYY-MM-DD');
@@ -337,7 +338,16 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
     onSuccess: (data) => {
       if (data.code == 201) {
         toast.success(data.message);
-        navigate(`/receipt-view/${data.id}`);
+        const followUpFormData = new FormData();
+        followUpFormData.append('chapter_id', userdata.chapter_id);
+        followUpFormData.append('indicomp_fts_id', userdata.indicomp_fts_id);
+        followUpFormData.append('followup_heading', "Receipt Created");
+        followUpFormData.append('followup_description', "Receipt was successfully created in the system");
+        followUpFormData.append('followup_status', "Completed");
+        
+        createFollowupMutation.mutate(followUpFormData);
+        // navigate(`/receipt-view/${data.id}`);
+        navigate(`/receipt-view?ref=${encodeURIComponent(data.id)}`);
         setIsButtonDisabled(false);
       } else if (data.code == 422) {
         toast.error(data.message);
@@ -440,6 +450,7 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
     finalFormData.append('donor_promoter', userdata.indicomp_promoter);
   
     createReceiptMutation.mutate(finalFormData);
+    
     setShowDraftDialog(false);
   };
   const pan = userdata.indicomp_pan_no == '' ? 'NA' : userdata.indicomp_pan_no;
@@ -488,16 +499,22 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
               
               {/* Donor Info Compact */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-3 pt-3 border-t border-gray-200">
-              
+              {userdata.indicomp_email  && (
+
+            
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
                   <span className="text-sm text-gray-600 truncate">{userdata.indicomp_email}</span>
                 </div>
-               
+                 )}
+                 {pan && (
+
+                
                 <div className="flex items-center gap-2">
                   <Shield className={`w-4 h-4  flex-shrink-0  ${pan ? 'text-muted-foreground' : 'text-red-600'}`} />
                   <span className="text-sm text-gray-600">PAN: {pan}</span>
                 </div>
+                 )}
               </div>
             </div>
           </div>

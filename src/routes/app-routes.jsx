@@ -260,11 +260,12 @@ function AppRoutes() {
                       <Receipt />
                     </Suspense>
                   } />
-                  <Route path="/receipt-view/:id" element={
+                  <Route path="/receipt-view" element={
                     <Suspense fallback={<LoadingBar />}>
                       <ReceiptView />
                     </Suspense>
                   } />
+               
                   <Route path="/donor-create-receipt/:id" element={
                     <Suspense fallback={<LoadingBar />}>
                       <ReceiptCreate />

@@ -46,6 +46,10 @@ export const UPDATES_FAQ = `${BASE_URL}/api/update-faqs`;
 
 /*--------------------------Master-end----------------------------------- */
 
+//CREATE FOLLOWUP 
+export const CREATE_FOLLOWUP_API_URL = `${BASE_URL}/api/followup`;
+export const FOLLOWUP_GET_DATA = `${BASE_URL}/api/followup`;
+
 /*--------------------------Donor-start----------------------------------- */
 //FULL LIST
 export const DONOR_LIST = `${BASE_URL}/api/fetch-donors`;

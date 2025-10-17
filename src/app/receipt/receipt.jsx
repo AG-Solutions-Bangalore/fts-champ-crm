@@ -303,31 +303,44 @@ const Receipt = () => {
         header: "Action",
         cell: ({ row }) => {
           const receiptId = row.original.id
-  
+          const receiptRefNo = row.original.receipt_ref_no
+          const receiptFinancialYear = row.original.receipt_financial_year;
+      const currentYear = Cookies.get("currentYear");
           return (
             <div className="flex flex-row">
-              <TooltipProvider>
-             
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to={`/receipt-view?ref=${encodeURIComponent(receiptRefNo)}`}>
+                    <Button variant="ghost" size="icon">
+                      <Eye />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Receipt Dashboard</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
   
-               
-              </TooltipProvider>
+
+            {/* {currentYear === receiptFinancialYear && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link to={`/receipt-view/${receiptId}`}>
-                <Button variant="ghost" size="icon">
-                  <Eye />
-                </Button>
-              </Link>
+                    <Link to={`/receipt-edit/${receiptId}`}>
+                      <Button variant="ghost" size="icon">
+                        <Edit />
+                      </Button>
+                    </Link>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Receipt Dashboard</p>
+                    <p>Receipt Edit</p>
                   </TooltipContent>
                 </Tooltip>
-  
-               
               </TooltipProvider>
-            </div>
+            )} */}
+          </div>
           );
         },
         size: 20, 
