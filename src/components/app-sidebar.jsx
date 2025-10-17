@@ -204,6 +204,12 @@ const NAVIGATION_CONFIG = {
       icon: Blocks,
       isActive: false,
     },
+    FOLDER: {
+      title: "Folder",
+      url: "/folder",
+      icon: Blocks,
+      isActive: false,
+    },
     
     RECEIPT_ZERO: {
       title: "Recepit-S",
@@ -243,7 +249,8 @@ const USER_ROLE_PERMISSIONS = {
       'SUMMARY',
       'DOWNLOADS',
       'OTHER',
-      'SETTINGS'
+      'SETTINGS',
+      'FOLDER'
     ]
   },
   
@@ -261,7 +268,8 @@ const USER_ROLE_PERMISSIONS = {
       'SUMMARY',
       'DOWNLOADS',
       'OTHER',
-      'SETTINGS'
+      'SETTINGS',
+      'FOLDER'
     ]
   },
   
@@ -279,7 +287,8 @@ const USER_ROLE_PERMISSIONS = {
       'SUMMARY',
       'DOWNLOADS',
       'OTHER',
-      'SETTINGS'
+      'SETTINGS',
+        'FOLDER'
     ]
   },
   
@@ -296,7 +305,8 @@ const USER_ROLE_PERMISSIONS = {
       'SUMMARY',
       'DOWNLOADS',
       'OTHER',
-      'SETTINGS'
+      'SETTINGS',
+        'FOLDER'
     ]
   },
   
@@ -309,6 +319,7 @@ const USER_ROLE_PERMISSIONS = {
     ],
     navMainReport: [
       'SETTINGS',
+        'FOLDER',
       'RECEIPT_ZERO',
       'RECEIPT_CHANGE_DONOR',
       'RECEIPT_MULTIPLE'
@@ -329,7 +340,6 @@ const LIMITED_MASTER_SETTINGS = {
     },
   ],
 };
-
 
 const useNavigationData = (userType) => {
   return useMemo(() => {

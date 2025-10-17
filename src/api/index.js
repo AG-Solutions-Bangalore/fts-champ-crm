@@ -170,8 +170,20 @@ export const DONOR_DETAILS_SUMBIT = `/api/create-school-alot`;
 // export const UPDATE_DETAILS_SUMBIT = `/api/update-schoolsallot`;
 export const UPDATE_DETAILS_SUMBIT = `/api/school-allotment`;
 export const SEND_LETTER_EMAIL = `/api/send-school-alloted-email`;
-
+export const UPDATE_EMAIL = `/api/update-donor-email`;
 /*--------------------------School-end----------------------------------- */
+/*--------------------------Folder-start----------------------------------- */
+
+export const FETCH_FOLDER = `/api/panel-fetch-folder`;
+export const CREATE_FOLDER = `/api/panel-create-folder`;
+export const DELETE_FOLDER = `/api/panel-delete-folder`;
+export const FETCH_FILE_FOLDER = `/api/panel-fetch-file-folder`;
+export const DOWNLOAD_FILE = `/api/panel-download-file`;
+export const DELETE_FILE = `/api/panel-delete-file`;
+export const CREATE_FILE_FOLDER = `/api/panel-create-file-folder`;
+export const PANEL_UPDATE_FILE_FOLDER = `/api/panel-update-file-folder`;
+
+/*--------------------------Folder-end----------------------------------- */
 
 /*--------------------------Dashboard-start----------------------------------- */
 
