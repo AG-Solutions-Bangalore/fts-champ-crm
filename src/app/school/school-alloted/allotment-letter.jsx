@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -11,24 +11,47 @@ import { useApiMutation } from "@/hooks/use-mutation";
 import { decryptId } from "@/utils/encyrption/encyrption";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { Download, Loader, Loader2, Mail, Printer } from "lucide-react";
+import {
+  Download,
+  Loader,
+  Loader2,
+  Mail,
+  MailPlus,
+  Printer,
+} from "lucide-react";
 import moment from "moment";
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
-import { SCHOOL_ALLOT_LETTER, SEND_LETTER_EMAIL } from "../../../api";
+import {
+  SCHOOL_ALLOT_LETTER,
+  SEND_LETTER_EMAIL,
+  UPDATE_EMAIL,
+} from "../../../api";
 import mailSentGif from "../../../assets/mail-sent.gif";
 import AllotmentPrintLetter from "./allotment-print-letter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const SchoolAllotLetter = () => {
   const componentRef = useRef();
   const { id } = useParams();
   const donorId = decryptId(id);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [donoremail, setDonorEmail] = useState("");
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const today = moment().format("DD/MM/YYYY");
   const { trigger: Mailtrigger, loading: mailloading } = useApiMutation();
+  const { trigger: UpdateMail, loading: updatemail } = useApiMutation();
 
   const {
     data: schoolLetter,
@@ -147,7 +170,40 @@ const SchoolAllotLetter = () => {
   const SchoolAlotReceipt = schoolLetter?.data?.individualCompany || {};
   const SchoolAlotView = schoolLetter?.data?.SchoolAlotView || [];
   const OTSReceipts = schoolLetter?.data?.OTSReceipts || [];
+  const handleClickOpen = (id) => {
+    setSelectedId(id);
+    setOpen(true);
+  };
 
+  const handleClose = () => {
+    setOpen(false);
+    setDonorEmail("");
+    setSelectedId(null);
+  };
+  const onSubmitMail = async (e) => {
+    e.preventDefault();
+    if (!selectedId)
+      return toast.error("Id is Missing, Please try again later");
+
+    try {
+      const res = await UpdateMail({
+        url: `${UPDATE_EMAIL}/${selectedId}`,
+        method: "patch",
+        data: { indicomp_email: donoremail },
+      });
+
+      if (res?.code == 201) {
+        toast.success(res.message);
+        handleClose();
+        refetch();
+      } else {
+        toast.error(res.message || "Unexpected error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to update");
+    }
+  };
   const onSubmit = async ({ id }) => {
     if (!id) return toast.error("Id is Missing, Please try again later");
 
@@ -192,36 +248,53 @@ const SchoolAllotLetter = () => {
                 <TooltipContent>Print Receipt</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
+            {SchoolAlotReceipt?.donor?.indicomp_email ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      className="h-11 w-11 relative rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
+                      onClick={() => onSubmit({ id: donorId })}
+                    >
+                      {SchoolAlotReceipt && (
+                        <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
+                          {SchoolAlotReceipt?.schoolalot_email_count || 0}
+                        </span>
+                      )}
+                      {mailloading ? (
+                        <img
+                          src={mailSentGif}
+                          alt="Sending..."
+                          className="h-5 w-5"
+                        />
+                      ) : (
+                        <Mail className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Send Mail</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    type="button"
-                    className="h-11 w-11 relative rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
-                    onClick={() => onSubmit({ id: donorId })}
+                    onClick={() =>
+                      handleClickOpen(SchoolAlotReceipt?.donor?.indicomp_fts_id)
+                    }
+                    className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
                   >
-                    {SchoolAlotReceipt && (
-                      <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
-                        {SchoolAlotReceipt?.schoolalot_email_count || 0}
-                      </span>
-                    )}
-                    {mailloading ? (
-                      <img
-                        src={mailSentGif}
-                        alt="Sending..."
-                        className="h-5 w-5"
-                      />
-                    ) : (
-                      <Mail className="h-5 w-5" />
-                    )}
+                    <MailPlus className="h-5 w-5 text-red-500" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Send Mail</TooltipContent>
+                <TooltipContent>Add Mail</TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-
+            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -398,6 +471,35 @@ const SchoolAllotLetter = () => {
           componentRef={componentRef}
         />
       </div>
+      {/* Email Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Donor Email</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={onSubmitMail} autoComplete="off">
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="donoremail">Email *</Label>
+                <Input
+                  type="email"
+                  id="donoremail"
+                  name="donoremail"
+                  value={donoremail}
+                  onChange={(e) => setDonorEmail(e.target.value)}
+                  required
+                  placeholder="Enter donor email"
+                />
+              </div>
+              <div className="flex justify-center">
+                <Button type="submit" disabled={updatemail}>
+                  {updatemail ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
+            </CardContent>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
