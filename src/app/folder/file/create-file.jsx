@@ -34,8 +34,7 @@ const CreateFile = ({ id, refetch }) => {
         method: "post",
         data: formData,
       });
-      //   multipart/form-data
-      if (response?.code == 200) {
+      if (response?.code == 201) {
         toast.success(response.message || "File uploaded successfully");
         refetch();
         setFile(null);
