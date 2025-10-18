@@ -1,4 +1,5 @@
 import LoadingBar from "@/components/loader/loading-bar";
+import ReceiptEdit from "@/app/receipt/recept-edit";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 
@@ -176,7 +177,9 @@ const MultipleRecepitList = lazy(() =>
 const FolderList = lazy(() => import("@/app/folder/folder/folder-list"));
 const FileList = lazy(() => import("@/app/folder/file/file-list"));
 const FileView = lazy(() => import("@/app/folder/file/file-view"));
-const MultiAllotment = lazy(() => import("@/app/allotment-super/multi-download-allotment"));
+const MultiAllotment = lazy(() =>
+  import("@/app/allotment-super/multi-download-allotment")
+);
 
 function AppRoutes() {
   return (
@@ -383,6 +386,15 @@ function AppRoutes() {
         />
 
         <Route
+          path="/receipt-edit/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <ReceiptEdit />
+            </Suspense>
+          }
+        />
+
+        <Route
           path="/donor-create-receipt/:id"
           element={
             <Suspense fallback={<LoadingBar />}>
@@ -576,31 +588,6 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        <Route
-          path="/file/:id"
-          element={
-            <Suspense fallback={<LoadingBar />}>
-              <FileList />
-            </Suspense>
-          }
-        />
-
-        <Route
-          path="/file-preview"
-          element={
-            <Suspense fallback={<LoadingBar />}>
-              <FileView />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/multi-allotment"
-          element={
-            <Suspense fallback={<LoadingBar />}>
-              <MultiAllotment />
-            </Suspense>
-          }
-        />
 
         <Route
           path="/settings"
@@ -640,6 +627,39 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <MultipleRecepitList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/folder"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <FolderList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/file/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <FileList />
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/file-preview"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <FileView />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/multi-allotment"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <MultiAllotment />
             </Suspense>
           }
         />
