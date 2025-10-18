@@ -23,9 +23,6 @@ import Cookies from "js-cookie";
 import { NavMainReport } from "./nav-main-report";
 import { useState, useMemo } from "react";
 
-
-
-
 const NAVIGATION_CONFIG = {
   COMMON: {
     DASHBOARD: {
@@ -33,9 +30,9 @@ const NAVIGATION_CONFIG = {
       url: "/home",
       icon: Frame,
       isActive: false,
-    }
+    },
   },
-  
+
   MODULES: {
     CHAPTER: {
       title: "Chapter",
@@ -43,7 +40,7 @@ const NAVIGATION_CONFIG = {
       icon: Frame,
       isActive: false,
     },
-    
+
     MASTER_SETTINGS: {
       title: "Master Settings",
       url: "#",
@@ -60,7 +57,7 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    
+
     MEMBERSHIP: {
       title: "MemberShip",
       url: "#",
@@ -81,7 +78,7 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    
+
     DONOR: {
       title: "Donor",
       url: "#",
@@ -98,14 +95,14 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    
+
     RECEIPT: {
       title: "Receipt",
       url: "/receipt",
       isActive: false,
       icon: Package,
     },
-    
+
     SCHOOL: {
       title: "School",
       url: "#",
@@ -131,7 +128,7 @@ const NAVIGATION_CONFIG = {
       ],
     },
   },
-  
+
   REPORTS: {
     SUMMARY: {
       title: "Summary",
@@ -169,14 +166,14 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    
+
     DOWNLOADS: {
       title: "Downloads",
       url: "/download",
       icon: Blocks,
       isActive: false,
     },
-    
+
     OTHER: {
       title: "Other",
       url: "#",
@@ -197,7 +194,7 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    
+
     SETTINGS: {
       title: "Settings",
       url: "/settings",
@@ -210,21 +207,27 @@ const NAVIGATION_CONFIG = {
       icon: Blocks,
       isActive: false,
     },
-    
+    MULTIALLOTMENT: {
+      title: "Multi-Allotment",
+      url: "/multi-allotment",
+      icon: Blocks,
+      isActive: false,
+    },
+
     RECEIPT_ZERO: {
       title: "Recepit-S",
       url: "/recepit/zero-list",
       icon: Blocks,
       isActive: false,
     },
-    
+
     RECEIPT_CHANGE_DONOR: {
       title: "C-Recepit-Donor",
       url: "/recepit/change-donor",
       icon: Blocks,
       isActive: false,
     },
-    
+
     RECEIPT_MULTIPLE: {
       title: "M-Recepit",
       url: "/recepit/multiple-list",
@@ -234,99 +237,80 @@ const NAVIGATION_CONFIG = {
   },
 };
 
-
 const USER_ROLE_PERMISSIONS = {
-  
   1: {
-    navMain: [
-      'DASHBOARD',
-      'MEMBERSHIP',
-      'DONOR',
-      'RECEIPT',
-      'SCHOOL'
-    ],
+    navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL"],
     navMainReport: [
-      'SUMMARY',
-      'DOWNLOADS',
-      'OTHER',
-      'SETTINGS',
-      'FOLDER'
-    ]
+      "SUMMARY",
+      "DOWNLOADS",
+      "OTHER",
+      "SETTINGS",
+      "FOLDER",
+      "MULTIALLOTMENT",
+    ],
   },
-  
-  
+
   2: {
     navMain: [
-      'DASHBOARD',
-      'CHAPTER',
-      'MEMBERSHIP',
-      'DONOR',
-      'RECEIPT',
-      'SCHOOL'
+      "DASHBOARD",
+      "CHAPTER",
+      "MEMBERSHIP",
+      "DONOR",
+      "RECEIPT",
+      "SCHOOL",
     ],
     navMainReport: [
-      'SUMMARY',
-      'DOWNLOADS',
-      'OTHER',
-      'SETTINGS',
-      'FOLDER'
-    ]
+      "SUMMARY",
+      "DOWNLOADS",
+      "OTHER",
+      "SETTINGS",
+      "FOLDER",
+      "MULTIALLOTMENT",
+    ],
   },
-  
- 
+
   3: {
     navMain: [
-      'DASHBOARD',
-      'MASTER_SETTINGS',
-      'MEMBERSHIP',
-      'DONOR',
-      'RECEIPT',
-      'SCHOOL'
+      "DASHBOARD",
+      "MASTER_SETTINGS",
+      "MEMBERSHIP",
+      "DONOR",
+      "RECEIPT",
+      "SCHOOL",
     ],
     navMainReport: [
-      'SUMMARY',
-      'DOWNLOADS',
-      'OTHER',
-      'SETTINGS',
-        'FOLDER'
-    ]
+      "SUMMARY",
+      "DOWNLOADS",
+      "OTHER",
+      "SETTINGS",
+      "FOLDER",
+      "MULTIALLOTMENT",
+    ],
   },
-  
 
   4: {
-    navMain: [
-      'DASHBOARD',
-      'MEMBERSHIP',
-      'DONOR',
-      'RECEIPT',
-      'SCHOOL'
-    ],
+    navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL"],
     navMainReport: [
-      'SUMMARY',
-      'DOWNLOADS',
-      'OTHER',
-      'SETTINGS',
-        'FOLDER'
-    ]
+      "SUMMARY",
+      "DOWNLOADS",
+      "OTHER",
+      "SETTINGS",
+      "FOLDER",
+      "MULTIALLOTMENT",
+    ],
   },
-  
-  
-  5: {
-    navMain: [
-      'DASHBOARD',
-      'CHAPTER',
-    
-    ],
-    navMainReport: [
-      'SETTINGS',
-        'FOLDER',
-      'RECEIPT_ZERO',
-      'RECEIPT_CHANGE_DONOR',
-      'RECEIPT_MULTIPLE'
-    ]
-  }
-};
 
+  5: {
+    navMain: ["DASHBOARD", "CHAPTER"],
+    navMainReport: [
+      "SETTINGS",
+      "FOLDER",
+      "RECEIPT_ZERO",
+      "RECEIPT_CHANGE_DONOR",
+      "RECEIPT_MULTIPLE",
+    ],
+  },
+};
 
 const LIMITED_MASTER_SETTINGS = {
   title: "Master Settings",
@@ -343,32 +327,34 @@ const LIMITED_MASTER_SETTINGS = {
 
 const useNavigationData = (userType) => {
   return useMemo(() => {
-    const permissions = USER_ROLE_PERMISSIONS[userType] || USER_ROLE_PERMISSIONS[1];
-    
+    const permissions =
+      USER_ROLE_PERMISSIONS[userType] || USER_ROLE_PERMISSIONS[1];
+
     const buildNavItems = (permissionKeys, config, customItems = {}) => {
-      return permissionKeys.map(key => {
-        if (key === 'MASTER_SETTINGS_LIMITED') {
-          return LIMITED_MASTER_SETTINGS;
-        }
-        return config[key];
-      }).filter(Boolean);
+      return permissionKeys
+        .map((key) => {
+          if (key === "MASTER_SETTINGS_LIMITED") {
+            return LIMITED_MASTER_SETTINGS;
+          }
+          return config[key];
+        })
+        .filter(Boolean);
     };
 
     const navMain = buildNavItems(
-      permissions.navMain, 
+      permissions.navMain,
       { ...NAVIGATION_CONFIG.COMMON, ...NAVIGATION_CONFIG.MODULES },
       { MASTER_SETTINGS_LIMITED: LIMITED_MASTER_SETTINGS }
     );
 
     const navMainReport = buildNavItems(
-      permissions.navMainReport, 
+      permissions.navMainReport,
       NAVIGATION_CONFIG.REPORTS
     );
 
     return { navMain, navMainReport };
   }, [userType]);
 };
-
 
 const TEAMS_CONFIG = [
   {
@@ -391,7 +377,7 @@ const TEAMS_CONFIG = [
 export function AppSidebar({ ...props }) {
   const nameL = Cookies.get("name");
   const emailL = Cookies.get("email");
-  const userType = Cookies.get("user_type_id") || "1"; 
+  const userType = Cookies.get("user_type_id") || "1";
   const [openItem, setOpenItem] = useState(null);
 
   const { navMain, navMainReport } = useNavigationData(userType);
@@ -431,6 +417,5 @@ export function AppSidebar({ ...props }) {
     </Sidebar>
   );
 }
-
 
 export { NAVIGATION_CONFIG, USER_ROLE_PERMISSIONS };

@@ -317,6 +317,7 @@ export const RECEIPT_SUPER_SUMBIT = `/api/receipt-zero`;
 // export const CHANGE_DONOR = `/api/fetch-change-donors`;
 // export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
 export const RECEPIT_SUP_DOWNLOAD = `/api/receipt-view`;
+export const SCHOOL_ALLOTMENT_MULTI = `/api/download-school-alloted-multi`;
 
 /*--------------------------Recceipt-Super-end----------------------------------- */
 
