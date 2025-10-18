@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from 'react';
 import LoadingBar from "@/components/loader/loading-bar";
 import FolderList from "@/app/folder/folder/folder-list";
+import ReceiptEdit from "@/app/receipt/recept-edit";
 
 // import Login from "@/app/auth/login";
 // import DonorList from "@/app/donor/donor-list/donor-list";
@@ -263,6 +264,12 @@ function AppRoutes() {
                   <Route path="/receipt-view" element={
                     <Suspense fallback={<LoadingBar />}>
                       <ReceiptView />
+                    </Suspense>
+                  } />
+               
+                  <Route path="/receipt-edit/:id" element={
+                    <Suspense fallback={<LoadingBar />}>
+                      <ReceiptEdit />
                     </Suspense>
                   } />
                

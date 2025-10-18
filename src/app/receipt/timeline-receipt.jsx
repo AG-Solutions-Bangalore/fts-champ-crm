@@ -272,7 +272,78 @@ const TimelineReceipt = ({ donorId }) => {
           </div>
         </ScrollArea> */}
         
-    
+{/* 📧 Email sent on 10:45 AM by John Doe
+(with status badge + duration) */}
+
+    <ScrollArea className="h-[calc(100vh-14rem)]">
+  <div className="space-y-3 pr-4">
+    {isLoading ? (
+      renderSkeleton()
+    ) : error ? (
+      <div className="text-center py-8 text-red-600">
+        Error loading timeline data
+      </div>
+    ) : followUpData.length === 0 ? (
+      <div className="text-center py-8 text-gray-500">
+        No timeline events found
+      </div>
+    ) : (
+      followUpData.map((item, index) => {
+        const IconComponent = item.icon;
+        return (
+          <div
+            key={item.id}
+            className="flex gap-3 group hover:bg-gray-50 rounded-lg p-2 transition-all duration-200 border border-transparent hover:border-gray-200"
+          >
+          
+            <div className="flex flex-col items-center pt-0.5">
+              <div
+                className={`w-7 h-7 rounded-full ${item.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-sm border-2 border-white`}
+              >
+                <IconComponent className="h-3.5 w-3.5 text-white" />
+              </div>
+              {index !== followUpData.length - 1 && (
+                <div className="w-0.5 h-full bg-gradient-to-b from-gray-200 to-gray-100 mt-1" />
+              )}
+            </div>
+
+     
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start mb-1 gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <h4 className="font-semibold text-sm text-gray-900 truncate">
+                    {item.action}
+                  </h4>
+                  {getStatusBadge(item.status)}
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
+                  {item.time}
+                </span>
+              </div>
+
+            
+              <p className="text-xs text-gray-600 mb-1.5 leading-relaxed">
+                {item.action} on {item.time} by{" "}
+                <span className="font-medium text-gray-800">{item.user}</span>
+              </p>
+
+              <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
+                  <User className="h-3 w-3" />
+                  <span className="truncate max-w-[80px]">{item.user}</span>
+                </div>
+                <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
+                  <span className="text-xs">⏱️ {item.duration}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })
+    )}
+  </div>
+</ScrollArea>
+
         {!isLoading && !error && followUpData.length > 0 && (
           <div className="pt-3 mt-4 ">
             <div className="grid grid-cols-4 gap-2 text-center">
