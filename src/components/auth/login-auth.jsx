@@ -1,15 +1,23 @@
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import BASE_URL from "@/config/base-url";
+import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import Cookies from "js-cookie";
+
 import { Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import BASE_URL from "@/config/base-url";
 
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
@@ -17,9 +25,8 @@ export default function LoginAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
-
-  const [showPassword, setShowPassword] = useState(false);
-  
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false)
   const loadingMessages = [
     "Setting things up for you...",
     "Checking your credentials...",
@@ -44,17 +51,18 @@ export default function LoginAuth() {
     };
   }, [isLoading]);
 
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
-
+  
     const formData = new FormData();
     formData.append("username", email);
     formData.append("password", password);
-
+  
     try {
       const res = await axios.post(`${BASE_URL}/api/panel-login`, formData);
-
+  
       if (res.status === 200) {
         if (!res.data.UserInfo || !res.data.UserInfo.token) {
           console.warn("⚠️ Login failed: Token missing in response");
@@ -62,170 +70,186 @@ export default function LoginAuth() {
           setIsLoading(false);
           return;
         }
-
+  
         const { UserInfo, version, year } = res.data;
-        const isProduction = window.location.protocol === "https:";
-        
-        const cookieOptions = {
-          expires: 7,
-          secure: isProduction,
-          sameSite: "Strict",
-        };
-
-
-
-        Cookies.set("token", UserInfo.token, cookieOptions);
-        Cookies.set("id", UserInfo.user.user_type_id, cookieOptions);
-        Cookies.set("name", UserInfo.user.first_name, cookieOptions);
-        Cookies.set("username", UserInfo.user.name, cookieOptions);
-        Cookies.set("chapter_id", UserInfo.user.chapter_id, cookieOptions);
-        Cookies.set("viewer_chapter_ids", UserInfo.user.viewer_chapter_ids, cookieOptions);
-        Cookies.set("user_type_id", UserInfo.user.user_type_id, cookieOptions);
-        Cookies.set("email", UserInfo.user.email, cookieOptions);
-        Cookies.set("token-expire-time", UserInfo?.token_expires_at, cookieOptions);
-        Cookies.set("ver_con", version?.version_panel, cookieOptions);
-        Cookies.set("currentYear", year?.current_year, cookieOptions);
-
-        const redirectPath = window.innerWidth < 768 ? "/home" : "/home";
-        console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
-        navigate(redirectPath);
+               const isProduction = window.location.protocol === "https:";
+               
+               const cookieOptions = {
+                 expires: 7,
+                 secure: isProduction,
+                 sameSite: "Strict",
+               };
+       
+       
+       
+               Cookies.set("token", UserInfo.token, cookieOptions);
+               Cookies.set("id", UserInfo.user.user_type_id, cookieOptions);
+               Cookies.set("name", UserInfo.user.first_name, cookieOptions);
+               Cookies.set("username", UserInfo.user.name, cookieOptions);
+               Cookies.set("chapter_id", UserInfo.user.chapter_id, cookieOptions);
+               Cookies.set("viewer_chapter_ids", UserInfo.user.viewer_chapter_ids, cookieOptions);
+               Cookies.set("user_type_id", UserInfo.user.user_type_id, cookieOptions);
+               Cookies.set("email", UserInfo.user.email, cookieOptions);
+               Cookies.set("token-expire-time", UserInfo?.token_expires_at, cookieOptions);
+               Cookies.set("ver_con", version?.version_panel, cookieOptions);
+               Cookies.set("currentYear", year?.current_year, cookieOptions);
+       
+               const redirectPath = window.innerWidth < 768 ? "/home" : "/home";
+               console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
+               navigate(redirectPath);
       } else {
         console.warn("⚠️ Unexpected API response:", res);
         toast.error("Login Failed: Unexpected response.");
       }
     } catch (error) {
       console.error("❌ Login Error:", error.response?.data.message || error.message);
-
-      toast.error(error.response?.data?.message || "Please check your credentials.");
-
+  
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description:
+          error.response?.data?.message || "Please check your credentials.",
+      });
+  
       setIsLoading(false);
     }
   };
 
   return (
-    <div className=" flex flex-col justify-center items-center min-h-screen bg-gray-100">
-      <div className=" py-12">
-        <motion.div 
-          className="mx-auto grid w-[350px] gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+    <motion.div
+      className="relative flex flex-col justify-center items-center min-h-screen bg-gray-100"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        initial={{ opacity: 1, x: 0 }}
+        exit={{
+          opacity: 0,
+          x: -window.innerWidth,
+          transition: { duration: 0.3, ease: "easeInOut" },
+        }}
+      >
+       
+        <Card
+          className={`w-72 md:w-80 max-w-md `}
         >
-          <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">FTS CHAMP</h1>
-            <p className="text-balance text-muted-foreground">
-              Enter your credentials below to login to your account
-            </p>
-          </div>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Username</Label>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Input
-                    id="email"
-                    type="text"
-                    placeholder="Enter your username"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    minLength={1}
-                    maxLength={50}
-                    required
-                  />
-                </motion.div>
-              </div>
-
-              <div className="grid gap-2">
-                <div className="flex items-center" >
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                  tabIndex={-1}
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/forgot-password");
-                    }}
+          <CardHeader>
+          {/* <img src={logo} alt="logo" className=" mx-auto text-black bg-gray-500 rounded-lg shadow-md" />   */}
+            <CardTitle
+              className={`text-2xl text-center`}
+            >
+   Fts Champ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="email"
+                  
                   >
-                    Forgot your password?
-                  </a>
-                </div>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="relative">
+                    Username
+                  </Label>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="*******"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
+                      id="email"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       minLength={1}
-                      maxLength={16}
-                      className="pr-10"
+                      maxLength={50}
+                      required 
+                
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
+                  </motion.div>
+                </div>
+              
+
+
+<div className="grid gap-2">
+  <Label
+    htmlFor="password"
+    className={``}
+  >
+    Password
+  </Label>
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3 }}
+  >
+    <div className="relative">
+      <Input
+        id="password"
+        type={showPassword ? "text" : "password"}
+        placeholder="*******"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        minLength={1}
+        maxLength={16}
+        className="pr-10" 
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword((prev) => !prev)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        tabIndex={-1} 
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  </motion.div>
+</div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Button
+                    type="submit"
+                    className={` w-full`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <motion.span
+                        key={loadingMessage}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="text-sm"
+                      >
+                        {loadingMessage}
+                      </motion.span>
+                    ) : (
+                      "Sign in"
+                    )}
+                  </Button>
                 </motion.div>
               </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+            </form>
+            <CardDescription
+              className={`flex justify-end mt-4 underline`}
+            >
+              <span
+                onClick={() => navigate("/forgot-password")}
+                className="cursor-pointer "
               >
-                <Button
-                  type="submit"
-                  className={`w-full `}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <motion.span
-                      key={loadingMessage}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-sm"
-                    >
-                      {loadingMessage}
-                    </motion.span>
-                  ) : (
-                    "Login"
-                  )}
-                </Button>
-              </motion.div>
-            </div>
-          </form>
-
-          
-          
-          
-        </motion.div>
-      </div>
-      
-      {/* <div className="hidden bg-muted lg:block">
-        <img
-          src="/login.jpg"
-          alt="Login Image"
-      
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div> */}
-    </div>
+                {" "}
+                Forgot Password
+              </span>
+            </CardDescription>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

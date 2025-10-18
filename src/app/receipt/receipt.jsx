@@ -324,7 +324,7 @@ const Receipt = () => {
             </TooltipProvider>
   
 
-            {/* {currentYear === receiptFinancialYear && (
+            {currentYear === receiptFinancialYear && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -339,7 +339,7 @@ const Receipt = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )} */}
+            )}
           </div>
           );
         },
