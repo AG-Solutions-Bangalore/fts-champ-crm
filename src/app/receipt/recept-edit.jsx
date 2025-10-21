@@ -255,9 +255,9 @@ const ReceiptEdit = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.code === 200) {
+      if (data.code === 201) {
         toast.success(data.message || 'Receipt updated successfully');
-        navigate(`/receipt-view?ref=${encodeURIComponent(id)}`);
+        navigate(`/receipt`);
         setIsButtonDisabled(false);
       } else {
         toast.error(data.message || 'Unexpected Error');
@@ -281,28 +281,24 @@ const ReceiptEdit = () => {
       return;
     }
 
-    const formData = new FormData();
+    const formData = {
+      schoolalot_year: receipt.schoolalot_year || null,
+      receipt_total_amount: receipt.receipt_total_amount || 0,
+      receipt_realization_date: receipt.receipt_realization_date || null,
+      receipt_donation_type: receipt.receipt_donation_type || '',
+      m_ship_vailidity: receipt.m_ship_vailidity || null,
+      receipt_csr: receipt.receipt_csr || 'No',
+      receipt_no_of_ots: receipt.receipt_no_of_ots || 0,
+      receipt_tran_pay_mode: receipt.receipt_tran_pay_mode || '',
+      receipt_tran_pay_details: receipt.receipt_tran_pay_details || '',
+      receipt_remarks: receipt.receipt_remarks || '',
+      receipt_reason: receipt.receipt_reason || '',
+      donor_promoter: receipt.donor_promoter || '',
+      donor_source: receipt.donor_source || '',
+      with_out_panno: (!receipt.individual_company?.indicomp_pan_no ||
+                      receipt.individual_company?.indicomp_pan_no === 'NA') ? 'Yes' : 'No'
+    };
     
-
-    if (receipt.receipt_exemption_type) formData.append('receipt_exemption_type', receipt.receipt_exemption_type);
-    if (receipt.schoolalot_year) formData.append('schoolalot_year', receipt.schoolalot_year);
-    if (receipt.receipt_total_amount) formData.append('receipt_total_amount', receipt.receipt_total_amount);
-    if (receipt.receipt_realization_date) formData.append('receipt_realization_date', receipt.receipt_realization_date);
-    if (receipt.receipt_donation_type) formData.append('receipt_donation_type', receipt.receipt_donation_type);
-    if (receipt.m_ship_vailidity) formData.append('m_ship_vailidity', receipt.m_ship_vailidity);
-    if (receipt.receipt_csr) formData.append('receipt_csr', receipt.receipt_csr);
-    if (receipt.receipt_tran_pay_mode) formData.append('receipt_tran_pay_mode', receipt.receipt_tran_pay_mode);
-    if (receipt.receipt_tran_pay_details) formData.append('receipt_tran_pay_details', receipt.receipt_tran_pay_details);
-    if (receipt.receipt_remarks) formData.append('receipt_remarks', receipt.receipt_remarks);
-    if (receipt.receipt_reason) formData.append('receipt_reason', receipt.receipt_reason);
-    if (receipt.donor_promoter) formData.append('donor_promoter', receipt.donor_promoter);
-    if (receipt.donor_source) formData.append('donor_source', receipt.donor_source);
-    
- 
-    const pan = receipt.individual_company?.indicomp_pan_no;
-    const withOutPanno = (!pan || pan === 'NA' || pan === '') ? 'Yes' : 'No';
-    formData.append('with_out_panno', withOutPanno);
-
     setIsButtonDisabled(true);
     updateReceiptMutation.mutate(formData);
   };
@@ -311,19 +307,19 @@ const ReceiptEdit = () => {
 
   if (isLoadingReceipt && isLoadingHook) {
     return (
-      <div className="w-full space-y-4 p-4">
-        <Card className="p-4">
-          <CardHeader className="pb-3">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-56" />
+      <div className="w-full space-y-3 p-3">
+        <Card className="p-3">
+          <CardHeader className="pb-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="p-4">
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-6 w-32" />
+            <Card key={index} className="p-3">
+              <Skeleton className="h-3 w-20 mb-1" />
+              <Skeleton className="h-5 w-28" />
             </Card>
           ))}
         </div>
@@ -332,64 +328,63 @@ const ReceiptEdit = () => {
   }
 
   return (
-    <div className="w-full space-y-2 p-4">
-      <Card className="p-2">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <FileText className="text-muted-foreground w-5 h-5" />
+    <div className="w-full space-y-3 p-3">
+      {/* Header Card */}
+      <Card className="p-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+          <div className="flex items-start gap-2">
+            <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <FileText className="text-muted-foreground w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900">Edit Receipt</h1>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Edit receipt for <span className='text-muted-foreground font-semibold'>{receipt.individual_company?.indicomp_full_name}</span> ( {receipt.individual_company?.indicomp_fts_id})
+                  <h1 className="text-base font-semibold text-gray-900">Edit Receipt</h1>
+                  <p className="text-xs text-gray-500">
+                    Edit receipt for <span className='text-muted-foreground font-semibold'>{receipt.individual_company?.indicomp_full_name}</span> ({receipt.individual_company?.indicomp_fts_id})
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     Receipt Ref: <span className='text-muted-foreground font-semibold'>{receipt.receipt_ref_no}</span>
                   </p>
                 </div>
               </div>
               
-              {/* Donor Info Compact */}
-            {/* Donor Info - Single Row Compact */}
-<div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
-  {receipt.individual_company?.indicomp_email && (
-    <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
-      <Mail className="w-4 h-4 text-gray-500" />
-      <span className="truncate">{receipt.individual_company.indicomp_email}</span>
-    </div>
-  )}
+              {/* Compact Donor Info */}
+              <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+                {receipt.individual_company?.indicomp_email && (
+                  <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                    <Mail className="w-3 h-3 text-gray-500" />
+                    <span className="truncate max-w-[120px]">{receipt.individual_company.indicomp_email}</span>
+                  </div>
+                )}
 
-  {pan && (
-    <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
-      <Shield className={`w-4 h-4 ${pan ? 'text-gray-500' : 'text-red-600'}`} />
-      <span>PAN: {pan}</span>
-    </div>
-  )}
+                {pan && (
+                  <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                    <Shield className={`w-3 h-3 ${pan ? 'text-gray-500' : 'text-red-600'}`} />
+                    <span>PAN: {pan}</span>
+                  </div>
+                )}
 
-  <div className="bg-gray-50 px-2 py-1 rounded-md">
-    Date: {moment(receipt.receipt_date).format('DD-MM-YYYY')}
-  </div>
+                <div className="bg-gray-50 px-2 py-1 rounded">
+                  Date: {moment(receipt.receipt_date).format('DD-MM-YYYY')}
+                </div>
 
-  <div className="bg-gray-50 px-2 py-1 rounded-md">
-    Year: {receipt.receipt_financial_year}
-  </div>
+                <div className="bg-gray-50 px-2 py-1 rounded">
+                  Year: {receipt.receipt_financial_year}
+                </div>
 
-  <div className="bg-gray-50 px-2 py-1 rounded-md">
-    Exemption: {receipt.receipt_exemption_type}
-  </div>
+                <div className="bg-gray-50 px-2 py-1 rounded">
+                  Exemption: {receipt.receipt_exemption_type}
+                </div>
 
-  {receipt.receipt_total_amount > 2000 &&
-    receipt.receipt_exemption_type === '80G' &&
-    pan === 'NA' && (
-      <div className="flex items-center bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-md px-3 py-2">
-        Maximum amount allowed without PAN card is ₹2000
-      </div>
-    )}
-</div>
-
+                {receipt.receipt_total_amount > 2000 &&
+                  receipt.receipt_exemption_type === '80G' &&
+                  pan === 'NA' && (
+                    <div className="flex items-center bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded px-2 py-1">
+                      Max ₹2000 without PAN
+                    </div>
+                  )}
+              </div>
             </div>
           </div>
           
@@ -397,66 +392,41 @@ const ReceiptEdit = () => {
             onClick={() => navigate('/receipt')}
             variant="outline"
             size="sm"
-            className="flex items-center gap-1 flex-shrink-0 mt-2 sm:mt-0"
+            className="flex items-center gap-1 flex-shrink-0 mt-2 sm:mt-0 h-7 text-xs"
           >
             <ArrowLeft className="w-3 h-3" />
             Back
           </Button>
         </div>
-
-       
-
-        {/* Amount Warning */}
-      
       </Card>
 
-      <Card>
-        <CardContent className="p-2 pt-4">
-          <form onSubmit={handleSubmit} className="space-y-2">
+      {/* Form Card */}
+      <Card className="p-3">
+        <CardContent className="p-0">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* CSR Checkbox - Compact */}
-            <div className="flex items-center justify-end space-x-2 mb-3">
+            <div className="flex items-center justify-end space-x-2">
               <Checkbox
                 id="receipt_csr"
                 checked={receipt.receipt_csr === 'Yes'}
                 onCheckedChange={(checked) => 
                   setReceipt(prev => ({ ...prev, receipt_csr: checked ? 'Yes' : 'No' }))
                 }
-                className="h-4 w-4"
+                className="h-3 w-3"
               />
-              <Label htmlFor="receipt_csr" className="text-sm font-medium">
-                This is a CSR donation
+              <Label htmlFor="receipt_csr" className="text-xs font-medium">
+                CSR donation
               </Label>
               {errors.receipt_csr && (
                 <p className="text-red-500 text-xs">{errors.receipt_csr}</p>
               )}
             </div>
 
-            {/* Compact Form Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Exemption Type - Compact */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Category *</Label>
-                <div className="flex flex-wrap gap-1">
-                  {exemptionOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      type="button"
-                      variant={receipt.receipt_exemption_type === option.value ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleButtonGroupChange('receipt_exemption_type', option.value)}
-                      className="text-xs h-7 px-2"
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
-                {errors.receipt_exemption_type && (
-                  <p className="text-red-500 text-xs">{errors.receipt_exemption_type}</p>
-                )}
-              </div>
-
+            {/* Main Form Grid - Ultra Compact */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              
               {/* Donation Type - Compact */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs font-medium">Purpose *</Label>
                 <div className="flex flex-wrap gap-1">
                   {(receipt.receipt_exemption_type === '80G' ? donationType80GOptions : donationTypeOptions).map((option) => (
@@ -466,7 +436,7 @@ const ReceiptEdit = () => {
                       variant={receipt.receipt_donation_type === option.value ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleButtonGroupChange('receipt_donation_type', option.value)}
-                      className="text-xs h-7 px-2"
+                      className="text-xs h-6 px-2"
                     >
                       {option.label}
                     </Button>
@@ -478,9 +448,9 @@ const ReceiptEdit = () => {
               </div>
 
               {/* Total Amount */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="receipt_total_amount" className="text-xs font-medium">
-                  Total Amount *
+                  Amount *
                 </Label>
                 <Input
                   id="receipt_total_amount"
@@ -491,7 +461,7 @@ const ReceiptEdit = () => {
                   disabled={receipt.receipt_donation_type === 'Membership'}
                   placeholder="Enter amount"
                   maxLength={8}
-                  className="h-8 text-sm"
+                  className="h-7 text-xs"
                 />
                 {errors.receipt_total_amount && (
                   <p className="text-red-500 text-xs">{errors.receipt_total_amount}</p>
@@ -499,8 +469,8 @@ const ReceiptEdit = () => {
               </div>
 
               {/* Payment Mode - Compact */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Transaction Type *</Label>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Transaction *</Label>
                 <div className="flex flex-wrap gap-1">
                   {paymentModeOptions
                     .filter(option => 
@@ -515,7 +485,7 @@ const ReceiptEdit = () => {
                         variant={receipt.receipt_tran_pay_mode === option.value ? "default" : "outline"}
                         size="sm"
                         onClick={() => handleButtonGroupChange('receipt_tran_pay_mode', option.value)}
-                        className="text-xs h-7 px-2"
+                        className="text-xs h-6 px-2"
                       >
                         {option.label}
                       </Button>
@@ -527,7 +497,7 @@ const ReceiptEdit = () => {
               </div>
 
               {/* Realization Date */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="receipt_realization_date" className="text-xs font-medium">
                   Realization Date
                 </Label>
@@ -538,21 +508,21 @@ const ReceiptEdit = () => {
                   value={receipt.receipt_realization_date}
                   onChange={onInputChange}
                   max={todayDate}
-                  className="h-8 text-sm"
+                  className="h-7 text-xs"
                 />
               </div>
 
               {/* Conditional Fields - Compact */}
               {receipt.receipt_donation_type === 'Membership' && (
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label htmlFor="m_ship_vailidity" className="text-xs font-medium">
-                    Membership End Date *
+                    Membership End *
                   </Label>
                   <Select
                     value={receipt.m_ship_vailidity}
                     onValueChange={(value) => setReceipt(prev => ({ ...prev, m_ship_vailidity: value }))}
                   >
-                    <SelectTrigger className="h-8 text-sm">
+                    <SelectTrigger className="h-7 text-xs">
                       <SelectValue placeholder="Select end date" />
                     </SelectTrigger>
                     <SelectContent>
@@ -571,9 +541,9 @@ const ReceiptEdit = () => {
 
               {receipt.receipt_donation_type === 'One Teacher School' && (
                 <>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label htmlFor="receipt_no_of_ots" className="text-xs font-medium">
-                      Number of Schools *
+                      Schools *
                     </Label>
                     <Input
                       id="receipt_no_of_ots"
@@ -583,22 +553,22 @@ const ReceiptEdit = () => {
                       onChange={onInputChange}
                       placeholder="Enter number"
                       maxLength={3}
-                      className="h-8 text-sm"
+                      className="h-7 text-xs"
                     />
                     {errors.receipt_no_of_ots && (
                       <p className="text-red-500 text-xs">{errors.receipt_no_of_ots}</p>
                     )}
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label htmlFor="schoolalot_year" className="text-xs font-medium">
-                      School Allotment Year *
+                      Allotment Year *
                     </Label>
                     <Select
                       value={receipt.schoolalot_year}
                       onValueChange={(value) => setReceipt(prev => ({ ...prev, schoolalot_year: value }))}
                     >
-                      <SelectTrigger className="h-8 text-sm">
+                      <SelectTrigger className="h-7 text-xs">
                         <SelectValue placeholder="Select year" />
                       </SelectTrigger>
                       <SelectContent>
@@ -617,7 +587,7 @@ const ReceiptEdit = () => {
               )}
 
               {receipt.receipt_donation_type === 'General' && (
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label htmlFor="donor_source" className="text-xs font-medium">
                     Source
                   </Label>
@@ -625,7 +595,7 @@ const ReceiptEdit = () => {
                     value={receipt.donor_source}
                     onValueChange={(value) => setReceipt(prev => ({ ...prev, donor_source: value }))}
                   >
-                    <SelectTrigger className="h-8 text-sm">
+                    <SelectTrigger className="h-7 text-xs">
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
                     <SelectContent>
@@ -641,9 +611,9 @@ const ReceiptEdit = () => {
             </div>
 
             {/* Text Areas - Compact */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Payment Details */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="receipt_tran_pay_details" className="text-xs font-medium">
                   Transaction Details
                 </Label>
@@ -653,12 +623,12 @@ const ReceiptEdit = () => {
                   value={receipt.receipt_tran_pay_details}
                   onChange={onInputChange}
                   placeholder="Cheque No / Bank Name / UTR / Any Other Details"
-                  className="resize-none h-14 text-sm"
+                  className="resize-none h-12 text-xs"
                 />
               </div>
 
               {/* Remarks */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label htmlFor="receipt_remarks" className="text-xs font-medium">
                   Remarks
                 </Label>
@@ -668,13 +638,13 @@ const ReceiptEdit = () => {
                   value={receipt.receipt_remarks}
                   onChange={onInputChange}
                   placeholder="Additional remarks..."
-                  className="resize-none h-14 text-sm"
+                  className="resize-none h-12 text-xs"
                 />
               </div>
             </div>
 
             {/* Reason Field - Required */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label htmlFor="receipt_reason" className="text-xs font-medium">
                 Reason for Edit *
               </Label>
@@ -684,7 +654,7 @@ const ReceiptEdit = () => {
                 value={receipt.receipt_reason}
                 onChange={onInputChange}
                 placeholder="Please provide reason for editing this receipt..."
-                className="resize-none h-14 text-sm"
+                className="resize-none h-12 text-xs"
                 required
               />
               {errors.receipt_reason && (
@@ -693,11 +663,11 @@ const ReceiptEdit = () => {
             </div>
 
             {/* Submit Buttons - Compact */}
-            <div className="flex gap-2 pt-3 border-t border-gray-200">
+            <div className="flex gap-2 pt-2 border-t border-gray-200">
               <Button
                 type="submit"
                 disabled={isButtonDisabled || updateReceiptMutation.isPending}
-                className="flex items-center gap-2 h-9"
+                className="flex items-center gap-2 h-8 text-xs"
                 size="sm"
               >
                 {updateReceiptMutation.isPending ? (
@@ -717,7 +687,7 @@ const ReceiptEdit = () => {
                 variant="outline"
                 onClick={() => navigate('/receipt')}
                 size="sm"
-                className="h-9"
+                className="h-8 text-xs"
               >
                 Cancel
               </Button>

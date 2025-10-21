@@ -38,7 +38,7 @@ import { DOWNLOAD_TEAM } from '@/api';
 
 
 const TeamDownload = () => {
-  const token = Cookies.get('token') || localStorage.getItem('token');
+  const token = Cookies.get('token')
   const [formData, setFormData] = useState({
     committee_start_date: Moment().startOf('month').format('YYYY-MM-DD'),
     committee_end_date: Moment().format('YYYY-MM-DD'),

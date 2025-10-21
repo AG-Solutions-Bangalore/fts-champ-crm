@@ -461,7 +461,7 @@ export const navigateToNonZero = (navigate, editId) => {
 
 export const fetchAdminSchoolViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -483,7 +483,7 @@ export const fetchAdminSchoolViewById = async (encryptedId) => {
 };
 export const fetchChapterViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -565,7 +565,7 @@ export const fetchChapterDatasourceById = async (encryptedId) => {
 //RECEIPT
 export const fetchReceiptEditById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -584,7 +584,7 @@ export const fetchReceiptEditById = async (encryptedId) => {
 };
 export const fetchReceiptEditOldById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -604,7 +604,7 @@ export const fetchReceiptEditOldById = async (encryptedId) => {
 
 export const fetchReceiptEditByIdDonorData = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -624,7 +624,7 @@ export const fetchReceiptEditByIdDonorData = async (encryptedId) => {
 
 export const fetchReceiptEditByIdUpdate = async (encryptedId, formData) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
     const response = await axios.put(
@@ -644,7 +644,7 @@ export const fetchReceiptEditByIdUpdate = async (encryptedId, formData) => {
 };
 export const fetchReceiptEditByIdOldUpdate = async (encryptedId, formData) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
     const id = decryptId(encryptedId);
     const response = await axios.put(
@@ -665,7 +665,7 @@ export const fetchReceiptEditByIdOldUpdate = async (encryptedId, formData) => {
 
 export const fetchReceiptViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -684,7 +684,7 @@ export const fetchReceiptViewById = async (encryptedId) => {
 };
 export const fetchReceiptOldViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -703,7 +703,7 @@ export const fetchReceiptOldViewById = async (encryptedId) => {
 };
 export const fetchReceiptOld20to22ViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -725,7 +725,7 @@ export const fetchReceiptOld20to22ViewById = async (encryptedId) => {
 };
 export const fetchSchoolFullListViewById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -744,7 +744,7 @@ export const fetchSchoolFullListViewById = async (encryptedId) => {
 };
 export const fetchRepeatDonorEditList = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -849,7 +849,7 @@ export const fetchDonorDataInCreateReceiptById = async (encryptedId) => {
 
 export const fetchReceiptOldOneSendMail = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -871,7 +871,7 @@ export const fetchReceiptOldOneSendMail = async (encryptedId) => {
 };
 export const fetchReceiptOldOne20TO22SendMail = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -894,7 +894,7 @@ export const fetchReceiptOldOne20TO22SendMail = async (encryptedId) => {
 
 export const fetchReceiptOneSendMail = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);

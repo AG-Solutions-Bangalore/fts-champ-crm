@@ -31,12 +31,12 @@ export function NavUser({ user }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const user_position = Cookies.get("email");
-  const handleLogout = () => {
-    ['token', 'id', 'name','username','chapter_id','viewer_chapter_ids','user_type_id','token-expire-time', 'ver_con', 'email','currentYear','favorite_chapters','recent_chapters'].forEach(cookie => {
-      Cookies.remove(cookie);
-    });
-    navigate("/");
-  };
+    const handleLogout = () => {
+        ['token', 'id', 'name','username','chapter_id','viewer_chapter_ids','user_type_id','token-expire-time', 'ver_con', 'email','currentYear','favorite_chapters','recent_chapters'].forEach(cookie => {
+          Cookies.remove(cookie);
+        });
+        navigate("/");
+      };
 
   const splitUser = user.name;
   const intialsChar = splitUser

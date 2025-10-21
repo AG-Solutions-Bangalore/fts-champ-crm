@@ -14,16 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -47,13 +37,14 @@ import { navigateToCreateReceipt } from "@/api";
 import { toast } from "sonner";
 
 const DonorList = () => {
-     const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get('user_type_id');
   const queryClient = useQueryClient();
   const keyDown = useNumericInput()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
+
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -61,20 +52,77 @@ const DonorList = () => {
 
   const [pageInput, setPageInput] = useState("");
 
+  // Store current page in cookies when navigating away
+  const storeCurrentPage = () => {
+    Cookies.set("donorReturnPage", (pagination.pageIndex + 1).toString(), { 
+      expires: 1 // expires in 1 day
+    });
+  };
 
+  // Navigation handlers that store current page
+  const handleEditDonor = (id, donorType) => {
+    storeCurrentPage();
+    if (donorType === "Individual") {
+      navigate(`/donor/donor-edit-indivisual/${id}`);
+    } else {
+      navigate(`/donor/donor-edit-company/${id}`);
+    }
+  };
+
+  const handleViewDonor = (id) => {
+    storeCurrentPage();
+    navigate(`/donor/donor-view/${id}`);
+  };
+
+  const handleCreateReceipt = (id) => {
+    storeCurrentPage();
+    navigateToCreateReceipt(navigate, id);
+  };
+
+  // Restore page from cookies when component mounts
+  useEffect(() => {
+    const savedPage = Cookies.get("donorReturnPage");
+    if (savedPage) {
+      // Remove the cookie first to prevent infinite loops
+      Cookies.remove("donorReturnPage");
+      
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination(prev => ({ ...prev, pageIndex }));
+          
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["donors"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+
+  // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
+      // Check if this is a genuine new search (not just initialization)
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      }
+      
       setDebouncedSearchTerm(searchTerm);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPreviousSearchTerm(searchTerm);
     }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
-  }, [searchTerm]);
-
-
- 
+  }, [searchTerm, previousSearchTerm]);
 
   const {
     data: donorsData,
@@ -108,10 +156,10 @@ const DonorList = () => {
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000, 
   });
+
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = donorsData?.last_page || 1;
-    
     
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
@@ -141,7 +189,6 @@ const DonorList = () => {
         staleTime: 5 * 60 * 1000, 
       });
     }
-
 
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
@@ -175,35 +222,6 @@ const DonorList = () => {
       }
     }
   }, [pagination.pageIndex, debouncedSearchTerm, queryClient, donorsData?.last_page]);
-  //delete muattaion
-  // const deleteMutation = useMutation({
-  //     mutationFn: async (id) => {
-  //       const token = Cookies.get("token");
-  //       const response = await axios.delete(
-  //         `${BASE_URL}/api/donor/${id}`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-  //       return response.data;
-  //     },
-  //     onSuccess: (data) => {
-  //       toast.success(data.message || "Donor deleted successfully");
-  //       refetch();
-  //       setOpen(false);
-  //     },
-  //     onError: (error) => {
-  //       toast.error(
-  //         error.response?.data?.message || "Failed to delete Donor type"
-  //       );
-  //     },
-  //   });
-  
-  
-    // const [open, setOpen] = useState(false);
-    // const [selectedId, setSelectedId] = useState(null);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -272,26 +290,15 @@ const DonorList = () => {
           </div>
           <div className="text-xs">
             {row.original.indicomp_type === 'Individual' ? (
- <span> <span className="text-xs text-gray-500">Spouse :</span>  <span  className="font-medium">{row.original.indicomp_spouse_name || '-'}</span></span> 
+              <span> <span className="text-xs text-gray-500">Spouse :</span>  <span  className="font-medium">{row.original.indicomp_spouse_name || '-'}</span></span> 
             ):(
-           
               <span ><span className="text-xs text-gray-500"> Contact :</span> <span className="font-medium">{row.original.indicomp_com_contact_name || '-'}</span></span> 
-              
             )}
-            
           </div>
         </div>
       ),
       size: 140,
     },
-   
-    // {
-    //   accessorKey: "indicomp_com_contact_name",
-    //   id: "Contact Person",
-    //   header: "Contact Person",
-    //   cell: ({ row }) => <div className="text-xs">{row.getValue("Contact Person")}</div>,
-    //   size: 120,
-    // },
     {
       id: "actions",
       header: "Action",
@@ -301,13 +308,14 @@ const DonorList = () => {
         return (
           <div className="flex flex-row">
             {userType !== '4' && (
-                  <TooltipProvider>
+              <>
+                <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigateToCreateReceipt(navigate, id)}
+                        onClick={() => handleCreateReceipt(id)}
                       >
                         <ReceiptText />
                       </Button>
@@ -316,39 +324,26 @@ const DonorList = () => {
                       <p>Receipt Creation</p>
                     </TooltipContent>
                   </Tooltip>
-    
-                  <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              if (row.original.indicomp_type === "Individual") {
-                navigate(`/donor/donor-edit-indivisual/${id}`);
-              } else {
-                navigate(`/donor/donor-edit-company/${id}`);
-              }
-            }}
-          >
-            <Edit />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Donor Edit</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-                 
                 </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditDonor(id, row.original.indicomp_type)}
+                      >
+                        <Edit />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Donor Edit</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
             )}
-        
-
-
-
-
-
-
 
             <TooltipProvider>
               <Tooltip>
@@ -356,7 +351,7 @@ const DonorList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-              onClick={()=>navigate(`/donor/donor-view/${id}`)}
+                    onClick={() => handleViewDonor(id)}
                   >
                     <Eye />
                   </Button>
@@ -365,36 +360,11 @@ const DonorList = () => {
                   <p>Donor Dashboard</p>
                 </TooltipContent>
               </Tooltip>
-
-             
             </TooltipProvider>
-
-            
-  {/* <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                               
-                                onClick={() => {
-                                  setSelectedId(id);
-                                  setOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete Donor</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider> */}
           </div>
         );
       },
     },
-    
   ];
 
   const table = useReactTable({
@@ -422,22 +392,16 @@ const DonorList = () => {
       pagination: {
         pageSize: 10,
       },
-      
     },
-    
   });
 
-
   const handlePageChange = (newPageIndex) => {
-
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData(["donors", debouncedSearchTerm, targetPage]);
     
     if (cachedData) {
-      
       setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
     } else {
- 
       table.setPageIndex(newPageIndex);
     }
   };
@@ -513,7 +477,6 @@ const DonorList = () => {
   };
 
   const TableShimmer = () => {
-    
     return Array.from({ length: 10 }).map((_, index) => (
       <TableRow key={index} className="animate-pulse h-11"> 
         {table.getVisibleFlatColumns().map((column) => (
@@ -542,28 +505,24 @@ const DonorList = () => {
     );
   }
 
-
   return (
     <div className="max-w-full p-2">
-   
       <div className="flex items-center justify-between py-1">
-      
-       
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search donors..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setSearchTerm("");
-                }
-              }}
-              className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-            />
-          </div>
-           <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
+        <div className="relative w-64">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search donors..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchTerm("");
+              }
+            }}
+            className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+          />
+        </div>
+        <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9">
@@ -588,29 +547,30 @@ const DonorList = () => {
           </DropdownMenu>
           {userType !== '4' && (
             <>
-          <Link 
-          to='/donor/donors-indiviusal-create'
-          >
-            <Button variant="default">
-          <SquarePlus className="h-3 w-3 mr-2" /> Indiviusal
-        </Button>
-        </Link>
-          <Link 
-          to='/donor/donors-company-create'
-          >
-            <Button variant="default" >
-          <SquarePlus className="h-3 w-3 mr-2" /> Company
-        </Button>
-        </Link>
-        </>
+              <Link 
+                to='/donor/donors-indiviusal-create'
+                onClick={storeCurrentPage}
+              >
+                <Button variant="default">
+                  <SquarePlus className="h-3 w-3 mr-2" /> Individual
+                </Button>
+              </Link>
+              <Link 
+                to='/donor/donors-company-create'
+                onClick={storeCurrentPage}
+              >
+                <Button variant="default">
+                  <SquarePlus className="h-3 w-3 mr-2" /> Company
+                </Button>
+              </Link>
+            </>
           )}
-       </div>
+        </div>
       </div>
-      
 
       {/* Table */}
       <div className="rounded-none border min-h-[31rem] grid grid-cols-1">
-      <Table className="flex-1">
+        <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -654,16 +614,16 @@ const DonorList = () => {
               ))
             ) : (
               <TableRow className="h-12"> 
-              <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                No donors found.
-              </TableCell>
-            </TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                  No donors found.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
-      {/*  Pagination */}
+      {/* Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
           Showing {donorsData?.from || 0} to {donorsData?.to || 0} of{" "}
@@ -712,31 +672,6 @@ const DonorList = () => {
           </Button>
         </div>
       </div>
-      {/* <AlertDialog open={open} onOpenChange={setOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Ots</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this Ots Expensive Type? This
-                    action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={deleteMutation.isPending}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(selectedId)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    {deleteMutation.isPending ? "Deleting..." : "Confirm"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog> */}
     </div>
   );
 };
