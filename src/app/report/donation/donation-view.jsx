@@ -21,7 +21,6 @@ const DonationView = ({
     {},
     { enabled: false }
   );
-  console.log(data, "data");
   useEffect(() => {
     if (receiptFromDate && receiptToDate) {
       refetch();
@@ -29,8 +28,7 @@ const DonationView = ({
   }, [receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.receipt || [];
-  console.log(donorsummary, "donorsummary");
-  // --- Pivot Table logic here ---
+ 
   const groupedData = useMemo(() => {
     const result = {};
     donorsummary.forEach((item) => {

@@ -34,7 +34,6 @@ const SchoolListView = () => {
     `school-full-list-view${decryptedId}`,
     `${SCHOOL_FULL_LIST_VIEW}/${decryptedId}`
   );
-  console.log(schoolviewdata);
   const school = schoolviewdata?.data?.schools || {};
 
   const schoolAdoption = schoolviewdata?.data?.schoolsadoption?.donor || [];

@@ -285,7 +285,6 @@ const DonorDetails = () => {
         toast.success(res.message);
         // navigate("/school/alloted");
         navigate("/school/alloted", { state: { refetch: true } });
-
       } else {
         toast.error(res.message || "Unexpected error");
       }
@@ -457,28 +456,35 @@ const DonorDetails = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9">
-              Columns <ChevronDown className="ml-2 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="text-xs capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-end space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                Columns <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="text-xs capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={onSubmit} disabled={submitloading}>
+            {submitloading ? "Submitting..." : "Submit"}
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -587,12 +593,6 @@ const DonorDetails = () => {
           </div>
         )
       )}
-      {/* Submit */}
-      <div className="flex justify-end mt-4">
-        <Button onClick={onSubmit} disabled={submitloading}>
-          {submitloading ? "Submitting..." : "Submit"}
-        </Button>
-      </div>
     </div>
   );
 };

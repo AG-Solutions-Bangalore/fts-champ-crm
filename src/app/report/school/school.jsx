@@ -159,9 +159,10 @@ function School() {
           <form id="dowRecp" autoComplete="off" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
               <div className="flex flex-col space-y-2">
-                <Label htmlFor="indicomp_full_name" required>
-                  Source
+                <Label className="font-medium" htmlFor="indicomp_full_name">
+                  Source <span className="text-red-500">*</span>
                 </Label>
+
                 <MemoizedSelect
                   name="indicomp_full_name"
                   value={downloadDonor?.indicomp_full_name}

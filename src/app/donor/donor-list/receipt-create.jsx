@@ -329,7 +329,6 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
 
   const createReceiptMutation = useMutation({
     mutationFn: async (formData) => {
-        // console.log('formData',formData)
       const response = await axios.post(DONOR_LIST_CREATE_RECEIPT, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });

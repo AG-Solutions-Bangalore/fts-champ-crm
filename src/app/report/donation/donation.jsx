@@ -32,7 +32,7 @@ const DonationSummary = () => {
   });
   const [viewType, setViewType] = useState(false);
   const { trigger, loading } = useApiMutation();
-  console.log(viewType);
+  
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
 

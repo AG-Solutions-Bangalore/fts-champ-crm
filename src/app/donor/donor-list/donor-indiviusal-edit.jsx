@@ -98,7 +98,6 @@ const DonorEditIndv = () => {
   const datasource = datasourceHook?.data || [];
   const promoter = promoterHook?.data || [];
 
-  // console.log('promoterlength',promoter.length)
 
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor', id],

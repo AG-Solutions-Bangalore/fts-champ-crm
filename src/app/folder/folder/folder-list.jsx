@@ -38,7 +38,6 @@ const FolderList = () => {
 
   const handleDeleteFile = (name) => {
     setDeleteItemdata(name);
-    console.log(name);
     setDeleteConfirmOpen(true);
   };
   const fetchfolder = folderdata?.data;

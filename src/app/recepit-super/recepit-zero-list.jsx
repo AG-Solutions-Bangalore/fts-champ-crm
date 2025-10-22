@@ -215,7 +215,6 @@ const RecepitZeroList = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    // console.log("Row data:", row);
                     navigateToNonZero(navigate, row?.original?.id);
                   }}
                 >

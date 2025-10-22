@@ -91,7 +91,6 @@ const SuperReceiptDonor = () => {
         method: "post",
         data: { receipt_ref_no: receiptRefNo },
       });
-      console.log('change-donor', res);
       
       if (res.data && res.data.length > 0) {
         setReceiptData(res.data);
