@@ -19,7 +19,6 @@ import Cookies from "js-cookie";
 import { CHAPTER_DATASOURCE_CREATE } from "@/api";
 
 const CreateDatasourceSuperadmin = ({ chapterId }) => {
-  console.log('chapterId',chapterId)
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   

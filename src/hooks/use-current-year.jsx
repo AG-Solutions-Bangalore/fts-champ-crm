@@ -13,7 +13,6 @@ export const useCurrentYear = () => {
         "Content-Type": "application/json",
       },
     });
-    console.log(response, "response");
     if (!response.ok) throw new Error("Failed to fetch year data");
     return response.json();
   };

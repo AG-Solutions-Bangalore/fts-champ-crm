@@ -44,7 +44,6 @@ const FileView = () => {
   useEffect(() => {
     const loadExcel = async () => {
       try {
-        console.log("Fetching Excel file from:", fileUrl);
 
         const res = await axios.get(fileUrl, {
           responseType: "arraybuffer",

@@ -38,7 +38,6 @@ const Promoter = () => {
     "promter-summary-dropdown",
     PROMOTER_SUMMARY_DROPDOWN
   );
-  console.log(PromoterData, "PromoterData");
   const handleInputChange = (e, field) => {
     const value = e.target ? e.target.value : e;
 
@@ -183,7 +182,9 @@ const Promoter = () => {
           <form id="dowRecp" autoComplete="off" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="indicomp_promoter">Notice Title</Label>
+                <Label className="font-medium" htmlFor="indicomp_promoter">
+                  Notice Title <span className="text-red-500">*</span>
+                </Label>
 
                 <MemoizedProductSelect
                   name="indicomp_promoter"

@@ -36,7 +36,6 @@ const DonorGroupView = ({
   }, [indicompFullName, receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.data?.receipt || [];
-  console.log(donorsummary, "donorsummary");
   const individual = data?.data?.individual_Company || [];
   const receiptsummary = data?.data?.receipt_total || [];
   const receiptsummaryfooterOTS = data?.data?.receipt_grand_total_ots || [];

@@ -55,10 +55,6 @@ const ReceiptDraft = ({
   };
 
   const receiptDate = getReceiptDate();
-
-
-
-  console.log('formData.receipt_tran_pay_mode',formData.receipt_tran_pay_mode)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

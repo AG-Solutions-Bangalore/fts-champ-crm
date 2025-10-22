@@ -103,14 +103,6 @@ const SchoolAllotEdit = () => {
       const defaultSelectedIds = school
         .filter((s) => savedIds.includes(s.school_code.trim()))
         .map((s) => s.school_code.trim());
-
-      console.log("Saved IDs:", savedIds);
-      console.log(
-        "School codes in list:",
-        school.map((s) => s.school_code)
-      );
-      console.log("Matched defaultSelectedIds:", defaultSelectedIds);
-
       setSelectedSchoolIds(defaultSelectedIds);
     }
   }, [schoolalot, schoolListRes]);

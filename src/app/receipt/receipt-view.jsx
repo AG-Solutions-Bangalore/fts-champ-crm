@@ -49,15 +49,10 @@ const ReceiptOne = () => {
   const containerRef = useRef();
   const navigate = useNavigate();
   const createFollowupMutation = useCreateFollowup();
-
-  // const { '*': id } = useParams();
-  // console.log('id receipt view',id)
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const id = searchParams.get('ref');
-  
-  console.log('Receipt ref:', id);
-  const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
   const token = Cookies.get("token");
   const [donor1, setDonor1] = useState({ indicomp_email: "" });
   const [open, setOpen] = useState(false);

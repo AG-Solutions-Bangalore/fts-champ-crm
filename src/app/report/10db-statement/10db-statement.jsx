@@ -209,8 +209,9 @@ const DBStatement = () => {
               {/* From Date */}
               <div className="flex flex-col space-y-2 min-w-0">
                 <Label htmlFor="receipt_from_date" required>
-                  From Date
+                  From Date 
                 </Label>
+                
                 <Input
                   id="receipt_from_date"
                   name="receipt_from_date"

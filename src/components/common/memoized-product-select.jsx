@@ -77,7 +77,7 @@ export const MemoizedProductSelect = React.memo(
         value={selectedOption}
         // onChange={(selected) => onChange(selected ? selected.value : "")}
         onChange={(selected) => {
-          console.log("Selected value:", selected?.value); // Debugging log
+          // console.log("Selected value:", selected?.value); // Debugging log
           onChange(selected?.value); // Directly pass the value
         }}
         options={selectOptions}
