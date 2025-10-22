@@ -409,28 +409,35 @@ const SchoolAllotEdit = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9">
-              Columns <ChevronDown className="ml-2 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="text-xs capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-end space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                Columns <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="text-xs capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={onSubmit} disabled={updateloading}>
+            {updateloading ? "Updating..." : "Update"}
+          </Button>
+        </div>
       </div>
       <div className="rounded-none border min-h-[25rem]  flex flex-col">
         <Table className="flex-1">
@@ -536,12 +543,6 @@ const SchoolAllotEdit = () => {
           </div>
         )
       )}
-      {/* Submit Button */}
-      <div className="flex justify-end mt-4">
-        <Button onClick={onSubmit} disabled={updateloading}>
-          {updateloading ? "Updating..." : "Update"}
-        </Button>
-      </div>
     </div>
   );
 };
