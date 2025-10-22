@@ -117,7 +117,8 @@ export default function LoginAuth() {
         Cookies.set("currentYear", year?.current_year, cookieOptions);
        
   const token = Cookies.get("token");
-        if (!token) {
+  const tokenExpireTime = Cookies.get("token-expire-time");
+        if (!token && !tokenExpireTime ) {
           throw new Error("Cookies not set properly");
         }
         
