@@ -64,20 +64,15 @@ const SchoolList = () => {
     pageSize: 10,
   });
 
-  // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
     Cookies.set("schoolListReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 // expires in 1 day
+      expires: 1 
     });
   };
-
-  // Navigation handlers that store current page
   const handleViewSchool = (id) => {
     storeCurrentPage();
     navigateToSchoolFullListView(navigate, id);
   };
-
-  // Restore page from cookies when component mounts
   useEffect(() => {
     const savedPage = Cookies.get("schoolListReturnPage");
     if (savedPage) {

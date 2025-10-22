@@ -240,14 +240,7 @@ const NAVIGATION_CONFIG = {
 const USER_ROLE_PERMISSIONS = {
   1: {
     navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL"],
-    navMainReport: [
-      "SUMMARY",
-      "DOWNLOADS",
-      "OTHER",
-      "SETTINGS",
-      "FOLDER",
-      "MULTIALLOTMENT",
-    ],
+    navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   2: {
@@ -259,14 +252,7 @@ const USER_ROLE_PERMISSIONS = {
       "RECEIPT",
       "SCHOOL",
     ],
-    navMainReport: [
-      "SUMMARY",
-      "DOWNLOADS",
-      "OTHER",
-      "SETTINGS",
-      "FOLDER",
-      "MULTIALLOTMENT",
-    ],
+    navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   3: {
@@ -278,36 +264,23 @@ const USER_ROLE_PERMISSIONS = {
       "RECEIPT",
       "SCHOOL",
     ],
-    navMainReport: [
-      "SUMMARY",
-      "DOWNLOADS",
-      "OTHER",
-      "SETTINGS",
-      "FOLDER",
-      "MULTIALLOTMENT",
-    ],
+    navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   4: {
     navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL"],
-    navMainReport: [
-      "SUMMARY",
-      "DOWNLOADS",
-      "OTHER",
-      "SETTINGS",
-      "FOLDER",
-      "MULTIALLOTMENT",
-    ],
+    navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   5: {
     navMain: ["DASHBOARD", "CHAPTER"],
     navMainReport: [
       "SETTINGS",
-      "FOLDER",
       "RECEIPT_ZERO",
       "RECEIPT_CHANGE_DONOR",
       "RECEIPT_MULTIPLE",
+      "FOLDER",
+      "MULTIALLOTMENT",
     ],
   },
 };

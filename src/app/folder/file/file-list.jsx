@@ -55,7 +55,6 @@ const FileList = () => {
         data: { file_folder_unique: id },
       });
 
-      // ✅ Ensure files is an array
       const fileList = response?.data || response?.files || [];
       if (Array.isArray(fileList)) {
         setFiles(fileList);
@@ -196,7 +195,7 @@ const FileList = () => {
             if (["xlsx", "xls"].includes(ext)) {
               Icon = FileSpreadsheet;
               iconColor = "text-green-500";
-            } else if (ext === "pdf") {
+            } else if (ext == "pdf") {
               Icon = FileMinus;
               iconColor = "text-red-500";
             }

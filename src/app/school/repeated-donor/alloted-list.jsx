@@ -1,4 +1,5 @@
 import { REAPEAT_DONOR_EDIT_LIST, REAPEAT_DONOR_EDIT_UPDATE_NEXT } from "@/api";
+import PaginationShimmer from "@/components/common/pagination-schimmer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,15 +40,14 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Edit,
   Loader,
   Search,
+  Send
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { TableShimmer } from "../loadingtable/TableShimmer";
-import PaginationShimmer from "@/components/common/pagination-schimmer";
 
 const AllotedList = () => {
   const queryClient = useQueryClient();
@@ -80,6 +80,7 @@ const AllotedList = () => {
   const {
     data: schoolData,
     isError,
+    isLoading: loading,
     isFetching,
     prefetchPage,
   } = useGetMutation(
@@ -127,7 +128,7 @@ const AllotedList = () => {
         method: "put",
         data: payload,
       });
-      if (res.code == 200) {
+      if (res.code == 201) {
         toast.success(res.msg);
         navigate("/school/repeated");
       } else {
@@ -233,7 +234,7 @@ const AllotedList = () => {
                     {loading ? (
                       <Loader className="h-5 w-5 animate-spin text-blue-500" />
                     ) : (
-                      <Edit className="h-5 w-5 text-blue-500" />
+                      <Send className="h-5 w-5 text-blue-500" />
                     )}{" "}
                   </Button>
                 </TooltipTrigger>
