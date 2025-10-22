@@ -89,7 +89,7 @@ export default function ForgotPassword() {
           xmlns:xlink="http://www.w3.org/1999/xlink"
           viewBox="0 0 512 512"
           xml:space="preserve"
-          fill="#df4949"
+          fill="var(--team-color)"
           stroke="#000000"
           opacity="0.5"
         >

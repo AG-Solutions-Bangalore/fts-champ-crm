@@ -36,7 +36,7 @@ const SchoolListView = () => {
   );
   const school = schoolviewdata?.data?.schools || {};
 
-  const schoolAdoption = schoolviewdata?.data?.schoolsadoption?.donor || [];
+  const schoolAdoption = schoolviewdata?.data?.schoolsadoption || [];
   if (isLoading) {
     return <SchoolViewLoading />;
   }
@@ -172,13 +172,13 @@ const SchoolListView = () => {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="px-4 py-2 text-sm font-medium text-gray-700">
-                      {adoption?.individual_company.indicomp_fts_id || ""}
+                      {adoption?.indicomp_fts_id || ""}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
-                      {adoption?.individual_company.indicomp_full_name || ""}
+                      {adoption?.donor?.indicomp_full_name || ""}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-sm text-gray-700">
-                      {adoption.schoolalot_financial_year || ""}
+                      {adoption?.schoolalot_financial_year || ""}
                     </TableCell>
                   </TableRow>
                 ))}
