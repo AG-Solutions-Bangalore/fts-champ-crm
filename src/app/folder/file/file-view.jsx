@@ -5,7 +5,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
+import axios from "axios";
+import Cookies from "js-cookie";
 import {
   Loader2,
   Rows,
@@ -19,24 +22,18 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-
-/** Excel-like File Viewer & Editor with Auto Row Height and Add Sheet */
 const FileView = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const fileUrl = state?.fileUrl ?? "";
   const fileName = state?.fileName ?? "";
   const folderUnique = state?.id ?? "";
-
   const [sheets, setSheets] = useState([]);
   const [currentSheetIndex, setCurrentSheetIndex] = useState(0);
   const [modifiedCells, setModifiedCells] = useState({});
   const [contextMenu, setContextMenu] = useState(null);
   const { trigger: updateFileTrigger, loading: isSaving } = useApiMutation();
-
   const trimmedName = fileName.replace(/\.[^/.]+$/, "");
-
-  /** Column resizing state */
   const [resizing, setResizing] = useState({
     active: false,
     colIndex: null,
@@ -44,13 +41,18 @@ const FileView = () => {
     startWidth: 0,
   });
 
-  /** Fetch and parse Excel file */
   useEffect(() => {
     const loadExcel = async () => {
       try {
-        const res = await fetch(fileUrl);
-        const buffer = await res.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: "array" });
+        console.log("Fetching Excel file from:", fileUrl);
+
+        const res = await axios.get(fileUrl, {
+          responseType: "arraybuffer",
+        });
+
+        const arrayBuffer = res.data;
+
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
         const parsed = workbook.SheetNames.map((name) => ({
           name,
@@ -58,14 +60,14 @@ const FileView = () => {
             header: 1,
             defval: "",
           }),
-          colWidths: [], // Store widths for each column
+          colWidths: [],
         }));
 
         setSheets(parsed);
         setCurrentSheetIndex(0);
       } catch (err) {
         console.error("Error loading Excel:", err);
-        toast.error("Failed to load Excel file.");
+        toast.error(err.message || "Failed to load Excel file.");
       }
     };
     if (fileUrl) loadExcel();
@@ -98,8 +100,6 @@ const FileView = () => {
       },
     }));
   };
-
-  /** Modify rows */
   const modifyRow = (index, type) => {
     const data = [...rows];
     const cols = data[0]?.length || 0;
