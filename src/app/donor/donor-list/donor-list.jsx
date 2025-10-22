@@ -51,11 +51,9 @@ const DonorList = () => {
   });
 
   const [pageInput, setPageInput] = useState("");
-
-  // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
     Cookies.set("donorReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 // expires in 1 day
+      expires: 1 
     });
   };
 

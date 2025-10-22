@@ -48,7 +48,7 @@ import PaginationShimmer from "@/components/common/pagination-schimmer";
 const RepeatDonor = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-     const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get("user_type_id");
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -64,17 +64,6 @@ const RepeatDonor = () => {
     pageSize: 10,
   });
 
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }, 500);
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [searchTerm]);
-
   const {
     data: repeatData,
     isError,
@@ -88,6 +77,53 @@ const RepeatDonor = () => {
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
     }
   );
+  const storeCurrentPage = () => {
+    Cookies.set(
+      "repeatedDonorReturnPage",
+      (pagination.pageIndex + 1).toString(),
+      {
+        expires: 1,
+      }
+    );
+  };
+  const handleEditRepeated = (id) => {
+    storeCurrentPage();
+    navigateToRepeatDonorEdit(navigate, id);
+  };
+  useEffect(() => {
+    const savedPage = Cookies.get("repeatedDonorReturnPage");
+    if (savedPage) {
+      Cookies.remove("repeatedDonorReturnPage");
+
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination((prev) => ({ ...prev, pageIndex }));
+
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["repeatdonor"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = repeatData?.data?.last_page || 1;
@@ -157,34 +193,39 @@ const RepeatDonor = () => {
       },
       size: 200,
     },
-    ...(userType !== '4' ? [
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const id = row.original.indicomp_fts_id;
-        return (
-          <div className="flex">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToRepeatDonorEdit(navigate, id)}
-                  >
-                    <Edit className="h-5 w-5 text-blue-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Edit</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        );
-      },
-      size: 100,
-    },
-  ]:[])
+    ...(userType !== "4"
+      ? [
+          {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+              const id = row.original.indicomp_fts_id;
+              return (
+                <div className="flex">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          // onClick={() =>
+                          //   navigateToRepeatDonorEdit(navigate, id)
+                          // }
+                          onClick={() => handleEditRepeated(row?.original?.id)}
+                        >
+                          <Edit className="h-5 w-5 text-blue-500" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              );
+            },
+            size: 100,
+          },
+        ]
+      : []),
   ];
 
   const table = useReactTable({
