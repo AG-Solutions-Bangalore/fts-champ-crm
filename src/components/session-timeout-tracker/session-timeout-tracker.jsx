@@ -1,152 +1,173 @@
-import React from 'react';
-import { AlertTriangle } from 'lucide-react';
-import Cookies from 'js-cookie';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React from "react";
+import { AlertTriangle } from "lucide-react";
+import Cookies from "js-cookie";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
   const queryClient = useQueryClient();
+  const [isInitialized, setIsInitialized] = React.useState(false);
 
+  React.useEffect(() => {
+    const initTimer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 3000);
+
+    return () => clearTimeout(initTimer);
+  }, []);
 
   const isTokenPresent = () => {
-    return !!Cookies.get('token');
-  };
+    const token = Cookies.get("token");
 
+    return !!token;
+  };
 
   const validateExpiryTime = (expiryTime) => {
-
     if (!expiryTime) {
-      onLogout();
       return null;
     }
-    
+
     try {
       const expiryDate = new Date(expiryTime);
-      return isNaN(expiryDate.getTime()) ? null : expiryDate;
-    } catch {
-      onLogout();
+      if (isNaN(expiryDate.getTime())) {
+        console.warn("❌ Invalid expiry date");
+        return null;
+      }
+
+      return expiryDate;
+    } catch (error) {
+      console.error("❌ Error parsing expiry time:", error);
       return null;
     }
   };
-
 
   const calculateTimeUntilExpiry = (expiryDate) => {
     const now = new Date();
-    return expiryDate - now;
+    const timeUntil = expiryDate - now;
+
+    return timeUntil;
   };
 
-
   React.useEffect(() => {
+    if (!isInitialized) return;
+
     const originalFetch = window.fetch;
-    
+
     window.fetch = async (...args) => {
       const response = await originalFetch(...args);
-      
 
-      const clonedResponse = response.clone();
-      
-      try {
-        const data = await clonedResponse.json();
+      const url = args[0] || "";
+      if (typeof url === "string" && url.includes("/api/")) {
+        try {
+          const clonedResponse = response.clone();
+          const data = await clonedResponse.json();
 
-        if (data?.message === 'Unauthenticated.' && isTokenPresent()) {
-          console.log('Authentication error detected in API response, logging out...');
-          onLogout();
+          if (data?.message === "Unauthenticated." && isTokenPresent()) {
+            onLogout();
+          }
+        } catch (error) {
+          // Ignore JSON parsing errors
         }
-      } catch (error) {
-
       }
-      
+
       return response;
     };
 
- 
     return () => {
       window.fetch = originalFetch;
     };
-  }, [onLogout]);
+  }, [onLogout, isInitialized]);
 
- 
   React.useEffect(() => {
+    if (!isInitialized) return;
+
     const checkCookieChange = () => {
-    
-      queryClient.invalidateQueries({ queryKey: ['session-validation'] });
+      queryClient.invalidateQueries({ queryKey: ["session-validation"] });
     };
 
- 
-    const interval = setInterval(checkCookieChange, 1000);
+    const interval = setInterval(checkCookieChange, 3000);
 
     return () => clearInterval(interval);
-  }, [queryClient]);
-
+  }, [queryClient, isInitialized]);
 
   const { data: sessionStatus } = useQuery({
-    queryKey: ['session-validation', expiryTime],
+    queryKey: ["session-validation", expiryTime],
     queryFn: () => {
-  
-      if (!isTokenPresent()) {
-        return { status: 'no-token', countdown: 0 };
+      if (!isInitialized) {
+        return { status: "initializing", countdown: null };
       }
 
+      if (!isTokenPresent()) {
+        return { status: "no-token-warning", countdown: null };
+      }
 
       const expiryDate = validateExpiryTime(expiryTime);
       if (!expiryDate) {
-        return { status: 'expired', countdown: 0 };
+        console.log(
+          "⚠️ Invalid expiry time, but token exists - not logging out"
+        );
+        return { status: "valid", countdown: null };
       }
 
       const timeUntilExpiry = calculateTimeUntilExpiry(expiryDate);
       const fiveMinutes = 5 * 60 * 1000;
 
-
-      if (timeUntilExpiry <= 0) {
-        onLogout();
-        return { status: 'expired', countdown: 0 };
+      if (timeUntilExpiry <= -6) {
+        return { status: "expired", countdown: 0 };
       }
 
-
-      if (timeUntilExpiry <= fiveMinutes) {
-        return { 
-          status: 'expiring', 
-          countdown: Math.floor(timeUntilExpiry / 1000)
+      if (timeUntilExpiry <= fiveMinutes && timeUntilExpiry > 0) {
+        return {
+          status: "expiring",
+          countdown: Math.floor(timeUntilExpiry / 1000),
         };
       }
 
-
-      return { status: 'valid', countdown: null };
+      return { status: "valid", countdown: null };
     },
     refetchInterval: (query) => {
-      const state = query.state.data;
-      
+      if (!isInitialized) return false;
 
-      if (state?.status === 'expiring') {
+      const state = query.state.data;
+
+      if (state?.status === "expiring") {
         return 1000;
       }
-      
 
-      if (state?.status === 'valid') {
+      if (state?.status === "no-token-warning") {
+        return 5000;
+      }
+
+      if (state?.status === "valid") {
         return 30000;
       }
-      
 
       return false;
     },
     refetchOnWindowFocus: true,
     staleTime: 0,
+    enabled: isInitialized,
   });
 
-
   React.useEffect(() => {
-    if (sessionStatus?.status === 'expired' && isTokenPresent()) {
+    if (sessionStatus?.status === "expired" && isTokenPresent()) {
       onLogout();
+    }
+
+    if (sessionStatus?.status === "no-token-warning") {
     }
   }, [sessionStatus?.status, onLogout]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
-
-  if (sessionStatus?.status !== 'expiring' || !isTokenPresent()) {
+  if (
+    !isInitialized ||
+    sessionStatus?.status !== "expiring" ||
+    !isTokenPresent()
+  ) {
     return null;
   }
 
@@ -154,12 +175,12 @@ const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md animate-slide-down">
       <div className="mx-4">
         <div className="bg-white rounded-lg shadow-xl border border-gray-300">
-          <div 
-            className="h-1 bg-red-600 rounded-tl-lg" 
-            style={{ 
+          <div
+            className="h-1 bg-red-600 rounded-tl-lg"
+            style={{
               width: `${(sessionStatus.countdown / 300) * 100}%`,
-              transition: 'width 1s linear'
-            }} 
+              transition: "width 1s linear",
+            }}
           />
           <div className="p-2">
             <div className="flex items-center gap-4">
@@ -168,7 +189,7 @@ const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
               </div>
               <div className="flex-1">
                 <div className="text-gray-800 text-sm">
-                  Session timeout in{' '}
+                  Session timeout in{" "}
                   <span className="text-red-600 font-bold font-mono">
                     {formatTime(sessionStatus.countdown)}
                   </span>
