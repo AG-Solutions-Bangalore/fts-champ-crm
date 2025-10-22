@@ -51,6 +51,7 @@ const SchoolList = () => {
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
   const [pageInput, setPageInput] = useState("");
   const currentYear = Cookies.get("currentYear");
@@ -62,16 +63,65 @@ const SchoolList = () => {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  // Store current page in cookies when navigating away
+  const storeCurrentPage = () => {
+    Cookies.set("schoolListReturnPage", (pagination.pageIndex + 1).toString(), { 
+      expires: 1 // expires in 1 day
+    });
+  };
+
+  // Navigation handlers that store current page
+  const handleViewSchool = (id) => {
+    storeCurrentPage();
+    navigateToSchoolFullListView(navigate, id);
+  };
+
+  // Restore page from cookies when component mounts
+  useEffect(() => {
+    const savedPage = Cookies.get("schoolListReturnPage");
+    if (savedPage) {
+      // Remove the cookie first to prevent infinite loops
+      Cookies.remove("schoolListReturnPage");
+      
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination(prev => ({ ...prev, pageIndex }));
+          
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["schoollist"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+
+  // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
+      // Check if this is a genuine new search (not just initialization)
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      }
+      
       setDebouncedSearchTerm(searchTerm);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      setPreviousSearchTerm(searchTerm);
     }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
-  }, [searchTerm]);
+  }, [searchTerm, previousSearchTerm]);
+
   const {
     data: schoolData,
     isError,
@@ -82,6 +132,7 @@ const SchoolList = () => {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
+
   useEffect(() => {
     if (!schoolData?.data?.school?.last_page) return;
 
@@ -209,9 +260,7 @@ const SchoolList = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      navigateToSchoolFullListView(navigate, row?.original?.id);
-                    }}
+                    onClick={() => handleViewSchool(row?.original?.id)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -270,6 +319,7 @@ const SchoolList = () => {
       table.setPageIndex(newPageIndex);
     }
   };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedPage(pageInput);
@@ -290,6 +340,7 @@ const SchoolList = () => {
   const handlePageInput = (e) => {
     setPageInput(e.target.value);
   };
+
   const generatePageButtons = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
@@ -376,6 +427,7 @@ const SchoolList = () => {
       </div>
     );
   }
+
   return (
     <div className="max-w-full p-2">
       {schoolData?.data?.schoolcount?.length > 0 && (

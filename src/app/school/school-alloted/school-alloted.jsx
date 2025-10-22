@@ -56,10 +56,11 @@ const SchoolAlloted = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-     const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get('user_type_id');
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
   const [pageInput, setPageInput] = useState("");
   const [sorting, setSorting] = useState([]);
@@ -70,16 +71,74 @@ const SchoolAlloted = () => {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  // Store current page in cookies when navigating away
+  const storeCurrentPage = () => {
+    Cookies.set("schoolAllotedReturnPage", (pagination.pageIndex + 1).toString(), { 
+      expires: 1 // expires in 1 day
+    });
+  };
+
+  // Navigation handlers that store current page
+  const handleEditAllotment = (id, year) => {
+    storeCurrentPage();
+    navigateToSchoolAllotEdit(navigate, id, year);
+  };
+
+  const handleViewAllotment = (id) => {
+    storeCurrentPage();
+    navigateToSchoolAllotView(navigate, id);
+  };
+
+  const handleAllotmentLetter = (id) => {
+    storeCurrentPage();
+    navigateToSchoolAllotmentLetter(navigate, id);
+  };
+
+  // Restore page from cookies when component mounts
+  useEffect(() => {
+    const savedPage = Cookies.get("schoolAllotedReturnPage");
+    if (savedPage) {
+      // Remove the cookie first to prevent infinite loops
+      Cookies.remove("schoolAllotedReturnPage");
+      
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination(prev => ({ ...prev, pageIndex }));
+          
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["schoolallotmentlist"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+
+  // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
+      // Check if this is a genuine new search (not just initialization)
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      }
+      
       setDebouncedSearchTerm(searchTerm);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      setPreviousSearchTerm(searchTerm);
     }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
-  }, [searchTerm]);
+  }, [searchTerm, previousSearchTerm]);
 
   const {
     data: schoolData,
@@ -91,11 +150,13 @@ const SchoolAlloted = () => {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
+
   useEffect(() => {
     if (location.state?.refetch) {
       refetch();
     }
   }, [location.state, refetch]);
+
   useEffect(() => {
     if (!schoolData?.data?.last_page) return;
 
@@ -113,10 +174,10 @@ const SchoolAlloted = () => {
     schoolData?.data?.last_page,
     prefetchPage,
   ]);
+
   const columns = [
     {
       id: "serialNo",
-
       header: "S. No.",
       cell: ({ row }) => {
         const globalIndex =
@@ -212,68 +273,65 @@ const SchoolAlloted = () => {
 
     // Actions
     ...(userType !== '4'? [
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const id = row.original.id;
-        const year = row.original.schoolalot_financial_year;
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const year = row.original.schoolalot_financial_year;
 
-        return (
-          <div className="flex">
-            <TooltipProvider>
-              {/* Edit */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      navigateToSchoolAllotEdit(navigate, id, year)
-                    }
-                  >
-                    <Edit className="h-5 w-5 " />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Edit</TooltipContent>
-              </Tooltip>
+          return (
+            <div className="flex">
+              <TooltipProvider>
+                {/* Edit */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditAllotment(id, year)}
+                    >
+                      <Edit className="h-5 w-5 " />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit</TooltipContent>
+                </Tooltip>
 
-              {/* View */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToSchoolAllotView(navigate, id)}
-                  >
-                    <Eye className="h-5 w-5 " />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View</TooltipContent>
-              </Tooltip>
+                {/* View */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewAllotment(id)}
+                    >
+                      <Eye className="h-5 w-5 " />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View</TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      navigateToSchoolAllotmentLetter(navigate, id)
-                    }
-                  >
-                    <ClipboardList className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Allotment</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        );
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleAllotmentLetter(id)}
+                    >
+                      <ClipboardList className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Allotment</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          );
+        },
+        size: 120,
       },
-      size: 120,
-    },
-  ]:[])
+    ]: [])
   ];
+
   const table = useReactTable({
     data: schoolData?.data?.data || [],
     columns,
@@ -504,7 +562,7 @@ const SchoolAlloted = () => {
 
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
-              <TableShimmer columns={table.getVisibleFlatColumns()} />
+              <TableShimmer />
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

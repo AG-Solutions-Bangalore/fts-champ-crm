@@ -303,13 +303,13 @@ const TimelineReceipt = ({ donorId }) => {
                 <IconComponent className="h-3.5 w-3.5 text-white" />
               </div>
               {index !== followUpData.length - 1 && (
-                <div className="w-0.5 h-full bg-gradient-to-b from-gray-200 to-gray-100 mt-1" />
+                <div className="w-0.5 h-full bg-gradient-to-b from-blue-800 to-gray-100 mt-1" />
               )}
             </div>
 
      
             <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-start mb-1 gap-2">
+              {/* <div className="flex justify-between items-start mb-1 gap-2">
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
                   <h4 className="font-semibold text-sm text-gray-900 truncate">
                     {item.action}
@@ -319,21 +319,21 @@ const TimelineReceipt = ({ donorId }) => {
                 <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
                   {item.time}
                 </span>
-              </div>
+              </div> */}
 
             
-              <p className="text-xs text-gray-600 mb-1.5 leading-relaxed">
+              <p className="text-sm font-medium  mb-1.5 leading-relaxed">
                 {item.action} on {item.time} by{" "}
-                <span className="font-medium text-gray-800">{item.user}</span>
+                <span className="font-medium text-gray-800">{item.user}</span>  {getStatusBadge(item.status)}
               </p>
 
               <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-                <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
+                {/* <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
                   <User className="h-3 w-3" />
                   <span className="truncate max-w-[80px]">{item.user}</span>
-                </div>
+                </div> */}
                 <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
-                  <span className="text-xs">⏱️ {item.duration}</span>
+                  <span className="text-xs">⏱️ {item.duration} ago</span>
                 </div>
               </div>
             </div>

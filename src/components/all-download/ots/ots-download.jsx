@@ -36,7 +36,7 @@ import { DOWNLOAD_PURCHASE_OTS } from '@/api';
 import Cookies from 'js-cookie';
 
 const OtsDownload = () => {
-  const token = Cookies.get('token') || localStorage.getItem('token');
+  const token = Cookies.get('token')
   const [formData, setFormData] = useState({
     receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
     receipt_to_date: Moment().format('YYYY-MM-DD')

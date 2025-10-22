@@ -47,11 +47,12 @@ import Cookies from "js-cookie";
 
 const SchoolToAllot = () => {
   const navigate = useNavigate();
-   const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get('user_type_id');
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
   const [pageInput, setPageInput] = useState("");
   const [pagination, setPagination] = useState({
@@ -59,16 +60,63 @@ const SchoolToAllot = () => {
     pageSize: 10,
   });
 
+  // Store current page in cookies when navigating away
+  const storeCurrentPage = () => {
+    Cookies.set("schoolToAllotReturnPage", (pagination.pageIndex + 1).toString(), { 
+      expires: 1 // expires in 1 day
+    });
+  };
+
+  // Navigation handlers that store current page
+  const handleAllotment = (donorId, schoolAllotYear, receiptYear) => {
+    storeCurrentPage();
+    navigateToDonorDetailsView(navigate, donorId, schoolAllotYear, receiptYear);
+  };
+
+  // Restore page from cookies when component mounts
+  useEffect(() => {
+    const savedPage = Cookies.get("schoolToAllotReturnPage");
+    if (savedPage) {
+      // Remove the cookie first to prevent infinite loops
+      Cookies.remove("schoolToAllotReturnPage");
+      
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination(prev => ({ ...prev, pageIndex }));
+          
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["schooltoallot"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+
+  // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
+      // Check if this is a genuine new search (not just initialization)
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      }
+      
       setDebouncedSearchTerm(searchTerm);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      setPreviousSearchTerm(searchTerm);
     }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
-  }, [searchTerm]);
+  }, [searchTerm, previousSearchTerm]);
 
   const {
     data: schooltoallotData,
@@ -80,6 +128,7 @@ const SchoolToAllot = () => {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
+
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = schooltoallotData?.data?.last_page || 1;
@@ -96,10 +145,12 @@ const SchoolToAllot = () => {
     schooltoallotData?.data?.last_page,
     prefetchPage,
   ]);
+
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+
   const columns = [
     // Serial Number
     {
@@ -187,57 +238,49 @@ const SchoolToAllot = () => {
       size: 100,
     },
     ...(userType !== '4'? [
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const item = row.original;
+          const company = item?.donor;
+          if (!company) return null;
 
-    
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const item = row.original;
-        const company = item?.donor;
-        if (!company) return null;
-
-        const status = company.indicomp_status;
-        const donorId = company.id;
-        const schoolAllotYear = item.schoolalot_year;
-        const receiptYear = item.receipt_financial_year;
-        return (
-          <div className="flex items-center gap-2">
-            {status == "Active" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        navigateToDonorDetailsView(
-                          navigate,
-                          donorId,
-                          schoolAllotYear,
-                          receiptYear
-                        )
-                      }
-                    >
-                      <ClipboardList
-                        className="h-5 w-5 text-blue-500"
-                        title="Allotment"
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Allotment</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-        );
+          const status = company.indicomp_status;
+          const donorId = company.id;
+          const schoolAllotYear = item.schoolalot_year;
+          const receiptYear = item.receipt_financial_year;
+          return (
+            <div className="flex items-center gap-2">
+              {status == "Active" && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleAllotment(donorId, schoolAllotYear, receiptYear)}
+                      >
+                        <ClipboardList
+                          className="h-5 w-5 text-blue-500"
+                          title="Allotment"
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Allotment</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          );
+        },
+        size: 80,
       },
-      size: 80,
-    },
-  ] : []),
+    ] : []),
   ];
+
   const table = useReactTable({
     data: schooltoallotData?.data?.data || [],
     columns,

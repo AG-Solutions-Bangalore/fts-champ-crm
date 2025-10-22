@@ -51,6 +51,7 @@ const DuplicateDonor = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
   
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -59,19 +60,97 @@ const DuplicateDonor = () => {
 
   const [pageInput, setPageInput] = useState("");
 
-  // Debounce search term
+  // Store current page in cookies when navigating away
+  const storeCurrentPage = () => {
+    Cookies.set("duplicateReturnP", (pagination.pageIndex + 1).toString(), { 
+      expires: 1 // expires in 1 day
+    });
+  };
+
+  // Navigation handlers that store current page
+  const handleEditDuplicate = (id) => {
+    storeCurrentPage();
+    navigateToDuplicateEdit(navigate, id);
+  };
+
+  // Restore page from cookies when component mounts
+  useEffect(() => {
+    const savedPage = Cookies.get("duplicateReturnP");
+    if (savedPage) {
+      // Remove the cookie first to prevent infinite loops
+      Cookies.remove("duplicateReturnP");
+      
+      // Set the pagination after a small delay to ensure proper rendering
+      setTimeout(() => {
+        const pageIndex = parseInt(savedPage) - 1;
+        if (pageIndex >= 0) {
+          setPagination(prev => ({ ...prev, pageIndex }));
+          
+          // Also update the page input field
+          setPageInput(savedPage);
+
+          // Invalidate queries to refetch data for the correct page
+          queryClient.invalidateQueries({
+            queryKey: ["duplicateList"],
+            exact: false,
+          });
+        }
+      }, 100);
+    }
+  }, [queryClient]);
+
+  // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
+      // Check if this is a genuine new search (not just initialization)
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      }
+      
       setDebouncedSearchTerm(searchTerm);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPreviousSearchTerm(searchTerm);
     }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
-  }, [searchTerm]);
+  }, [searchTerm, previousSearchTerm]);
 
-  // Prefetch next and previous pages
+  const {
+    data: duplicateData,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["duplicateList", debouncedSearchTerm, pagination.pageIndex + 1],
+    queryFn: async () => {
+      const token = Cookies.get("token");
+      const params = new URLSearchParams({
+        page: (pagination.pageIndex + 1).toString(),
+      });
+      
+      if (debouncedSearchTerm) {
+        params.append("search", debouncedSearchTerm);
+      }
+
+      const response = await axios.get(
+        `${DUPLICATE_LIST}?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data?.data || response.data;
+    },
+    keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Prefetch next and previous pages - MOVED AFTER duplicateData is defined
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = duplicateData?.last_page || 1;
@@ -136,39 +215,7 @@ const DuplicateDonor = () => {
         });
       }
     }
-  }, [pagination.pageIndex, debouncedSearchTerm, queryClient]);
-
-  const {
-    data: duplicateData,
-    isLoading,
-    isError,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["duplicateList", debouncedSearchTerm, pagination.pageIndex + 1],
-    queryFn: async () => {
-      const token = Cookies.get("token");
-      const params = new URLSearchParams({
-        page: (pagination.pageIndex + 1).toString(),
-      });
-      
-      if (debouncedSearchTerm) {
-        params.append("search", debouncedSearchTerm);
-      }
-
-      const response = await axios.get(
-        `${DUPLICATE_LIST}?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.data?.data || response.data;
-    },
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000,
-  });
+  }, [pagination.pageIndex, debouncedSearchTerm, queryClient, duplicateData?.last_page]);
 
   const handleOpenDeleteDialog = (id) => {
     setDeleteId(id);
@@ -341,7 +388,7 @@ const DuplicateDonor = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigateToDuplicateEdit(navigate, id)}
+                      onClick={() => handleEditDuplicate(id)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
