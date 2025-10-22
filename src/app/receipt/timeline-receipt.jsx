@@ -10,6 +10,7 @@ import { History, Mail, FileText, Download, Calendar, User, Printer, PlusCircle,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FOLLOWUP_GET_DATA } from "@/api";
+import moment from "moment";
 
 const TimelineReceipt = ({ donorId }) => {
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
@@ -82,7 +83,8 @@ const TimelineReceipt = ({ donorId }) => {
         type: type,
         status: item.followup_status?.toLowerCase(),
         user: item.created_by || "System",
-        duration: "2 mins", 
+        followTime: item.followup_time, 
+        followDate: item.followup_date, 
         icon: icon,
         color: color,
         textColor: `text-${color.replace('bg-', '')}-700`,
@@ -333,7 +335,7 @@ const TimelineReceipt = ({ donorId }) => {
                   <span className="truncate max-w-[80px]">{item.user}</span>
                 </div> */}
                 <div className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">
-                  <span className="text-xs">⏱️ {item.duration} ago</span>
+                  <span className="text-xs">⏱️ {moment(item.followDate).format('MMM DD, YYYY')} ,{moment(item.followTime, "HH:mm:ss").format("h:mm A")}  </span>
                 </div>
               </div>
             </div>
