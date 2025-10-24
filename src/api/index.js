@@ -79,6 +79,8 @@ export const MEMBERS_LIST = `${BASE_URL}/api/fetch-members`;
 export const SEND_EMAIL = `${BASE_URL}/api/send-membership-renew?id=`;
 
 export const MEMBER_DASHBOARD = `${BASE_URL}/api/member`;
+export const MEMBER_ACTIVE_DATA = `${BASE_URL}/api/member-data?type=1`;
+export const MEMBER_INACTIVE_DATA = `${BASE_URL}/api/member-data?type=2`;
 
 export const SEND_BULK_EMAIL = `${BASE_URL}/api/member`;
 
