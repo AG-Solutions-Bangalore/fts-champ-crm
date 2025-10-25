@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -27,19 +27,52 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Search, Loader2, Mail } from "lucide-react";
-import { useState, useEffect } from "react";
-import { MEMBER_DASHBOARD } from '@/api';
+import { MEMBER_ACTIVE_DATA } from '@/api';
 import Cookies from "js-cookie";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import BASE_URL from "@/config/base-url";
 import { toast } from "sonner";
+import useNumericInput from "@/hooks/use-numeric-input";
 
 const MemberShipInactive = () => {
-  const currentYear = Cookies.get('currentYear');
+ 
   const token = Cookies.get('token');
-     const userType = Cookies.get('user_type_id');
-  const activeYear = currentYear.split("-")[0] 
-const [mailSending, setMailSending] = React.useState({});
+  const userType = Cookies.get('user_type_id');
+  const queryClient = useQueryClient();
+  const keyDown = useNumericInput();
+
+  
+  const [mailSending, setMailSending] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [previousSearchTerm, setPreviousSearchTerm] = useState("");
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [pageInput, setPageInput] = useState("");
+
+  // Debounced search effect
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+      
+      if (isNewSearch) {
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      }
+      
+      setDebouncedSearchTerm(searchTerm);
+      setPreviousSearchTerm(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm, previousSearchTerm]);
+
+  // Updated query with pagination and search
   const {
     data: membershipData,
     isLoading,
@@ -47,31 +80,101 @@ const [mailSending, setMailSending] = React.useState({});
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ['member-active'],
+    queryKey: ["member-inactive", debouncedSearchTerm, pagination.pageIndex + 1],
     queryFn: async () => {
-      const response = await axios.get(MEMBER_DASHBOARD, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const params = new URLSearchParams({
+        page: (pagination.pageIndex + 1).toString(),
       });
+      
+      if (debouncedSearchTerm) {
+        params.append("search", debouncedSearchTerm);
+      }
+
+      const response = await axios.get(
+        `${BASE_URL}/api/member-data?type=2&${params}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+        }
+      );
       return response.data;
     },
+    keepPreviousData: true,
+    staleTime: 5 * 60 * 1000,
     retry: 2,
-    staleTime: 30 * 60 * 1000,
-    cacheTime: 60 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 
+  // Prefetch next and previous pages
+  useEffect(() => {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = membershipData?.data?.last_page || 1;
+    
+    if (currentPage < totalPages) {
+      const nextPage = currentPage + 1;
+      queryClient.prefetchQuery({
+        queryKey: ["member-inactive", debouncedSearchTerm, nextPage],
+        queryFn: async () => {
+          const params = new URLSearchParams({
+            page: nextPage.toString(),
+          });
+          
+          if (debouncedSearchTerm) {
+            params.append("search", debouncedSearchTerm);
+          }
 
- const filteredData = useMemo(() => {
-     return (
-       membershipData?.data?.filter(
-         (member) => member.last_payment_vailidity !== activeYear
-       ) || []
-     );
-   }, [membershipData, activeYear]);
- 
-   const sendEmailMutation = useMutation({
+          const response = await axios.get(
+            `${BASE_URL}/api/member-data?type=2&${params}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+            }
+          );
+          return response.data;
+        },
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+
+    if (currentPage > 1) {
+      const prevPage = currentPage - 1;
+    
+      if (!queryClient.getQueryData(["member-inactive", debouncedSearchTerm, prevPage])) {
+        queryClient.prefetchQuery({
+          queryKey: ["member-inactive", debouncedSearchTerm, prevPage],
+          queryFn: async () => {
+            const params = new URLSearchParams({
+              page: prevPage.toString(),
+            });
+            
+            if (debouncedSearchTerm) {
+              params.append("search", debouncedSearchTerm);
+            }
+
+            const response = await axios.get(
+              `${BASE_URL}/api/member-data?type=2&${params}`,
+              {
+                headers: { 
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json"
+                },
+              }
+            );
+            return response.data;
+          },
+          staleTime: 5 * 60 * 1000,
+        });
+      }
+    }
+  }, [pagination.pageIndex, debouncedSearchTerm, queryClient, membershipData?.data?.last_page, token]);
+
+  const sendEmailMutation = useMutation({
     mutationFn: async (memberId) => {
       const response = await axios.get(`${BASE_URL}/api/send-membership-renewal-email/${memberId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -98,30 +201,21 @@ const [mailSending, setMailSending] = React.useState({});
     setMailSending(prev => ({ ...prev, [memberId]: true }));
     sendEmailMutation.mutate(memberId);
   };
+
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
 
-const [searchValue, setSearchValue] = useState("");
-  const [globalFilter, setGlobalFilter] = useState("");
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setGlobalFilter(searchValue);
-    }, 400); // wait 400ms after typing stops
-
-    return () => clearTimeout(handler);
-  }, [searchValue]);
   const columns = [
     {
       id: "S. No.",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = row.index + 1;
+        const globalIndex = (pagination.pageIndex * pagination.pageSize) + row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
       },
-   
+      size: 60,
     },
     {
       accessorKey: "indicomp_full_name",
@@ -138,7 +232,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Full Name") || "-"}</div>,
-   
+      size: 120,
     },
     {
       accessorKey: "indicomp_email",
@@ -155,7 +249,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Email") || "-"}</div>,
-  
+      size: 150,
     },
     {
       accessorKey: "indicomp_mobile_phone",
@@ -172,7 +266,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Mobile Phone") || "-"}</div>,
- 
+      size: 120,
     },
     {
       accessorKey: "indicomp_type",
@@ -189,7 +283,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Type") || "-"}</div>,
-  
+      size: 100,
     },
     {
       accessorKey: "indicomp_donor_type",
@@ -206,7 +300,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Donor Type") || "-"}</div>,
-    
+      size: 100,
     },
     {
       accessorKey: "chapter_name",
@@ -223,7 +317,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Chapter") || "-"}</div>,
-   
+      size: 120,
     },
     {
       accessorKey: "last_payment_date",
@@ -240,7 +334,7 @@ const [searchValue, setSearchValue] = useState("");
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Last Pay Date") || "-"}</div>,
-      
+      size: 120,
     },
     {
       accessorKey: "payment_count",
@@ -252,69 +346,71 @@ const [searchValue, setSearchValue] = useState("");
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Pay Count
+         Pay Count
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Pay Count") || "0"}</div>,
-      
+      size: 80,
     },
     ...(userType !== '4'
       ? [
-    {
-                id: 'actions',
-                header: 'Actions',
-                cell: ({ row }) => {
-                  const memberId = row.original.id;
-                  const email = row.original.indicomp_email;
-                  const isValidEmail = email && email.toLowerCase() !== 'null';
-              
-                  return (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSendEmail(memberId, email)}
-                      disabled={!isValidEmail || mailSending[memberId]}
-                      className="h-7 w-7 p-0 flex items-center justify-center"
-                    >
-                      {mailSending[memberId] ? (
-                       
-                        <img
-                          src={mailSentGif}
-                          alt="Sending..."
-                          className="h-5 w-5 object-contain"
-                        />
-                      ) : (
-                        <Mail
-                          className={`w-3 h-3 ${isValidEmail ? 'text-blue-500' : 'text-gray-300'}`}
-                        />
-                      )}
-                    </Button>
-                  );
-                },
-              }
-            ]
-            : []),
+          {
+            id: 'actions',
+            header: 'Actions',
+            cell: ({ row }) => {
+              const memberId = row.original.id;
+              const email = row.original.indicomp_email;
+              const isValidEmail = email && email.toLowerCase() !== 'null';
+          
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendEmail(memberId, email)}
+                  disabled={!isValidEmail || mailSending[memberId]}
+                  className="h-7 w-7 p-0 flex items-center justify-center"
+                >
+                  {mailSending[memberId] ? (
+                    <img
+                      src={mailSentGif}
+                      alt="Sending..."
+                      className="h-5 w-5 object-contain"
+                    />
+                  ) : (
+                    <Mail
+                      className={`w-3 h-3 ${isValidEmail ? 'text-blue-500' : 'text-gray-300'}`}
+                    />
+                  )}
+                </Button>
+              );
+            },
+            size: 80,
+          }
+        ]
+      : []),
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: membershipData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination: true,
+    pageCount: membershipData?.data?.last_page || -1,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
-      globalFilter,
       columnVisibility,
       rowSelection,
+      pagination,
     },
     initialState: {
       pagination: {
@@ -322,6 +418,89 @@ const [searchValue, setSearchValue] = useState("");
       },
     },
   });
+
+  const handlePageChange = (newPageIndex) => {
+    const targetPage = newPageIndex + 1;
+    const cachedData = queryClient.getQueryData(["member-inactive", debouncedSearchTerm, targetPage]);
+    
+    if (cachedData) {
+      setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
+    } else {
+      table.setPageIndex(newPageIndex);
+    }
+  };
+
+  const handlePageInput = (e) => {
+    const value = e.target.value;
+    setPageInput(value);
+    
+    if (value && !isNaN(value)) {
+      const pageNum = parseInt(value);
+      if (pageNum >= 1 && pageNum <= table.getPageCount()) {
+        handlePageChange(pageNum - 1);
+      }
+    }
+  };
+
+  const generatePageButtons = () => {
+    const currentPage = pagination.pageIndex + 1;
+    const totalPages = table.getPageCount();
+    const buttons = [];
+    
+    if (totalPages === 0) return buttons;
+    
+    buttons.push(
+      <Button
+        key={1}
+        variant={currentPage === 1 ? "default" : "outline"}
+        size="sm"
+        onClick={() => handlePageChange(0)}
+        className="h-8 w-8 p-0 text-xs"
+      >
+        1
+      </Button>
+    );
+
+    if (currentPage > 3) {
+      buttons.push(<span key="ellipsis1" className="px-2">...</span>);
+    }
+
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      if (i !== 1 && i !== totalPages) {
+        buttons.push(
+          <Button
+            key={i}
+            variant={currentPage === i ? "default" : "outline"}
+            size="sm"
+            onClick={() => handlePageChange(i - 1)}
+            className="h-8 w-8 p-0 text-xs"
+          >
+            {i}
+          </Button>
+        );
+      }
+    }
+
+    if (currentPage < totalPages - 2) {
+      buttons.push(<span key="ellipsis2" className="px-2">...</span>);
+    }
+
+    if (totalPages > 1) {
+      buttons.push(
+        <Button
+          key={totalPages}
+          variant={currentPage === totalPages ? "default" : "outline"}
+          size="sm"
+          onClick={() => handlePageChange(totalPages - 1)}
+          className="h-8 w-8 p-0 text-xs"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+
+    return buttons;
+  };
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
@@ -353,14 +532,19 @@ const [searchValue, setSearchValue] = useState("");
   }
 
   return (
-    <div className="max-w-full ">
+    <div className="max-w-full p-2">
       <div className="flex items-center justify-between py-1">
-        <div className="relative w-72">
+        <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             placeholder="Search members..."
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setSearchTerm("");
+              }
+            }}
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
@@ -391,7 +575,7 @@ const [searchValue, setSearchValue] = useState("");
       </div>
 
       {/* Table */}
-      <div className="rounded-none grid grid-cols-1  overflow-x-auto overflow-hidden border min-h-[31rem] ">
+      <div className="rounded-none border min-h-[31rem] grid grid-cols-1">
         <Table className="flex-1">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -437,7 +621,7 @@ const [searchValue, setSearchValue] = useState("");
             ) : (
               <TableRow className="h-12">
                 <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                  No active members found for {activeYear}.
+                  No members found.
                 </TableCell>
               </TableRow>
             )}
@@ -446,27 +630,51 @@ const [searchValue, setSearchValue] = useState("");
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2 py-1">
-        <div className="flex-1 text-sm text-muted-foreground">
-          Inactive Members : &nbsp;
-          {table.getFilteredRowModel().rows.length}
+      <div className="flex items-center justify-between py-1">
+        <div className="text-sm text-muted-foreground">
+          Showing {membershipData?.data?.from || 0} to {membershipData?.data?.to || 0} of{" "}
+          {membershipData?.data?.total || 0} members
         </div>
-        <div className="space-x-2">
+        
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
+            onClick={() => handlePageChange(pagination.pageIndex - 1)}
             disabled={!table.getCanPreviousPage()}
+            className="h-8 px-2"
           >
-            Previous
+            <ChevronLeft className="h-4 w-4" />
           </Button>
+          
+          <div className="flex items-center space-x-1">
+            {generatePageButtons()}
+          </div>
+
+          <div className="flex items-center space-x-2 text-sm">
+            <span>Go to</span>
+            <Input
+              type="tel"
+              min="1"
+              max={table.getPageCount()}
+              value={pageInput}
+              onChange={handlePageInput}
+              onBlur={() => setPageInput("")}
+              onKeyDown={keyDown}
+              className="w-16 h-8 text-sm"
+              placeholder="Page"
+            />
+            <span>of {table.getPageCount()}</span>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
+            onClick={() => handlePageChange(pagination.pageIndex + 1)}
             disabled={!table.getCanNextPage()}
+            className="h-8 px-2"
           >
-            Next
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

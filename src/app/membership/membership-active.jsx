@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import useNumericInput from "@/hooks/use-numeric-input";
 
 const MembershipActive = () => {
-  const currentYear = Cookies.get('currentYear');
+ 
   const token = Cookies.get('token');
   const userType = Cookies.get('user_type_id');
   const queryClient = useQueryClient();
@@ -53,34 +53,6 @@ const MembershipActive = () => {
   });
 
   const [pageInput, setPageInput] = useState("");
-
-  // Store current page in cookies
-  const storeCurrentPage = () => {
-    Cookies.set("membershipActiveReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 
-    });
-  };
-
-  // Restore page from cookies when component mounts
-  useEffect(() => {
-    const savedPage = Cookies.get("membershipActiveReturnPage");
-    if (savedPage) {
-      Cookies.remove("membershipActiveReturnPage");
-      
-      setTimeout(() => {
-        const pageIndex = parseInt(savedPage) - 1;
-        if (pageIndex >= 0) {
-          setPagination(prev => ({ ...prev, pageIndex }));
-          setPageInput(savedPage);
-          
-          queryClient.invalidateQueries({
-            queryKey: ["member-active"],
-            exact: false,
-          });
-        }
-      }, 100);
-    }
-  }, [queryClient]);
 
   // Debounced search effect
   useEffect(() => {
@@ -119,7 +91,7 @@ const MembershipActive = () => {
       }
 
       const response = await axios.get(
-        `${BASE_URL}/api/mmember-data?type=1&${params}`,
+        `${BASE_URL}/api/member-data?type=1&${params}`,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -156,7 +128,7 @@ const MembershipActive = () => {
           }
 
           const response = await axios.get(
-            `${BASE_URL}/api/mmember-data?type=1&${params}`,
+            `${BASE_URL}/api/member-data?type=1&${params}`,
             {
               headers: { 
                 Authorization: `Bearer ${token}`,
@@ -186,7 +158,7 @@ const MembershipActive = () => {
             }
 
             const response = await axios.get(
-              `${BASE_URL}/api/mmember-data?type=1&${params}`,
+              `${BASE_URL}/api/member-data?type=1&${params}`,
               {
                 headers: { 
                   Authorization: `Bearer ${token}`,
@@ -395,10 +367,7 @@ const MembershipActive = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    storeCurrentPage();
-                    handleSendEmail(memberId, email);
-                  }}
+                  onClick={() => handleSendEmail(memberId, email)}
                   disabled={!isValidEmail || mailSending[memberId]}
                   className="h-7 w-7 p-0 flex items-center justify-center"
                 >
