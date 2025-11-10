@@ -18,7 +18,7 @@ const DbStatementNoPan = ({
     refetch,
   } = useGetMutation(
     "db-no-pan-view",
-    `${DB_DOCUMENT_VIEW_NO_PAN}?from_date=${receiptFromDate}&to_date=${receiptFromDate}`,
+    `${DB_DOCUMENT_VIEW_NO_PAN}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -27,7 +27,7 @@ const DbStatementNoPan = ({
       refetch();
     }
   }, [receiptFromDate, receiptToDate]);
-  const DBNoPanDataView = dbnopandata?.receipt || [];
+  const DBNoPanDataView = dbnopandata?.data || [];
 
   return (
     <>

@@ -121,15 +121,12 @@ export default function LoginAuth() {
         if (!token && !tokenExpireTime ) {
           throw new Error("Cookies not set properly");
         }
-        
-        console.log("✅ Login successful! Cookies verified.");
-        console.log("Token set:", token ? "Yes" : "No");
+
         
        
         navigate("/home", { replace: true });
         
       } else {
-        console.warn("⚠️ Unexpected API response:", res.data.message);
         toast.error(res.data.message||"Login Failed: Unexpected response.");
         setIsLoading(false);
       }

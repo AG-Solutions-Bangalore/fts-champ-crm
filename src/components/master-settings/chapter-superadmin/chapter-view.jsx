@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { Card, CardContent } from '@/components/ui/card';
+import { CHAPTER_EDIT_STATES_DROPDOWN, fetchChapterEditById, fetchChapterUpdateEditById } from '@/api';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building, Save, X, Loader2, Info, } from 'lucide-react';
-import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import Cookies from 'js-cookie';
-import { fetchChapterEditById, fetchChapterUpdateEditById, CHAPTER_EDIT_STATES_DROPDOWN } from '@/api';
+import { ArrowLeft, Building, Info, Loader2, Save, X, } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import UserListSuperadmin from './user-list-superadmin';
 import DatasourceListSuperadmin from './datasource-list-superadmin';
+import UserListSuperadmin from './user-list-superadmin';
+import { Textarea } from '@/components/ui/textarea';
 
 const committee_type = [
   {
@@ -93,7 +94,7 @@ const ChapterViewSuperAdmin = () => {
       const chapter = chapterData.data;
       const newFormData = {
         chapter_name: chapter.chapter_name || "",
-        chapter_code: chapter.chapter_code || "",
+        // chapter_code: chapter.chapter_code || "",
         chapter_address: chapter.chapter_address || "",
         chapter_city: chapter.chapter_city || "",
         chapter_pin: chapter.chapter_pin || "",
@@ -248,7 +249,7 @@ const ChapterViewSuperAdmin = () => {
                   </div>
 
                
-                  <div className="space-y-1">
+                  {/* <div className="space-y-1">
                     <Label htmlFor="chapter_code" className="text-xs font-medium">
                       Chapter Code
                     </Label>
@@ -259,14 +260,14 @@ const ChapterViewSuperAdmin = () => {
                       placeholder="Enter chapter code"
                       className="h-8 text-xs"
                     />
-                  </div>
+                  </div> */}
 
                  
-                  <div className="space-y-1">
+                  <div className="space-y-1 md:col-span-2">
                     <Label htmlFor="chapter_address" className="text-xs font-medium">
                       Address <span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <Textarea
                       id="chapter_address"
                       value={formData.chapter_address}
                       onChange={(e) => handleInputChange('chapter_address', e.target.value)}

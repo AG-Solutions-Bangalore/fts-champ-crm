@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import Moment from 'moment';
-import * as XLSX from 'xlsx';
-import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
+import React, { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import Moment from "moment";
+import * as XLSX from "xlsx";
+import { Download, Eye, ArrowUpDown, ChevronDown, Search } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -17,13 +23,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   flexRender,
   getCoreRowModel,
@@ -31,44 +37,44 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { DOWNLOAD_RECEIPT, DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE } from '@/api';
-import Cookies from 'js-cookie';
+} from "@tanstack/react-table";
+import { DOWNLOAD_RECEIPT, DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE } from "@/api";
+import Cookies from "js-cookie";
+import moment from "moment";
 
 const ReceiptDownload = () => {
-  const token = Cookies.get('token');
+  const token = Cookies.get("token");
   const [formData, setFormData] = useState({
-    receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-    receipt_to_date: Moment().format('YYYY-MM-DD'),
-    receipt_donation_type: '',
-    receipt_exemption_type: '',
-    indicomp_source: ''
+    receipt_from_date: Moment().startOf("month").format("YYYY-MM-DD"),
+    receipt_to_date: Moment().format("YYYY-MM-DD"),
+    receipt_donation_type: "",
+    receipt_exemption_type: "",
+    indicomp_source: "",
   });
 
   const [jsonData, setJsonData] = useState(null);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [globalFilter, setGlobalFilter] = useState('');
-
+  const [globalFilter, setGlobalFilter] = useState("");
   const exemptionTypes = [
-    { value: '80G', label: '80G' },
-    { value: 'Non 80G', label: 'Non 80G' },
-    { value: 'FCRA', label: 'FCRA' },
-    { value: 'CSR', label: 'CSR' }
+    { value: "80G", label: "80G" },
+    { value: "Non 80G", label: "Non 80G" },
+    { value: "FCRA", label: "FCRA" },
+    { value: "CSR", label: "CSR" },
   ];
 
   const donationTypes = [
-    { value: 'One Teacher School', label: 'EV' },
-    { value: 'General', label: 'General' },
-    { value: 'Membership', label: 'Membership' }
+    { value: "One Teacher School", label: "EV" },
+    { value: "General", label: "General" },
+    { value: "Membership", label: "Membership" },
   ];
 
   const { data: datasource = [], isLoading } = useQuery({
-    queryKey: ['receipt-download-datasource'],
+    queryKey: ["receipt-download-datasource"],
     queryFn: async () => {
       const response = await axios.get(DOWNLOAD_RECEIPT_DROPDOWN_DATASOURCE, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.data || [];
     },
@@ -78,112 +84,114 @@ const ReceiptDownload = () => {
   const downloadMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        responseType: 'blob'
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
       });
       return response.data;
     },
     onSuccess: (blob) => {
       const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'receipt_list.xlsx');
+      link.setAttribute("download", "receipt_list.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Receipt downloaded successfully!');
+      toast.success("Receipt downloaded successfully!");
       setFormData({
-        receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-        receipt_to_date: Moment().format('YYYY-MM-DD'),
-        receipt_donation_type: '',
-        receipt_exemption_type: '',
-        indicomp_source: ''
+        receipt_from_date: Moment().startOf("month").format("YYYY-MM-DD"),
+        receipt_to_date: Moment().format("YYYY-MM-DD"),
+        receipt_donation_type: "",
+        receipt_exemption_type: "",
+        indicomp_source: "",
       });
     },
     onError: (error) => {
-      toast.error('Failed to download receipt');
-      console.error('Download error:', error);
-    }
+      toast.error("Failed to download receipt");
+      console.error("Download error:", error);
+    },
   });
 
-const viewMutation = useMutation({
-  mutationFn: async (downloadData) => {
-    const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      responseType: 'blob'
-    });
-    return response.data;
-  },
- onSuccess: async (blob) => {
-  try {
-    const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
-    const text = await innerBlob.text();
+  const viewMutation = useMutation({
+    mutationFn: async (downloadData) => {
+      const response = await axios.post(DOWNLOAD_RECEIPT, downloadData, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      return response.data;
+    },
+    onSuccess: async (blob) => {
+      try {
+        const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+        const text = await innerBlob.text();
 
-    if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
-      if (typeof XLSX === 'undefined') {
-        toast.error('Excel parser not loaded. Please reload the page.');
-        return;
+        if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+          if (typeof XLSX === "undefined") {
+            toast.error("Excel parser not loaded. Please reload the page.");
+            return;
+          }
+
+          const arrayBuffer = await innerBlob.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet);
+
+          setJsonData(json);
+          toast.success(`Loaded ${json.length} receipts from Excel file.`);
+        } else {
+          parseCSVAndSetData(text);
+          toast.success("Loaded receipts from Excel file.");
+        }
+      } catch (error) {
+        console.error("Failed to read Excel blob:", error);
+        toast.error("Unable to preview receipt file.");
       }
-
-      const arrayBuffer = await innerBlob.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(sheet);
-
-      setJsonData(json);
-      toast.success(`Loaded ${json.length} receipts from Excel file.`);
-    } else {
-      parseCSVAndSetData(text);
-      toast.success('Loaded receipts from Excel file.');
-    }
-  } catch (error) {
-    console.error('Failed to read Excel blob:', error);
-    toast.error('Unable to preview receipt file.');
-  }
-}
-,
-  onError: () => {
-    toast.error('Failed to fetch receipt data');
-  }
-});
-
-function parseCSVAndSetData(text) {
-  const rows = text.split('\n').filter(Boolean);
-  if (!rows.length) {
-    toast.error('No receipt data found');
-    return;
-  }
-
-  const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-  const data = rows.slice(1).map(row => {
-    const values = row.split(',');
-    const obj = {};
-    headers.forEach((header, idx) => {
-      const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
-      obj[header] = cleanValue;
-    });
-    return obj;
+    },
+    onError: () => {
+      toast.error("Failed to fetch receipt data");
+    },
   });
 
-  setJsonData(data);
-}
+  function parseCSVAndSetData(text) {
+    const rows = text.split("\n").filter(Boolean);
+    if (!rows.length) {
+      toast.error("No receipt data found");
+      return;
+    }
 
+    const headers = rows[0]
+      .split(",")
+      .map((h) => h.replace(/^"|"$/g, "").trim());
+    const data = rows.slice(1).map((row) => {
+      const values = row.split(",");
+      const obj = {};
+      headers.forEach((header, idx) => {
+        const cleanValue = values[idx]
+          ? values[idx].replace(/^"|"$/g, "").trim()
+          : "";
+        obj[header] = cleanValue;
+      });
+      return obj;
+    });
+
+    setJsonData(data);
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitDownload = (e) => {
     e.preventDefault();
     if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
+      toast.error("Please select both from and to dates");
       return;
     }
     downloadMutation.mutate(formData);
@@ -192,18 +200,18 @@ function parseCSVAndSetData(text) {
   const handleSubmitView = (e) => {
     e.preventDefault();
     if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
+      toast.error("Please select both from and to dates");
       return;
     }
     viewMutation.mutate(formData);
   };
 
   // Define columns for the table
- // Replace the columns array with this:
-const columns = [
+  // Replace the columns array with this:
+  const columns = [
     {
-      id: 'S. No.',
-      header: 'S. No.',
+      id: "S. No.",
+      header: "S. No.",
       cell: ({ row }) => {
         const globalIndex = row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
@@ -211,98 +219,128 @@ const columns = [
       size: 60,
     },
     {
-      accessorKey: 'Receipt No', // Removed quotes
-      id: 'Receipt No',
+      accessorKey: "Receipt No",
+      id: "Receipt No",
       header: ({ column }) => (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
           Receipt No
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt No')}</div>,
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Receipt No")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Date', // Removed quotes
-      id: 'Date',
-      header: 'Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Date')}</div>,
+      accessorKey: "Receipt Date",
+      id: "Receipt Date",
+      header: "Receipt Date",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {moment(row.getValue("Receipt Date")).format("DD MMM YYYY")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Exemption Type', // Removed quotes
-      id: 'Exemption Type',
-      header: 'Exemption Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Exemption Type')}</div>,
+      accessorKey: "Exemption Type",
+      id: "Exemption Type",
+      header: "Exemption Type",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Exemption Type")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Financial Year', // Removed quotes
-      id: 'Financial Year',
-      header: 'Financial Year',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Financial Year')}</div>,
+      accessorKey: "Financial Year",
+      id: "Financial Year",
+      header: "Financial Year",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Financial Year")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Amount', // Removed quotes
-      id: 'Amount',
-      header: 'Amount',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Amount')}</div>,
+      accessorKey: "Amount",
+      id: "Amount",
+      header: "Amount",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Amount")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Realization Date', // Removed quotes
-      id: 'Realization Date',
-      header: 'Realization Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Realization Date')}</div>,
+      accessorKey: "Realization Date",
+      id: "Realization Date",
+      header: "Realization Date",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Realization Date")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Donation Type', // Removed quotes
-      id: 'Donation Type',
-      header: 'Donation Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donation Type')}</div>,
+      accessorKey: "Donation Type",
+      id: "Donation Type",
+      header: "Donation Type",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Donation Type")}
+        </div>
+      ),
       size: 140,
     },
     {
-      accessorKey: 'Pay Mode', // Removed quotes
-      id: 'Pay Mode',
-      header: 'Pay Mode',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pay Mode')}</div>,
+      accessorKey: "Pay Mode",
+      id: "Pay Mode",
+      header: "Pay Mode",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Pay Mode")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Pay Details', // Removed quotes
-      id: 'Pay Details',
-      header: 'Pay Details',
+      accessorKey: "Pay Details",
+      id: "Pay Details",
+      header: "Pay Details",
       cell: ({ row }) => {
-        const payDetails = row.getValue('Pay Details') || '';
-        const shortPayDetails = payDetails.length > 50 ? payDetails.slice(0, 50) + '…' : payDetails;
+        const payDetails = row.getValue("Pay Details") || "";
+        const shortPayDetails =
+          payDetails.length > 50 ? payDetails.slice(0, 50) + "…" : payDetails;
         return <div className="text-xs font-medium">{shortPayDetails}</div>;
       },
       size: 200,
     },
     {
-      accessorKey: 'Remarks', // Removed quotes
-      id: 'Remarks',
-      header: 'Remarks',
+      accessorKey: "Remarks",
+      id: "Remarks",
+      header: "Remarks",
       cell: ({ row }) => {
-        const remarks = row.getValue('Remarks') || '';
-        const shortRemarks = remarks.length > 50 ? remarks.slice(0, 50) + '…' : remarks;
+        const remarks = row.getValue("Remarks") || "";
+        const shortRemarks =
+          remarks.length > 50 ? remarks.slice(0, 50) + "…" : remarks;
         return <div className="text-xs font-medium">{shortRemarks}</div>;
       },
       size: 200,
     },
     {
-      accessorKey: 'Data Source', // Removed quotes
-      id: 'Data Source',
-      header: 'Data Source',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Data Source')}</div>,
+      accessorKey: "Data Source",
+      id: "Data Source",
+      header: "Data Source",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Data Source")}</div>
+      ),
       size: 120,
     },
   ];
@@ -380,61 +418,127 @@ const columns = [
         <form className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
-              <Input id="receipt_from_date" name="receipt_from_date" type="date" value={formData.receipt_from_date} onChange={handleInputChange} required className="h-9" />
+              <Label htmlFor="receipt_from_date" className="text-sm">
+                From Date *
+              </Label>
+              <Input
+                id="receipt_from_date"
+                name="receipt_from_date"
+                type="date"
+                value={formData.receipt_from_date}
+                onChange={handleInputChange}
+                required
+                className="h-9"
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_to_date" className="text-sm">To Date *</Label>
-              <Input id="receipt_to_date" name="receipt_to_date" type="date" value={formData.receipt_to_date} onChange={handleInputChange} required className="h-9" />
+              <Label htmlFor="receipt_to_date" className="text-sm">
+                To Date *
+              </Label>
+              <Input
+                id="receipt_to_date"
+                name="receipt_to_date"
+                type="date"
+                value={formData.receipt_to_date}
+                onChange={handleInputChange}
+                required
+                className="h-9"
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_donation_type" className="text-sm">Purpose</Label>
-              <Select value={formData.receipt_donation_type} onValueChange={(value) => handleSelectChange('receipt_donation_type', value)}>
+              <Label htmlFor="receipt_donation_type" className="text-sm">
+                Purpose
+              </Label>
+              <Select
+                value={formData.receipt_donation_type}
+                onValueChange={(value) =>
+                  handleSelectChange("receipt_donation_type", value)
+                }
+              >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Purpose" />
                 </SelectTrigger>
                 <SelectContent>
-                  {donationTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                  {donationTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_exemption_type" className="text-sm">Category</Label>
-              <Select value={formData.receipt_exemption_type} onValueChange={(value) => handleSelectChange('receipt_exemption_type', value)}>
+              <Label htmlFor="receipt_exemption_type" className="text-sm">
+                Category
+              </Label>
+              <Select
+                value={formData.receipt_exemption_type}
+                onValueChange={(value) =>
+                  handleSelectChange("receipt_exemption_type", value)
+                }
+              >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {exemptionTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                  {exemptionTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="indicomp_source" className="text-sm">Source</Label>
-              <Select value={formData.indicomp_source} onValueChange={(value) => handleSelectChange('indicomp_source', value)}>
+              <Label htmlFor="indicomp_source" className="text-sm">
+                Source
+              </Label>
+              <Select
+                value={formData.indicomp_source}
+                onValueChange={(value) =>
+                  handleSelectChange("indicomp_source", value)
+                }
+              >
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Select Source" />
                 </SelectTrigger>
                 <SelectContent>
-                  {datasource.map(item => <SelectItem key={item.data_source_type} value={item.data_source_type}>{item.data_source_type}</SelectItem>)}
+                  {datasource.map((item) => (
+                    <SelectItem
+                      key={item.data_source_type}
+                      value={item.data_source_type}
+                    >
+                      {item.data_source_type}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" onClick={handleSubmitDownload} disabled={downloadMutation.isPending} className="flex items-center gap-2 h-9">
+            <Button
+              type="button"
+              onClick={handleSubmitDownload}
+              disabled={downloadMutation.isPending}
+              className="flex items-center gap-2 h-9"
+            >
               <Download className="w-4 h-4" />
-              {downloadMutation.isPending ? 'Downloading...' : 'Download'}
+              {downloadMutation.isPending ? "Downloading..." : "Download"}
             </Button>
 
-            <Button type="button" onClick={handleSubmitView} disabled={viewMutation.isPending} className="flex items-center gap-2 h-9">
+            <Button
+              type="button"
+              onClick={handleSubmitView}
+              disabled={viewMutation.isPending}
+              className="flex items-center gap-2 h-9"
+            >
               <Eye className="w-4 h-4" />
-              {viewMutation.isPending ? 'Loading...' : 'View'}
+              {viewMutation.isPending ? "Loading..." : "View"}
             </Button>
           </div>
         </form>
@@ -447,8 +551,10 @@ const columns = [
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Search receipts..."
-                  value={table.getState().globalFilter || ''}
-                  onChange={(event) => table.setGlobalFilter(event.target.value)}
+                  value={table.getState().globalFilter || ""}
+                  onChange={(event) =>
+                    table.setGlobalFilter(event.target.value)
+                  }
                   className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
                 />
               </div>
@@ -467,7 +573,9 @@ const columns = [
                         key={column.id}
                         className="text-xs capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
                       >
                         {column.id}
                       </DropdownMenuCheckboxItem>
@@ -483,8 +591,8 @@ const columns = [
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <TableHead 
-                          key={header.id} 
+                        <TableHead
+                          key={header.id}
                           className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
                           style={{ width: header.column.columnDef.size }}
                         >
@@ -499,7 +607,7 @@ const columns = [
                     </TableRow>
                   ))}
                 </TableHeader>
-                
+
                 <TableBody>
                   {viewMutation.isPending ? (
                     <TableShimmer />
@@ -522,7 +630,10 @@ const columns = [
                     ))
                   ) : (
                     <TableRow className="h-12">
-                      <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-sm"
+                      >
                         No receipts found.
                       </TableCell>
                     </TableRow>

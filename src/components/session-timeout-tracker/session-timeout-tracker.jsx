@@ -102,9 +102,7 @@ const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
 
       const expiryDate = validateExpiryTime(expiryTime);
       if (!expiryDate) {
-        console.log(
-          "⚠️ Invalid expiry time, but token exists - not logging out"
-        );
+      
         return { status: "valid", countdown: null };
       }
 

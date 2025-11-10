@@ -1,41 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import { 
-  ArrowLeft, 
-  Building,
-  Info,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Calendar,
-  AlertCircle
-} from 'lucide-react';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { ArrowLeft, Building, Info } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { ADD_CHAPTER_SUMBIT } from "@/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import BASE_URL from '@/config/base-url';
-import { ADD_CHAPTER_SUMBIT } from '@/api';
-import { useFetchState } from '@/hooks/use-api';
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFetchState } from "@/hooks/use-api";
+import { Textarea } from "@/components/ui/textarea";
 
 const ChapterCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const token = Cookies.get('token');
+  const token = Cookies.get("token");
 
   const [errors, setErrors] = useState({});
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -57,8 +47,8 @@ const ChapterCreate = () => {
 
   // Fetch states
 
- const { data: statesHooks, isLoading } = useFetchState();
- const states = statesHooks?.data || [];
+  const { data: statesHooks, isLoading } = useFetchState();
+  const states = statesHooks?.data || [];
   const validateOnlyDigits = (inputtxt) => {
     const phoneno = /^\d+$/;
     return inputtxt.match(phoneno) || inputtxt.length === 0;
@@ -66,20 +56,20 @@ const ChapterCreate = () => {
 
   const onInputChange = (e) => {
     const { name, value } = e.target;
-    
-    const digitFields = ['chapter_pin', 'chapter_phone', 'chapter_whatsapp'];
+
+    const digitFields = ["chapter_pin", "chapter_phone", "chapter_whatsapp"];
 
     if (digitFields.includes(name)) {
       if (validateOnlyDigits(value)) {
-        setChapter(prev => ({
+        setChapter((prev) => ({
           ...prev,
-          [name]: value
+          [name]: value,
         }));
       }
     } else {
-      setChapter(prev => ({
+      setChapter((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -89,45 +79,48 @@ const ChapterCreate = () => {
     let isValid = true;
 
     if (!chapter.chapter_name?.trim()) {
-      newErrors.chapter_name = 'Chapter Name is required';
+      newErrors.chapter_name = "Chapter Name is required";
       isValid = false;
     }
 
     if (!chapter.chapter_address?.trim()) {
-      newErrors.chapter_address = 'Address is required';
+      newErrors.chapter_address = "Address is required";
       isValid = false;
     }
 
     if (!chapter.chapter_city?.trim()) {
-      newErrors.chapter_city = 'City is required';
+      newErrors.chapter_city = "City is required";
       isValid = false;
     }
 
     if (!chapter.chapter_pin || !/^\d{6}$/.test(chapter.chapter_pin)) {
-      newErrors.chapter_pin = 'Valid 6-digit Pincode is required';
+      newErrors.chapter_pin = "Valid 6-digit Pincode is required";
       isValid = false;
     }
 
     if (!chapter.chapter_state) {
-      newErrors.chapter_state = 'State is required';
+      newErrors.chapter_state = "State is required";
       isValid = false;
     }
 
     if (!chapter.chapter_phone || !/^\d{10}$/.test(chapter.chapter_phone)) {
-      newErrors.chapter_phone = 'Valid 10-digit Phone Number is required';
+      newErrors.chapter_phone = "Valid 10-digit Phone Number is required";
       isValid = false;
     }
 
-    if (chapter.chapter_whatsapp && !/^\d{10}$/.test(chapter.chapter_whatsapp)) {
-      newErrors.chapter_whatsapp = 'Valid 10-digit WhatsApp Number is required';
+    if (
+      chapter.chapter_whatsapp &&
+      !/^\d{10}$/.test(chapter.chapter_whatsapp)
+    ) {
+      newErrors.chapter_whatsapp = "Valid 10-digit WhatsApp Number is required";
       isValid = false;
     }
 
     if (!chapter.chapter_email?.trim()) {
-      newErrors.chapter_email = 'Email is required';
+      newErrors.chapter_email = "Email is required";
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(chapter.chapter_email)) {
-      newErrors.chapter_email = 'Valid email address is required';
+      newErrors.chapter_email = "Valid email address is required";
       isValid = false;
     }
 
@@ -146,46 +139,44 @@ const ChapterCreate = () => {
     },
     onSuccess: (data) => {
       if (data.code === 201) {
-        
-        queryClient.invalidateQueries(['chapters']);
+        queryClient.invalidateQueries(["chapters"]);
         toast.success(data.message);
-        
-        
-       
-        
-        navigate('/master/chapter')
+
+        navigate("/master/chapter");
         setChapter({
-            chapter_name: "",
-            chapter_code: "",
-            chapter_address: "",
-            chapter_city: "",
-            chapter_pin: "",
-            chapter_state: "",
-            chapter_phone: "",
-            chapter_whatsapp: "",
-            chapter_email: "",
-            chapter_website: "",
-            chapter_date_of_incorporation: "",
-            chapter_region_code: "",
-          });
+          chapter_name: "",
+          chapter_code: "",
+          chapter_address: "",
+          chapter_city: "",
+          chapter_pin: "",
+          chapter_state: "",
+          chapter_phone: "",
+          chapter_whatsapp: "",
+          chapter_email: "",
+          chapter_website: "",
+          chapter_date_of_incorporation: "",
+          chapter_region_code: "",
+        });
       } else {
         toast.error(data.message || "Unexpected Error");
       }
     },
     onError: (error) => {
       console.error("Create chapter error:", error.response.data.message);
-      toast.error(error.response.data.message ||"An error occurred during create chapter");
+      toast.error(
+        error.response.data.message || "An error occurred during create chapter"
+      );
     },
     onSettled: () => {
       setIsButtonDisabled(false);
-    }
+    },
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
+
     const { isValid, errors } = validateForm();
-        
+
     if (!isValid) {
       const firstError = Object.values(errors)[0];
       toast.error(firstError);
@@ -210,7 +201,6 @@ const ChapterCreate = () => {
 
       setIsButtonDisabled(true);
       createChapterMutation.mutate(formData);
-      
     } catch (error) {
       console.error("Submission error:", error);
       toast.error("An error occurred during submission");
@@ -252,7 +242,9 @@ const ChapterCreate = () => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h1 className="text-md font-semibold text-gray-900">Add Chapter</h1>
+                  <h1 className="text-md font-semibold text-gray-900">
+                    Add Chapter
+                  </h1>
                   <p className="text-xs text-gray-500 mt-1">
                     Create a new chapter record
                   </p>
@@ -260,9 +252,9 @@ const ChapterCreate = () => {
               </div>
             </div>
           </div>
-          
-          <Button 
-            onClick={()=>navigate('/master/chapter')}
+
+          <Button
+            onClick={() => navigate("/master/chapter")}
             variant="outline"
             size="sm"
             className="flex items-center gap-1 flex-shrink-0 mt-2 sm:mt-0"
@@ -283,7 +275,7 @@ const ChapterCreate = () => {
                 <Info className="w-4 h-4" />
                 Chapter Details
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Chapter Name */}
                 <div className="">
@@ -298,7 +290,9 @@ const ChapterCreate = () => {
                     placeholder="Enter chapter name"
                   />
                   {errors?.chapter_name && (
-                    <p className="text-red-500 text-xs">{errors.chapter_name}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_name}
+                    </p>
                   )}
                 </div>
 
@@ -317,11 +311,14 @@ const ChapterCreate = () => {
                 </div> */}
 
                 {/* Address */}
-                <div className="">
-                  <Label htmlFor="chapter_address" className="text-xs font-medium">
+                <div className="md:col-span-2">
+                  <Label
+                    htmlFor="chapter_address"
+                    className="text-xs font-medium"
+                  >
                     Address *
                   </Label>
-                  <Input
+                  <Textarea
                     id="chapter_address"
                     name="chapter_address"
                     value={chapter.chapter_address}
@@ -329,7 +326,9 @@ const ChapterCreate = () => {
                     placeholder="Enter address"
                   />
                   {errors?.chapter_address && (
-                    <p className="text-red-500 text-xs">{errors.chapter_address}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_address}
+                    </p>
                   )}
                 </div>
 
@@ -346,7 +345,9 @@ const ChapterCreate = () => {
                     placeholder="Enter city"
                   />
                   {errors?.chapter_city && (
-                    <p className="text-red-500 text-xs">{errors.chapter_city}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_city}
+                    </p>
                   )}
                 </div>
 
@@ -371,12 +372,17 @@ const ChapterCreate = () => {
 
                 {/* State */}
                 <div className="">
-                  <Label htmlFor="chapter_state" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_state"
+                    className="text-xs font-medium"
+                  >
                     State *
                   </Label>
-                  <Select 
-                    value={chapter.chapter_state} 
-                    onValueChange={(value) => setChapter(prev => ({ ...prev, chapter_state: value }))}
+                  <Select
+                    value={chapter.chapter_state}
+                    onValueChange={(value) =>
+                      setChapter((prev) => ({ ...prev, chapter_state: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select State" />
@@ -390,15 +396,18 @@ const ChapterCreate = () => {
                     </SelectContent>
                   </Select>
                   {errors?.chapter_state && (
-                    <p className="text-red-500 text-xs">{errors.chapter_state}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_state}
+                    </p>
                   )}
                 </div>
-              
-             
-             
+
                 {/* Phone */}
                 <div className="">
-                  <Label htmlFor="chapter_phone" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_phone"
+                    className="text-xs font-medium"
+                  >
                     Phone *
                   </Label>
                   <Input
@@ -411,13 +420,18 @@ const ChapterCreate = () => {
                     placeholder="Enter phone number"
                   />
                   {errors?.chapter_phone && (
-                    <p className="text-red-500 text-xs">{errors.chapter_phone}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_phone}
+                    </p>
                   )}
                 </div>
 
                 {/* WhatsApp */}
                 <div className="">
-                  <Label htmlFor="chapter_whatsapp" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_whatsapp"
+                    className="text-xs font-medium"
+                  >
                     WhatsApp
                   </Label>
                   <Input
@@ -430,13 +444,18 @@ const ChapterCreate = () => {
                     placeholder="Enter WhatsApp number"
                   />
                   {errors?.chapter_whatsapp && (
-                    <p className="text-red-500 text-xs">{errors.chapter_whatsapp}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_whatsapp}
+                    </p>
                   )}
                 </div>
 
                 {/* Email */}
                 <div className="">
-                  <Label htmlFor="chapter_email" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_email"
+                    className="text-xs font-medium"
+                  >
                     Email *
                   </Label>
                   <Input
@@ -448,13 +467,18 @@ const ChapterCreate = () => {
                     placeholder="Enter email address"
                   />
                   {errors?.chapter_email && (
-                    <p className="text-red-500 text-xs">{errors.chapter_email}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.chapter_email}
+                    </p>
                   )}
                 </div>
 
                 {/* Website */}
                 <div className="">
-                  <Label htmlFor="chapter_website" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_website"
+                    className="text-xs font-medium"
+                  >
                     Website
                   </Label>
                   <Input
@@ -482,7 +506,10 @@ const ChapterCreate = () => {
 
                 {/* Incorporation Date */}
                 <div className="">
-                  <Label htmlFor="chapter_date_of_incorporation" className="text-xs font-medium">
+                  <Label
+                    htmlFor="chapter_date_of_incorporation"
+                    className="text-xs font-medium"
+                  >
                     Incorporation Date
                   </Label>
                   <Input
@@ -516,10 +543,9 @@ const ChapterCreate = () => {
                 )}
               </Button>
               <Button
-                      onClick={()=>navigate('/master/chapter')}
+                onClick={() => navigate("/master/chapter")}
                 type="button"
                 variant="outline"
-              
               >
                 Cancel
               </Button>

@@ -1,4 +1,4 @@
-import React from "react";
+import { navigateToChapterViewSuperAdmin } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import BASE_URL from "@/config/base-url";
+import { useQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -25,16 +27,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, Search, SquarePlus } from "lucide-react";
-import { useState, useEffect } from "react";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { navigateToChapterViewSuperAdmin } from "@/api";
+import { ArrowUpDown, ChevronDown, Eye, Search, SquarePlus } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const ChapterList = () => {
-  const queryClient = useQueryClient();
   const navigate = useNavigate()
   const userType = Cookies.get('user_type_id')
   const {
@@ -121,13 +119,13 @@ const ChapterList = () => {
       ),
       size: 120,
     },
-    {
-      accessorKey: "chapter_code",
-      id: "Chapter Code",
-      header: "Chapter Code",
-      cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter Code")}</div>,
-      size: 100,
-    },
+    // {
+    //   accessorKey: "chapter_code",
+    //   id: "Chapter Code",
+    //   header: "Chapter Code",
+    //   cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter Code")}</div>,
+    //   size: 100,
+    // },
     {
       accessorKey: "chapter_status",
       id: "Status",

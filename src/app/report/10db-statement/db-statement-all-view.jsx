@@ -17,7 +17,7 @@ const DbStatementAll = ({
     refetch,
   } = useGetMutation(
     "db-all-view",
-    `${DB_DOCUMENT_VIEW}?from_date=${receiptFromDate}&to_date=${receiptFromDate}`,
+    `${DB_DOCUMENT_VIEW}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -26,7 +26,7 @@ const DbStatementAll = ({
       refetch();
     }
   }, [receiptFromDate, receiptToDate]);
-  const DBAllDataView = dballdata?.receipt || [];
+  const DBAllDataView = dballdata?.data || [];
   return (
     <>
       <div className="invoice-wrapper">

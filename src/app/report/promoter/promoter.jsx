@@ -1,7 +1,7 @@
 import { PROMOTER_SUMMARY_DOWNLOAD, PROMOTER_SUMMARY_DROPDOWN } from "@/api";
 import { MemoizedProductSelect } from "@/components/common/memoized-product-select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,8 +19,8 @@ import moment from "moment";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";
-import PromoterView from "./promoter-view";
 import PromoterLoading from "./loading";
+import PromoterView from "./promoter-view";
 const Promoter = () => {
   const [childLoading, setChildLoading] = useState(false);
 
@@ -183,7 +183,7 @@ const Promoter = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <div>
                 <Label className="font-medium" htmlFor="indicomp_promoter">
-                  Notice Title <span className="text-red-500">*</span>
+                  Promoter <span className="text-red-500">*</span>
                 </Label>
 
                 <MemoizedProductSelect
@@ -192,11 +192,11 @@ const Promoter = () => {
                   onChange={(e) => handleInputChange(e, "indicomp_promoter")}
                   options={
                     PromoterData?.data?.map((item) => ({
-                      label: item.indicomp_promoter,
-                      value: item.indicomp_promoter,
+                      label: item.indicomp_full_name,
+                      value: item.indicomp_fts_id,
                     })) || []
                   }
-                  placeholder="Select Notice Title"
+                  placeholder="Select Promoter"
                 />
               </div>
 

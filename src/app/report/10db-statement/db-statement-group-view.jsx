@@ -17,7 +17,7 @@ const DbStatementGroup = ({
     refetch,
   } = useGetMutation(
     "db-group-view",
-    `${DB_DOCUMENT_VIEW_GROUP}?from_date=${receiptFromDate}&to_date=${receiptFromDate}`,
+    `${DB_DOCUMENT_VIEW_GROUP}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -26,7 +26,7 @@ const DbStatementGroup = ({
       refetch();
     }
   }, [receiptFromDate, receiptToDate]);
-  const DBGroupDataView = dbgroupdata?.receipt || [];
+  const DBGroupDataView = dbgroupdata?.data || [];
   return (
     <>
       <div className="invoice-wrapper">

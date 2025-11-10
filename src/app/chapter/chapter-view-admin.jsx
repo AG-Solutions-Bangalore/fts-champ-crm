@@ -1,19 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building, Save, X, Loader2, Info } from 'lucide-react';
-import { toast } from 'sonner';
-import Cookies from 'js-cookie';
-import { ADMIN_CHAPTER_DATA_CHAPTER_LIST, ADMIN_CHAPTER_UPDATE } from '../../api';
-import UserListAdmin from './user-list-admin';
-import DatasourceListAdmin from './datasource-list-admin';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Building, Save, X, Loader2, Info } from "lucide-react";
+import { toast } from "sonner";
+import Cookies from "js-cookie";
+import {
+  ADMIN_CHAPTER_DATA_CHAPTER_LIST,
+  ADMIN_CHAPTER_UPDATE,
+} from "../../api";
+import UserListAdmin from "./user-list-admin";
+import DatasourceListAdmin from "./datasource-list-admin";
+import { Textarea } from "@/components/ui/textarea";
 
 const committee_type = [
   {
@@ -50,18 +60,23 @@ const ChapterViewAdmin = () => {
     chapter_date_of_incorporation: "",
     chapter_region_code: "",
     auth_sign: "",
-    chapter_status:""
+    chapter_status: "",
   });
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [initialFormData, setInitialFormData] = useState({});
 
-
-  const { data: chapterData, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['chapter-admin', id],
+  const {
+    data: chapterData,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["chapter-admin", id],
     queryFn: async () => {
       const response = await axios.get(`${ADMIN_CHAPTER_DATA_CHAPTER_LIST}`, {
         headers: {
-          Authorization: `Bearer ${Cookies.get('token')}`,
+          Authorization: `Bearer ${Cookies.get("token")}`,
         },
       });
       return response.data;
@@ -70,7 +85,7 @@ const ChapterViewAdmin = () => {
   });
 
   const users = chapterData?.users || [];
-  const dataSource = chapterData?.dataSource || []
+  const dataSource = chapterData?.dataSource || [];
   const ImageUrl = chapterData?.image_url;
   const chapterCodeForCreateUser = chapterData?.chapter?.chapter_code;
   const updatemutationId = chapterData?.chapter?.id;
@@ -89,57 +104,60 @@ const ChapterViewAdmin = () => {
         chapter_whatsapp: chapter.chapter_whatsapp || "",
         chapter_email: chapter.chapter_email || "",
         chapter_website: chapter.chapter_website || "",
-        chapter_date_of_incorporation: chapter.chapter_date_of_incorporation || "",
+        chapter_date_of_incorporation:
+          chapter.chapter_date_of_incorporation || "",
         chapter_region_code: chapter.chapter_region_code || "",
         auth_sign: chapter.auth_sign || "",
         chapter_status: chapter.chapter_status || "",
       };
-      
+
       setFormData(newFormData);
       setInitialFormData(newFormData);
     }
   }, [chapterData]);
 
   useEffect(() => {
-    const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const isDirty =
+      JSON.stringify(formData) !== JSON.stringify(initialFormData);
     setIsFormDirty(isDirty);
   }, [formData, initialFormData]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => 
+    mutationFn: (data) =>
       axios.put(`${ADMIN_CHAPTER_UPDATE}${updatemutationId}`, data, {
         headers: {
-          Authorization: `Bearer ${Cookies.get('token')}`,
+          Authorization: `Bearer ${Cookies.get("token")}`,
         },
       }),
     onSuccess: (response) => {
       if (response.data.code === 201) {
         toast.success(response.data.message);
-        queryClient.invalidateQueries(['chapter']);
+        queryClient.invalidateQueries(["chapter"]);
         refetch();
       } else {
-        toast.error(response.data.message || 'Unexpected error occurred');
+        toast.error(response.data.message || "Unexpected error occurred");
       }
     },
-    onError: (error) => toast.error(error.response.data.message || 'Failed to update chapter'),
+    onError: (error) =>
+      toast.error(error.response.data.message || "Failed to update chapter"),
   });
 
   const handleInputChange = (field, value) => {
     const digitFields = ["chapter_pin", "chapter_phone", "chapter_whatsapp"];
     if (digitFields.includes(field)) {
       if (/^\d*$/.test(value)) {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
 
   const handleContactChange = (field, value) => {
     if (/^\d*$/.test(value)) {
-      const maxLength = field === 'chapter_pin' ? 6 : 10;
+      const maxLength = field === "chapter_pin" ? 6 : 10;
       if (value.length <= maxLength) {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
       }
     }
   };
@@ -198,20 +216,19 @@ const ChapterViewAdmin = () => {
                       {formData.chapter_name || "Chapter Details"}
                     </h1>
                     <p className="text-xs text-gray-500 mt-1">
-                      {formData.chapter_city && formData.chapter_state && formData.chapter_pin && 
-                        `${formData.chapter_city}, ${formData.chapter_state} - ${formData.chapter_pin}`
-                      }
+                      {formData.chapter_city &&
+                        formData.chapter_state &&
+                        formData.chapter_pin &&
+                        `${formData.chapter_city}, ${formData.chapter_state} - ${formData.chapter_pin}`}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            
-          
           </div>
         </Card>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {/* Chapter Details Form */}
           <Card className="p-4">
             <form onSubmit={handleSubmit}>
@@ -220,17 +237,22 @@ const ChapterViewAdmin = () => {
                   <Info className="w-3 h-3" />
                   Chapter Details
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Address */}
                   <div className="space-y-1 md:col-span-2">
-                    <Label htmlFor="chapter_address" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_address"
+                      className="text-xs font-medium"
+                    >
                       Address <span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <Textarea
                       id="chapter_address"
                       value={formData.chapter_address}
-                      onChange={(e) => handleInputChange('chapter_address', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("chapter_address", e.target.value)
+                      }
                       placeholder="Enter address"
                       className="h-8 text-xs"
                       required
@@ -239,14 +261,19 @@ const ChapterViewAdmin = () => {
 
                   {/* Phone */}
                   <div className="space-y-1">
-                    <Label htmlFor="chapter_phone" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_phone"
+                      className="text-xs font-medium"
+                    >
                       Phone <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="chapter_phone"
                       type="tel"
                       value={formData.chapter_phone}
-                      onChange={(e) => handleContactChange('chapter_phone', e.target.value)}
+                      onChange={(e) =>
+                        handleContactChange("chapter_phone", e.target.value)
+                      }
                       placeholder="Enter phone number"
                       maxLength={10}
                       className="h-8 text-xs"
@@ -256,14 +283,19 @@ const ChapterViewAdmin = () => {
 
                   {/* WhatsApp */}
                   <div className="space-y-1">
-                    <Label htmlFor="chapter_whatsapp" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_whatsapp"
+                      className="text-xs font-medium"
+                    >
                       WhatsApp
                     </Label>
                     <Input
                       id="chapter_whatsapp"
                       type="tel"
                       value={formData.chapter_whatsapp}
-                      onChange={(e) => handleContactChange('chapter_whatsapp', e.target.value)}
+                      onChange={(e) =>
+                        handleContactChange("chapter_whatsapp", e.target.value)
+                      }
                       placeholder="Enter WhatsApp number"
                       maxLength={10}
                       className="h-8 text-xs"
@@ -272,14 +304,19 @@ const ChapterViewAdmin = () => {
 
                   {/* Email */}
                   <div className="space-y-1">
-                    <Label htmlFor="chapter_email" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_email"
+                      className="text-xs font-medium"
+                    >
                       Email <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="chapter_email"
                       type="email"
                       value={formData.chapter_email}
-                      onChange={(e) => handleInputChange('chapter_email', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("chapter_email", e.target.value)
+                      }
                       placeholder="Enter email address"
                       className="h-8 text-xs"
                       required
@@ -288,13 +325,18 @@ const ChapterViewAdmin = () => {
 
                   {/* Website */}
                   <div className="space-y-1">
-                    <Label htmlFor="chapter_website" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_website"
+                      className="text-xs font-medium"
+                    >
                       Website
                     </Label>
                     <Input
                       id="chapter_website"
                       value={formData.chapter_website}
-                      onChange={(e) => handleInputChange('chapter_website', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("chapter_website", e.target.value)
+                      }
                       placeholder="Enter website URL"
                       className="h-8 text-xs"
                     />
@@ -303,11 +345,14 @@ const ChapterViewAdmin = () => {
                   {/* Committee Member for Sign */}
                   <div className="space-y-1">
                     <Label htmlFor="auth_sign" className="text-xs font-medium">
-                      Comm. Member for Sign <span className="text-red-500">*</span>
+                      Comm. Member for Sign{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
-                    <Select 
-                      value={formData.auth_sign} 
-                      onValueChange={(value) => handleInputChange('auth_sign', value)}
+                    <Select
+                      value={formData.auth_sign}
+                      onValueChange={(value) =>
+                        handleInputChange("auth_sign", value)
+                      }
                       required
                     >
                       <SelectTrigger className="h-8 text-xs">
@@ -315,7 +360,11 @@ const ChapterViewAdmin = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {committee_type.map((option) => (
-                          <SelectItem key={option.value} value={option.value} className="text-xs">
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="text-xs"
+                          >
                             {option.label}
                           </SelectItem>
                         ))}
@@ -325,24 +374,37 @@ const ChapterViewAdmin = () => {
 
                   {/* Incorporation Date */}
                   <div className="space-y-1">
-                    <Label htmlFor="chapter_date_of_incorporation" className="text-xs font-medium">
+                    <Label
+                      htmlFor="chapter_date_of_incorporation"
+                      className="text-xs font-medium"
+                    >
                       Incorporation Date
                     </Label>
                     <Input
                       id="chapter_date_of_incorporation"
                       type="date"
                       value={formData.chapter_date_of_incorporation}
-                      onChange={(e) => handleInputChange('chapter_date_of_incorporation', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "chapter_date_of_incorporation",
+                          e.target.value
+                        )
+                      }
                       className="h-8 text-xs"
                     />
                   </div>
-                    <div className="space-y-1">
-                    <Label htmlFor="chapter_status" className="text-xs font-medium">
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="chapter_status"
+                      className="text-xs font-medium"
+                    >
                       Chapter Status <span className="text-red-500">*</span>
                     </Label>
                     <Select
                       value={formData.chapter_status}
-                      onValueChange={(value) => handleInputChange('chapter_status', value)}
+                      onValueChange={(value) =>
+                        handleInputChange("chapter_status", value)
+                      }
                       required
                     >
                       <SelectTrigger className="h-8 text-xs">
@@ -363,18 +425,18 @@ const ChapterViewAdmin = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => navigate(-1)} 
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
                   className="flex items-center gap-2 h-8 text-xs"
                 >
-                  <X className="w-3 h-3" /> 
+                  <X className="w-3 h-3" />
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={updateMutation.isLoading || !isFormDirty} 
+                <Button
+                  type="submit"
+                  disabled={updateMutation.isLoading || !isFormDirty}
                   className="flex items-center gap-2 bg-[var(--team-color)] hover:bg-blue-700 h-8 text-xs"
                 >
                   {updateMutation.isLoading ? (
@@ -394,32 +456,34 @@ const ChapterViewAdmin = () => {
           </Card>
 
           {/* Users Tab */}
-          <Card className='p-4'>
+          <Card className="p-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="">
               <TabsList className="grid w-full grid-cols-2 h-9 bg-[var(--team-color)] text-white rounded-md">
-                <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
-                <TabsTrigger value="datasource" className="text-xs">Datsource</TabsTrigger>
+                <TabsTrigger value="users" className="text-xs">
+                  Users
+                </TabsTrigger>
+                <TabsTrigger value="datasource" className="text-xs">
+                  Datsource
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="users" className="">
-                <UserListAdmin 
-                  id={id} 
-                  users={users} 
-                  isLoading={isLoading} 
-                  isError={isError} 
-                  refetch={refetch} 
-                  isFetching={isFetching} 
-                  ImageUrl={ImageUrl} 
+                <UserListAdmin
+                  id={id}
+                  users={users}
+                  isLoading={isLoading}
+                  isError={isError}
+                  refetch={refetch}
+                  isFetching={isFetching}
+                  ImageUrl={ImageUrl}
                   chapterCodeForCreateUser={chapterCodeForCreateUser}
                 />
-              
               </TabsContent>
               <TabsContent value="datasource" className="">
-                <DatasourceListAdmin 
+                <DatasourceListAdmin
                   datasources={dataSource}
                   refetch={refetch}
                 />
-              
               </TabsContent>
             </Tabs>
           </Card>
@@ -427,6 +491,6 @@ const ChapterViewAdmin = () => {
       </div>
     </>
   );
-}
+};
 
 export default ChapterViewAdmin;

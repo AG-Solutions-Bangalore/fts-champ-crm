@@ -19,7 +19,7 @@ const PromoterView = ({
     refetch,
   } = useGetMutation(
     `donor-summary-view${indicompFullName}`,
-    `${PROMOTER_SUMMARY_VIEW}/${indicompFullName}&from_date=${receiptFromDate}&to_date=${receiptToDate}`,
+    `${PROMOTER_SUMMARY_VIEW}/${indicompFullName}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -34,17 +34,16 @@ const PromoterView = ({
       onLoadingChange(loader);
     }
   }, [loader, onLoadingChange]);
-  const donorsummary = data?.data?.receipt || [];
-  const receiptsummaryfooterOTS = data?.data?.receipt_grand_total_ots || [];
-  const receiptsummaryfootertotal =
-    data?.data?.receipt_grand_total_amount || [];
+  const donorsummary = data?.receipts || [];
+  const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || [];
+  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || "";
 
   const groupedData = useMemo(() => {
     const result = {};
     donorsummary.forEach((item) => {
       const year = item.receipt_financial_year;
       const donationType = item.receipt_donation_type;
-      const amount = item.receipt_total_amount;
+      const amount = parseFloat(item.receipt_total_amount) || 0;
 
       if (!result[year]) result[year] = {};
       if (!result[year][donationType]) result[year][donationType] = 0;
@@ -76,7 +75,7 @@ const PromoterView = ({
                     <thead>
                       <tr className="bg-gray-200">
                         {[
-                          "Promoter",
+                       
                           "Donor Name",
                           "Contact",
                           "Mobile",
@@ -100,9 +99,7 @@ const PromoterView = ({
                       {donorsummary && donorsummary.length > 0 ? (
                         donorsummary.map((dataSumm) => (
                           <tr key={dataSumm.id}>
-                            <td className="border border-black px-4 py-2 text-xs">
-                              {dataSumm.indicomp_promoter}
-                            </td>
+                         
                             <td className="border border-black px-4 py-2 text-xs">
                               {dataSumm.indicomp_full_name}
                             </td>
@@ -137,7 +134,7 @@ const PromoterView = ({
                       ) : (
                         <tr>
                           <td
-                            colSpan={10}
+                            colSpan={9}
                             className="border border-black text-center py-4 text-xs"
                           >
                             No data available
@@ -154,22 +151,13 @@ const PromoterView = ({
                           >
                             Total
                           </td>
-                          {receiptsummaryfooterOTS.map((footv, key) => (
-                            <td
-                              key={key}
-                              className="border border-black text-center text-xs font-bold"
-                            >
-                              {footv.total_no_of_ots}
-                            </td>
-                          ))}
-                          {receiptsummaryfootertotal.map((foota, key) => (
-                            <td
-                              key={key}
-                              className="border border-black text-right px-4 text-xs font-bold"
-                            >
-                              {foota.total_grand_amount}
-                            </td>
-                          ))}
+                          <td className="border border-black text-center text-xs font-bold">
+                            {receiptsummaryfooterOTS || ""}
+                          </td>
+
+                          <td className="border border-black text-right px-4 text-xs font-bold">
+                            {receiptsummaryfootertotal || ""}
+                          </td>
                         </tr>
                       </tfoot>
                     )}

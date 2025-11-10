@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import Moment from 'moment';
-import { Download, Eye, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
+import React, { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import Moment from "moment";
+import { Download, Eye, ArrowUpDown, ChevronDown, Search } from "lucide-react";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -17,13 +23,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   flexRender,
   getCoreRowModel,
@@ -31,50 +37,51 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { DOWNLOAD_PURCHASE_OTS } from '@/api';
-import Cookies from 'js-cookie';
+} from "@tanstack/react-table";
+import { DOWNLOAD_PURCHASE_OTS } from "@/api";
+import Cookies from "js-cookie";
+import moment from "moment";
 
 const OtsDownload = () => {
-  const token = Cookies.get('token')
+  const token = Cookies.get("token");
   const [formData, setFormData] = useState({
-    receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-    receipt_to_date: Moment().format('YYYY-MM-DD')
+    receipt_from_date: Moment().startOf("month").format("YYYY-MM-DD"),
+    receipt_to_date: Moment().format("YYYY-MM-DD"),
   });
 
   const [jsonData, setJsonData] = useState(null);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const downloadMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_PURCHASE_OTS, downloadData, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        responseType: 'blob'
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
       });
       return response.data;
     },
     onSuccess: (blob) => {
       const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'ots_list.xlsx');
+      link.setAttribute("download", "ots_list.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('OTS downloaded successfully!');
+      toast.success("OTS downloaded successfully!");
       setFormData({
-        receipt_from_date: Moment().startOf('month').format('YYYY-MM-DD'),
-        receipt_to_date: Moment().format('YYYY-MM-DD')
+        receipt_from_date: Moment().startOf("month").format("YYYY-MM-DD"),
+        receipt_to_date: Moment().format("YYYY-MM-DD"),
       });
     },
     onError: (error) => {
-      toast.error('Failed to download OTS');
-      console.error('Download error:', error);
-    }
+      toast.error("Failed to download OTS");
+      console.error("Download error:", error);
+    },
   });
 
   // const viewMutation = useMutation({
@@ -109,75 +116,78 @@ const OtsDownload = () => {
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_PURCHASE_OTS, downloadData, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        responseType: 'blob'
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
       });
       return response.data;
     },
-   onSuccess: async (blob) => {
-    try {
-      const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
-      const text = await innerBlob.text();
-  
-      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
-        if (typeof XLSX === 'undefined') {
-          toast.error('Excel parser not loaded. Please reload the page.');
-          return;
+    onSuccess: async (blob) => {
+      try {
+        const innerBlob = blob instanceof Blob ? blob : new Blob([blob]);
+        const text = await innerBlob.text();
+
+        if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+          if (typeof XLSX === "undefined") {
+            toast.error("Excel parser not loaded. Please reload the page.");
+            return;
+          }
+
+          const arrayBuffer = await innerBlob.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet);
+
+          setJsonData(json);
+          toast.success(`Loaded ${json.length} receipts from Excel file.`);
+        } else {
+          parseCSVAndSetData(text);
+          toast.success("Loaded receipts from Excel file.");
         }
-  
-        const arrayBuffer = await innerBlob.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet);
-  
-        setJsonData(json);
-        toast.success(`Loaded ${json.length} receipts from Excel file.`);
-      } else {
-        parseCSVAndSetData(text);
-        toast.success('Loaded receipts from Excel file.');
+      } catch (error) {
+        console.error("Failed to read Excel blob:", error);
+        toast.error("Unable to preview receipt file.");
       }
-    } catch (error) {
-      console.error('Failed to read Excel blob:', error);
-      toast.error('Unable to preview receipt file.');
-    }
-  }
-  ,
+    },
     onError: () => {
-      toast.error('Failed to fetch receipt data');
-    }
+      toast.error("Failed to fetch receipt data");
+    },
   });
-  
+
   function parseCSVAndSetData(text) {
-    const rows = text.split('\n').filter(Boolean);
+    const rows = text.split("\n").filter(Boolean);
     if (!rows.length) {
-      toast.error('No receipt data found');
+      toast.error("No receipt data found");
       return;
     }
-  
-    const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-    const data = rows.slice(1).map(row => {
-      const values = row.split(',');
+
+    const headers = rows[0]
+      .split(",")
+      .map((h) => h.replace(/^"|"$/g, "").trim());
+    const data = rows.slice(1).map((row) => {
+      const values = row.split(",");
       const obj = {};
       headers.forEach((header, idx) => {
-        const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '').trim() : '';
+        const cleanValue = values[idx]
+          ? values[idx].replace(/^"|"$/g, "").trim()
+          : "";
         obj[header] = cleanValue;
       });
       return obj;
     });
-  
+
     setJsonData(data);
   }
-  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitDownload = (e) => {
     e.preventDefault();
     if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
+      toast.error("Please select both from and to dates");
       return;
     }
     downloadMutation.mutate(formData);
@@ -186,7 +196,7 @@ const OtsDownload = () => {
   const handleSubmitView = (e) => {
     e.preventDefault();
     if (!formData.receipt_from_date || !formData.receipt_to_date) {
-      toast.error('Please select both from and to dates');
+      toast.error("Please select both from and to dates");
       return;
     }
     viewMutation.mutate(formData);
@@ -194,8 +204,8 @@ const OtsDownload = () => {
 
   const columns = [
     {
-      id: 'S. No.',
-      header: 'S. No.',
+      id: "S. No.",
+      header: "S. No.",
       cell: ({ row }) => {
         const globalIndex = row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
@@ -203,125 +213,160 @@ const OtsDownload = () => {
       size: 60,
     },
     {
-      accessorKey: 'Chapter',
-      id: 'Chapter',
+      accessorKey: "Chapter",
+      id: "Chapter",
       header: ({ column }) => (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
           Chapter
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Chapter')}</div>,
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Chapter")}</div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Receipt Date',
-      id: 'Receipt Date',
-      header: 'Receipt Date',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt Date')}</div>,
+      accessorKey: "Receipt Date",
+      id: "Receipt Date",
+      header: "Receipt Date",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {moment(row.getValue("Receipt Date")).format("DD MMM YYYY")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Receipt No',
-      id: 'Receipt No',
-      header: 'Receipt No',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Receipt No')}</div>,
+      accessorKey: "Receipt No",
+      id: "Receipt No",
+      header: "Receipt No",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Receipt No")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Amount',
-      id: 'Amount',
-      header: 'Amount',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Amount')}</div>,
+      accessorKey: "Amount",
+      id: "Amount",
+      header: "Amount",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Amount")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'OTS Donated',
-      id: 'OTS Donated',
-      header: 'OTS Donated',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('OTS Donated')}</div>,
+      accessorKey: "OTS Donated",
+      id: "OTS Donated",
+      header: "OTS Donated",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("OTS Donated")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Pay Mode',
-      id: 'Pay Mode',
-      header: 'Pay Mode',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pay Mode')}</div>,
+      accessorKey: "Pay Mode",
+      id: "Pay Mode",
+      header: "Pay Mode",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Pay Mode")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Pay Details',
-      id: 'Pay Details',
-      header: 'Pay Details',
+      accessorKey: "Pay Details",
+      id: "Pay Details",
+      header: "Pay Details",
       cell: ({ row }) => {
-        const payDetails = row.getValue('Pay Details') || '';
-        const shortPayDetails = payDetails.length > 50 ? payDetails.slice(0, 50) + '…' : payDetails;
+        const payDetails = row.getValue("Pay Details") || "";
+        const shortPayDetails =
+          payDetails.length > 50 ? payDetails.slice(0, 50) + "…" : payDetails;
         return <div className="text-xs font-medium">{shortPayDetails}</div>;
       },
       size: 150,
     },
     {
-      accessorKey: 'FTS ID',
-      id: 'FTS ID',
-      header: 'FTS ID',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('FTS ID')}</div>,
+      accessorKey: "FTS ID",
+      id: "FTS ID",
+      header: "FTS ID",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("FTS ID")}</div>
+      ),
       size: 100,
     },
     {
-      accessorKey: 'Donor Name',
-      id: 'Donor Name',
-      header: 'Donor Name',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Name')}</div>,
+      accessorKey: "Donor Name",
+      id: "Donor Name",
+      header: "Donor Name",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Donor Name")}</div>
+      ),
       size: 150,
     },
-   
+
     {
-      accessorKey: 'Reg City',
-      id: 'Reg City',
-      header: 'Reg City',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Reg City')}</div>,
+      accessorKey: "Reg City",
+      id: "Reg City",
+      header: "Reg City",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Reg City")}</div>
+      ),
       size: 100,
     },
-   
+
     {
-      accessorKey: 'Correspondence Preference',
-      id: 'Correspondence Preference',
-      header: 'Correspondence Preference',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Correspondence Preference')}</div>,
+      accessorKey: "Correspondence Preference",
+      id: "Correspondence Preference",
+      header: "Correspondence Preference",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Correspondence Preference")}
+        </div>
+      ),
       size: 150,
     },
     {
-      accessorKey: 'Email',
-      id: 'Email',
-      header: 'Email',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Email')}</div>,
+      accessorKey: "Email",
+      id: "Email",
+      header: "Email",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Email")}</div>
+      ),
       size: 150,
     },
     {
-      accessorKey: 'Contact Number',
-      id: 'Contact Number',
-      header: 'Contact Number',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Contact Number')}</div>,
+      accessorKey: "Contact Number",
+      id: "Contact Number",
+      header: "Contact Number",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">
+          {row.getValue("Contact Number")}
+        </div>
+      ),
       size: 120,
     },
     {
-      accessorKey: 'Prompter',
-      id: 'Prompter',
-      header: 'Prompter',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Prompter')}</div>,
+      accessorKey: "Prompter",
+      id: "Prompter",
+      header: "Prompter",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Prompter")}</div>
+      ),
       size: 100,
     },
-    
+
     {
-      accessorKey: 'Donor Type',
-      id: 'Donor Type',
-      header: 'Donor Type',
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Donor Type')}</div>,
+      accessorKey: "Donor Type",
+      id: "Donor Type",
+      header: "Donor Type",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium">{row.getValue("Donor Type")}</div>
+      ),
       size: 100,
     },
   ];
@@ -378,51 +423,55 @@ const OtsDownload = () => {
         <form className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_from_date" className="text-sm">From Date *</Label>
-              <Input 
-                id="receipt_from_date" 
-                name="receipt_from_date" 
-                type="date" 
-                value={formData.receipt_from_date} 
-                onChange={handleInputChange} 
-                required 
-                className="h-9" 
+              <Label htmlFor="receipt_from_date" className="text-sm">
+                From Date *
+              </Label>
+              <Input
+                id="receipt_from_date"
+                name="receipt_from_date"
+                type="date"
+                value={formData.receipt_from_date}
+                onChange={handleInputChange}
+                required
+                className="h-9"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="receipt_to_date" className="text-sm">To Date *</Label>
-              <Input 
-                id="receipt_to_date" 
-                name="receipt_to_date" 
-                type="date" 
-                value={formData.receipt_to_date} 
-                onChange={handleInputChange} 
-                required 
-                className="h-9" 
+              <Label htmlFor="receipt_to_date" className="text-sm">
+                To Date *
+              </Label>
+              <Input
+                id="receipt_to_date"
+                name="receipt_to_date"
+                type="date"
+                value={formData.receipt_to_date}
+                onChange={handleInputChange}
+                required
+                className="h-9"
               />
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              type="button" 
-              onClick={handleSubmitDownload} 
-              disabled={downloadMutation.isPending} 
+            <Button
+              type="button"
+              onClick={handleSubmitDownload}
+              disabled={downloadMutation.isPending}
               className="flex items-center gap-2 h-9"
             >
               <Download className="w-4 h-4" />
-              {downloadMutation.isPending ? 'Downloading...' : 'Download'}
+              {downloadMutation.isPending ? "Downloading..." : "Download"}
             </Button>
 
-            <Button 
-              type="button" 
-              onClick={handleSubmitView} 
-              disabled={viewMutation.isPending} 
+            <Button
+              type="button"
+              onClick={handleSubmitView}
+              disabled={viewMutation.isPending}
               className="flex items-center gap-2 h-9"
             >
               <Eye className="w-4 h-4" />
-              {viewMutation.isPending ? 'Loading...' : 'View'}
+              {viewMutation.isPending ? "Loading..." : "View"}
             </Button>
           </div>
         </form>
@@ -435,8 +484,10 @@ const OtsDownload = () => {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Search OTS..."
-                  value={table.getState().globalFilter || ''}
-                  onChange={(event) => table.setGlobalFilter(event.target.value)}
+                  value={table.getState().globalFilter || ""}
+                  onChange={(event) =>
+                    table.setGlobalFilter(event.target.value)
+                  }
                   className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
                 />
               </div>
@@ -455,7 +506,9 @@ const OtsDownload = () => {
                         key={column.id}
                         className="text-xs capitalize"
                         checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
                       >
                         {column.id}
                       </DropdownMenuCheckboxItem>
@@ -471,8 +524,8 @@ const OtsDownload = () => {
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <TableHead 
-                          key={header.id} 
+                        <TableHead
+                          key={header.id}
                           className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
                           style={{ width: header.column.columnDef.size }}
                         >
@@ -487,7 +540,7 @@ const OtsDownload = () => {
                     </TableRow>
                   ))}
                 </TableHeader>
-                
+
                 <TableBody>
                   {viewMutation.isPending ? (
                     <TableShimmer />
@@ -510,7 +563,10 @@ const OtsDownload = () => {
                     ))
                   ) : (
                     <TableRow className="h-12">
-                      <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-sm"
+                      >
                         No OTS records found.
                       </TableCell>
                     </TableRow>

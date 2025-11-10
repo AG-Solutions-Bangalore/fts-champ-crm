@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,7 +6,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import mailSentGif from "../../assets/mail-sent-fast.gif";
 import {
   Table,
   TableBody,
@@ -16,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import BASE_URL from "@/config/base-url";
+import useNumericInput from "@/hooks/use-numeric-input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -26,22 +26,26 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Search, Loader2, Mail } from "lucide-react";
-import { MEMBER_ACTIVE_DATA } from '@/api';
 import Cookies from "js-cookie";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import BASE_URL from "@/config/base-url";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Search,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import useNumericInput from "@/hooks/use-numeric-input";
+import mailSentGif from "../../assets/mail-sent-fast.gif";
+import moment from "moment";
 
 const MembershipActive = () => {
- 
-  const token = Cookies.get('token');
-  const userType = Cookies.get('user_type_id');
+  const token = Cookies.get("token");
+  const userType = Cookies.get("user_type_id");
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
 
-  
   const [mailSending, setMailSending] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -57,12 +61,13 @@ const MembershipActive = () => {
   // Debounced search effect
   useEffect(() => {
     const timerId = setTimeout(() => {
-      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
-      
+      const isNewSearch =
+        searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+
       if (isNewSearch) {
-        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
       }
-      
+
       setDebouncedSearchTerm(searchTerm);
       setPreviousSearchTerm(searchTerm);
     }, 500);
@@ -85,7 +90,7 @@ const MembershipActive = () => {
       const params = new URLSearchParams({
         page: (pagination.pageIndex + 1).toString(),
       });
-      
+
       if (debouncedSearchTerm) {
         params.append("search", debouncedSearchTerm);
       }
@@ -93,9 +98,9 @@ const MembershipActive = () => {
       const response = await axios.get(
         `${BASE_URL}/api/member-data?type=1&${params}`,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
         }
       );
@@ -113,7 +118,7 @@ const MembershipActive = () => {
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = membershipData?.data?.last_page || 1;
-    
+
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
       queryClient.prefetchQuery({
@@ -122,7 +127,7 @@ const MembershipActive = () => {
           const params = new URLSearchParams({
             page: nextPage.toString(),
           });
-          
+
           if (debouncedSearchTerm) {
             params.append("search", debouncedSearchTerm);
           }
@@ -130,9 +135,9 @@ const MembershipActive = () => {
           const response = await axios.get(
             `${BASE_URL}/api/member-data?type=1&${params}`,
             {
-              headers: { 
+              headers: {
                 Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
               },
             }
           );
@@ -144,15 +149,21 @@ const MembershipActive = () => {
 
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
-    
-      if (!queryClient.getQueryData(["member-active", debouncedSearchTerm, prevPage])) {
+
+      if (
+        !queryClient.getQueryData([
+          "member-active",
+          debouncedSearchTerm,
+          prevPage,
+        ])
+      ) {
         queryClient.prefetchQuery({
           queryKey: ["member-active", debouncedSearchTerm, prevPage],
           queryFn: async () => {
             const params = new URLSearchParams({
               page: prevPage.toString(),
             });
-            
+
             if (debouncedSearchTerm) {
               params.append("search", debouncedSearchTerm);
             }
@@ -160,9 +171,9 @@ const MembershipActive = () => {
             const response = await axios.get(
               `${BASE_URL}/api/member-data?type=1&${params}`,
               {
-                headers: { 
+                headers: {
                   Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
                 },
               }
             );
@@ -172,33 +183,42 @@ const MembershipActive = () => {
         });
       }
     }
-  }, [pagination.pageIndex, debouncedSearchTerm, queryClient, membershipData?.data?.last_page, token]);
+  }, [
+    pagination.pageIndex,
+    debouncedSearchTerm,
+    queryClient,
+    membershipData?.data?.last_page,
+    token,
+  ]);
 
   const sendEmailMutation = useMutation({
     mutationFn: async (memberId) => {
-      const response = await axios.get(`${BASE_URL}/api/send-membership-renewal-email/${memberId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await axios.get(
+        `${BASE_URL}/api/send-membership-renewal-email/${memberId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       return response.data;
     },
     onSuccess: (data, memberId) => {
-      toast.success(data.message || 'Email sent successfully');
-      setMailSending(prev => ({ ...prev, [memberId]: false }));
+      toast.success(data.message || "Email sent successfully");
+      setMailSending((prev) => ({ ...prev, [memberId]: false }));
     },
     onError: (error, memberId) => {
-      const message = error.response?.data?.message || 'Failed to send email';
+      const message = error.response?.data?.message || "Failed to send email";
       toast.error(message);
-      setMailSending(prev => ({ ...prev, [memberId]: false }));
-    }
+      setMailSending((prev) => ({ ...prev, [memberId]: false }));
+    },
   });
 
   const handleSendEmail = (memberId, email) => {
-    if (!email || email.toLowerCase() === 'null') {
-      toast.error('No email address available for this member');
+    if (!email || email.toLowerCase() === "null") {
+      toast.error("No email address available for this member");
       return;
     }
 
-    setMailSending(prev => ({ ...prev, [memberId]: true }));
+    setMailSending((prev) => ({ ...prev, [memberId]: true }));
     sendEmailMutation.mutate(memberId);
   };
 
@@ -212,7 +232,8 @@ const MembershipActive = () => {
       id: "S. No.",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = (pagination.pageIndex * pagination.pageSize) + row.index + 1;
+        const globalIndex =
+          pagination.pageIndex * pagination.pageSize + row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
       },
       size: 60,
@@ -231,7 +252,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Full Name") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Full Name") || "-"}
+        </div>
+      ),
       size: 120,
     },
     {
@@ -248,7 +273,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Email") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Email") || "-"}
+        </div>
+      ),
       size: 150,
     },
     {
@@ -265,7 +294,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Mobile Phone") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Mobile Phone") || "-"}
+        </div>
+      ),
       size: 120,
     },
     {
@@ -282,7 +315,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Type") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Type") || "-"}
+        </div>
+      ),
       size: 100,
     },
     {
@@ -299,7 +336,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Donor Type") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Donor Type") || "-"}
+        </div>
+      ),
       size: 100,
     },
     {
@@ -316,7 +357,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Chapter") || "-"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Chapter") || "-"}
+        </div>
+      ),
       size: 120,
     },
     {
@@ -333,7 +378,11 @@ const MembershipActive = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Last Pay Date") || "-"}</div>,
+      cell: ({ row }) => {
+        const date = row.getValue("Last Pay Date");
+        const formattedDate = date ? moment(date).format("DD MMM YYYY") : "-";
+        return <div className="text-[13px] font-medium">{formattedDate}</div>;
+      },
       size: 120,
     },
     {
@@ -346,23 +395,27 @@ const MembershipActive = () => {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-         Pay Count
+          Pay Count
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Pay Count") || "0"}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Pay Count") || "0"}
+        </div>
+      ),
       size: 80,
     },
-    ...(userType !== '4'
+    ...(userType !== "4"
       ? [
           {
-            id: 'actions',
-            header: 'Actions',
+            id: "actions",
+            header: "Actions",
             cell: ({ row }) => {
               const memberId = row.original.id;
               const email = row.original.indicomp_email;
-              const isValidEmail = email && email.toLowerCase() !== 'null';
-          
+              const isValidEmail = email && email.toLowerCase() !== "null";
+
               return (
                 <Button
                   variant="outline"
@@ -379,14 +432,16 @@ const MembershipActive = () => {
                     />
                   ) : (
                     <Mail
-                      className={`w-3 h-3 ${isValidEmail ? 'text-blue-500' : 'text-gray-300'}`}
+                      className={`w-3 h-3 ${
+                        isValidEmail ? "text-blue-500" : "text-gray-300"
+                      }`}
                     />
                   )}
                 </Button>
               );
             },
             size: 80,
-          }
+          },
         ]
       : []),
   ];
@@ -421,10 +476,14 @@ const MembershipActive = () => {
 
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
-    const cachedData = queryClient.getQueryData(["member-active", debouncedSearchTerm, targetPage]);
-    
+    const cachedData = queryClient.getQueryData([
+      "member-active",
+      debouncedSearchTerm,
+      targetPage,
+    ]);
+
     if (cachedData) {
-      setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
     } else {
       table.setPageIndex(newPageIndex);
     }
@@ -433,7 +492,7 @@ const MembershipActive = () => {
   const handlePageInput = (e) => {
     const value = e.target.value;
     setPageInput(value);
-    
+
     if (value && !isNaN(value)) {
       const pageNum = parseInt(value);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
@@ -446,9 +505,9 @@ const MembershipActive = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
     const buttons = [];
-    
+
     if (totalPages === 0) return buttons;
-    
+
     buttons.push(
       <Button
         key={1}
@@ -462,10 +521,18 @@ const MembershipActive = () => {
     );
 
     if (currentPage > 3) {
-      buttons.push(<span key="ellipsis1" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis1" className="px-2">
+          ...
+        </span>
+      );
     }
 
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
       if (i !== 1 && i !== totalPages) {
         buttons.push(
           <Button
@@ -482,7 +549,11 @@ const MembershipActive = () => {
     }
 
     if (currentPage < totalPages - 2) {
-      buttons.push(<span key="ellipsis2" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis2" className="px-2">
+          ...
+        </span>
+      );
     }
 
     if (totalPages > 1) {
@@ -504,16 +575,16 @@ const MembershipActive = () => {
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11"> 
+      <TableRow key={index} className="animate-pulse h-11">
         {table.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div> 
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
           </TableCell>
         ))}
       </TableRow>
     ));
   };
-  
+
   if (isError) {
     return (
       <div className="w-full p-4">
@@ -564,7 +635,9 @@ const MembershipActive = () => {
                     key={column.id}
                     className="text-xs capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
@@ -581,8 +654,8 @@ const MembershipActive = () => {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
                     style={{ width: header.column.columnDef.size }}
                   >
@@ -597,7 +670,7 @@ const MembershipActive = () => {
               </TableRow>
             ))}
           </TableHeader>
-          
+
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
               <TableShimmer />
@@ -620,7 +693,10 @@ const MembershipActive = () => {
               ))
             ) : (
               <TableRow className="h-12">
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-sm"
+                >
                   No members found.
                 </TableCell>
               </TableRow>
@@ -632,10 +708,11 @@ const MembershipActive = () => {
       {/* Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {membershipData?.data?.from || 0} to {membershipData?.data?.to || 0} of{" "}
-          {membershipData?.data?.total || 0} members
+          Showing {membershipData?.data?.from || 0} to{" "}
+          {membershipData?.data?.to || 0} of {membershipData?.data?.total || 0}{" "}
+          members
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -646,7 +723,7 @@ const MembershipActive = () => {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          
+
           <div className="flex items-center space-x-1">
             {generatePageButtons()}
           </div>
