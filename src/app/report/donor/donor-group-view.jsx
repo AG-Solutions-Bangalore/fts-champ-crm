@@ -35,12 +35,11 @@ const DonorGroupView = ({
     }
   }, [indicompFullName, receiptFromDate, receiptToDate]);
 
-  const donorsummary = data?.data?.receipt || [];
-  const individual = data?.data?.individual_Company || [];
-  const receiptsummary = data?.data?.receipt_total || [];
-  const receiptsummaryfooterOTS = data?.data?.receipt_grand_total_ots || [];
-  const receiptsummaryfootertotal =
-    data?.data?.receipt_grand_total_amount || [];
+  const receiptsummary = data?.receipt_total || [];
+  const donorsummary = data?.receipts || [];
+  const individual = data?.individual_company || {};
+  const receiptsummaryfooterOTS = data?.receipt_grand_total_ots || "";
+  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || "";
 
   return (
     <>
@@ -56,59 +55,57 @@ const DonorGroupView = ({
               <Card className="p-6 overflow-x-auto  grid md:grid-cols-1 1fr">
                 <div ref={componentRef}>
                   <ReportHeader title="DONOR GROUP SUMMARY" />
-                  {individual.map((individ, key) => (
-                    <div className="flex  justify-between mb-6" key={key}>
-                      <div className="mb-4 md:mb-0">
-                        <p className="font-bold mb-1">
-                          Full Name:{" "}
-                          <span className="font-normal">
-                            {individ.indicomp_type === "Individual" ? (
-                              <>
-                                {individ.title} {individ.indicomp_full_name}
-                              </>
-                            ) : (
-                              <>M/s {individ.indicomp_full_name}</>
-                            )}
-                          </span>
-                        </p>
-                        <p className="font-bold mb-1">
-                          Contact Person/Spouse:{" "}
-                          <span className="font-normal">
-                            {individ.indicomp_type === "Individual" ? (
-                              <>{individ.indicomp_spouse_name}</>
-                            ) : (
-                              <>
-                                {individ.title}{" "}
-                                {individ.indicomp_com_contact_name}
-                              </>
-                            )}
-                          </span>
-                        </p>
-                        <p className="font-bold mb-1">
-                          Promoter:{" "}
-                          <span className="font-normal">
-                            {individ.indicomp_promoter}
-                          </span>
-                        </p>
-                      </div>
-
-                      {/* Right Section */}
-                      <div>
-                        <p className="font-bold mb-1">
-                          Mobile:{" "}
-                          <span className="font-normal">
-                            {individ.indicomp_mobile_phone}
-                          </span>
-                        </p>
-                        <p className="font-bold mb-1">
-                          PAN Number:{" "}
-                          <span className="font-normal">
-                            {individ.indicomp_pan_no}
-                          </span>
-                        </p>
-                      </div>
+                  <div className="flex  justify-between mb-6">
+                    <div className="mb-4 md:mb-0">
+                      <p className="font-bold mb-1">
+                        Full Name:{" "}
+                        <span className="font-normal">
+                          {individual.indicomp_type === "Individual" ? (
+                            <>
+                              {individual.title} {individual.indicomp_full_name}
+                            </>
+                          ) : (
+                            <>M/s {individual.indicomp_full_name}</>
+                          )}
+                        </span>
+                      </p>
+                      <p className="font-bold mb-1">
+                        Contact Person/Spouse:{" "}
+                        <span className="font-normal">
+                          {individual.indicomp_type === "Individual" ? (
+                            <>{individual.indicomp_spouse_name}</>
+                          ) : (
+                            <>
+                              {individual.title}{" "}
+                              {individual.indicomp_com_contact_name}
+                            </>
+                          )}
+                        </span>
+                      </p>
+                      <p className="font-bold mb-1">
+                        Promoter:{" "}
+                        <span className="font-normal">
+                          {individual?.promoter?.indicomp_full_name || ""}
+                        </span>
+                      </p>
                     </div>
-                  ))}
+
+                    {/* Right Section */}
+                    <div>
+                      <p className="font-bold mb-1">
+                        Mobile:{" "}
+                        <span className="font-normal">
+                          {individual.indicomp_mobile_phone}
+                        </span>
+                      </p>
+                      <p className="font-bold mb-1">
+                        PAN Number:{" "}
+                        <span className="font-normal">
+                          {individual.indicomp_pan_no}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
 
                   <div ref={componentRef} className="my-5">
                     <table className="min-w-full border-collapse border border-black">
@@ -152,10 +149,10 @@ const DonorGroupView = ({
                                 {dataSumm.receipt_no}
                               </td>
                               <td className="border border-black px-4 py-2 text-xs">
-                                {dataSumm.indicomp_full_name}
+                                {dataSumm?.donor?.indicomp_full_name}
                               </td>
                               <td className="border border-black px-4 py-2 text-xs">
-                                {dataSumm.indicomp_promoter}
+                                {dataSumm?.donor?.promoter?.indicomp_full_name}
                               </td>
                               <td className="border border-black px-4 py-2 text-xs">
                                 {dataSumm.receipt_financial_year}
@@ -210,22 +207,18 @@ const DonorGroupView = ({
                             >
                               Total
                             </td>
-                            {receiptsummaryfootertotal.map((footv, key) => (
-                              <td className="border border-black text-center text-sm p-2 font-bold">
-                                {footv.total_grand_amount}
-                              </td>
-                            ))}
+                            <td className="border border-black text-center text-sm p-2 font-bold">
+                              {receiptsummaryfootertotal || ""}
+                            </td>
 
                             <td
                               className="border border-black text-right px-4 text-sm p-2 md:text-base font-bold"
                               colSpan={2}
                             ></td>
 
-                            {receiptsummaryfooterOTS.map((footv, key) => (
-                              <td className="border border-black text-center text-xs font-bold">
-                                {footv.total_no_of_ots}
-                              </td>
-                            ))}
+                            <td className="border border-black text-center text-xs font-bold">
+                              {receiptsummaryfooterOTS || ""}
+                            </td>
 
                             <td
                               className="border border-black text-right px-4 text-xs font-bold"
@@ -262,7 +255,7 @@ const DonorGroupView = ({
                                 {dataSumm.receipt_financial_year}
                               </td>
                               <td className="border border-black px-4 py-2 text-sm md:text-base text-center">
-                                {dataSumm.receipt_total_amount}
+                                {dataSumm.total_amount}
                               </td>
                             </tr>
                           ))

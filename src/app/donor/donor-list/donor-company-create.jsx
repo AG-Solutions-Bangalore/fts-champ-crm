@@ -1,49 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import InputMask from "react-input-mask";
-import { 
-  ArrowLeft, 
-  Building, 
-  Info,
-  Upload,
-  Calendar,
-  Phone,
-  Mail,
-  Globe,
-  MapPin,
-  User,
-  FileText,
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import Cookies from "js-cookie";
+import {
   AlertCircle,
-  Briefcase
-} from 'lucide-react';
+  ArrowLeft,
+  Briefcase,
+  Building,
+  Info,
+  MapPin,
+  Phone,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import InputMask from "react-input-mask";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { DONOR_COMPANY_CREATE_SUMBIT } from "@/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import BASE_URL from '@/config/base-url';
-import { DONOR_COMPANY_CREATE_SUMBIT } from '@/api';
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import BASE_URL from "@/config/base-url";
 
 // Import your utility data
-import donor_type from '@/utils/donor-type';
-import belongs_to from '@/utils/belongs-to';
-import honorific from '@/utils/honorific';
-import company_type from '@/utils/company-type';
-import { MemoizedSelect } from '@/components/common/memoized-select';
-import { useFetchDataSource, useFetchPromoter, useFetchState } from '@/hooks/use-api';
+import { MemoizedSelect } from "@/components/common/memoized-select";
+import {
+  useFetchDataSource,
+  useFetchPromoter,
+  useFetchState,
+} from "@/hooks/use-api";
+import belongs_to from "@/utils/belongs-to";
+import company_type from "@/utils/company-type";
+import donor_type from "@/utils/donor-type";
+import honorific from "@/utils/honorific";
 
 // Constants
 const gender = [
@@ -65,7 +62,7 @@ const corrpreffer = [
 const DonorCompanyCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const token = Cookies.get('token');
+  const token = Cookies.get("token");
 
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [errors, setErrors] = useState({});
@@ -90,7 +87,7 @@ const DonorCompanyCreate = () => {
     indicomp_mobile_phone: "",
     indicomp_mobile_whatsapp: "",
     indicomp_email: "",
-   
+
     indicomp_website: "",
     indicomp_res_reg_address: "",
     indicomp_res_reg_area: "",
@@ -109,18 +106,23 @@ const DonorCompanyCreate = () => {
   });
 
   const { data: statesHooks, isLoading: isLoadingStates } = useFetchState();
-  const { data: datasourceHook, isLoading: isLoadingDataSource } = useFetchDataSource();
-  const { data: promoterHook, isLoading: isLoadingPromoter } = useFetchPromoter();
+  const { data: datasourceHook, isLoading: isLoadingDataSource } =
+    useFetchDataSource();
+  const { data: promoterHook, isLoading: isLoadingPromoter } =
+    useFetchPromoter();
   const isLoading = isLoadingStates || isLoadingDataSource || isLoadingPromoter;
 
- const states = statesHooks?.data || [];
-const datasource = datasourceHook?.data || [];
-const promoter = promoterHook?.data || [];
+  const states = statesHooks?.data || [];
+  const datasource = datasourceHook?.data || [];
+  const promoter = promoterHook?.data || [];
 
   const handlePromoterNotList = () => {
-    setDonor(prev => ({
+    setDonor((prev) => ({
       ...prev,
-      indicomp_remarks: prev.indicomp_remarks + (prev.indicomp_remarks ? ' ' : '') + 'Promoter not in list'
+      indicomp_remarks:
+        prev.indicomp_remarks +
+        (prev.indicomp_remarks ? " " : "") +
+        "Promoter not in list",
     }));
   };
   const validateOnlyDigits = (inputtxt) => {
@@ -130,25 +132,25 @@ const promoter = promoterHook?.data || [];
 
   const onInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     const digitFields = [
-      'indicomp_mobile_phone', 
-      'indicomp_mobile_whatsapp', 
-      'indicomp_res_reg_pin_code', 
-      'indicomp_off_branch_pin_code'
+      "indicomp_mobile_phone",
+      "indicomp_mobile_whatsapp",
+      "indicomp_res_reg_pin_code",
+      "indicomp_off_branch_pin_code",
     ];
 
     if (digitFields.includes(name)) {
       if (validateOnlyDigits(value)) {
-        setDonor(prev => ({
+        setDonor((prev) => ({
           ...prev,
-          [name]: value
+          [name]: value,
         }));
       }
     } else {
-      setDonor(prev => ({
+      setDonor((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -157,10 +159,13 @@ const promoter = promoterHook?.data || [];
     const panValue = e.target.value;
     // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
     setDonor({ ...donor, indicomp_pan_no: panValue });
-  }
+  };
 
   const checkDuplicateDonor = async () => {
-    if (donor.indicomp_full_name && donor.indicomp_mobile_phone?.length === 10) {
+    if (
+      donor.indicomp_full_name &&
+      donor.indicomp_mobile_phone?.length === 10
+    ) {
       try {
         const response = await axios.post(
           `${BASE_URL}/api/check-donor-duplicate`,
@@ -181,7 +186,10 @@ const promoter = promoterHook?.data || [];
         }
         return true;
       } catch (error) {
-        console.error("Error checking duplicate donor", error.response.data.message);
+        console.error(
+          "Error checking duplicate donor",
+          error.response.data.message
+        );
         return true;
       }
     }
@@ -189,7 +197,10 @@ const promoter = promoterHook?.data || [];
   };
 
   useEffect(() => {
-    if (donor.indicomp_full_name && donor.indicomp_mobile_phone?.length === 10) {
+    if (
+      donor.indicomp_full_name &&
+      donor.indicomp_mobile_phone?.length === 10
+    ) {
       const timer = setTimeout(async () => {
         const isNotDuplicate = await checkDuplicateDonor();
         setIsDuplicate(!isNotDuplicate);
@@ -206,32 +217,36 @@ const promoter = promoterHook?.data || [];
     let isValid = true;
 
     if (!donor.indicomp_full_name?.trim()) {
-      newErrors.indicomp_full_name = 'Company Name is required';
+      newErrors.indicomp_full_name = "Company Name is required";
       isValid = false;
     }
 
     if (!donor.indicomp_type) {
-      newErrors.indicomp_type = 'Company Type is required';
+      newErrors.indicomp_type = "Company Type is required";
       isValid = false;
     }
 
     if (!donor.indicomp_com_contact_name) {
-      newErrors.indicomp_com_contact_name = 'Contact Name is required';
+      newErrors.indicomp_com_contact_name = "Contact Name is required";
       isValid = false;
     }
 
     if (!donor.title) {
-      newErrors.title = 'Title is required';
+      newErrors.title = "Title is required";
       isValid = false;
     }
 
     if (!donor.indicomp_gender) {
-      newErrors.indicomp_gender = 'Gender is required';
+      newErrors.indicomp_gender = "Gender is required";
       isValid = false;
     }
 
-    if (!donor.indicomp_pan_no || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(donor.indicomp_pan_no)) {
-      newErrors.indicomp_pan_no = 'Valid PAN Number is required (format: AAAAA9999A)';
+    if (
+      !donor.indicomp_pan_no ||
+      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(donor.indicomp_pan_no)
+    ) {
+      newErrors.indicomp_pan_no =
+        "Valid PAN Number is required (format: AAAAA9999A)";
       isValid = false;
     }
 
@@ -245,32 +260,37 @@ const promoter = promoterHook?.data || [];
     //   isValid = false;
     // }
 
-    if (!donor.indicomp_mobile_phone || !/^\d{10}$/.test(donor.indicomp_mobile_phone)) {
-      newErrors.indicomp_mobile_phone = 'Valid 10-digit Mobile Number is required';
+    if (
+      !donor.indicomp_mobile_phone ||
+      !/^\d{10}$/.test(donor.indicomp_mobile_phone)
+    ) {
+      newErrors.indicomp_mobile_phone =
+        "Valid 10-digit Mobile Number is required";
       isValid = false;
     }
 
     if (!donor.indicomp_res_reg_city?.trim()) {
-      newErrors.indicomp_res_reg_city = 'City is required';
+      newErrors.indicomp_res_reg_city = "City is required";
       isValid = false;
     }
 
     if (!donor.indicomp_res_reg_state) {
-      newErrors.indicomp_res_reg_state = 'State is required';
+      newErrors.indicomp_res_reg_state = "State is required";
       isValid = false;
     }
 
-    if (!donor.indicomp_res_reg_pin_code || !/^\d{6}$/.test(donor.indicomp_res_reg_pin_code)) {
-      newErrors.indicomp_res_reg_pin_code = 'Valid 6-digit Pincode is required';
+    if (
+      !donor.indicomp_res_reg_pin_code ||
+      !/^\d{6}$/.test(donor.indicomp_res_reg_pin_code)
+    ) {
+      newErrors.indicomp_res_reg_pin_code = "Valid 6-digit Pincode is required";
       isValid = false;
     }
 
     if (!donor.indicomp_corr_preffer) {
-      newErrors.indicomp_corr_preffer = 'Correspondence Preference is required';
+      newErrors.indicomp_corr_preffer = "Correspondence Preference is required";
       isValid = false;
     }
-
-     
 
     setErrors(newErrors);
     return { isValid, errors: newErrors };
@@ -289,9 +309,9 @@ const promoter = promoterHook?.data || [];
     onSuccess: (data) => {
       if (data.code === 201) {
         // Invalidate and refetch donor list
-        queryClient.invalidateQueries(['donor-list']);
-        toast.success(data.message|| 'Company Created Successfully');
-        
+        queryClient.invalidateQueries(["donor-list"]);
+        toast.success(data.message || "Company Created Successfully");
+
         // Reset form
         setDonor({
           indicomp_full_name: "",
@@ -328,26 +348,31 @@ const promoter = promoterHook?.data || [];
           indicomp_corr_preffer: "Registered",
           indicomp_csr: "",
         });
-        
-        navigate('/donor/donors');
+
+        navigate("/donor/donors");
       } else {
         toast.error(data.message || "Company Creation Error");
       }
     },
     onError: (error) => {
-      console.error("Donor Company Creation Error:", error.response.data.message);
-      toast.error(error.response.data.message || "Donor Company Creation Error");
+      console.error(
+        "Donor Company Creation Error:",
+        error.response.data.message
+      );
+      toast.error(
+        error.response.data.message || "Donor Company Creation Error"
+      );
     },
     onSettled: () => {
       setIsButtonDisabled(false);
-    }
+    },
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { isValid, errors } = validateForm();
-    
+
     if (!isValid) {
       const firstError = Object.values(errors)[0];
       toast.error(firstError);
@@ -363,42 +388,95 @@ const promoter = promoterHook?.data || [];
       const formData = new FormData();
       formData.append("indicomp_full_name", donor.indicomp_full_name || "");
       formData.append("title", donor.title || "");
-       
+
       formData.append("indicomp_type", donor.indicomp_type || "");
-      formData.append("indicomp_com_contact_name", donor.indicomp_com_contact_name || "");
-      formData.append("indicomp_com_contact_designation", donor.indicomp_com_contact_designation || "");
+      formData.append(
+        "indicomp_com_contact_name",
+        donor.indicomp_com_contact_name || ""
+      );
+      formData.append(
+        "indicomp_com_contact_designation",
+        donor.indicomp_com_contact_designation || ""
+      );
       formData.append("indicomp_gender", donor.indicomp_gender || "");
-      formData.append("indicomp_dob_annualday", donor.indicomp_dob_annualday || "");
+      formData.append(
+        "indicomp_dob_annualday",
+        donor.indicomp_dob_annualday || ""
+      );
       formData.append("indicomp_pan_no", donor.indicomp_pan_no || "");
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
       formData.append("indicomp_remarks", donor.indicomp_remarks || "");
       formData.append("indicomp_promoter", donor.indicomp_promoter || "");
       formData.append("indicomp_newpromoter", donor.indicomp_newpromoter || "");
       formData.append("indicomp_source", donor.indicomp_source || "");
-      formData.append("indicomp_mobile_phone", donor.indicomp_mobile_phone || "");
-      formData.append("indicomp_mobile_whatsapp", donor.indicomp_mobile_whatsapp || "");
+      formData.append(
+        "indicomp_mobile_phone",
+        donor.indicomp_mobile_phone || ""
+      );
+      formData.append(
+        "indicomp_mobile_whatsapp",
+        donor.indicomp_mobile_whatsapp || ""
+      );
       formData.append("indicomp_email", donor.indicomp_email || "");
       formData.append("indicomp_website", donor.indicomp_website || "");
-      formData.append("indicomp_res_reg_address", donor.indicomp_res_reg_address || "");
-      formData.append("indicomp_res_reg_area", donor.indicomp_res_reg_area || "");
-      formData.append("indicomp_res_reg_ladmark", donor.indicomp_res_reg_ladmark || "");
-      formData.append("indicomp_res_reg_city", donor.indicomp_res_reg_city || "");
-      formData.append("indicomp_res_reg_state", donor.indicomp_res_reg_state || "");
-      formData.append("indicomp_res_reg_pin_code", donor.indicomp_res_reg_pin_code || "");
-      formData.append("indicomp_off_branch_address", donor.indicomp_off_branch_address || "");
-      formData.append("indicomp_off_branch_area", donor.indicomp_off_branch_area || "");
-      formData.append("indicomp_off_branch_ladmark", donor.indicomp_off_branch_ladmark || "");
-      formData.append("indicomp_off_branch_city", donor.indicomp_off_branch_city || "");
-      formData.append("indicomp_off_branch_state", donor.indicomp_off_branch_state || "");
-      formData.append("indicomp_off_branch_pin_code", donor.indicomp_off_branch_pin_code || "");
-      formData.append("indicomp_corr_preffer", donor.indicomp_corr_preffer || "");
+      formData.append(
+        "indicomp_res_reg_address",
+        donor.indicomp_res_reg_address || ""
+      );
+      formData.append(
+        "indicomp_res_reg_area",
+        donor.indicomp_res_reg_area || ""
+      );
+      formData.append(
+        "indicomp_res_reg_ladmark",
+        donor.indicomp_res_reg_ladmark || ""
+      );
+      formData.append(
+        "indicomp_res_reg_city",
+        donor.indicomp_res_reg_city || ""
+      );
+      formData.append(
+        "indicomp_res_reg_state",
+        donor.indicomp_res_reg_state || ""
+      );
+      formData.append(
+        "indicomp_res_reg_pin_code",
+        donor.indicomp_res_reg_pin_code || ""
+      );
+      formData.append(
+        "indicomp_off_branch_address",
+        donor.indicomp_off_branch_address || ""
+      );
+      formData.append(
+        "indicomp_off_branch_area",
+        donor.indicomp_off_branch_area || ""
+      );
+      formData.append(
+        "indicomp_off_branch_ladmark",
+        donor.indicomp_off_branch_ladmark || ""
+      );
+      formData.append(
+        "indicomp_off_branch_city",
+        donor.indicomp_off_branch_city || ""
+      );
+      formData.append(
+        "indicomp_off_branch_state",
+        donor.indicomp_off_branch_state || ""
+      );
+      formData.append(
+        "indicomp_off_branch_pin_code",
+        donor.indicomp_off_branch_pin_code || ""
+      );
+      formData.append(
+        "indicomp_corr_preffer",
+        donor.indicomp_corr_preffer || ""
+      );
       formData.append("indicomp_belongs_to", donor.indicomp_belongs_to || "");
       formData.append("indicomp_donor_type", donor.indicomp_donor_type || "");
       formData.append("indicomp_csr", donor.indicomp_csr || "");
 
       setIsButtonDisabled(true);
       createDonorMutation.mutate(formData);
-      
     } catch (error) {
       console.error("Submission error:", error);
       toast.error("An error occurred during submission");
@@ -440,7 +518,9 @@ const promoter = promoterHook?.data || [];
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h1 className="text-md font-semibold text-gray-900">Add Company Donor</h1>
+                  <h1 className="text-md font-semibold text-gray-900">
+                    Add Company Donor
+                  </h1>
                   <p className="text-xs text-gray-500 mt-1">
                     Create a new company donor record
                   </p>
@@ -448,9 +528,9 @@ const promoter = promoterHook?.data || [];
               </div>
             </div>
           </div>
-          
-          <Button 
-            onClick={() => navigate('/donor/donors')}
+
+          <Button
+            onClick={() => navigate("/donor/donors")}
             variant="outline"
             size="sm"
             className="flex items-center gap-1 flex-shrink-0 mt-2 sm:mt-0"
@@ -471,11 +551,14 @@ const promoter = promoterHook?.data || [];
                 <Info className="w-4 h-4 " />
                 Company Details
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Company Name */}
                 <div className="">
-                  <Label htmlFor="indicomp_full_name" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_full_name"
+                    className="text-xs  font-medium"
+                  >
                     Company Name *
                   </Label>
                   <Input
@@ -483,14 +566,16 @@ const promoter = promoterHook?.data || [];
                     name="indicomp_full_name"
                     value={donor.indicomp_full_name}
                     onChange={onInputChange}
-                    className={isDuplicate ? 'border-red-500' : ''}
+                    className={isDuplicate ? "border-red-500" : ""}
                     placeholder="Company name (don't add title)"
                   />
                   {/* <p className="text-xs text-gray-500">
                     Please don't add M/s before name
                   </p> */}
                   {errors?.indicomp_full_name && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_full_name}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_full_name}
+                    </p>
                   )}
                   {isDuplicate && (
                     <div className="flex items-center gap-1 text-red-500 text-xs">
@@ -502,12 +587,17 @@ const promoter = promoterHook?.data || [];
 
                 {/* Company Type */}
                 <div className="">
-                  <Label htmlFor="indicomp_type" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_type"
+                    className="text-xs  font-medium"
+                  >
                     Company Type *
                   </Label>
-                  <Select 
-                    value={donor.indicomp_type} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_type: value }))}
+                  <Select
+                    value={donor.indicomp_type}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({ ...prev, indicomp_type: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Company Type" />
@@ -521,7 +611,9 @@ const promoter = promoterHook?.data || [];
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_type && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_type}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_type}
+                    </p>
                   )}
                 </div>
 
@@ -530,9 +622,11 @@ const promoter = promoterHook?.data || [];
                   <Label htmlFor="title" className="text-xs  font-medium">
                     Title *
                   </Label>
-                  <Select 
-                    value={donor.title} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, title: value }))}
+                  <Select
+                    value={donor.title}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({ ...prev, title: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Title" />
@@ -552,7 +646,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Contact Name */}
                 <div className="">
-                  <Label htmlFor="indicomp_com_contact_name" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_com_contact_name"
+                    className="text-xs  font-medium"
+                  >
                     Contact Name *
                   </Label>
                   <Input
@@ -563,13 +660,18 @@ const promoter = promoterHook?.data || [];
                     placeholder="Enter contact name"
                   />
                   {errors?.indicomp_com_contact_name && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_com_contact_name}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_com_contact_name}
+                    </p>
                   )}
                 </div>
 
                 {/* Designation */}
                 <div className="">
-                  <Label htmlFor="indicomp_com_contact_designation" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_com_contact_designation"
+                    className="text-xs  font-medium"
+                  >
                     Designation
                   </Label>
                   <Input
@@ -583,12 +685,17 @@ const promoter = promoterHook?.data || [];
 
                 {/* Gender */}
                 <div className="">
-                  <Label htmlFor="indicomp_gender" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_gender"
+                    className="text-xs  font-medium"
+                  >
                     Gender *
                   </Label>
-                  <Select 
-                    value={donor.indicomp_gender} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_gender: value }))}
+                  <Select
+                    value={donor.indicomp_gender}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({ ...prev, indicomp_gender: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -602,13 +709,18 @@ const promoter = promoterHook?.data || [];
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_gender && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_gender}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_gender}
+                    </p>
                   )}
                 </div>
 
                 {/* Annual Day */}
                 <div className="">
-                  <Label htmlFor="indicomp_dob_annualday" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_dob_annualday"
+                    className="text-xs  font-medium"
+                  >
                     Annual Day
                   </Label>
                   <Input
@@ -633,38 +745,46 @@ const promoter = promoterHook?.data || [];
                     placeholder="Enter PAN number"
                     className="uppercase"
                   /> */}
-                    <InputMask
-                mask="aaaaa9999a"
-                value={donor.indicomp_pan_no}
-                onChange={(e) => onChangePanNumber(e)}
-                formatChars={{
-                  9: "[0-9]",
-                  a: "[A-Z]",
-                }}
-              >
-                {() => (
-                  <div>
-             <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
-                    PAN Number *
-                  </Label>
-                    <Input
-                      type="text"
-                      label="PAN Number"
-                      name="panNumber"
-                     placeholder="Enter PAN number"
-                    />
-                  </div>
-                )}
-              </InputMask>
+                  <InputMask
+                    mask="aaaaa9999a"
+                    value={donor.indicomp_pan_no}
+                    onChange={(e) => onChangePanNumber(e)}
+                    formatChars={{
+                      9: "[0-9]",
+                      a: "[A-Z]",
+                    }}
+                  >
+                    {() => (
+                      <div>
+                        <Label
+                          htmlFor="indicomp_pan_no"
+                          className="text-xs  font-medium"
+                        >
+                          PAN Number *
+                        </Label>
+                        <Input
+                          type="text"
+                          label="PAN Number"
+                          name="panNumber"
+                          placeholder="Enter PAN number"
+                        />
+                      </div>
+                    )}
+                  </InputMask>
 
                   {errors?.indicomp_pan_no && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_pan_no}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_pan_no}
+                    </p>
                   )}
                 </div>
 
                 {/* Upload Logo */}
                 <div className="">
-                  <Label htmlFor="indicomp_image_logo" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_image_logo"
+                    className="text-xs  font-medium"
+                  >
                     Upload Company Logo
                   </Label>
                   <Input
@@ -672,17 +792,22 @@ const promoter = promoterHook?.data || [];
                     name="indicomp_image_logo"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setDonor(prev => ({ 
-                      ...prev, 
-                      indicomp_image_logo: e.target.files[0] 
-                    }))}
+                    onChange={(e) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_image_logo: e.target.files[0],
+                      }))
+                    }
                   />
                   {/* <p className="text-xs text-gray-500">Upload Company Logo</p> */}
                 </div>
 
                 {/* Remarks */}
                 <div className="">
-                  <Label htmlFor="indicomp_remarks" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_remarks"
+                    className="text-xs  font-medium"
+                  >
                     Remarks
                   </Label>
                   <Input
@@ -694,36 +819,44 @@ const promoter = promoterHook?.data || [];
                   />
                 </div>
 
-
-
-                
                 <div className="flex flex-col justify-between">
-                 <Label htmlFor="indicomp_promoter" className="text-xs  flex flex-row items-center justify-between  font-medium">
-                                    <span>Promoter</span>   <span className='hover:cursor-pointer hover:text-red-900 text-red-500' onClick={handlePromoterNotList} >
+                  <Label
+                    htmlFor="indicomp_promoter"
+                    className="text-xs  flex flex-row items-center justify-between  font-medium"
+                  >
+                    <span>Promoter</span>{" "}
+                    <span
+                      className="hover:cursor-pointer hover:text-red-900 text-red-500"
+                      onClick={handlePromoterNotList}
+                    >
                       Not in List!
                     </span>
-                                  </Label>
-                 <MemoizedSelect
+                  </Label>
+                  <MemoizedSelect
                     value={donor.indicomp_promoter}
                     // onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
                     onChange={(value) => {
-                      const selectedPromoter = promoter.find(p => p.indicomp_promoter === value);
-                      setDonor(prev => ({
+                      const selectedPromoter = promoter.find(
+                        (p) => p.indicomp_promoter == value
+                      );
+                      setDonor((prev) => ({
                         ...prev,
-                        indicomp_promoter: selectedPromoter?.indicomp_fts_id || '',
+                        indicomp_promoter:
+                          selectedPromoter?.indicomp_fts_id || "",
                       }));
                     }}
                     options={promoter.map((option) => ({
                       value: option.indicomp_promoter,
-                      label: option.indicomp_promoter
+                      label: option.indicomp_full_name,
                     }))}
                     placeholder="Select Promoter"
                   />
                   {errors?.indicomp_promoter && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_promoter}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_promoter}
+                    </p>
                   )}
                 </div>
-                 
 
                 {/* New Promoter (if Other selected) */}
                 {/* {donor.indicomp_promoter === "Other" && (
@@ -746,12 +879,20 @@ const promoter = promoterHook?.data || [];
 
                 {/* Belong To */}
                 <div className="">
-                  <Label htmlFor="indicomp_belongs_to" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_belongs_to"
+                    className="text-xs  font-medium"
+                  >
                     Belong To
                   </Label>
-                  <Select 
-                    value={donor.indicomp_belongs_to} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_belongs_to: value }))}
+                  <Select
+                    value={donor.indicomp_belongs_to}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_belongs_to: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Belong To" />
@@ -768,19 +909,27 @@ const promoter = promoterHook?.data || [];
 
                 {/* Source */}
                 <div className="">
-                  <Label htmlFor="indicomp_source" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_source"
+                    className="text-xs  font-medium"
+                  >
                     Source
                   </Label>
-                  <Select 
-                    value={donor.indicomp_source} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_source: value }))}
+                  <Select
+                    value={donor.indicomp_source}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({ ...prev, indicomp_source: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Source" />
                     </SelectTrigger>
                     <SelectContent>
                       {datasource.map((option) => (
-                        <SelectItem key={option.id} value={option.data_source_type}>
+                        <SelectItem
+                          key={option.id}
+                          value={option.data_source_type}
+                        >
                           {option.data_source_type}
                         </SelectItem>
                       ))}
@@ -790,12 +939,20 @@ const promoter = promoterHook?.data || [];
 
                 {/* Donor Type */}
                 <div className="">
-                  <Label htmlFor="indicomp_donor_type" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_donor_type"
+                    className="text-xs  font-medium"
+                  >
                     Donor Type
                   </Label>
-                  <Select 
-                    value={donor.indicomp_donor_type} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_donor_type: value }))}
+                  <Select
+                    value={donor.indicomp_donor_type}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_donor_type: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Donor Type" />
@@ -812,12 +969,17 @@ const promoter = promoterHook?.data || [];
 
                 {/* CSR */}
                 <div className="">
-                  <Label htmlFor="indicomp_csr" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_csr"
+                    className="text-xs  font-medium"
+                  >
                     CSR
                   </Label>
-                  <Select 
-                    value={donor.indicomp_csr} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_csr: value }))}
+                  <Select
+                    value={donor.indicomp_csr}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({ ...prev, indicomp_csr: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select CSR" />
@@ -840,11 +1002,14 @@ const promoter = promoterHook?.data || [];
                 <Phone className="w-4 h-4" />
                 Communication Details
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Mobile Phone */}
                 <div className="">
-                  <Label htmlFor="indicomp_mobile_phone" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_mobile_phone"
+                    className="text-xs  font-medium"
+                  >
                     Mobile Phone *
                   </Label>
                   <Input
@@ -855,10 +1020,12 @@ const promoter = promoterHook?.data || [];
                     onChange={onInputChange}
                     maxLength={10}
                     placeholder="Enter mobile number"
-                    className={isDuplicate ? 'border-red-500' : ''}
+                    className={isDuplicate ? "border-red-500" : ""}
                   />
                   {errors?.indicomp_mobile_phone && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_mobile_phone}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_mobile_phone}
+                    </p>
                   )}
                   {isDuplicate && (
                     <div className="flex items-center gap-1 text-red-500 text-xs">
@@ -870,7 +1037,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* WhatsApp */}
                 <div className="">
-                  <Label htmlFor="indicomp_mobile_whatsapp" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_mobile_whatsapp"
+                    className="text-xs  font-medium"
+                  >
                     WhatsApp
                   </Label>
                   <Input
@@ -886,7 +1056,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Email */}
                 <div className="">
-                  <Label htmlFor="indicomp_email" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_email"
+                    className="text-xs  font-medium"
+                  >
                     Email
                   </Label>
                   <Input
@@ -901,7 +1074,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Website */}
                 <div className="">
-                  <Label htmlFor="indicomp_website" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_website"
+                    className="text-xs  font-medium"
+                  >
                     Website
                   </Label>
                   <Input
@@ -921,11 +1097,14 @@ const promoter = promoterHook?.data || [];
                 <MapPin className="w-4 h-4" />
                 Registered Address
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Address */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_address" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_address"
+                    className="text-xs  font-medium"
+                  >
                     House & Street Number
                   </Label>
                   <Input
@@ -939,7 +1118,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Area */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_area" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_area"
+                    className="text-xs  font-medium"
+                  >
                     Area
                   </Label>
                   <Input
@@ -953,7 +1135,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Landmark */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_ladmark" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_ladmark"
+                    className="text-xs  font-medium"
+                  >
                     Landmark
                   </Label>
                   <Input
@@ -967,7 +1152,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* City */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_city" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_city"
+                    className="text-xs  font-medium"
+                  >
                     City *
                   </Label>
                   <Input
@@ -978,18 +1166,28 @@ const promoter = promoterHook?.data || [];
                     placeholder="Enter city"
                   />
                   {errors?.indicomp_res_reg_city && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_res_reg_city}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_res_reg_city}
+                    </p>
                   )}
                 </div>
 
                 {/* State */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_state" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_state"
+                    className="text-xs  font-medium"
+                  >
                     State *
                   </Label>
-                  <Select 
-                    value={donor.indicomp_res_reg_state} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_res_reg_state: value }))}
+                  <Select
+                    value={donor.indicomp_res_reg_state}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_res_reg_state: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select State" />
@@ -1003,13 +1201,18 @@ const promoter = promoterHook?.data || [];
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_res_reg_state && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_res_reg_state}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_res_reg_state}
+                    </p>
                   )}
                 </div>
 
                 {/* Pincode */}
                 <div className="">
-                  <Label htmlFor="indicomp_res_reg_pin_code" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_res_reg_pin_code"
+                    className="text-xs  font-medium"
+                  >
                     Pincode *
                   </Label>
                   <Input
@@ -1021,7 +1224,9 @@ const promoter = promoterHook?.data || [];
                     placeholder="Enter pincode"
                   />
                   {errors?.indicomp_res_reg_pin_code && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_res_reg_pin_code}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_res_reg_pin_code}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1033,11 +1238,14 @@ const promoter = promoterHook?.data || [];
                 <Briefcase className="w-4 h-4" />
                 Branch Office Address
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Office Address */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_address" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_address"
+                    className="text-xs  font-medium"
+                  >
                     Office & Street Number
                   </Label>
                   <Input
@@ -1051,7 +1259,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Office Area */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_area" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_area"
+                    className="text-xs  font-medium"
+                  >
                     Area
                   </Label>
                   <Input
@@ -1065,7 +1276,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Office Landmark */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_ladmark" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_ladmark"
+                    className="text-xs  font-medium"
+                  >
                     Landmark
                   </Label>
                   <Input
@@ -1079,7 +1293,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Office City */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_city" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_city"
+                    className="text-xs  font-medium"
+                  >
                     City
                   </Label>
                   <Input
@@ -1093,12 +1310,20 @@ const promoter = promoterHook?.data || [];
 
                 {/* Office State */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_state" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_state"
+                    className="text-xs  font-medium"
+                  >
                     State
                   </Label>
-                  <Select 
-                    value={donor.indicomp_off_branch_state} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_off_branch_state: value }))}
+                  <Select
+                    value={donor.indicomp_off_branch_state}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_off_branch_state: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select State" />
@@ -1115,7 +1340,10 @@ const promoter = promoterHook?.data || [];
 
                 {/* Office Pincode */}
                 <div className="">
-                  <Label htmlFor="indicomp_off_branch_pin_code" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_off_branch_pin_code"
+                    className="text-xs  font-medium"
+                  >
                     Pincode
                   </Label>
                   <Input
@@ -1130,12 +1358,20 @@ const promoter = promoterHook?.data || [];
 
                 {/* Correspondence Preference */}
                 <div className="">
-                  <Label htmlFor="indicomp_corr_preffer" className="text-xs  font-medium">
+                  <Label
+                    htmlFor="indicomp_corr_preffer"
+                    className="text-xs  font-medium"
+                  >
                     Correspondence Preference *
                   </Label>
-                  <Select 
-                    value={donor.indicomp_corr_preffer} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_corr_preffer: value }))}
+                  <Select
+                    value={donor.indicomp_corr_preffer}
+                    onValueChange={(value) =>
+                      setDonor((prev) => ({
+                        ...prev,
+                        indicomp_corr_preffer: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Preference" />
@@ -1149,7 +1385,9 @@ const promoter = promoterHook?.data || [];
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_corr_preffer && (
-                    <p className="text-red-500 text-xs">{errors.indicomp_corr_preffer}</p>
+                    <p className="text-red-500 text-xs">
+                      {errors.indicomp_corr_preffer}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1177,7 +1415,7 @@ const promoter = promoterHook?.data || [];
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/donor/donors')}
+                onClick={() => navigate("/donor/donors")}
               >
                 Cancel
               </Button>

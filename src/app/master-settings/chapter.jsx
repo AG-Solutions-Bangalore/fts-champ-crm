@@ -1,10 +1,9 @@
-import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChapterList from "@/components/master-settings/chapter-superadmin/chapter-list";
-import StateList from "@/components/master-settings/state/state-list";
 import DesignationList from "@/components/master-settings/designation/designation-list";
-import OtsList from "@/components/master-settings/ots/ots-list";
 import FaqList from "@/components/master-settings/faq/faq-list";
+import OtsList from "@/components/master-settings/ots/ots-list";
+import StateList from "@/components/master-settings/state/state-list";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Chapter = () => {
   return (

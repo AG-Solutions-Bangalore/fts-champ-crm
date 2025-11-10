@@ -27,14 +27,13 @@ const DonationView = ({
     }
   }, [receiptFromDate, receiptToDate]);
 
-  const donorsummary = data?.receipt || [];
- 
+  const donorsummary = data?.data || [];
   const groupedData = useMemo(() => {
     const result = {};
     donorsummary.forEach((item) => {
       const year = item.chapter_name;
       const donationType = item.receipt_donation_type;
-      const amount = item.receipt_total_amount;
+      const amount = parseFloat(item.receipt_total_amount) || 0;
       const donationCount = item.total_count;
       const otsCount = item.receipt_no_of_ots;
 

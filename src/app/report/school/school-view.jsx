@@ -27,9 +27,9 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
       onLoadingChange(loader);
     }
   }, [loader, onLoadingChange]);
-  const SchoolAlotReceipt = data?.SchoolAlotReceipt || {};
-  const SchoolAlotView = data?.SchoolAlotView || [];
-  const OTSReceipts = data?.OTSReceipts || [];
+  const SchoolAlotReceipt = data?.data?.individualCompany || {};
+  const SchoolAlotView = data?.data?.SchoolAlotView || [];
+  const OTSReceipts = data?.data?.OTSReceipts || [];
   return (
     <>
       {!loader && error && (
@@ -52,25 +52,19 @@ const SchoolView = ({ indicompFullName, componentRef, onLoadingChange }) => {
                   </div>
                   <div className="flex justify-between">
                     <div>
-                      {SchoolAlotReceipt?.individual_company?.indicomp_type !==
+                      {SchoolAlotReceipt?.donor?.indicomp_type !==
                         "Individual" && (
                         <label>
                           Donor Name :{" "}
-                          {
-                            SchoolAlotReceipt?.individual_company
-                              ?.indicomp_full_name
-                          }
+                          {SchoolAlotReceipt?.donor?.indicomp_full_name}
                         </label>
                       )}
 
-                      {SchoolAlotReceipt?.individual_company?.indicomp_type ===
+                      {SchoolAlotReceipt?.donor?.indicomp_type ===
                         "Individual" && (
                         <label>
                           Donor Name :{" "}
-                          {
-                            SchoolAlotReceipt?.individual_company
-                              ?.indicomp_full_name
-                          }
+                          {SchoolAlotReceipt?.donor?.indicomp_full_name}
                         </label>
                       )}
                     </div>

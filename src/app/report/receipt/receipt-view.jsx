@@ -13,7 +13,7 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
     refetch,
   } = useGetMutation(
     "recepit-summary-view",
-    `${RECEIPT_SUMMARY_VIEW}?${receiptFromDate}&${receiptToDate}`,
+    `${RECEIPT_SUMMARY_VIEW}?from_date=${receiptFromDate}&to_date=${receiptToDate}`,
     {},
     { enabled: false }
   );
@@ -24,14 +24,18 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
     }
   }, [receiptFromDate, receiptToDate]);
   const donorsummary = data?.receipt || [];
-  const receiptsummary = data?.data?.receiptTotal || [];
-  const grandots = data?.data?.receipt_grand_total_ots || [];
-  const totalsummarygeneral = data?.data?.recveiptTotalGeneral || [];
-  const receiptsummaryfootertotal =
-    data?.data?.receipt_grand_total_amount || [];
-  const grandtotal = data?.data?.receipt_grand_total_count || [];
-  const receiptTotalMembership = data?.data?.receiptTotalMembership || [];
-  const receiptTotalOTS = data?.data?.receiptTotalOTS || [];
+  const receiptsummary = data?.receiptTotal || [];
+  const grandots = data?.receipt_grand_total_ots || "";
+  const totalsummarygeneral = data?.recveiptTotalGeneral || "";
+  const receiptsummaryfootertotal = data?.receipt_grand_total_amount || "";
+  const grandtotal = data?.receipt_grand_total_count || "";
+  const receiptTotalMembership = data?.receiptTotalMembership || "";
+  const receiptTotalOTS = data?.receiptTotalOTS || "";
+  const safeNumber = (value) => {
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  };
+
   return (
     <>
       {!loader && error && (
@@ -83,13 +87,13 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                             </td>
                             <td className="border border-black text-right px-4 text-xs">
                               <NumericFormat
-                                value={dataSumm.total_amount}
-                                displayType={"text"}
-                                thousandSeparator={true}
+                                value={safeNumber(dataSumm.total_amount)}
+                                displayType="text"
+                                thousandSeparator
                                 thousandsGroupStyle="lakh"
-                                prefix={"₹"}
+                                prefix="₹"
                                 decimalScale={0}
-                                fixedDecimalScale={true}
+                                fixedDecimalScale
                               />
                             </td>
                           </tr>
@@ -114,115 +118,88 @@ const RecepitView = ({ componentRef, receiptFromDate, receiptToDate }) => {
                           >
                             Total
                           </td>
-                          {grandtotal?.map((grandcount, key) => (
-                            <td
-                              key={key}
-                              className="border border-black px-4 py-2 text-xs font-bold"
-                            >
-                              {grandcount.total_grand_count}
-                            </td>
-                          ))}
-                          {grandots.map((footv, key) => (
-                            <td
-                              key={key}
-                              className="border border-black px-4 py-2 text-xs font-bold"
-                            >
-                              {footv.total_no_of_ots}
-                            </td>
-                          ))}
-                          {receiptsummaryfootertotal?.map((foota, key) => (
-                            <td
-                              key={key}
-                              className="border border-black text-right px-4 py-2 text-xs font-bold"
-                            >
-                              <NumericFormat
-                                value={foota.total_grand_amount}
-                                displayType={"text"}
-                                thousandSeparator={true}
-                                thousandsGroupStyle="lakh"
-                                prefix={"₹"}
-                                decimalScale={0}
-                                fixedDecimalScale={true}
-                              />
-                            </td>
-                          ))}
+                          <td className="border border-black px-4 py-2 text-xs font-bold">
+                            {grandtotal}
+                          </td>
+
+                          <td className="border border-black px-4 py-2 text-xs font-bold">
+                            {grandots}
+                          </td>
+
+                          <td className="border border-black text-right px-4 py-2 text-xs font-bold">
+                            <NumericFormat
+                              value={safeNumber(receiptsummaryfootertotal)}
+                              displayType="text"
+                              thousandSeparator
+                              thousandsGroupStyle="lakh"
+                              prefix="₹"
+                              decimalScale={0}
+                              fixedDecimalScale
+                            />
+                          </td>
                         </tr>
                       </tfoot>
                     )}
                   </table>
 
                   <div className="grid grid-cols-4 mt-6">
-                    {receiptTotalOTS?.length > 0 && (
+                   
                       <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
                         <b className="items-center text-center">
                           One Teacher School
                         </b>
-                        {receiptTotalOTS.map((grandcount, key) => (
-                          <NumericFormat
-                            key={key}
-                            thousandSeparator={true}
-                            thousandsGroupStyle="lakh"
-                            displayType={"text"}
-                            prefix={"₹ "}
-                            value={grandcount.total_ots_donation}
-                            className="mt-2"
-                          />
-                        ))}
+                        <NumericFormat
+                          thousandSeparator
+                          thousandsGroupStyle="lakh"
+                          displayType="text"
+                          prefix="₹ "
+                          value={safeNumber(receiptTotalOTS)}
+                          className="mt-2"
+                        />
                       </div>
-                    )}
+                 
 
-                    {receiptTotalMembership?.length > 0 && (
                       <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
                         <b className="items-center text-center">
                           Membership Fees
                         </b>
-                        {receiptTotalMembership.map((grandcount, key) => (
-                          <NumericFormat
-                            key={key}
-                            thousandSeparator={true}
-                            thousandsGroupStyle="lakh"
-                            displayType={"text"}
-                            prefix={"₹ "}
-                            value={grandcount.total_membership_donation}
-                            className="mt-2"
-                          />
-                        ))}
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={safeNumber(receiptTotalMembership)}
+                          className="mt-2"
+                        />
                       </div>
-                    )}
+             
 
-                    {totalsummarygeneral?.length > 0 && (
+                 
                       <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
                         <b className="items-center text-center">Gn. Donation</b>
-                        {totalsummarygeneral.map((grandcount, key) => (
-                          <NumericFormat
-                            key={key}
-                            thousandSeparator={true}
-                            thousandsGroupStyle="lakh"
-                            displayType={"text"}
-                            prefix={"₹ "}
-                            value={grandcount.total_general_donation}
-                            className="mt-2"
-                          />
-                        ))}
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={safeNumber(totalsummarygeneral)}
+                          className="mt-2"
+                        />
                       </div>
-                    )}
+                 
 
-                    {receiptsummary?.length > 0 && (
                       <div className="col-xl-3 flex items-center flex-col mb-4 md:mb-0">
                         <b className="items-center text-center">Total</b>
-                        {receiptsummary.map((grandcount, key) => (
-                          <NumericFormat
-                            key={key}
-                            thousandSeparator={true}
-                            thousandsGroupStyle="lakh"
-                            displayType={"text"}
-                            prefix={"₹ "}
-                            value={grandcount.total_donation}
-                            className="mt-2"
-                          />
-                        ))}
+                        <NumericFormat
+                          thousandSeparator={true}
+                          thousandsGroupStyle="lakh"
+                          displayType={"text"}
+                          prefix={"₹ "}
+                          value={safeNumber(receiptsummary)}
+                          className="mt-2"
+                        />
                       </div>
-                    )}
+                  
                   </div>
                 </div>
               </Card>

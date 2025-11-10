@@ -11,7 +11,7 @@ A modern, full-featured **Customer Relationship Management (CRM)** system built 
 
 ```
 
-sajid-tech-fts-champ-crm/
+fts-champ-crm/
 ├── README.md
 ├── package.json
 ├── vite.config.js
@@ -93,13 +93,13 @@ sajid-tech-fts-champ-crm/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/sajid-tech/fts-champ-crm.git
+   git clone https://github.com/fts-champ-crm.git
 ````
 
 2. **Navigate into the project**
 
    ```bash
-   cd sajid-tech-fts-champ-crm
+   cd fts-champ-crm
    ```
 
 3. **Install dependencies**
@@ -190,7 +190,6 @@ VITE_APP_ENV=development
 
 **Project Name:** FTS Champ CRM
 **Version:** 3.0.8
-**Developed by:** Sajid Tech
 **Frontend Framework:** React (Vite + Tailwind + ShadCN)
 
 ---

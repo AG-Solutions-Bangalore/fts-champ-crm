@@ -2,63 +2,7 @@ import LoadingBar from "@/components/loader/loading-bar";
 import ReceiptEdit from "@/app/receipt/recept-edit";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-
-// import Login from "@/app/auth/login";
-// import DonorList from "@/app/donor/donor-list/donor-list";
-// import ReceiptCreate from "@/app/donor/donor-list/receipt-create";
-// import AllDownload from "@/app/download/all-download";
-// import NotFound from "@/app/errors/not-found";
-// import Home from "@/app/home/home";
-// import Chapter from "@/app/master-settings/chapter";
-// import Viewer from "@/app/master-settings/viewer";
-// import MembershipActive from "@/app/membership/membership-active";
-// import MemberShipDashboard from "@/app/membership/membership-dashboard";
-// import MemberShipInactive from "@/app/membership/membership-inactive";
-// import MembershipList from "@/app/membership/membership-list";
-// import FaqOther from "@/app/other/faq/faq";
-// import Notification from "@/app/other/notification/notification";
-// import Team from "@/app/other/team/team";
-// import Maintenance from "@/components/common/maintenance";
-// import ForgotPassword from "@/components/forgot-password/forgot-password";
-// import AuthRoute from "./auth-route";
-// import ProtectedRoute from "./protected-route";
-// import DonorCompanyCreate from "@/app/donor/donor-list/donor-company-create";
-// import DonorIndiviusalCreate from "@/app/donor/donor-list/donor-indiviusal-create";
-// import DonorView from "@/app/donor/donor-list/donor-view";
-// import DuplicateDonor from "@/app/donor/duplicate/duplicate-donor";
-// import DuplicateDonorEdit from "@/app/donor/duplicate/duplicate-donor-edit";
-// import Receipt from "@/app/receipt/receipt";
-// import ReceiptView from "@/app/receipt/receipt-view";
-// import DBStatement from "@/app/report/10db-statement/10db-statement";
-// import DonationSummary from "@/app/report/donation/donation";
-// import Donor from "@/app/report/donor/donor";
-// import Promoter from "@/app/report/promoter/promoter";
-// import ReceiptSummary from "@/app/report/receipt/receipt";
-// import SchoolSummary from "@/app/report/school/school";
-// import SuspenseSummary from "@/app/report/suspense/suspense";
-// import RepeatedDonor from "@/app/school/repeated-donor/repeated-donor";
-// import SchoolAllotLetter from "@/app/school/school-alloted/allotment-letter";
-// import SchoolAlloted from "@/app/school/school-alloted/school-alloted";
-// import SchoolAllotEdit from "@/app/school/school-alloted/school-alloted-edit";
-// import SchoolAllotView from "@/app/school/school-alloted/school-alloted-view";
-// import DonorDetails from "@/app/school/school-allotment/donor-details";
-// import SchoolToAllot from "@/app/school/school-allotment/school-allotment";
-// import SchoolList from "@/app/school/school-list/school-list";
-// import SchoolListView from "@/app/school/school-list/school-list-view";
-// import Settings from "@/app/setting/setting";
-// import AllotedList from "@/app/school/repeated-donor/alloted-list";
-// import DonorIndiviusalEdit from "@/app/donor/donor-list/donor-indiviusal-edit";
-// import DonorCompanyEdit from "@/app/donor/donor-list/donor-company-edit";
-// import RecepitZeroList from "@/app/recepit-super/recepit-zero-list";
-// import RecepitNonZeroList from "@/app/recepit-super/recepit-nonzero-list";
-// import CreateViewer from "@/components/master-settings/viewers/create-viewer";
-// import EditViewer from "@/components/master-settings/viewers/edit-viewer";
-// import ChapterViewSuperAdmin from "@/components/master-settings/chapter-superadmin/chapter-view";
-// import ChapterCreate from "@/components/master-settings/chapter-superadmin/chapter-create";
-// import ChapterViewAdmin from "@/app/chapter/chapter-view-admin";
-// import SuperReceiptDonor from "@/app/change-recepit-donor/change-recepit-donor";
-// import MultipleRecepitList from "@/app/recepit-super/multiple-recepit-list";
-
+import Maintenance from "@/components/common/maintenance";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(() =>
@@ -84,7 +28,7 @@ const Notification = lazy(() =>
   import("@/app/other/notification/notification")
 );
 const Team = lazy(() => import("@/app/other/team/team"));
-const Maintenance = lazy(() => import("@/components/common/maintenance"));
+// const Maintenance = lazy(() => import("@/components/common/maintenance"));
 const ForgotPassword = lazy(() =>
   import("@/components/forgot-password/forgot-password")
 );
