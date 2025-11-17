@@ -218,16 +218,7 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-    // if (!donor.indicomp_promoter) {
-    //   newErrors.indicomp_promoter = 'Promoter is required';
-    //   isValid = false;
-    // }
-
-    // if (donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-    //   newErrors.indicomp_newpromoter = 'Please specify promoter';
-    //   isValid = false;
-    // }
-
+  
     if (
       !donor.indicomp_mobile_phone ||
       !/^\d{10}$/.test(donor.indicomp_mobile_phone)
@@ -260,10 +251,6 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-    // if (donor.indicomp_is_promoter === "Yes" && donor.indicomp_promoter === 'Other' && !donor.indicomp_newpromoter?.trim()) {
-    //   newErrors.indicomp_newpromoter = 'Please specify promoter';
-    //   isValid = false;
-    // }
 
     setErrors(newErrors);
     return { isValid, errors: newErrors };
@@ -693,17 +680,7 @@ const DonorIndiviusalCreate = () => {
 
                 {/* PAN Number */}
                 <div className=" ">
-                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs  font-medium">
-                    PAN Number
-                  </Label> */}
-                  {/* <Input
-                    id="indicomp_pan_no"
-                    name="indicomp_pan_no"
-                    value={donor.indicomp_pan_no}
-                    onChange={onChangePanNumber}
-                    placeholder="Enter PAN number"
-                    className="uppercase"
-                  /> */}
+              
                   <InputMask
                     mask="aaaaa9999a"
                     value={donor.indicomp_pan_no}
@@ -840,27 +817,7 @@ const DonorIndiviusalCreate = () => {
                   )}
                 </div>
 
-                {/* New Promoter (if Other selected) */}
-                {/*
-                {donor.indicomp_promoter === "Other" && (
-                  <div className=" ">
-                    <Label htmlFor="indicomp_newpromoter" className="text-xs  font-medium">
-                      Promoter Details
-                    </Label>
-                    <Input
-                      id="indicomp_newpromoter"
-                      name="indicomp_newpromoter"
-                      value={donor.indicomp_newpromoter}
-                      onChange={onInputChange}
-                      placeholder="Specify promoter"
-                    />
-                    {errors?.indicomp_newpromoter && (
-                      <p className="text-red-500 text-xs">{errors.indicomp_newpromoter}</p>
-                    )}
-                  </div>
-                )}
- */}
-                {/* Belong To */}
+ 
                 <div className=" ">
                   <Label
                     htmlFor="indicomp_belongs_to"

@@ -15,7 +15,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import BASE_URL from "@/config/base-url";
+import useNumericInput from "@/hooks/use-numeric-input";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -25,16 +28,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, Loader2, ReceiptText, Search, SquarePlus, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import useNumericInput from "@/hooks/use-numeric-input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, ReceiptText, Search, SquarePlus } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Link, useNavigate } from "react-router-dom";
 import { navigateToCreateReceipt } from "@/api";
-import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
 
 const DonorList = () => {
   const userType = Cookies.get('user_type_id');

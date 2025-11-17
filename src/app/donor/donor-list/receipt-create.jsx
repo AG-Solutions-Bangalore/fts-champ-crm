@@ -1,38 +1,22 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { toast } from 'sonner';
-import { useNavigate, useParams } from 'react-router-dom';
 import Cookies from 'js-cookie';
-import moment from 'moment';
-import { 
-  ArrowLeft, 
-  User, 
-  Calendar, 
-  FileText, 
-  IndianRupee,
+import {
+  ArrowLeft,
+  FileText,
   Mail,
-  Shield,
-  Target,
-  School,
-  Users,
-  Building
+  Shield
 } from 'lucide-react';
+import moment from 'moment';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { DONOR_LIST_CREATE_RECEIPT, fetchDonorDataInCreateReceiptById } from '@/api';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -42,11 +26,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import BASE_URL from '@/config/base-url';
-import { DONOR_LIST_CREATE_RECEIPT, fetchDonorDataInCreateReceiptById } from '@/api';
-import ReceiptDraft from './receipt-draft';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useFetchDataSource, useFetchMembershipYear, useFetchReceiptControl, useFetchSchoolAllotmentYear } from '@/hooks/use-api';
 import useCreateFollowup from '@/hooks/use-create-followup';
+import ReceiptDraft from './receipt-draft';
 
 const exemptionOptions = [
   { value: '80G', label: '80G' },
@@ -121,12 +113,7 @@ const [draftData, setDraftData] = useState(null);
     receipt_csr: 'No',
   });
 
-  // const [dataSources, setDataSources] = useState([]);
-  // const [membershipYears, setMembershipYears] = useState([]);
-  // const [schoolAllotYears, setSchoolAllotYears] = useState([]);
-  // const [receiptControl, setReceiptControl] = useState({});
 
-  
   const { data: donorData, isLoading } = useQuery({
     queryKey: ['donor-data', id],
     queryFn: async () => {
@@ -140,30 +127,6 @@ const [draftData, setDraftData] = useState(null);
   const userdata = donorData?.data || {};
 
  
-  // const { data: additionalData } = useQuery({
-  //   queryKey: ['receipt-additional-data'],
-  //   queryFn: async () => {
-  //     const [dataSourcesRes, membershipYearsRes, schoolAllotYearsRes, receiptControlRes] = await Promise.all([
-  //       axios.get(`${BASE_URL}/api/data-source`, { headers: { Authorization: `Bearer ${token}` } }),
-  //       axios.get(`${BASE_URL}/api/fetch-membership-year`, { headers: { Authorization: `Bearer ${token}` } }),
-  //       axios.get(`${BASE_URL}/api/fetch-school-allotment-year`, { headers: { Authorization: `Bearer ${token}` } }),
-  //       axios.get(`${BASE_URL}/api/fetch-receipt-control`, { headers: { Authorization: `Bearer ${token}` } })
-  //     ]);
-
-  //     return {
-  //       dataSources: dataSourcesRes.data.data,
-  //       membershipYears: membershipYearsRes.data.data,
-  //       schoolAllotYears: schoolAllotYearsRes.data.data,
-  //       receiptControl: receiptControlRes.data.data
-  //     };
-  //   },
-  //   retry: 2,
-  //     staleTime: 30 * 60 * 1000,
-  //   cacheTime: 60 * 60 * 1000,
-  //   refetchOnMount: false,
-  //   refetchOnWindowFocus: false,
-  //   refetchOnReconnect: false,
-  // });
 const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSource();
     const { data: membershipYearHook, isLoading: isLoadingMembershipYear } = useFetchMembershipYear();
     const { data: schoolAllotYearHook, isLoading: isLoadingSchoolAllotYear } = useFetchSchoolAllotmentYear();
@@ -176,14 +139,6 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
     const schoolAllotYears = schoolAllotYearHook?.data || [];
     const receiptControl = receiptControlHook?.data || [];
 
-  // useEffect(() => {
-  //   if (additionalData) {
-  //     setDataSources(additionalData.dataSources);
-  //     setMembershipYears(additionalData.membershipYears);
-  //     setSchoolAllotYears(additionalData.schoolAllotYears);
-  //     setReceiptControl(additionalData.receiptControl);
-  //   }
-  // }, [additionalData]);
 
   const handleButtonGroupChange = (stateName, value) => {
     if (stateName === 'receipt_exemption_type' && value === '80G') {
@@ -378,32 +333,6 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
       return;
     }
   
-    // const formData = new FormData();
-    // formData.append('indicomp_fts_id', userdata.indicomp_fts_id);
-  
-  
-    // if (receiptControl.date_open === 'No' && receiptControl.date_open_one === 'No') {
-    //   formData.append('receipt_date', todayDate);
-    // } else if (receiptControl.date_open === 'Yes') {
-    //   formData.append('receipt_date', donor.receipt_date);
-    // } else if (receiptControl.date_open_one === 'Yes') {
-    //   formData.append('receipt_date', receiptControl.date_open_one_date);
-    // }
-  
-  
-    // Object.keys(donor).forEach(key => {
-    //   if (key !== 'receipt_date' && key !== 'donor_promoter') {
-    //     if (donor[key] !== undefined && donor[key] !== null) {
-    //       formData.append(key, donor[key]);
-    //     }
-    //   }
-    // });
-  
-  
-    // formData.append('donor_promoter', userdata.indicomp_promoter);
-  
-    // setIsButtonDisabled(true);
-    // createReceiptMutation.mutate(formData);
 
     setDraftData({
       ...donor,
@@ -844,24 +773,7 @@ const { data: datasourceHook, isLoading: isLoadingDatasource } = useFetchDataSou
 
             {/* Submit Buttons - Compact */}
             <div className="flex gap-2 pt-3 border-t border-gray-200">
-              {/* <Button
-                type="submit"
-                disabled={isButtonDisabled || createReceiptMutation.isPending}
-                className="flex items-center gap-2 h-9"
-                size="sm"
-              >
-                {createReceiptMutation.isPending ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-3 h-3" />
-                    Create Receipt
-                  </>
-                )}
-              </Button> */}
+   
             <Button
   type="button" 
   onClick={handleSubmit}

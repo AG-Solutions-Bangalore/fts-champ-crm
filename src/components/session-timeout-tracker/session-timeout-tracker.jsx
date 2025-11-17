@@ -29,7 +29,6 @@ const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
     try {
       const expiryDate = new Date(expiryTime);
       if (isNaN(expiryDate.getTime())) {
-        console.warn("❌ Invalid expiry date");
         return null;
       }
 

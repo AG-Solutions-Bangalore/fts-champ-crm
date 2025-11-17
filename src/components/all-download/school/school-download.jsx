@@ -284,35 +284,7 @@ const SchoolDownload = () => {
     }
   });
 
-  // const viewAllottedMutation = useMutation({
-  //   mutationFn: async (downloadData) => {
-  //     const response = await axios.post(DOWNLOAD_SCHOOL_ALLOTED, downloadData, {
-  //       headers: { 'Authorization': `Bearer ${token}` },
-  //       responseType: 'blob'
-  //     });
-  //     return response.data;
-  //   },
-  //   onSuccess: async (blob) => {
-  //     const text = await blob.text();
-  //     const rows = text.split('\n').filter(Boolean);
-  //     const headers = rows[0].split(',');
-  //     const data = rows.slice(1).map(row => {
-  //       const values = row.split(',');
-  //       const obj = {};
-  //       headers.forEach((header, idx) => {
-  //         const cleanHeader = header.replace(/^"|"$/g, '');
-  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-  //         obj[cleanHeader] = cleanValue;
-  //       });
-  //       return obj;
-  //     });
-  //     setJsonData(data);
-  //     setDataType('allotted');
-  //   },
-  //   onError: () => {
-  //     toast.error('Failed to fetch school allotted data');
-  //   }
-  // });
+  
 
   const viewAllottedMutation = useMutation({
     mutationFn: async (downloadData) => {
@@ -417,35 +389,7 @@ const SchoolDownload = () => {
       toast.error('Failed to fetch receipt data');
     }
   });
-  // const viewUnallottedMutation = useMutation({
-  //   mutationFn: async (downloadData) => {
-  //     const response = await axios.post(DOWNLOAD_SCHOOL_UNALLOTED, downloadData, {
-  //       headers: { 'Authorization': `Bearer ${token}` },
-  //       responseType: 'blob'
-  //     });
-  //     return response.data;
-  //   },
-  //   onSuccess: async (blob) => {
-  //     const text = await blob.text();
-  //     const rows = text.split('\n').filter(Boolean);
-  //     const headers = rows[0].split(',');
-  //     const data = rows.slice(1).map(row => {
-  //       const values = row.split(',');
-  //       const obj = {};
-  //       headers.forEach((header, idx) => {
-  //         const cleanHeader = header.replace(/^"|"$/g, '');
-  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-  //         obj[cleanHeader] = cleanValue;
-  //       });
-  //       return obj;
-  //     });
-  //     setJsonData(data);
-  //     setDataType('unallotted');
-  //   },
-  //   onError: () => {
-  //     toast.error('Failed to fetch school unallotted data');
-  //   }
-  // });
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -9,9 +9,7 @@ export const MemoizedSelect = React.memo(
       label: option.label,
     }));
 
-    // const selectedOption = selectOptions.find(
-    //   (option) => option.value == value
-    // );
+
     const selectedOption =
       value !== "" && value !== null
         ? selectOptions.find((option) => option.value === value)

@@ -62,7 +62,7 @@ const SidebarProvider = React.forwardRef(
 
     const setOpen = React.useCallback(
       (value) => {
-        const newOpen = typeof value === "function" ? value(open) : value;
+        const newOpen = typeof value == "function" ? value(open) : value;
 
         if (setOpenProp) {
           setOpenProp(newOpen);

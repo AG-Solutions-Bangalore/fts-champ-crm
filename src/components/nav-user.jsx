@@ -17,32 +17,19 @@ import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
+import { appLogout } from "@/utils/logout";
 
 export function NavUser({ user }) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(
-    localStorage.getItem("sidebar:state") === "true"
+    localStorage.getItem("sidebar:state") == "true"
   );
 
   const navigate = useNavigate();
   const user_position = Cookies.get("email");
 
   const handleLogout = () => {
-    [
-      "token",
-      "id",
-      "name",
-      "username",
-      "chapter_id",
-      "viewer_chapter_ids",
-      "user_type_id",
-      "token-expire-time",
-      "ver_con",
-      "email",
-      "currentYear",
-      "favorite_chapters",
-      "recent_chapters",
-    ].forEach((cookie) => Cookies.remove(cookie));
+    appLogout();
     navigate("/");
   };
 
@@ -55,11 +42,11 @@ export function NavUser({ user }) {
   // 🔹 Watch for sidebar state changes in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
-      setSidebarOpen(localStorage.getItem("sidebar:state") === "true");
+      setSidebarOpen(localStorage.getItem("sidebar:state") == "true");
     };
 
     window.addEventListener("storage", handleStorageChange);
-    const interval = setInterval(handleStorageChange, 500); // fallback for same-tab updates
+    const interval = setInterval(handleStorageChange, 500);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -77,7 +64,7 @@ export function NavUser({ user }) {
     mutationFn: async () => Promise.resolve(),
     onSuccess: () => {
       toast.success("Update completed successfully");
-      handleLogout();
+      appLogout();
       window.location.reload();
     },
     onError: (error) => {

@@ -40,7 +40,6 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
-// download-school-alloted-multi
 const MultiDownloadAllotment = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -117,7 +116,6 @@ const MultiDownloadAllotment = () => {
       size: 60,
     },
 
-    // Donor Name
     {
       accessorKey: "id",
       header: "ID",
@@ -138,7 +136,7 @@ const MultiDownloadAllotment = () => {
       },
     },
 
-    // School Allotment Year
+  
     {
       accessorKey: "schoolalot_financial_year",
       header: "School Allot Year",
@@ -175,7 +173,7 @@ const MultiDownloadAllotment = () => {
       size: 200,
     },
 
-    // OTS Received
+   
     {
       accessorKey: "receipt_no_of_ots",
       header: "OTS Received",
@@ -186,7 +184,7 @@ const MultiDownloadAllotment = () => {
       },
     },
 
-    // Schools Allotted
+   
     {
       accessorKey: "no_of_schools_allotted",
       header: "Schools Allotted",
@@ -197,7 +195,7 @@ const MultiDownloadAllotment = () => {
       },
     },
 
-    // Pending
+    
     {
       accessorKey: "pending",
       header: "Pending",

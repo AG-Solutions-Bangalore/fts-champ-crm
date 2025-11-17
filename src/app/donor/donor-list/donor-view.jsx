@@ -1,55 +1,37 @@
-import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BASE_URL from '@/config/base-url';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { 
-  User, 
-  Users, 
-  Building, 
-  Receipt, 
-  Gift, 
-  Crown, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Calendar,
-  IdCard,
-  Shield,
-  Download,
-  Eye,
-  BarChart3,
-  PieChart,
+import {
   Activity,
-  TrendingUp,
-  FileText,
-  CreditCard,
-  Map,
-  Globe,
-  Building2,
-  HeartHandshake,
-  Target,
   Award,
-  Star,
-  CalendarDays,
-  Wallet,
-  ShieldCheck,
   BadgeCheck,
-  Clock,
-  CheckCircle,
-  XCircle,
-  MoreHorizontal
+  BarChart3,
+  Building2,
+  Calendar,
+  CalendarDays,
+  CreditCard,
+  Crown,
+  Gift,
+  Globe,
+  HeartHandshake,
+  IdCard,
+  Mail,
+  MapPin,
+  Phone,
+  TrendingUp,
+  User,
+  Users,
+  XCircle
 } from 'lucide-react';
-import BASE_URL from '@/config/base-url';
+import React, { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 const getAuthHeaders = () => {
   const token = Cookies.get('token');
@@ -85,10 +67,6 @@ const DonorView = () => {
     queryFn: () => fetchDonorById(id),
   });
 
-  // const { data: oldReceiptsData, isLoading: oldReceiptsLoading } = useQuery({
-  //   queryKey: ['oldReceipts', id],
-  //   queryFn: () => fetchOldReceipts(id),
-  // });
 
   const { data: donorReceiptsData, isLoading: donorReceiptsLoading } = useQuery({
     queryKey: ['donorReceipts', id],
@@ -689,45 +667,7 @@ const DonorView = () => {
                   </Table>
                 </CardContent>
               </Card>
-{/*
-              <Card>
-                <CardHeader>
-                  <CardTitle>Old Receipts</CardTitle>
-                  <CardDescription>
-                    {oldReceipts.length} historical receipts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Receipt #</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {oldReceipts.map((receipt) => (
-                        <TableRow key={receipt.id}>
-                          <TableCell className="font-medium">#{receipt.receipt_no}</TableCell>
-                          <TableCell>{formatDate(receipt.receipt_date)}</TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Badge variant="outline">{receipt.receipt_exemption_type}</Badge>
-                              <div className="text-xs text-gray-500">{receipt.receipt_donation_type}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-blue-600">
-                            {formatCurrency(receipt.receipt_total_amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-               */}
+
             </div>
           </TabsContent>
 

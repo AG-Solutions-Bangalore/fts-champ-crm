@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useApiMutation } from "@/hooks/use-mutation";
 import {
   Download,
@@ -22,7 +23,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import LoadingFolderCard from "../folder/loading";
-import { Button } from "@/components/ui/button";
 import CreateFile from "./create-file";
 
 const FileList = () => {
@@ -101,7 +101,6 @@ const FileList = () => {
         window.URL.revokeObjectURL(url);
         toast.success("File downloaded successfully");
       } else {
-        console.warn("Empty blob received:", blob);
         toast.error("Failed to download file. Empty response.");
       }
     } catch (error) {
@@ -204,15 +203,24 @@ const FileList = () => {
               <div
                 key={file.path}
                 className="flex justify-between items-center border rounded-lg p-3 shadow-sm hover:shadow-md transition cursor-pointer"
-                onClick={() =>
+       
+                onClick={(e) => {
+                  const ext = fileName.split(".").pop().toLowerCase();
+                  const isXL = window.innerWidth >= 1280;
+
+                  if (ext == "pdf" && isXL) {
+                    handleDownload(fileName, e);
+                    return;
+                  }
+
                   navigate(`/file-preview?=${Date.now()}`, {
                     state: {
                       fileUrl: `${fileUrl}?t=${Date.now()}`,
                       fileName,
                       id,
                     },
-                  })
-                }
+                  });
+                }}
               >
                 <div className="flex items-center gap-2">
                   <Icon className={iconColor} size={24} />

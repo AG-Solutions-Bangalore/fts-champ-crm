@@ -29,24 +29,6 @@ import EditDatasourceAdmin from './edit-datasource-admin';
 
 const DatasourceListAdmin = ({datasources,refetch}) => {
   const [editDatasource, setEditDatasource] = useState(null);
-  const chapterId = Cookies.get("chapter_id");
-
-  // const { data: datasourceData, isLoading, isError, refetch, isFetching } = useQuery({
-  //   queryKey: ['chapter-datasource-admin', chapterId],
-  //   queryFn: async () => {
-  //     const response = await axios.get(ADMIN_DATASOURCE_LIST, {
-  //       headers: {
-  //         Authorization: `Bearer ${Cookies.get('token')}`,
-  //       },
-  //     });
-  //     return response.data;
-  //   },
-  //   enabled: !!chapterId,
-  // });
-
-  // const datasources = datasourceData?.datasource || [];
-
-
   const [datasourceSorting, setDatasourceSorting] = useState([]);
   const [datasourceColumnFilters, setDatasourceColumnFilters] = useState([]);
   const [datasourceColumnVisibility, setDatasourceColumnVisibility] = useState({});
@@ -144,46 +126,6 @@ const DatasourceListAdmin = ({datasources,refetch}) => {
       },
     },
   });
-
-  // const DatasourceTableShimmer = () => {
-  //   return Array.from({ length: 5 }).map((_, index) => (
-  //     <TableRow key={index} className="animate-pulse h-11"> 
-  //       {datasourceTable.getVisibleFlatColumns().map((column) => (
-  //         <TableCell key={column.id} className="py-1">
-  //           <div className="h-8 bg-gray-200 rounded w-full"></div> 
-  //         </TableCell>
-  //       ))}
-  //     </TableRow>
-  //   ));
-  // };
-
-  // if (isError) {
-  //   return (
-  //     <div className="w-full p-4">
-  //       <div className="flex items-center justify-center h-64">
-  //         <div className="text-center">
-  //           <div className="text-destructive font-medium mb-2">
-  //             Error Fetching Data Source Data
-  //           </div>
-  //           <Button onClick={() => refetch()} variant="outline" size="sm">
-  //             Try Again
-  //           </Button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-[20rem] bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
-  //       <div className="flex items-center gap-2">
-  //         <Loader2 className="w-6 h-6 animate-spin" />
-  //         <span>Loading data source data...</span>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="pt-1">
