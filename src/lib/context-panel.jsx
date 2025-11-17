@@ -1,4 +1,5 @@
 import BASE_URL from "@/config/base-url";
+import { appLogout } from "@/utils/logout";
 import Cookies from "js-cookie";
 import { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,23 +10,7 @@ const AppProvider = ({ children }) => {
   const navigate = useNavigate();
   const [isPanelUp, setIsPanelUp] = useState(true);
   const handleLogout = () => {
-    [
-      "token",
-      "id",
-      "name",
-      "username",
-      "chapter_id",
-      "viewer_chapter_ids",
-      "user_type_id",
-      "token-expire-time",
-      "ver_con",
-      "email",
-      "currentYear",
-      "favorite_chapters",
-      "recent_chapters",
-    ].forEach((cookie) => {
-      Cookies.remove(cookie);
-    });
+    appLogout();
     navigate("/");
   };
   const checkPanelStatus = async () => {

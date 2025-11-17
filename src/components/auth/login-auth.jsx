@@ -16,7 +16,7 @@ import { motion } from "framer-motion";
 import Cookies from "js-cookie";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import BASE_URL from "@/config/base-url";
-import logoLogin from "@/assets/receipt/fts_log.png"
+import logoLogin from "@/assets/receipt/fts_log.png";
 import { toast } from "sonner";
 
 export default function LoginAuth() {
@@ -25,7 +25,7 @@ export default function LoginAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
- 
+
   const [showPassword, setShowPassword] = useState(false);
   const emailInputRef = useRef(null);
 
@@ -62,79 +62,87 @@ export default function LoginAuth() {
 
   // Fix for form submission with Enter key
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter' && !isLoading) {
+    if (event.key === "Enter" && !isLoading) {
       handleSubmit(event);
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     // Validate inputs
     if (!email.trim() || !password.trim()) {
-      toast.error('Please enter both username and password.');
+      toast.error("Please enter both username and password.");
       return;
     }
 
     setIsLoading(true);
-  
+
     const formData = new FormData();
     formData.append("username", email);
     formData.append("password", password);
-  
+
     try {
       const res = await axios.post(`${BASE_URL}/api/panel-login`, formData);
-  
+
       if (res.data.code === 200) {
         if (!res.data.UserInfo || !res.data.UserInfo.token) {
-          console.warn("⚠️ Login failed: Token missing in response");
           toast.error("Login Failed: No token received.");
           setIsLoading(false);
           return;
         }
-  
+
         const { UserInfo, version, year } = res.data;
         const isProduction = window.location.protocol === "https:";
-               
+
         const cookieOptions = {
           expires: 7,
           secure: isProduction,
           sameSite: "Strict",
           path: "/",
         };
-       
+
         // Set all cookies
+        localStorage.setItem("sidebar:state", true);
         Cookies.set("token", UserInfo.token, cookieOptions);
         Cookies.set("id", UserInfo.user.user_type_id, cookieOptions);
         Cookies.set("name", UserInfo.user.first_name, cookieOptions);
         Cookies.set("username", UserInfo.user.name, cookieOptions);
         Cookies.set("chapter_id", UserInfo.user.chapter_id, cookieOptions);
-        Cookies.set("viewer_chapter_ids", UserInfo.user.viewer_chapter_ids, cookieOptions);
+        Cookies.set(
+          "viewer_chapter_ids",
+          UserInfo.user.viewer_chapter_ids,
+          cookieOptions
+        );
         Cookies.set("user_type_id", UserInfo.user.user_type_id, cookieOptions);
         Cookies.set("email", UserInfo.user.email, cookieOptions);
-        Cookies.set("token-expire-time", UserInfo?.token_expires_at, cookieOptions);
+        Cookies.set(
+          "token-expire-time",
+          UserInfo?.token_expires_at,
+          cookieOptions
+        );
         Cookies.set("ver_con", version?.version_panel, cookieOptions);
         Cookies.set("currentYear", year?.current_year, cookieOptions);
-       
-  const token = Cookies.get("token");
-  const tokenExpireTime = Cookies.get("token-expire-time");
-        if (!token && !tokenExpireTime ) {
+
+        const token = Cookies.get("token");
+        const tokenExpireTime = Cookies.get("token-expire-time");
+        if (!token && !tokenExpireTime) {
           throw new Error("Cookies not set properly");
         }
 
-        
-       
         navigate("/home", { replace: true });
-        
       } else {
-        toast.error(res.data.message||"Login Failed: Unexpected response.");
+        toast.error(res.data.message || "Login Failed: Unexpected response.");
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("❌ Login Error:", error.response?.data?.message || error.message);
-  
+      console.error(
+        "❌ Login Error:",
+        error.response?.data?.message || error.message
+      );
+
       toast.error(error.response?.data?.message);
-  
+
       setIsLoading(false);
     }
   };
@@ -163,7 +171,7 @@ export default function LoginAuth() {
           <CardHeader className="space-y-4 pb-6">
             <div className="flex justify-center">
               <div className="p-1 rounded-2xl shadow-lg shadow-[var(--color)]">
-                <img src={logoLogin} className="" alt="logo_login"/>
+                <img src={logoLogin} className="" alt="logo_login" />
               </div>
             </div>
             <div className="text-center space-y-2">
@@ -175,12 +183,15 @@ export default function LoginAuth() {
               </CardDescription>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Username
                   </Label>
                   <motion.div
@@ -205,7 +216,10 @@ export default function LoginAuth() {
                 </div>
 
                 <div className="grid gap-3">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Password
                   </Label>
                   <motion.div
@@ -232,7 +246,11 @@ export default function LoginAuth() {
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         tabIndex={-1}
                       >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </button>
                     </div>
                   </motion.div>
@@ -268,7 +286,7 @@ export default function LoginAuth() {
                 </motion.div>
               </div>
             </form>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -289,10 +307,18 @@ export default function LoginAuth() {
       {/* Add CSS for blob animation */}
       <style jsx>{`
         @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
         }
         .animate-blob {
           animation: blob 7s infinite;

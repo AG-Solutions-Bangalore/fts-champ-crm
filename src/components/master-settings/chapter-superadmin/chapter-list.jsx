@@ -94,13 +94,7 @@ const ChapterList = () => {
       cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Chapter Name")}</div>,
       size: 150,
     },
-    // {
-    //   accessorKey: "chapter_email",
-    //   id: "Email",
-    //   header: "Email",
-    //   cell: ({ row }) => <div className="text-xs text-blue-600">{row.getValue("Email")}</div>,
-    //   size: 200,
-    // },
+
     {
       accessorKey: "chapter_state",
       id: "State",
@@ -119,13 +113,7 @@ const ChapterList = () => {
       ),
       size: 120,
     },
-    // {
-    //   accessorKey: "chapter_code",
-    //   id: "Chapter Code",
-    //   header: "Chapter Code",
-    //   cell: ({ row }) => <div className="text-xs font-mono">{row.getValue("Chapter Code")}</div>,
-    //   size: 100,
-    // },
+
     {
       accessorKey: "chapter_status",
       id: "Status",

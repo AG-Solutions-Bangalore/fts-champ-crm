@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { fetchDuplicateEditById, fetchDuplicateEditByIdUpdate } from "@/api";
+import { MemoizedSelect } from '@/components/common/memoized-select';
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -10,15 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MemoizedSelect } from '@/components/common/memoized-select';
+import BASE_URL from "@/config/base-url";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -29,11 +28,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowLeft, ArrowUpDown, Search, Loader2, User, Merge, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 import Cookies from "js-cookie";
-import { fetchDuplicateEditById, fetchDuplicateEditByIdUpdate } from "@/api";
-import BASE_URL from "@/config/base-url";
+import { AlertTriangle, ArrowLeft, ArrowUpDown, Loader2, Merge, Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 const DuplicateDonorEdit = () => {
   const { id } = useParams();

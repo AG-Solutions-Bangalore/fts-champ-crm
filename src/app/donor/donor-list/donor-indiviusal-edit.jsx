@@ -1,29 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import InputMask from "react-input-mask";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
-import {
-  ArrowLeft,
-  Info,
-  User,
-  Mail,
-  MapPin,
-  Building,
-  Phone,
-} from "lucide-react";
-import AddToGroup from "./add-to-group";
-import honorific from "@/utils/honorific";
-import belongs_to from "@/utils/belongs-to";
-import donor_type from "@/utils/donor-type";
 import {
   DONOR_INDIVISUAL_EDIT_FETCH,
   DONOR_INDIVISUAL_FAMILY_GROUP_UPDATE,
   DONOR_INDIVISUAL_UPDATE_SUMBIT,
 } from "@/api";
+import belongs_to from "@/utils/belongs-to";
+import donor_type from "@/utils/donor-type";
+import honorific from "@/utils/honorific";
+import {
+  ArrowLeft,
+  Building,
+  Info,
+  MapPin,
+  Phone,
+  User
+} from "lucide-react";
+import AddToGroup from "./add-to-group";
 
 import {
   useFetchDataSource,
@@ -32,8 +31,14 @@ import {
 } from "@/hooks/use-api";
 
 // Shadcn Components
-import { Input } from "@/components/ui/input";
+import { MemoizedSelect } from "@/components/common/memoized-select";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -41,17 +46,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { MemoizedSelect } from "@/components/common/memoized-select";
 
 // Constants
 const gender = [
@@ -250,10 +244,7 @@ const DonorEditIndv = () => {
     }
   };
 
-  // const onChangePanNumber = (e) => {
-  //   setDonor(prev => ({ ...prev, indicomp_pan_no: e.target.value }));
 
-  // };
   const onChangePanNumber = (e) => {
     const panValue = e.target.value;
     // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
@@ -271,12 +262,7 @@ const DonorEditIndv = () => {
     if (!donor.indicomp_gender) {
       newErrors.indicomp_gender = "Gender is required";
     }
-    // if (!donor.indicomp_promoter) {
-    //   newErrors.indicomp_promoter = "Promoter is required";
-    // }
-    // if (donor.indicomp_promoter === "Other" && !donor.indicomp_newpromoter?.trim()) {
-    //   newErrors.indicomp_newpromoter = "Please specify promoter";
-    // }
+  
     if (
       !donor.indicomp_mobile_phone ||
       !/^\d{10}$/.test(donor.indicomp_mobile_phone)
@@ -352,12 +338,7 @@ const DonorEditIndv = () => {
     formData.append("indicomp_doa", processValue(donor.indicomp_doa));
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
 
-    // Handle file upload
-    // if (donor.indicomp_image_logo instanceof File) {
-    //   formData.append("indicomp_image_logo", donor.indicomp_image_logo);
-    // } else if (donor.indicomp_image_logo) {
-    //   formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
-    // }
+
 
     if (donor.indicomp_image_logo instanceof File) {
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
@@ -817,9 +798,7 @@ const DonorEditIndv = () => {
                         )?.indicomp_fts_id || ""
                       }
                       onChange={(value) => {
-                        // const selectedPromoter = promoter.find(
-                        //   (p) => p.indicomp_fts_id === value
-                        // );
+                   
 
                         setDonor((prev) => ({
                           ...prev,
@@ -1433,19 +1412,7 @@ const DonorEditIndv = () => {
         </CardContent>
       </Card>
 
-      {/* Modal */}
-      {/* {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <AddToGroup 
-              id={donor.id} 
-                   page='indivisual'
-              closegroupModal={() => setShowModal(false)} 
-            />
-            
-          </div>
-        </div>
-      )} */}
+
       {showModal && (
         <AddToGroup
           id={donor.id}

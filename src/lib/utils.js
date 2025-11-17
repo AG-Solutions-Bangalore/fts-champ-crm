@@ -8,12 +8,7 @@ export function cn(...inputs) {
 
 
 
-// export interface Star {
-//   position: string;
-//   size: string;
-//   blur: string;
-//   color: string;
-// }
+
 
 export const createStars = (count, color) => {
   const stars = [];

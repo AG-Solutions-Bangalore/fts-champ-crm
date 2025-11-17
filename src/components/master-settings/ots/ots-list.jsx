@@ -140,17 +140,7 @@ const OtsList = () => {
     },
     
    
-    // {
-    //   accessorKey: "id",
-    //   id: "Id",
-    //   header: "Id",
-    //   cell: ({ row }) => (
-    //     <div className="text-xs">
-    //       {row.getValue("Id") || "-"}
-    //     </div>
-    //   ),
-    //   size: 120,
-    // },
+  
    
     {
       id: "actions",

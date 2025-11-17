@@ -249,18 +249,7 @@ const ChapterViewSuperAdmin = () => {
                   </div>
 
                
-                  {/* <div className="space-y-1">
-                    <Label htmlFor="chapter_code" className="text-xs font-medium">
-                      Chapter Code
-                    </Label>
-                    <Input
-                      id="chapter_code"
-                      value={formData.chapter_code}
-                      onChange={(e) => handleInputChange('chapter_code', e.target.value)}
-                      placeholder="Enter chapter code"
-                      className="h-8 text-xs"
-                    />
-                  </div> */}
+              
 
                  
                   <div className="space-y-1 md:col-span-2">

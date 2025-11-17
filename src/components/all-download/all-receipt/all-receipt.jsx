@@ -144,34 +144,6 @@ const AllReceiptDownload = () => {
     }
   });
 
-  // const viewMutation = useMutation({
-  //   mutationFn: async (downloadData) => {
-  //     const response = await axios.post(`${BASE_URL}/api/download-receipt-all`, downloadData, {
-  //       headers: { 'Authorization': `Bearer ${token}` },
-  //       responseType: 'blob'
-  //     });
-  //     return response.data;
-  //   },
-  //   onSuccess: async (blob) => {
-  //     const text = await blob.text();
-  //     const rows = text.split('\n').filter(Boolean);
-  //     const headers = rows[0].split(',');
-  //     const data = rows.slice(1).map(row => {
-  //       const values = row.split(',');
-  //       const obj = {};
-  //       headers.forEach((header, idx) => {
-  //         const cleanHeader = header.replace(/^"|"$/g, '');
-  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-  //         obj[cleanHeader] = cleanValue;
-  //       });
-  //       return obj;
-  //     });
-  //     setJsonData(data);
-  //   },
-  //   onError: () => {
-  //     toast.error('Failed to fetch all receipt data');
-  //   }
-  // });
 
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
@@ -465,14 +437,7 @@ const AllReceiptDownload = () => {
 
             <div className="space-y-1.5">
               <Label htmlFor="indicomp_promoter" className="text-sm">Promoter</Label>
-              {/* <Select value={formData.indicomp_promoter} onValueChange={(value) => handleSelectChange('indicomp_promoter', value)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select Promoter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {promoter.map(item => <SelectItem key={item.indicomp_promoter} value={item.indicomp_promoter}>{item.indicomp_promoter}</SelectItem>)}
-                </SelectContent>
-              </Select> */}
+             
               <MemoizedSelect
 value={formData.indicomp_promoter}
 onChange={(value) =>

@@ -93,35 +93,6 @@ const DonorDownload = () => {
     }
   });
 
-  // const viewMutation = useMutation({
-  //   mutationFn: async (downloadData) => {
-  //     const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
-  //       headers: { 'Authorization': `Bearer ${token}` },
-  //       responseType: 'blob'
-  //     });
-  //     return response.data;
-  //   },
-  //   onSuccess: async (blob) => {
-  //     const text = await blob.text();
-  //     const rows = text.split('\n').filter(Boolean);
-  //     const headers = rows[0].split(',');
-  //     const data = rows.slice(1).map(row => {
-  //       const values = row.split(',');
-  //       const obj = {};
-  //       headers.forEach((header, idx) => {
-  //         const cleanHeader = header.replace(/^"|"$/g, '');
-  //         const cleanValue = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-  //         obj[cleanHeader] = cleanValue;
-  //       });
-  //       return obj;
-  //     });
-  //     setJsonData(data);
-  //   },
-  //   onError: () => {
-  //     toast.error('Failed to fetch donor data');
-  //   }
-  // });
-
   const viewMutation = useMutation({
     mutationFn: async (downloadData) => {
       const response = await axios.post(DOWNLOAD_DONOR, downloadData, {
@@ -289,20 +260,6 @@ const DonorDownload = () => {
       cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Spouse')}</div>,
   
     },
-    // {
-    //   accessorKey: 'DOB',
-    //   id: 'DOB',
-    //   header: 'DOB',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('DOB')}</div>,
-    //   size: 100,
-    // },
-    // {
-    //   accessorKey: 'DOA',
-    //   id: 'DOA',
-    //   header: 'DOA',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('DOA')}</div>,
-    //   size: 100,
-    // },
     {
       accessorKey: 'PAN No',
       id: 'PAN No',
@@ -324,28 +281,7 @@ const DonorDownload = () => {
       cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Whatsapp')}</div>,
   
     },
-    // {
-    //   accessorKey: 'Email',
-    //   id: 'Email',
-    //   header: 'Email',
-    //   cell: ({ row }) => {
-    //     const email = row.getValue('Email') || '';
-    //     const shortEmail = email.length > 25 ? email.slice(0, 25) + '…' : email;
-    //     return <div className="text-xs font-medium">{shortEmail}</div>;
-    //   },
-    //   size: 150,
-    // },
-    // {
-    //   accessorKey: 'Website',
-    //   id: 'Website',
-    //   header: 'Website',
-    //   cell: ({ row }) => {
-    //     const website = row.getValue('Website') || '';
-    //     const shortWebsite = website.length > 20 ? website.slice(0, 20) + '…' : website;
-    //     return <div className="text-xs font-medium">{shortWebsite}</div>;
-    //   },
-    //   size: 120,
-    // },
+    
     {
       accessorKey: '1st Address',
       id: '1st Address',
@@ -357,24 +293,7 @@ const DonorDownload = () => {
       },
     
     },
-    // {
-    //   accessorKey: 'Area',
-    //   id: 'Area',
-    //   header: 'Area',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Area')}</div>,
-    //   size: 120,
-    // },
-    // {
-    //   accessorKey: 'Landmark',
-    //   id: 'Landmark',
-    //   header: 'Landmark',
-    //   cell: ({ row }) => {
-    //     const landmark = row.getValue('Landmark') || '';
-    //     const shortLandmark = landmark.length > 20 ? landmark.slice(0, 20) + '…' : landmark;
-    //     return <div className="text-xs font-medium">{shortLandmark}</div>;
-    //   },
-    //   size: 120,
-    // },
+    
     {
       accessorKey: 'City',
       id: 'City',
@@ -382,38 +301,7 @@ const DonorDownload = () => {
       cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('City')}</div>,
     
     },
-    // {
-    //   accessorKey: 'State',
-    //   id: 'State',
-    //   header: 'State',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('State')}</div>,
-    //   size: 100,
-    // },
-    // {
-    //   accessorKey: 'Pincode',
-    //   id: 'Pincode',
-    //   header: 'Pincode',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Pincode')}</div>,
-    //   size: 80,
-    // },
-    // {
-    //   accessorKey: '2nd Address',
-    //   id: '2nd Address',
-    //   header: '2nd Address',
-    //   cell: ({ row }) => {
-    //     const address = row.getValue('2nd Address') || '';
-    //     const shortAddress = address.length > 30 ? address.slice(0, 30) + '…' : address;
-    //     return <div className="text-xs font-medium">{shortAddress}</div>;
-    //   },
-    //   size: 200,
-    // },
-    // {
-    //   accessorKey: 'Corr. Preffer',
-    //   id: 'Corr. Preffer',
-    //   header: 'Corr. Preffer',
-    //   cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Corr. Preffer')}</div>,
-    //   size: 100,
-    // },
+    
     {
       accessorKey: 'CSR',
       id: 'CSR',
@@ -449,17 +337,7 @@ const DonorDownload = () => {
       cell: ({ row }) => <div className="text-xs font-medium">{row.getValue('Source')}</div>,
     
     },
-    // {
-    //   accessorKey: 'Remarks',
-    //   id: 'Remarks',
-    //   header: 'Remarks',
-    //   cell: ({ row }) => {
-    //     const remarks = row.getValue('Remarks') || '';
-    //     const shortRemarks = remarks.length > 50 ? remarks.slice(0, 50) + '…' : remarks;
-    //     return <div className="text-xs font-medium">{shortRemarks}</div>;
-    //   },
-    //   size: 200,
-    // },
+  
   ];
 
   const table = useReactTable({

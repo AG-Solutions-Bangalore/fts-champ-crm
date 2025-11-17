@@ -427,9 +427,6 @@ export const navigateToSchoolFullListView = (navigate, viewId) => {
 export const navigateToRepeatDonorEdit = (navigate, viewId) => {
   navigate(ROUTES.REPEAT_DONOR_EDIT(viewId));
 };
-// export const navigateToSchoolAllotEdit = (navigate, viewId, year) => {
-//   navigate(ROUTES.SCHOOL_ALLOT_EDIT(viewId, year));
-// };
 export const navigateToSchoolAllotEdit = (navigate, id, year) => {
   navigate(`/school/allotedit/${encryptId(id)}/${encryptId(year)}`);
 };

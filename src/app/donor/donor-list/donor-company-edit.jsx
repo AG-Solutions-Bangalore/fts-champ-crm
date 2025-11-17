@@ -344,12 +344,7 @@ const DonorCompanyEdit = () => {
     );
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
 
-    // Handle file upload
-    // if (donor.indicomp_image_logo instanceof File) {
-    //   formData.append("indicomp_image_logo", donor.indicomp_image_logo);
-    // } else if (donor.indicomp_image_logo) {
-    //   formData.append("indicomp_image_logo", processValue(donor.indicomp_image_logo));
-    // }
+  
     if (donor.indicomp_image_logo instanceof File) {
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
     }
@@ -675,17 +670,7 @@ const DonorCompanyEdit = () => {
 
                 {/* PAN Number */}
                 <div className="">
-                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
-                    PAN Number *
-                  </Label>
-                  <Input
-                    id="indicomp_pan_no"
-                    name="indicomp_pan_no"
-                    value={donor.indicomp_pan_no}
-                    onChange={onChangePanNumber}
-                    placeholder="Enter PAN number"
-                    className="uppercase"
-                  /> */}
+             
                   <InputMask
                     mask="aaaaa9999a"
                     value={donor.indicomp_pan_no}
@@ -782,21 +767,7 @@ const DonorCompanyEdit = () => {
                   >
                     Promoter *
                   </Label>
-                  {/* <Select 
-                    value={donor.indicomp_promoter} 
-                    onValueChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Promoter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {promoter?.map((option) => (
-                        <SelectItem key={option.indicomp_promoter} value={option.indicomp_promoter}>
-                          {option.indicomp_promoter}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select> */}
+                
                   {isLoadingPromoter ? (
                     <div className="animate-pulse">
                       <div className="h-10 bg-gray-200 rounded-md w-full"></div>
@@ -808,16 +779,7 @@ const DonorCompanyEdit = () => {
                           (p) => p.indicomp_fts_id == donor.indicomp_promoter
                         )?.indicomp_fts_id || ""
                       }
-                      // onChange={(value) => {
-                      //   const selectedPromoter = promoter.find(
-                      //     (p) => p.indicomp_promoter === value
-                      //   );
-                      //   setDonor((prev) => ({
-                      //     ...prev,
-                      //     indicomp_promoter:
-                      //       selectedPromoter?.indicomp_fts_id || "",
-                      //   }));
-                      // }}
+                 
                       onChange={(value) => {
                         setDonor((prev) => ({
                           ...prev,
@@ -1437,18 +1399,7 @@ const DonorCompanyEdit = () => {
         </CardContent>
       </Card>
 
-      {/* Modal */}
-      {/* {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <AddToGroup 
-              id={donor.id} 
-              page='company'
-              closegroupModal={() => setShowModal(false)} 
-            />
-          </div>
-        </div>
-      )} */}
+
       {showModal && (
         <AddToGroup
           id={donor.id}

@@ -28,7 +28,6 @@ const Notification = lazy(() =>
   import("@/app/other/notification/notification")
 );
 const Team = lazy(() => import("@/app/other/team/team"));
-// const Maintenance = lazy(() => import("@/components/common/maintenance"));
 const ForgotPassword = lazy(() =>
   import("@/components/forgot-password/forgot-password")
 );

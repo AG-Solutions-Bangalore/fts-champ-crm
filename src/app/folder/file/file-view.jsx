@@ -44,7 +44,6 @@ const FileView = () => {
   useEffect(() => {
     const loadExcel = async () => {
       try {
-
         const res = await axios.get(fileUrl, {
           responseType: "arraybuffer",
         });
@@ -188,7 +187,21 @@ const FileView = () => {
       startWidth: colWidths[ci] || 150,
     });
   };
+  const deleteSheet = (idx) => {
+    if (sheets.length === 1) {
+      toast.error("At least one sheet must exist");
+      return;
+    }
 
+    const updated = sheets.filter((_, i) => i !== idx);
+    setSheets(updated);
+
+    if (currentSheetIndex === idx) {
+      setCurrentSheetIndex(0);
+    } else if (currentSheetIndex > idx) {
+      setCurrentSheetIndex(currentSheetIndex - 1);
+    }
+  };
   useEffect(() => {
     if (!resizing.active) return;
 
@@ -285,18 +298,32 @@ const FileView = () => {
       {/* Sheet Tabs */}
       <div className="flex gap-2 mb-3 flex-wrap">
         {sheets.map((sheet, idx) => (
-          <button
+          <div
             key={sheet.name + idx}
-            onClick={() => setCurrentSheetIndex(idx)}
-            onDoubleClick={() => renameSheet(idx)}
-            className={`px-3 py-1 rounded text-sm font-medium transition-all flex items-center gap-1 ${
+            className={`flex items-center gap-1 px-3 py-1 rounded text-sm font-medium transition-all cursor-pointer ${
               currentSheetIndex === idx
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
-            <Sheet size={16} /> {sheet.name}
-          </button>
+            <button
+              key={sheet.name + idx}
+              onClick={() => setCurrentSheetIndex(idx)}
+              onDoubleClick={() => renameSheet(idx)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-all flex items-center gap-1 ${
+                currentSheetIndex === idx
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              <Sheet size={16} /> {sheet.name}
+            </button>
+            <Trash2
+              size={14}
+              className="ml-2 text-red-500 hover:text-red-700"
+              onClick={() => deleteSheet(idx)}
+            />
+          </div>
         ))}
       </div>
 

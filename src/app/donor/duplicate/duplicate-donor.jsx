@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { DUPLICATE_DELETE, DUPLICATE_LIST, navigateToDuplicateEdit } from "@/api";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -15,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import useNumericInput from "@/hooks/use-numeric-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -25,21 +35,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Search, Loader2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
 import Cookies from "js-cookie";
-import { DUPLICATE_DELETE, DUPLICATE_LIST, navigateToDuplicateEdit } from "@/api";
+import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Search, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useNumericInput from "@/hooks/use-numeric-input";
+import { toast } from "sonner";
 
 const DuplicateDonor = () => {
   const [deleteId, setDeleteId] = useState(null);
