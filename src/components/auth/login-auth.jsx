@@ -11,13 +11,34 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/autoplay';
 import { motion } from "framer-motion";
 import Cookies from "js-cookie";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import BASE_URL from "@/config/base-url";
 import logoLogin from "@/assets/receipt/fts_log.png";
 import { toast } from "sonner";
+
+const sliderImages = [
+  {
+    id: 1,
+    title: "Empowering Tribal Communities",
+    description: "Providing five-fold education and holistic development for tribal upliftment since 1989",
+    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+  },
+ 
+
+  {
+    id: 2,
+    title: "Education for All",
+    description: "Spreading literacy and values education to create empowered communities",
+    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+  }
+];
 
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
@@ -148,12 +169,7 @@ export default function LoginAuth() {
   };
 
   return (
-    <motion.div
-      className="relative flex flex-col justify-center items-center min-h-screen bg-login-gradient"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="min-h-screen flex items-center justify-center  px-4">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-32 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob login-blob-1"></div>
@@ -161,149 +177,189 @@ export default function LoginAuth() {
         <div className="absolute top-40 left-1/2 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 login-blob-3"></div>
       </div>
 
+ <motion.div
+        className="flex flex-col md:flex-row shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full  relative z-10"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+
+  {/* Left Side - Slider (replaces the illustration from reference) */}
+        <div className="hidden md:flex flex-col items-center justify-center p-1 w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="w-full h-full rounded-xl overflow-hidden shadow-lg">
+            <Swiper
+              modules={[Autoplay, EffectFade]}
+              effect="fade"
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              loop={true}
+              className="w-full h-full"
+            >
+              {sliderImages.map((slide) => (
+                <SwiperSlide key={slide.id}>
+                  <div className="relative w-full h-full">
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {slide.title}
+                      </h3>
+                      <p className="text-white/90">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </div>
+
+ <div className="w-full md:w-1/2 px-4   ">
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative z-10"
+        className="bg-transparent"
+      
       >
-        <Card className="w-80 md:w-96 max-w-md bg-white/90 backdrop-blur-sm border-0 shadow-2xl">
-          <CardHeader className="space-y-4 pb-6">
-            <div className="flex justify-center">
-              <div className="p-1 rounded-2xl shadow-lg shadow-[var(--color)]">
-                <img src={logoLogin} className="" alt="logo_login" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[var(--team-color)] to-[var(--color-dark)] bg-clip-text text-transparent">
-                Welcome Back
-              </CardTitle>
-              <CardDescription className="text-gray-600 text-base">
-                Sign in to your Fts Champ account
-              </CardDescription>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Username
-                  </Label>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <Input
-                      ref={emailInputRef}
-                      id="email"
-                      type="text"
-                      placeholder="Enter your username"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      minLength={1}
-                      maxLength={50}
-                      required
-                      className="h-11 border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors"
-                      autoComplete="username"
-                    />
-                  </motion.div>
+             <Card className="border-none shadow-none bg-transparent">
+              <CardHeader className="pb-4 md:pb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                <div className="flex-shrink-0">
+                  <img 
+                    src={logoLogin} 
+                    className="w-auto h-16 md:h-20" 
+                    alt="FTS Champ Logo"
+                  />
                 </div>
-
-                <div className="grid gap-3">
-                  <Label
-                    htmlFor="password"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Password
-                  </Label>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={1}
-                        maxLength={16}
-                        className="h-11 pr-10 border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors"
-                        autoComplete="current-password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        tabIndex={-1}
+                <div className="space-y-1 md:space-y-2">
+                  <CardTitle className="text-lg md:text-xl font-bold bg-gradient-to-r from-[var(--team-color)] to-[var(--color-dark)] bg-clip-text text-transparent">
+                    Welcome Back
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 text-sm md:text-base">
+                    Sign in to your Fts Champ account
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="p-2 bg-white shadow-lg rounded-md backdrop-blur-sm">
+                <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
+                  <div className="space-y-4 ">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                        Username
+                      </Label>
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
                       >
-                        {showPassword ? (
-                          <EyeOff size={20} />
-                        ) : (
-                          <Eye size={20} />
-                        )}
-                      </button>
+                        <Input
+                          ref={emailInputRef}
+                          id="email"
+                          type="text"
+                          placeholder="Enter your username"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          minLength={1}
+                          maxLength={50}
+                          required
+                          className="h-10 md:h-11 border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors"
+                          autoComplete="username"
+                        />
+                      </motion.div>
                     </div>
-                  </motion.div>
-                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Button
-                    type="submit"
-                    className="w-full h-11 bg-gradient-to-r from-[var(--team-color)] to-[var(--color-dark)] hover:opacity-90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <motion.span
-                        key={loadingMessage}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="text-sm"
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                        Password
+                      </Label>
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
                       >
-                        {loadingMessage}
-                      </motion.span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <LogIn size={18} />
-                        Sign In
-                      </span>
-                    )}
-                  </Button>
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={1}
+                            maxLength={16}
+                            className="h-10 md:h-11 pr-10 border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors"
+                            autoComplete="current-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button
+                        type="submit"
+                        className="w-full h-10 md:h-11 bg-gradient-to-r from-[var(--team-color)] to-[var(--color-dark)] hover:opacity-90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-sm md:text-base"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <motion.span
+                            key={loadingMessage}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="text-sm"
+                          >
+                            {loadingMessage}
+                          </motion.span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-2">
+                            <LogIn size={16} className="md:size-[18px]" />
+                            Sign In
+                          </span>
+                        )}
+                      </Button>
+                    </motion.div>
+                  </div>
+                </form>
+                
+                
+              </CardContent>
+              <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="mb-4 mt-4 text-center"
+                >
+                  <button
+                    onClick={() => navigate("/forgot-password")}
+                    className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
                 </motion.div>
-              </div>
-            </form>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="mt-6 text-center"
-            >
-              <button
-                onClick={() => navigate("/forgot-password")}
-                className="text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
-              >
-                Forgot your password?
-              </button>
-            </motion.div>
-          </CardContent>
-        </Card>
+            </Card>
       </motion.div>
-
+      </div>
+</motion.div>
       {/* Add CSS for blob animation */}
       <style jsx>{`
         @keyframes blob {
@@ -330,6 +386,6 @@ export default function LoginAuth() {
           animation-delay: 4s;
         }
       `}</style>
-    </motion.div>
+    </div>
   );
 }
