@@ -3,6 +3,7 @@ import ReceiptEdit from "@/app/receipt/recept-edit";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import Maintenance from "@/components/common/maintenance";
+import SignUp from "@/app/auth/sign-up";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(() =>
@@ -129,6 +130,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<AuthRoute />}>
         <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
         {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
         <Route
           path="/forgot-password"

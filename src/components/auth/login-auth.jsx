@@ -248,7 +248,7 @@ export default function LoginAuth() {
                 </div>
               </CardHeader>
               
-              <CardContent className="p-2 bg-white shadow-lg rounded-md backdrop-blur-sm">
+              <CardContent className="p-2 ">
                 <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
                   <div className="space-y-4 ">
                     <div className="space-y-2">
@@ -347,8 +347,14 @@ export default function LoginAuth() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="mb-4 mt-4 text-center"
+                  className="mb-4 mt-4 flex flex-row items-center  justify-between mx-5 text-center"
                 >
+                  <button
+                    onClick={() => navigate("/signup")}
+                    className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
+                  >
+                    Signup
+                  </button>
                   <button
                     onClick={() => navigate("/forgot-password")}
                     className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
@@ -356,6 +362,7 @@ export default function LoginAuth() {
                     Forgot your password?
                   </button>
                 </motion.div>
+             
             </Card>
       </motion.div>
       </div>

@@ -121,6 +121,41 @@ export default function ForgotPassword() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
+        {/* Right Side - Slider */}
+        <div className="hidden md:flex flex-col items-center justify-center p-1 w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="w-full h-full rounded-xl overflow-hidden shadow-lg">
+            <Swiper
+              modules={[Autoplay, EffectFade]}
+              effect="fade"
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              loop={true}
+              className="w-full h-full"
+            >
+              {sliderImages.map((slide) => (
+                <SwiperSlide key={slide.id}>
+                  <div className="relative w-full h-full">
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {slide.title}
+                      </h3>
+                      <p className="text-white/90">
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </div>
         {/* Left Side - Forgot Password Form */}
         <div className="w-full md:w-1/2 px-4 py-8 md:py-0 flex items-center">
           <motion.div
@@ -148,7 +183,7 @@ export default function ForgotPassword() {
                 </div>
               </CardHeader>
               
-              <CardContent className="p-2 bg-white shadow-lg rounded-md backdrop-blur-sm">
+              <CardContent className="p-2 ">
                 <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -248,41 +283,7 @@ export default function ForgotPassword() {
           </motion.div>
         </div>
 
-        {/* Right Side - Slider */}
-        <div className="hidden md:flex flex-col items-center justify-center p-1 w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100">
-          <div className="w-full h-full rounded-xl overflow-hidden shadow-lg">
-            <Swiper
-              modules={[Autoplay, EffectFade]}
-              effect="fade"
-              autoplay={{
-                delay: 3000,
-                disableOnInteraction: false,
-              }}
-              loop={true}
-              className="w-full h-full"
-            >
-              {sliderImages.map((slide) => (
-                <SwiperSlide key={slide.id}>
-                  <div className="relative w-full h-full">
-                    <img
-                      src={slide.image}
-                      alt={slide.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                      <h3 className="text-2xl font-bold text-white mb-2">
-                        {slide.title}
-                      </h3>
-                      <p className="text-white/90">
-                        {slide.description}
-                      </p>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        </div>
+      
       </motion.div>
 
       {/* Add CSS for blob animation */}
