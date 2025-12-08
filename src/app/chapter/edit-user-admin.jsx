@@ -17,6 +17,7 @@ import { ADMIN_CHAPTER_EDIT_UPDATE } from "../../api";
 
 const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
   const [isLoading, setIsLoading] = useState(false);
+  console.log(userData)
   const [user, setUser] = useState({
     name: "",
     email: "",
@@ -25,7 +26,9 @@ const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
     last_name: "",
     phone: "",
     user_type_id: "",
+    user_school_ids: "",
     user_status: "",
+    viewer_chapter_ids: "",
   });
   const [currentImage, setCurrentImage] = useState("");
 
@@ -49,6 +52,8 @@ const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
         image: userData.image || null,
         last_name: userData.last_name || "",
         phone: userData.phone || "",
+        viewer_chapter_ids: userData.viewer_chapter_ids || "",
+        user_school_ids: userData.user_school_ids || "",
         user_type_id: userData.user_type_id?.toString() || "",
         user_status: userData.user_status || "Active",
       });
@@ -84,6 +89,8 @@ const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
       formData.append("last_name", user.last_name || "");
       formData.append("email", user.email);
       formData.append("phone", user.phone);
+      formData.append("user_school_ids", user.user_school_ids);
+      formData.append("viewer_chapter_ids", user.viewer_chapter_ids);
       formData.append("user_type", parseInt(user.user_type_id, 10));
       formData.append("user_status", user.user_status);
       formData.append("_method", "PUT");

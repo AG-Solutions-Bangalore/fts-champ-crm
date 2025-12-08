@@ -26,6 +26,10 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
     phone: "",
     user_type_id: "",
     chapter_id: "",
+    viewer_chapter_ids: "",
+    user_school_ids: "",
+    user_status: "",
+    
   });
   const [currentImage, setCurrentImage] = useState("");
 
@@ -35,7 +39,10 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
     { value: "1", label: "User" },
     { value: "2", label: "Admin" },
   ];
-
+  const statusOptions = [
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
+  ];
   useEffect(() => {
     if (userData) {
       setUser({
@@ -45,8 +52,11 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
         image: userData.image || null,
         last_name: userData.last_name || "",
         phone: userData.phone || "",
+        user_school_ids: userData.user_school_ids || "",
+        viewer_chapter_ids: userData.viewer_chapter_ids || "",
         user_type_id: userData.user_type_id?.toString() || "",
         chapter_id: userData.chapter_id || "",
+        user_status: userData.user_status || "Active",
       });
       setCurrentImage(userData.image || "");
     }
@@ -58,7 +68,8 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
       !user.email.trim() ||
       !user.first_name.trim() ||
       !user.phone.trim() ||
-      !user.user_type_id
+      !user.user_type_id || 
+      !user.user_status
     ) {
       toast.error("All required fields must be filled");
       return;
@@ -74,6 +85,9 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
       formData.append("last_name", user.last_name || "");
       formData.append("email", user.email);
       formData.append("phone", user.phone);
+      formData.append("user_status", user.user_status);
+      formData.append("user_school_ids", user.user_school_ids);
+      formData.append("viewer_chapter_ids", user.viewer_chapter_ids);
       formData.append("user_type", parseInt(user.user_type_id, 10));
       formData.append("chapter_id", user.chapter_id);
       formData.append("_method", "PUT");
@@ -211,6 +225,24 @@ const EditUserSuperadmin = ({ userData, ImageUrl, open, onClose }) => {
               >
                 <option value="">Select User Type</option>
                 {UserDrop.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="user_status" className="text-sm font-medium">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="user_status"
+                name="user_status"
+                value={user.user_status}
+                onChange={handleInputChange}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

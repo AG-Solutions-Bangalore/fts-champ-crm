@@ -21,6 +21,7 @@ const DonationView = ({
     {},
     { enabled: false }
   );
+  
   useEffect(() => {
     if (receiptFromDate && receiptToDate) {
       refetch();
@@ -28,6 +29,7 @@ const DonationView = ({
   }, [receiptFromDate, receiptToDate]);
 
   const donorsummary = data?.data || [];
+  
   const groupedData = useMemo(() => {
     const result = {};
     donorsummary.forEach((item) => {
@@ -36,6 +38,7 @@ const DonationView = ({
       const amount = parseFloat(item.receipt_total_amount) || 0;
       const donationCount = item.total_count;
       const otsCount = item.receipt_no_of_ots;
+      const donorCount = item.distinct_indicomp_count;
 
       if (!result[year]) {
         result[year] = {};
@@ -45,12 +48,14 @@ const DonationView = ({
           totalAmount: 0,
           donationCount: 0,
           otsCount: 0,
+          donorCount: 0,
         };
       }
 
       result[year][donationType].totalAmount += amount;
       result[year][donationType].donationCount += donationCount;
       result[year][donationType].otsCount += parseInt(otsCount, 10);
+      result[year][donationType].donorCount += parseInt(donorCount, 10);
     });
 
     return result;
@@ -67,11 +72,22 @@ const DonationView = ({
   const financialYearLabel =
     donorsummary.length > 0 ? "Financial Year" : "Financial Year";
 
+  // Calculate grand totals
   const grandTotalDonations = Object.keys(groupedData).reduce((total, year) => {
     return (
       total +
       Object.values(groupedData[year]).reduce(
         (sum, type) => sum + type.donationCount,
+        0
+      )
+    );
+  }, 0);
+
+  const grandTotalDonors = Object.keys(groupedData).reduce((total, year) => {
+    return (
+      total +
+      Object.values(groupedData[year]).reduce(
+        (sum, type) => sum + type.donorCount,
         0
       )
     );
@@ -96,11 +112,13 @@ const DonationView = ({
       )
     );
   }, 0);
+
   useEffect(() => {
     if (onLoadingChange) {
       onLoadingChange(loader);
     }
   }, [loader, onLoadingChange]);
+
   return (
     <>
       {!loader && error && (
@@ -131,7 +149,7 @@ const DonationView = ({
                         {donationTypes.map((type, index) => (
                           <th
                             key={index}
-                            colSpan={3}
+                            colSpan={4} // Changed from 3 to 4 for the new column
                             style={{
                               border: "1px solid black",
                               padding: "8px",
@@ -149,7 +167,7 @@ const DonationView = ({
                             textAlign: "center",
                             verticalAlign: "middle",
                           }}
-                          colSpan={3}
+                          colSpan={4} // Changed from 3 to 4
                         >
                           Grand Total
                         </th>
@@ -167,6 +185,14 @@ const DonationView = ({
                               }}
                             >
                               No of Donation
+                            </th>
+                            <th
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                              }}
+                            >
+                              Donor Count
                             </th>
                             <th
                               style={{
@@ -194,6 +220,11 @@ const DonationView = ({
                         <th
                           style={{ border: "1px solid black", padding: "8px" }}
                         >
+                          Donor Count
+                        </th>
+                        <th
+                          style={{ border: "1px solid black", padding: "8px" }}
+                        >
                           No of OTS
                         </th>
                         <th
@@ -208,7 +239,7 @@ const DonationView = ({
                       {Object.keys(groupedData).length === 0 ? (
                         <tr>
                           <td
-                            colSpan={donationTypes.length * 3 + 1 + 3} // columns for all donation types + financial year + grand total
+                            colSpan={donationTypes.length * 4 + 1 + 4} // Updated column calculation
                             style={{
                               textAlign: "center",
                               padding: "8px",
@@ -247,6 +278,15 @@ const DonationView = ({
                                     textAlign: "right",
                                   }}
                                 >
+                                  {groupedData[year][type]?.donorCount || 0}
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
                                   {groupedData[year][type]?.otsCount || 0}
                                 </td>
                                 <td
@@ -268,6 +308,15 @@ const DonationView = ({
                               }}
                             >
                               {grandTotalDonations}
+                            </td>
+                            <td
+                              style={{
+                                border: "1px solid black",
+                                padding: "8px",
+                                textAlign: "right",
+                              }}
+                            >
+                              {grandTotalDonors}
                             </td>
                             <td
                               style={{
@@ -313,6 +362,14 @@ const DonationView = ({
                                 (groupedData[year][type]?.donationCount || 0),
                               0
                             );
+                            const totalDonorsForType = Object.keys(
+                              groupedData
+                            ).reduce(
+                              (total, year) =>
+                                total +
+                                (groupedData[year][type]?.donorCount || 0),
+                              0
+                            );
                             const totalOTSForType = Object.keys(
                               groupedData
                             ).reduce(
@@ -348,6 +405,15 @@ const DonationView = ({
                                     textAlign: "right",
                                   }}
                                 >
+                                  <strong>{totalDonorsForType}</strong>
+                                </td>
+                                <td
+                                  style={{
+                                    border: "1px solid black",
+                                    padding: "8px",
+                                    textAlign: "right",
+                                  }}
+                                >
                                   <strong>{totalOTSForType}</strong>
                                 </td>
                                 <td
@@ -370,6 +436,15 @@ const DonationView = ({
                             }}
                           >
                             <strong>{grandTotalDonations}</strong>
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid black",
+                              padding: "8px",
+                              textAlign: "right",
+                            }}
+                          >
+                            <strong>{grandTotalDonors}</strong>
                           </td>
                           <td
                             style={{
