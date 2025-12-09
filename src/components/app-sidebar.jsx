@@ -55,6 +55,10 @@ const NAVIGATION_CONFIG = {
           title: "Viewer",
           url: "/master/viewer",
         },
+        {
+          title: "Sign Up",
+          url: "/master/signup",
+        },
       ],
     },
 

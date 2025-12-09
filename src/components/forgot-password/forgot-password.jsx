@@ -90,6 +90,7 @@ export default function ForgotPassword() {
       );
       if (res?.data?.code === 201) {
         toast.success(res?.data?.message || "Password reset link sent successfully!");
+        navigate('/')
       } else {
         toast.error(res?.data?.message || "Unexpected Error");
       }
