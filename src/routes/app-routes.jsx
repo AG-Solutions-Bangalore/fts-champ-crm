@@ -4,6 +4,7 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import Maintenance from "@/components/common/maintenance";
 import SignUp from "@/app/auth/sign-up";
+import SignUPList from "@/app/master-settings/sign-up-list";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(() =>
@@ -192,6 +193,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <Viewer />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/master/signup"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <SignUPList />
             </Suspense>
           }
         />

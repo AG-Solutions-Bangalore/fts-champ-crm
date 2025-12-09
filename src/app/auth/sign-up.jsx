@@ -193,9 +193,9 @@ export default function SignUp() {
       
       if (res.data.code === 201) {
         toast.success("Account created successfully! An admin will contact you with login credentials.");
-        setTimeout(() => {
+
           navigate("/");
-        }, 2000);
+     
       } else {
         toast.error(res.data.message || "Signup failed. Please try again.");
       }
@@ -399,6 +399,7 @@ export default function SignUp() {
                             value={formData.phone}
                             onChange={(e) => handlePhoneChange(e.target.value)}
                             required
+                            maxLength="10"
                             className={`h-10 border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors ${
                               errors.phone ? 'border-red-500' : ''
                             }`}
@@ -466,33 +467,7 @@ export default function SignUp() {
                       </div>
                     </div>
 
-                    {/* Address (Full Width) */}
-                    <div className="space-y-1">
-                      <Label htmlFor="user_add" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <MapPin size={14} />
-                        Address *
-                      </Label>
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.7 }}
-                      >
-                        <Textarea
-                          id="user_add"
-                          placeholder="Enter your complete address"
-                          value={formData.user_add}
-                          onChange={(e) => handleInputChange('user_add', e.target.value)}
-                          required
-                          className={`min-h-[80px] border-gray-300 focus:border-[var(--color-border)] focus:ring-[var(--color-border)] transition-colors ${
-                            errors.user_add ? 'border-red-500' : ''
-                          }`}
-                        />
-                        {errors.user_add && (
-                          <p className="text-red-500 text-xs mt-1">{errors.user_add}</p>
-                        )}
-                      </motion.div>
-                    </div>
-
+                
                     {/* Submit Button */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
