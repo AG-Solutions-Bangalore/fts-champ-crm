@@ -556,7 +556,12 @@ const ReceiptOne = () => {
                             {receipts.donor.indicomp_full_name}
                           </p>
 
-                          {receipts.donor.indicomp_off_branch_address && (
+                          {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Branch Office" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Office") && (
                             <div>
                               <p className="text-sm leading-tight">
                                 {receipts.donor.indicomp_off_branch_address}
@@ -575,7 +580,15 @@ const ReceiptOne = () => {
                             </div>
                           )}
 
-                          {receipts.donor.indicomp_res_reg_address && (
+                          {receipts.donor.indicomp_res_reg_address &&     (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Registered" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Residence" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Digital") && (
                             <div>
                               <p className="text-sm leading-tight">
                                 {receipts.donor.indicomp_res_reg_address}
