@@ -753,7 +753,12 @@ const ReceiptOne = () => {
               </p>
             )}
 
-            {receipts.donor.indicomp_off_branch_address && (
+            {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Branch Office" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Office")  && (
               <div className="space-y-0.5">
                 <p className="font-serif text-sm">
                   {receipts.donor.indicomp_off_branch_address}
@@ -772,7 +777,15 @@ const ReceiptOne = () => {
               </div>
             )}
 
-            {receipts.donor.indicomp_res_reg_address && (
+            {receipts.donor.indicomp_res_reg_address  &&     (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Registered" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Residence" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Digital") && (
               <div className="space-y-0.5">
                 <p className="font-serif text-sm">
                   {receipts.donor.indicomp_res_reg_address}
@@ -930,7 +943,12 @@ const ReceiptOne = () => {
                         </p>
                       )}
 
-                      {receipts.donor.indicomp_off_branch_address && (
+                      {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Branch Office" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Office") && (
                         <div>
                           <p className="font-serif text-[18px]">
                             {receipts.donor.indicomp_off_branch_address}
@@ -949,7 +967,15 @@ const ReceiptOne = () => {
                         </div>
                       )}
 
-                      {receipts.donor.indicomp_res_reg_address && (
+                      {receipts.donor.indicomp_res_reg_address  &&     (receipts.donor
+                                                        .indicomp_corr_preffer ===
+                                                        "Registered" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Residence" ||
+                                                        receipts.donor
+                                                          .indicomp_corr_preffer ===
+                                                          "Digital") && (
                         <div>
                           <p className="font-serif text-[18px]">
                             {receipts.donor.indicomp_res_reg_address}
