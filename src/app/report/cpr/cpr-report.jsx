@@ -422,7 +422,7 @@ const CprReport = () => {
         </div>
       </div>
       <div className="mb-2">
-        <h3 className="font-bold mb-[2px] text-center">8 c : Running Schools Status</h3>
+        <h3 className="font-bold  border-t-2 border-l-2 border-r-2 border-black text-left">8 c : Running Schools Status</h3>
         <div className="overflow-auto print:overflow-visible">
           <table className="w-full border border-black table-fixed">
             <colgroup>
