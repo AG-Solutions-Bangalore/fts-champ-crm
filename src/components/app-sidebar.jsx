@@ -168,6 +168,10 @@ const NAVIGATION_CONFIG = {
           title: "Suspense",
           url: "/report/suspense-summary",
         },
+        {
+          title: "CPR",
+          url: "/report/cpr-summary",
+        },
       ],
     },
 
