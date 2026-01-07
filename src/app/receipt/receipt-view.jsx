@@ -26,7 +26,8 @@ import {
   Loader2, 
   MailPlus,
   X,
-  History
+  History,
+  MessageCircleIcon
 } from "lucide-react";
 
 // Assets
@@ -483,6 +484,21 @@ const ReceiptOne = () => {
               ) : (
                 <FileText className="h-5 w-5" />
               )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Print Letter</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled
+              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+            >
+       
+                <MessageCircleIcon className="h-5 w-5 text-green-700" />
+         
             </Button>
           </TooltipTrigger>
           <TooltipContent>Print Letter</TooltipContent>
