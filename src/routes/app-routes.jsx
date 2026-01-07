@@ -6,6 +6,8 @@ import Maintenance from "@/components/common/maintenance";
 import SignUp from "@/app/auth/sign-up";
 import SignUPList from "@/app/master-settings/sign-up-list";
 import CprReport from "@/app/report/cpr/cpr-report";
+import EventList from "@/app/event/event-list";
+import EventCreate from "@/app/event/event-create";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(() =>
@@ -160,6 +162,16 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <ChapterViewAdmin />
+            </Suspense>
+          }
+        />
+        
+        
+          <Route
+          path="/event-create"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventCreate />
             </Suspense>
           }
         />
@@ -328,6 +340,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <Receipt />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/event-list"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventList />
             </Suspense>
           }
         />
