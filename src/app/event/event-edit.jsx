@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Card } from '@/components/ui/card';
@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Calendar, Save, X, Loader2, Info, Upload } from 'lucide-react';
+import { ArrowLeft, Calendar, Save, X, Loader2, Info, Upload, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import BASE_URL from '@/config/base-url';
 
-const EventCreate = () => {
+const EventEdit = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     event_name: '',
@@ -30,8 +31,8 @@ const EventCreate = () => {
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [eventForOptions, setEventForOptions] = useState([]);
+  const [existingImage, setExistingImage] = useState(null);
 
- 
   const eventTypeOptions = [
     { value: 'Meeting', label: 'Meeting', eventForOptions: [
       { value: 'Executive Committee', label: 'Executive Committee' },
@@ -45,36 +46,63 @@ const EventCreate = () => {
     ]}
   ];
 
-
-  const { data: existingEvents = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['events'],
+  const { data: eventData, isLoading: eventLoading, error } = useQuery({
+    queryKey: ['event', id],
     queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/event`, {
+      const response = await axios.get(`${BASE_URL}/api/event/${id}`, {
         headers: { Authorization: `Bearer ${Cookies.get('token')}` },
       });
-      return response.data.data || [];
+      return response.data.data || null;
     },
+    enabled: !!id,
   });
 
-  
+  const updateEventForOptions = (eventType) => {
+    const selectedEventType = eventTypeOptions.find(type => type.value === eventType);
+    if (selectedEventType) {
+      setEventForOptions(selectedEventType.eventForOptions);
+    } else {
+      setEventForOptions([]);
+    }
+  };
+
+  useEffect(() => {
+    if (eventData) {
+      const formattedData = {
+        event_name: eventData.event_name || '',
+        event_description: eventData.event_description || '',
+        event_date: eventData.event_date ? eventData.event_date.split('T')[0] : '',
+        event_time: eventData.event_time || '',
+        event_type: eventData.event_type || '',
+        event_for: eventData.event_for || '',
+        event_image: null,
+        event_status: eventData.event_status === 'active' ? 'Active' : 'Inactive',
+      };
+
+      setFormData(formattedData);
+      updateEventForOptions(eventData.event_type);
+
+      if (eventData.event_image) {
+        setExistingImage(`${BASE_URL}/storage/${eventData.event_image}`);
+      }
+    }
+  }, [eventData]);
+
   const validateForm = () => {
     const newErrors = {};
 
-   
     if (!formData.event_name.trim()) {
       newErrors.event_name = 'Event name is required';
     } else if (formData.event_name.length < 3) {
       newErrors.event_name = 'Event name must be at least 3 characters';
     }
 
-  
     if (!formData.event_description.trim()) {
       newErrors.event_description = 'Event description is required';
     } else if (formData.event_description.length < 10) {
       newErrors.event_description = 'Event description must be at least 10 characters';
     }
 
-  
     if (!formData.event_date) {
       newErrors.event_date = 'Event date is required';
     } else {
@@ -87,25 +115,21 @@ const EventCreate = () => {
       }
     }
 
-    
     if (!formData.event_time) {
       newErrors.event_time = 'Event time is required';
     }
 
-   
     if (!formData.event_type) {
       newErrors.event_type = 'Event type is required';
     }
 
-   
     if (!formData.event_for) {
       newErrors.event_for = 'Event category is required';
     }
 
-   
-    if (formData.event_image) {
+    if (formData.event_image && formData.event_image instanceof File) {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       
       if (!validTypes.includes(formData.event_image.type)) {
         newErrors.event_image = 'Please select a valid image (JPEG, PNG, GIF)';
@@ -118,19 +142,23 @@ const EventCreate = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const createMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: (data) => {
       const formDataToSend = new FormData();
       
       Object.keys(data).forEach(key => {
         if (key === 'event_image' && data[key] instanceof File) {
           formDataToSend.append('event_image', data[key]);
+        } else if (key === 'event_image' && data[key] === null) {
+          formDataToSend.append('event_image', '');
         } else if (data[key] !== null && data[key] !== undefined) {
           formDataToSend.append(key, data[key]);
         }
       });
 
-      return axios.post(`${BASE_URL}/api/event`, formDataToSend, {
+      formDataToSend.append('_method', 'PUT');
+
+      return axios.post(`https://agstest.in/api2/public/api/event/${id}`, formDataToSend, {
         headers: { 
           Authorization: `Bearer ${Cookies.get('token')}`,
           'Content-Type': 'multipart/form-data'
@@ -138,10 +166,11 @@ const EventCreate = () => {
       });
     },
     onSuccess: (response) => {
-      if (response.data.code === 201 || response.status === 201) {
-        toast.success('Event created successfully!');
+      if (response.data.code === 200 || response.status === 200) {
+        toast.success('Event updated successfully!');
         queryClient.invalidateQueries(['eventList']);
-        navigate('/event-list'); 
+        queryClient.invalidateQueries(['event', id]);
+        navigate('/event-list');
       } else if (response.data.code === 400) {
         toast.error(response.data.message || 'Validation error');
       } else {
@@ -149,14 +178,13 @@ const EventCreate = () => {
       }
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Failed to create event');
+      toast.error(error.response?.data?.message || 'Failed to update event');
     },
   });
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-  
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -164,23 +192,15 @@ const EventCreate = () => {
 
   const handleEventTypeChange = (value) => {
     handleInputChange('event_type', value);
-    handleInputChange('event_for', ''); 
-    
-   
-    const selectedEventType = eventTypeOptions.find(type => type.value === value);
-    if (selectedEventType) {
-      setEventForOptions(selectedEventType.eventForOptions);
-    } else {
-      setEventForOptions([]);
-    }
+    handleInputChange('event_for', '');
+    updateEventForOptions(value);
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-    
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      const maxSize = 5 * 1024 * 1024; 
+      const maxSize = 5 * 1024 * 1024;
       
       if (!validTypes.includes(file.type)) {
         setErrors(prev => ({ ...prev, event_image: 'Please select a valid image (JPEG, PNG, GIF)' }));
@@ -193,6 +213,7 @@ const EventCreate = () => {
       }
       
       setFormData(prev => ({ ...prev, event_image: file }));
+      setExistingImage(null);
       setErrors(prev => ({ ...prev, event_image: '' }));
       
       const reader = new FileReader();
@@ -206,6 +227,7 @@ const EventCreate = () => {
   const removeImage = () => {
     setFormData(prev => ({ ...prev, event_image: null }));
     setImagePreview(null);
+    setExistingImage(null);
     setErrors(prev => ({ ...prev, event_image: '' }));
   
     const fileInput = document.getElementById('event_image');
@@ -226,24 +248,45 @@ const EventCreate = () => {
       return;
     }
     
-   
     const submitData = {
-      ...formData,
-      
+      event_name: formData.event_name,
+      event_description: formData.event_description,
       event_date: formData.event_date,
       event_time: formData.event_time,
-      event_status: formData.event_status || 'active'
+      event_type: formData.event_type,
+      event_for: formData.event_for,
+      event_status: formData.event_status.toLowerCase(),
+      event_image: formData.event_image,
     };
 
-    createMutation.mutate(submitData);
+    updateMutation.mutate(submitData);
   };
 
-  if (eventsLoading) {
+  if (eventLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading data...</span>
+          <span>Loading event data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-red-600">Error loading event</h2>
+          <p className="text-sm text-gray-600 mt-2">{error.message}</p>
+          <Button 
+            onClick={() => navigate('/event-list')} 
+            className="mt-4"
+            variant="outline"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Events
+          </Button>
         </div>
       </div>
     );
@@ -255,15 +298,18 @@ const EventCreate = () => {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4">
           <div className="flex items-start gap-3">
             <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Calendar className="text-muted-foreground w-5 h-5" />
+              <Edit className="text-muted-foreground w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h1 className="text-md font-semibold text-gray-900">Create Event</h1>
+                  <h1 className="text-md font-semibold text-gray-900">Edit Event</h1>
                   <p className="text-xs text-gray-500 mt-1">
-                    Add new event information and details
+                    Update event information and details
                   </p>
+                </div>
+                <div className="text-xs text-gray-500 mt-1 sm:mt-0">
+                  ID: {id}
                 </div>
               </div>
             </div>
@@ -284,7 +330,6 @@ const EventCreate = () => {
       </Card>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-2">
-        
         <Card className="p-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white mb-4">
@@ -293,7 +338,6 @@ const EventCreate = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-           
               <div className="">
                 <Label htmlFor="event_name" className="text-xs font-medium">
                   Event Name <span className="text-red-500">*</span>
@@ -311,7 +355,6 @@ const EventCreate = () => {
                 )}
               </div>
 
-            
               <div className="">
                 <Label htmlFor="event_date" className="text-xs font-medium">
                   Event Date <span className="text-red-500">*</span>
@@ -330,7 +373,6 @@ const EventCreate = () => {
                 )}
               </div>
 
-            
               <div className="">
                 <Label htmlFor="event_time" className="text-xs font-medium">
                   Event Time <span className="text-red-500">*</span>
@@ -348,7 +390,6 @@ const EventCreate = () => {
                 )}
               </div>
 
-          
               <div className="">
                 <Label htmlFor="event_type" className="text-xs font-medium">
                   Event Type <span className="text-red-500">*</span>
@@ -376,7 +417,6 @@ const EventCreate = () => {
                 )}
               </div>
 
-         
               <div className="">
                 <Label htmlFor="event_for" className="text-xs font-medium">
                   Event Category <span className="text-red-500">*</span>
@@ -406,7 +446,6 @@ const EventCreate = () => {
                 )}
               </div>
 
-         
               <div className="">
                 <Label htmlFor="event_status" className="text-xs font-medium">
                   Event Status
@@ -427,7 +466,6 @@ const EventCreate = () => {
                 </Select>
               </div>
 
-        
               <div className="md:col-span-3">
                 <Label htmlFor="event_image" className="text-xs font-medium">
                   Event Image
@@ -445,12 +483,13 @@ const EventCreate = () => {
                   {errors.event_image && (
                     <p className="text-xs text-red-500 mt-1">{errors.event_image}</p>
                   )}
-                  {imagePreview && (
+                  
+                  {existingImage && !imagePreview && (
                     <div className="flex items-center gap-2 mt-2">
                       <div className="relative">
                         <img 
-                          src={imagePreview} 
-                          alt="Event Preview" 
+                          src={existingImage} 
+                          alt="Current Event" 
                           className="h-32 w-32 object-cover rounded-lg border"
                         />
                         <Button
@@ -463,13 +502,34 @@ const EventCreate = () => {
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
-                      <span className="text-xs text-green-600">Image selected</span>
+                      <span className="text-xs text-blue-600">Current image (click X to remove)</span>
+                    </div>
+                  )}
+                  
+                  {imagePreview && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="relative">
+                        <img 
+                          src={imagePreview} 
+                          alt="New Event Preview" 
+                          className="h-32 w-32 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
+                          onClick={removeImage}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <span className="text-xs text-green-600">New image selected</span>
                     </div>
                   )}
                 </div>
               </div>
 
-          
               <div className="md:col-span-3">
                 <Label htmlFor="event_description" className="text-xs font-medium">
                   Event Description <span className="text-red-500">*</span>
@@ -490,7 +550,6 @@ const EventCreate = () => {
           </div>
         </Card>
 
-     
         <div className="flex items-center justify-end gap-4 pt-6 border-t">
           <Button 
             type="button" 
@@ -503,18 +562,18 @@ const EventCreate = () => {
           </Button>
           <Button 
             type="submit" 
-            disabled={createMutation.isLoading} 
+            disabled={updateMutation.isLoading} 
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
           >
-            {createMutation.isLoading ? (
+            {updateMutation.isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
+                Updating...
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Create Event
+                Update Event
               </>
             )}
           </Button>
@@ -524,4 +583,4 @@ const EventCreate = () => {
   );
 };
 
-export default EventCreate;
+export default EventEdit;
