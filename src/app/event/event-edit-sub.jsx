@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import {
   Table,
@@ -19,21 +19,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, X, Loader2, Info, PlusCircle, MinusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
+import BASE_URL from '@/config/base-url';
 
 const EventEditSub = () => {
   const { id: event_id } = useParams();
   const navigate = useNavigate();
   
-  const [rows, setRows] = useState([
-    {
-      id: 1,
-      event_sub_description: '',
-      event_sub_local_national: '',
-      event_sub_deadline_date: '',
-      event_sub_completed_date: '',
-      event_sub_assign_to: '',
-    }
-  ]);
+  const [rows, setRows] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const assignToOptions = [
     { value: 'Govind', label: 'Govind' },
@@ -42,6 +35,47 @@ const EventEditSub = () => {
     { value: 'Amit', label: 'Amit' },
     { value: 'Sneha', label: 'Sneha' }
   ];
+
+  const { data: existingData, isLoading: isFetching } = useQuery({
+    queryKey: ['event-sub', event_id],
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/api/getEventSub/${event_id}`, {
+        headers: { 
+          Authorization: `Bearer ${Cookies.get('token')}`,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!event_id,
+  });
+
+  useEffect(() => {
+    if (existingData) {
+      if (existingData.data && existingData.data.length > 0) {
+        setIsEditing(true);
+        const formattedRows = existingData.data.map((item, index) => ({
+          id: item.id || index + 1,
+          event_sub_id: item.id,
+          event_sub_description: item.event_sub_description || '',
+          event_sub_local_national: item.event_sub_local_national || '',
+          event_sub_deadline_date: item.event_sub_deadline_date ? item.event_sub_deadline_date.split('T')[0] : '',
+          event_sub_completed_date: item.event_sub_completed_date ? item.event_sub_completed_date.split('T')[0] : '',
+          event_sub_assign_to: item.event_sub_assign_to || '',
+        }));
+        setRows(formattedRows);
+      } else if (existingData.data === null) {
+        setIsEditing(false);
+        setRows([{
+          id: 1,
+          event_sub_description: '',
+          event_sub_local_national: '',
+          event_sub_deadline_date: '',
+          event_sub_completed_date: '',
+          event_sub_assign_to: '',
+        }]);
+      }
+    }
+  }, [existingData]);
 
   const addRow = () => {
     const newId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
@@ -73,7 +107,7 @@ const EventEditSub = () => {
     setRows(newRows);
   };
 
-  const saveMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: async () => {
       const dataToSend = rows.map(row => ({
         event_id: parseInt(event_id),
@@ -84,9 +118,8 @@ const EventEditSub = () => {
         event_sub_assign_to: row.event_sub_assign_to,
       }));
 
-      // Send all rows in a single API call
-      const response = await axios.post('https://agstest.in/api2/public/api/createEventSub', 
-        {  dataToSend }, // Send as array in an object
+      const response = await axios.post(`${BASE_URL}/api/createEventSub`, 
+        { dataToSend },
         {
           headers: { 
             Authorization: `Bearer ${Cookies.get('token')}`,
@@ -111,6 +144,49 @@ const EventEditSub = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const updatePromises = rows.map(row => {
+        if (!row.event_sub_id) return Promise.resolve();
+
+        const updateData = {
+          event_sub_description: row.event_sub_description,
+          event_sub_local_national: row.event_sub_local_national,
+          event_sub_deadline_date: row.event_sub_deadline_date,
+          event_sub_completed_date: row.event_sub_completed_date || null,
+          event_sub_assign_to: row.event_sub_assign_to,
+        };
+
+        return axios.put(`${BASE_URL}/api/updateEventSub/${row.event_sub_id}`, 
+          updateData,
+          {
+            headers: { 
+              Authorization: `Bearer ${Cookies.get('token')}`,
+              'Content-Type': 'application/json'
+            },
+          }
+        );
+      });
+
+      return Promise.all(updatePromises);
+    },
+    onSuccess: (responses) => {
+      const allSuccess = responses.every(response => 
+        response && (response.data?.code === 200 || response.status === 200)
+      );
+      
+      if (allSuccess) {
+        toast.success('Sub events updated successfully!');
+        navigate(`/event-list`);
+      } else {
+        toast.error('Some updates failed');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to update sub events');
+    },
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -126,12 +202,24 @@ const EventEditSub = () => {
       return;
     }
 
-    saveMutation.mutate();
+    if (isEditing) {
+      updateMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
   };
 
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0];
   };
+
+  if (isFetching) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full space-y-2">
@@ -144,8 +232,9 @@ const EventEditSub = () => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h1 className="text-md font-semibold text-gray-900">Create Event Sub Tasks</h1>
-                 
+                  <h1 className="text-md font-semibold text-gray-900">
+                    {isEditing ? 'Edit Event Sub Tasks' : 'Create Event Sub Tasks'}
+                  </h1>
                 </div>
               </div>
             </div>
@@ -169,8 +258,6 @@ const EventEditSub = () => {
         <Card className="mb-2">
           <CardContent className="p-2">
             <div className="mb-0">
-              
-
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -292,18 +379,18 @@ const EventEditSub = () => {
           </Button>
           <Button 
             type="submit" 
-            disabled={saveMutation.isLoading} 
+            disabled={createMutation.isLoading || updateMutation.isLoading} 
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {saveMutation.isLoading ? (
+            {(createMutation.isLoading || updateMutation.isLoading) ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
+                {isEditing ? 'Updating...' : 'Creating...'}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Create Sub Tasks
+                {isEditing ? 'Update Sub Tasks' : 'Create Sub Tasks'}
               </>
             )}
           </Button>

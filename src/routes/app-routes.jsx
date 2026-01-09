@@ -6,6 +6,10 @@ import Maintenance from "@/components/common/maintenance";
 import SignUp from "@/app/auth/sign-up";
 import SignUPList from "@/app/master-settings/sign-up-list";
 import CprReport from "@/app/report/cpr/cpr-report";
+import EventList from "@/app/event/event-list";
+import EventCreate from "@/app/event/event-create";
+import EventEdit from "@/app/event/event-edit";
+import EventEditSub from "@/app/event/event-edit-sub";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(() =>
@@ -163,6 +167,33 @@ function AppRoutes() {
             </Suspense>
           }
         />
+        
+        
+          <Route
+          path="/event-create"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventCreate />
+            </Suspense>
+          }
+        />
+           <Route
+          path="/event-edit/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventEdit />
+            </Suspense>
+          }
+        />
+           <Route
+          path="/event-edit-sub/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventEditSub />
+            </Suspense>
+          }
+        />
+        
 
         {/* master-setting */}
         <Route
@@ -328,6 +359,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <Receipt />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/event-list"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <EventList />
             </Suspense>
           }
         />

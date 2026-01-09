@@ -200,6 +200,10 @@ const NAVIGATION_CONFIG = {
           title: "Notification",
           url: "/other/notification",
         },
+         {
+          title: "Event List",
+          url: "/event-list",
+        },
       ],
     },
 
