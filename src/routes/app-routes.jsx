@@ -12,53 +12,55 @@ import EventEdit from "@/app/event/event-edit";
 import EventEditSub from "@/app/event/event-edit-sub";
 import PromoterPendingList from "@/app/promoter/promoter-pending-list";
 import PanelConditionList from "@/app/panel-condition/panel-condition-list";
+import PromoterDashboard from "@/app/promoterdashboard/promoterdashboard";
+import PromoterDashboardView from "@/app/promoterdashboard/promoter-dashboard-view";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
-const ReceiptCreate = lazy(() =>
-  import("@/app/donor/donor-list/receipt-create")
+const ReceiptCreate = lazy(
+  () => import("@/app/donor/donor-list/receipt-create"),
 );
 const AllDownload = lazy(() => import("@/app/download/all-download"));
 const NotFound = lazy(() => import("@/app/errors/not-found"));
 const Home = lazy(() => import("@/app/home/home"));
 const Chapter = lazy(() => import("@/app/master-settings/chapter"));
 const Viewer = lazy(() => import("@/app/master-settings/viewer"));
-const MembershipActive = lazy(() =>
-  import("@/app/membership/membership-active")
+const MembershipActive = lazy(
+  () => import("@/app/membership/membership-active"),
 );
-const MemberShipDashboard = lazy(() =>
-  import("@/app/membership/membership-dashboard")
+const MemberShipDashboard = lazy(
+  () => import("@/app/membership/membership-dashboard"),
 );
-const MemberShipInactive = lazy(() =>
-  import("@/app/membership/membership-inactive")
+const MemberShipInactive = lazy(
+  () => import("@/app/membership/membership-inactive"),
 );
 const MembershipList = lazy(() => import("@/app/membership/membership-list"));
 const FaqOther = lazy(() => import("@/app/other/faq/faq"));
-const Notification = lazy(() =>
-  import("@/app/other/notification/notification")
+const Notification = lazy(
+  () => import("@/app/other/notification/notification"),
 );
 const Team = lazy(() => import("@/app/other/team/team"));
-const ForgotPassword = lazy(() =>
-  import("@/components/forgot-password/forgot-password")
+const ForgotPassword = lazy(
+  () => import("@/components/forgot-password/forgot-password"),
 );
 const AuthRoute = lazy(() => import("./auth-route"));
 const ProtectedRoute = lazy(() => import("./protected-route"));
-const DonorCompanyCreate = lazy(() =>
-  import("@/app/donor/donor-list/donor-company-create")
+const DonorCompanyCreate = lazy(
+  () => import("@/app/donor/donor-list/donor-company-create"),
 );
-const DonorIndiviusalCreate = lazy(() =>
-  import("@/app/donor/donor-list/donor-indiviusal-create")
+const DonorIndiviusalCreate = lazy(
+  () => import("@/app/donor/donor-list/donor-indiviusal-create"),
 );
 const DonorView = lazy(() => import("@/app/donor/donor-list/donor-view"));
-const DuplicateDonor = lazy(() =>
-  import("@/app/donor/duplicate/duplicate-donor")
+const DuplicateDonor = lazy(
+  () => import("@/app/donor/duplicate/duplicate-donor"),
 );
-const DuplicateDonorEdit = lazy(() =>
-  import("@/app/donor/duplicate/duplicate-donor-edit")
+const DuplicateDonorEdit = lazy(
+  () => import("@/app/donor/duplicate/duplicate-donor-edit"),
 );
 const Receipt = lazy(() => import("@/app/receipt/receipt"));
 const ReceiptView = lazy(() => import("@/app/receipt/receipt-view"));
-const DBStatement = lazy(() =>
-  import("@/app/report/10db-statement/10db-statement")
+const DBStatement = lazy(
+  () => import("@/app/report/10db-statement/10db-statement"),
 );
 const DonationSummary = lazy(() => import("@/app/report/donation/donation"));
 const Donor = lazy(() => import("@/app/report/donor/donor"));
@@ -66,71 +68,72 @@ const Promoter = lazy(() => import("@/app/report/promoter/promoter"));
 const ReceiptSummary = lazy(() => import("@/app/report/receipt/receipt"));
 const SchoolSummary = lazy(() => import("@/app/report/school/school"));
 const SuspenseSummary = lazy(() => import("@/app/report/suspense/suspense"));
-const RepeatedDonor = lazy(() =>
-  import("@/app/school/repeated-donor/repeated-donor")
+const RepeatedDonor = lazy(
+  () => import("@/app/school/repeated-donor/repeated-donor"),
 );
-const SchoolAllotLetter = lazy(() =>
-  import("@/app/school/school-alloted/allotment-letter")
+const SchoolAllotLetter = lazy(
+  () => import("@/app/school/school-alloted/allotment-letter"),
 );
-const SchoolAlloted = lazy(() =>
-  import("@/app/school/school-alloted/school-alloted")
+const SchoolAlloted = lazy(
+  () => import("@/app/school/school-alloted/school-alloted"),
 );
-const SchoolAllotEdit = lazy(() =>
-  import("@/app/school/school-alloted/school-alloted-edit")
+const SchoolAllotEdit = lazy(
+  () => import("@/app/school/school-alloted/school-alloted-edit"),
 );
-const SchoolAllotView = lazy(() =>
-  import("@/app/school/school-alloted/school-alloted-view")
+const SchoolAllotView = lazy(
+  () => import("@/app/school/school-alloted/school-alloted-view"),
 );
-const DonorDetails = lazy(() =>
-  import("@/app/school/school-allotment/donor-details")
+const DonorDetails = lazy(
+  () => import("@/app/school/school-allotment/donor-details"),
 );
-const SchoolToAllot = lazy(() =>
-  import("@/app/school/school-allotment/school-allotment")
+const SchoolToAllot = lazy(
+  () => import("@/app/school/school-allotment/school-allotment"),
 );
 const SchoolList = lazy(() => import("@/app/school/school-list/school-list"));
-const SchoolListView = lazy(() =>
-  import("@/app/school/school-list/school-list-view")
+const SchoolListView = lazy(
+  () => import("@/app/school/school-list/school-list-view"),
 );
 const Settings = lazy(() => import("@/app/setting/setting"));
-const AllotedList = lazy(() =>
-  import("@/app/school/repeated-donor/alloted-list")
+const AllotedList = lazy(
+  () => import("@/app/school/repeated-donor/alloted-list"),
 );
-const DonorIndiviusalEdit = lazy(() =>
-  import("@/app/donor/donor-list/donor-indiviusal-edit")
+const DonorIndiviusalEdit = lazy(
+  () => import("@/app/donor/donor-list/donor-indiviusal-edit"),
 );
-const DonorCompanyEdit = lazy(() =>
-  import("@/app/donor/donor-list/donor-company-edit")
+const DonorCompanyEdit = lazy(
+  () => import("@/app/donor/donor-list/donor-company-edit"),
 );
-const RecepitZeroList = lazy(() =>
-  import("@/app/recepit-super/recepit-zero-list")
+const RecepitZeroList = lazy(
+  () => import("@/app/recepit-super/recepit-zero-list"),
 );
-const RecepitNonZeroList = lazy(() =>
-  import("@/app/recepit-super/recepit-nonzero-list")
+const RecepitNonZeroList = lazy(
+  () => import("@/app/recepit-super/recepit-nonzero-list"),
 );
-const CreateViewer = lazy(() =>
-  import("@/components/master-settings/viewers/create-viewer")
+const CreateViewer = lazy(
+  () => import("@/components/master-settings/viewers/create-viewer"),
 );
-const EditViewer = lazy(() =>
-  import("@/components/master-settings/viewers/edit-viewer")
+const EditViewer = lazy(
+  () => import("@/components/master-settings/viewers/edit-viewer"),
 );
-const ChapterViewSuperAdmin = lazy(() =>
-  import("@/components/master-settings/chapter-superadmin/chapter-view")
+const ChapterViewSuperAdmin = lazy(
+  () => import("@/components/master-settings/chapter-superadmin/chapter-view"),
 );
-const ChapterCreate = lazy(() =>
-  import("@/components/master-settings/chapter-superadmin/chapter-create")
+const ChapterCreate = lazy(
+  () =>
+    import("@/components/master-settings/chapter-superadmin/chapter-create"),
 );
 const ChapterViewAdmin = lazy(() => import("@/app/chapter/chapter-view-admin"));
-const SuperReceiptDonor = lazy(() =>
-  import("@/app/change-recepit-donor/change-recepit-donor")
+const SuperReceiptDonor = lazy(
+  () => import("@/app/change-recepit-donor/change-recepit-donor"),
 );
-const MultipleRecepitList = lazy(() =>
-  import("@/app/recepit-super/multiple-recepit-list")
+const MultipleRecepitList = lazy(
+  () => import("@/app/recepit-super/multiple-recepit-list"),
 );
 const FolderList = lazy(() => import("@/app/folder/folder/folder-list"));
 const FileList = lazy(() => import("@/app/folder/file/file-list"));
 const FileView = lazy(() => import("@/app/folder/file/file-view"));
-const MultiAllotment = lazy(() =>
-  import("@/app/allotment-super/multi-download-allotment")
+const MultiAllotment = lazy(
+  () => import("@/app/allotment-super/multi-download-allotment"),
 );
 
 function AppRoutes() {
@@ -169,9 +172,8 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        
-        
-          <Route
+
+        <Route
           path="/event-create"
           element={
             <Suspense fallback={<LoadingBar />}>
@@ -179,7 +181,7 @@ function AppRoutes() {
             </Suspense>
           }
         />
-           <Route
+        <Route
           path="/event-edit/:id"
           element={
             <Suspense fallback={<LoadingBar />}>
@@ -187,7 +189,7 @@ function AppRoutes() {
             </Suspense>
           }
         />
-           <Route
+        <Route
           path="/event-edit-sub/:id"
           element={
             <Suspense fallback={<LoadingBar />}>
@@ -195,7 +197,6 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        
 
         {/* master-setting */}
         <Route
@@ -377,6 +378,22 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <PromoterPendingList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard-promoter"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <PromoterDashboard />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/dashboard-promoter-view/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <PromoterDashboardView />
             </Suspense>
           }
         />

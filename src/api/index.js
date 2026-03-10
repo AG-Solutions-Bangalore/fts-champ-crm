@@ -73,6 +73,8 @@ export const DONOR_COMPANY_FAMILY_GROUP_UPDATE = `${BASE_URL}/api/update-donor-l
 export const DONOR_COMPANY_EDIT_FETCH = `${BASE_URL}/api/donor`;
 export const DONOR_INDIVISUAL_EDIT_FETCH = `${BASE_URL}/api/donor`;
 // pending
+//promoter dasboard -
+export const PROMOTER_DASHBOARD_VIEW = `${BASE_URL}/api/promoter-dashboard-by-ftsid`;
 
 //MEMBERS
 export const MEMBERS_LIST = `${BASE_URL}/api/fetch-members`;
