@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import BASE_URL from "@/config/base-url";
 import { useQuery } from "@tanstack/react-query";
 import {
   flexRender,
@@ -25,45 +31,42 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { ArrowUpDown, ChevronDown, Edit, Edit3Icon, Eye, Loader2, Search, SquarePlus } from "lucide-react";
-import { useState } from "react";
-import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpDown, ChevronDown, Eye, Search } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const EventList = () => {
+const PromoterDashboard = () => {
+  const navigate =useNavigate()
   const {
-    data: eventData,
+    data: promoterData,
     isLoading,
     isError,
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ["eventList"],
+    queryKey: ["promoter-dashboard"],
     queryFn: async () => {
       const token = Cookies.get("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/event`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
+
+      const response = await axios.get(`${BASE_URL}/api/promoter-dashboard`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
-
+  const userType = Cookies.get("user_type_id");
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-const navigate = useNavigate()
+
   const columns = [
     {
       id: "S. No.",
@@ -75,8 +78,8 @@ const navigate = useNavigate()
       size: 60,
     },
     {
-      accessorKey: "event_name",
-      id: "Event Name",
+      accessorKey: "indicomp_full_name",
+      id: "Full Name",
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -84,95 +87,87 @@ const navigate = useNavigate()
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-2 h-8 text-xs"
         >
-          Event Name
+          Full Name
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Event Name")}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {" "}
+          {row.getValue("Full Name")}
+        </div>
+      ),
       size: 150,
     },
     {
-      accessorKey: "event_date",
-      id: "Event Date",
-      header: "Event Date",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Event Date")}</div>,
-      size: 120,
+      accessorKey: "indicomp_type",
+      id: "Type",
+      header: "Type",
+      cell: ({ row }) => (
+        <div className="font-medium text-gray-900 text-xs">
+          {row.getValue("Type")}
+        </div>
+      ),
     },
     {
-      accessorKey: "event_time",
-      id: "Event Time",
-      header: "Event Time",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Event Time")}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: "event_type",
-      id: "Event Type",
-      header: "Event Type",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Event Type")}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: "event_for",
-      id: "Event For",
-      header: "Event For",
-      cell: ({ row }) => <div className="text-xs font-medium">{row.getValue("Event For")}</div>,
-      size: 120,
-    },
-    {
-      accessorKey: "event_status",
-      id: "Status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.getValue("Status");
-        const isActive = status === "Active";
-        return (
-          <div className={`text-xs font-medium px-3 py-1 rounded-md w-fit ${isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-            {status || "-"}
+      id: "Contact Info",
+      header: "Contact Info",
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <div className="text-xs">
+            <span className="font-medium">Phone:</span>{" "}
+            {row.original.indicomp_mobile_phone}
           </div>
-        );
-      },
-      size: 120,
+          <div className="text-xs text-blue-600 ">
+            {row.original.indicomp_email}
+          </div>
+        </div>
+      ),
+      size: 150,
     },
+    ...(userType != 1 && userType != 2
+      ? [
+          {
+            accessorKey: "chapter.chapter_name",
+            id: "Chapter",
+            header: "Chapter",
+            cell: ({ row }) => (
+              <div className="font-medium text-gray-900 text-xs">
+                {row.original?.chapter?.chapter_name || "-"}
+              </div>
+            ),
+          },
+        ]
+      : []),
     {
       id: "actions",
-      header: "Action",
+      header: "Actions",
       cell: ({ row }) => {
+        const id = row.original.indicomp_fts_id;
         return (
-          <div className="flex flex-row">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={() => navigate(`/event-edit/${row.original.id}`)} variant="ghost" size="icon" className="h-8 w-8">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit Event</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={() => navigate(`/event-edit-sub/${row.original.id}`)} variant="ghost" size="icon" className="h-8 w-8">
-                    <Edit3Icon className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit Sub Event</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(`/dashboard-promoter-view/${id}`)}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
     },
   ];
 
   const table = useReactTable({
-    data: eventData || [],
+    data: promoterData?.promoter || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -215,7 +210,7 @@ const navigate = useNavigate()
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching Event Data
+              Error Fetching Promoter Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -227,22 +222,12 @@ const navigate = useNavigate()
   }
 
   return (
-    <div className="max-w-full">
-
-<div class="flex items-center justify-center ">
-  <center>
-    <h1 class="text-4xl font-bold text-gray-800">
-      <span class="text-blue-600">Coming</span>
-      <span class="text-gray-500 ml-2">Soon</span>
-    </h1>
-  </center>
-</div>
-
-      {/* <div className="flex items-center justify-between py-1">
+    <div className="max-w-full ">
+      <div className="flex items-center justify-between py-1">
         <div className="relative w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search events..."
+            placeholder="Search promoters dashboard..."
             value={table.getState().globalFilter || ""}
             onChange={(event) => table.setGlobalFilter(event.target.value)}
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
@@ -264,18 +249,15 @@ const navigate = useNavigate()
                     key={column.id}
                     className="text-xs capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link to='/event-create'>
-            <Button variant="default">
-              <SquarePlus className="h-3 w-3 mr-2" /> Event Create
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -285,8 +267,8 @@ const navigate = useNavigate()
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
                     style={{ width: header.column.columnDef.size }}
                   >
@@ -294,14 +276,14 @@ const navigate = useNavigate()
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
-          
+
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
               <TableShimmer />
@@ -316,7 +298,7 @@ const navigate = useNavigate()
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -324,8 +306,11 @@ const navigate = useNavigate()
               ))
             ) : (
               <TableRow className="h-12">
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
-                  No events found.
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-sm"
+                >
+                  No promoters dashboard found.
                 </TableCell>
               </TableRow>
             )}
@@ -335,7 +320,7 @@ const navigate = useNavigate()
 
       <div className="flex items-center justify-end space-x-2 py-1">
         <div className="flex-1 text-sm text-muted-foreground">
-          Total Events : &nbsp;
+          Total Promoters Dashboard: &nbsp;
           {table.getFilteredRowModel().rows.length}
         </div>
         <div className="space-x-2">
@@ -356,9 +341,9 @@ const navigate = useNavigate()
             Next
           </Button>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };
 
-export default EventList;
+export default PromoterDashboard;

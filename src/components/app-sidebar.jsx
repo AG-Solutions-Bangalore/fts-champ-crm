@@ -82,7 +82,12 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-
+    PROMOTERDASHBOARD: {
+      title: "Promoter Dashboard",
+      url: "/dashboard-promoter",
+      isActive: false,
+      icon: Package,
+    },
     DONOR: {
       title: "Donor",
       url: "#",
@@ -218,7 +223,6 @@ const NAVIGATION_CONFIG = {
           title: "Notification",
           url: "/other/notification",
         },
-       
       ],
     },
 
@@ -266,7 +270,16 @@ const NAVIGATION_CONFIG = {
 
 const USER_ROLE_PERMISSIONS = {
   1: {
-    navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL","PROMOTER","EVENt"],
+    navMain: [
+      "DASHBOARD",
+      "MEMBERSHIP",
+      "PROMOTERDASHBOARD",
+      "DONOR",
+      "RECEIPT",
+      "SCHOOL",
+      "PROMOTER",
+      "EVENt",
+    ],
     navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
@@ -280,7 +293,6 @@ const USER_ROLE_PERMISSIONS = {
       "SCHOOL",
       "PROMOTER",
       "EVENt",
-     
     ],
     navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
@@ -295,18 +307,25 @@ const USER_ROLE_PERMISSIONS = {
       "SCHOOL",
       "PROMOTER",
       "EVENt",
-      
     ],
     navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   4: {
-    navMain: ["DASHBOARD", "MEMBERSHIP", "DONOR", "RECEIPT", "SCHOOL","PROMOTER","EVENt"],
+    navMain: [
+      "DASHBOARD",
+      "MEMBERSHIP",
+      "DONOR",
+      "RECEIPT",
+      "SCHOOL",
+      "PROMOTER",
+      "EVENt",
+    ],
     navMainReport: ["SUMMARY", "DOWNLOADS", "OTHER", "SETTINGS"],
   },
 
   5: {
-    navMain: ["DASHBOARD", "CHAPTER", 'PROMOTER',"PANEL","EVENt"],
+    navMain: ["DASHBOARD", "CHAPTER", "PROMOTER", "PANEL", "EVENt"],
     navMainReport: [
       "SETTINGS",
       "RECEIPT_ZERO",
@@ -350,12 +369,12 @@ const useNavigationData = (userType) => {
     const navMain = buildNavItems(
       permissions.navMain,
       { ...NAVIGATION_CONFIG.COMMON, ...NAVIGATION_CONFIG.MODULES },
-      { MASTER_SETTINGS_LIMITED: LIMITED_MASTER_SETTINGS }
+      { MASTER_SETTINGS_LIMITED: LIMITED_MASTER_SETTINGS },
     );
 
     const navMainReport = buildNavItems(
       permissions.navMainReport,
-      NAVIGATION_CONFIG.REPORTS
+      NAVIGATION_CONFIG.REPORTS,
     );
 
     return { navMain, navMainReport };
