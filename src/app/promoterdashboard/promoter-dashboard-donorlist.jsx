@@ -1,14 +1,7 @@
-import { useState } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableHeader,
@@ -18,122 +11,98 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
-import moment from "moment";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+const DonorMembersTable = ({ data = [], selectedType }) => {
+  const [search, setSearch] = useState("");
 
-const DonorMembersTable = ({ data = [] }) => {
-  const [globalFilter, setGlobalFilter] = useState("");
+  const { rows, years } = useMemo(() => {
+    if (!selectedType) return { rows: [], years: [] };
 
-  const columns = [
-    {
-      accessorKey: "indicomp_full_name",
-      header: "Name",
-      cell: ({ row }) => (
-        <div className="text-xs font-medium">
-          {row.original.indicomp_full_name}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "indicomp_mobile_phone",
-      header: "Mobile",
-      cell: ({ row }) => (
-        <div className="text-xs">{row.original.indicomp_mobile_phone}</div>
-      ),
-    },
-    {
-      accessorKey: "indicomp_type",
-      header: "Type",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {row.original.indicomp_type}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "chapter_name",
-      header: "Chapter",
-      cell: ({ row }) => (
-        <div className="text-xs">{row.original.chapter_name || "-"}</div>
-      ),
-    },
-    {
-      accessorKey: "last_payment_date",
-      header: "Last Receipt",
-      cell: ({ row }) => (
-        <Badge variant="secondary" className="text-xs">
-          {moment(row.original.last_payment_date).format("DD MMM YYYY")}
-        </Badge>
-      ),
-    },
-  ];
+    const filtered = data.filter(
+      (d) => d.receipt_donation_type === selectedType,
+    );
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      globalFilter,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
-  });
+    const map = {};
+    const yearSet = new Set();
+
+    filtered.forEach((item) => {
+      const id = item.indicomp_fts_id;
+      const year = item.receipt_financial_year.split("-")[0];
+      const amount = Number(item.total_amount);
+
+      yearSet.add(year);
+
+      if (!map[id]) {
+        map[id] = {
+          name: item.indicomp_full_name,
+          type: item.indicomp_type,
+          mobile: item.indicomp_mobile_phone,
+        };
+      }
+
+      map[id][year] = (map[id][year] || 0) + amount;
+    });
+
+    const years = Array.from(yearSet).sort();
+    const rows = Object.values(map);
+
+    return { rows, years };
+  }, [data, selectedType]);
+
+  const filteredRows = rows.filter((row) =>
+    row.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <Card className="px-4 py-2">
-      <CardHeader className="pb-3 py-2">
-        <div className="flex items-center justify-between w-full">
-          <CardTitle className="text-base">Donors</CardTitle>
+    <Card className="px-4 py-3">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">
+            Donors -{selectedType || ""}
+          </CardTitle>
 
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              placeholder="Search members..."
-              value={globalFilter ?? ""}
-              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Search donors..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-9 text-sm"
             />
           </div>
         </div>
       </CardHeader>
 
-      {/* Table */}
-      <div className="border rounded-md">
+      <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              {table.getAllColumns().map((column) => (
-                <TableHead key={column.id} className="text-xs">
-                  {column.columnDef.header}
+              <TableHead>Name</TableHead>
+
+              {years.map((year) => (
+                <TableHead key={year} className="text-center">
+                  {year}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-xs">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+            {filteredRows.length ? (
+              filteredRows.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {row.name} ({row.type})
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {row.mobile}
+                      </span>
+                    </div>
+                  </TableCell>
+                  {years.map((year) => (
+                    <TableCell key={year} className="text-center">
+                      ₹ {row[year] ?? 0}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -141,36 +110,15 @@ const DonorMembersTable = ({ data = [] }) => {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-xs py-6"
+                  colSpan={years.length + 1}
+                  className="text-center py-6"
                 >
-                  No members found
+                  No donors found
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-end gap-2 mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
       </div>
     </Card>
   );

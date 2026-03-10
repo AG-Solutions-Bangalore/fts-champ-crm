@@ -273,7 +273,6 @@ const USER_ROLE_PERMISSIONS = {
     navMain: [
       "DASHBOARD",
       "MEMBERSHIP",
-      "PROMOTERDASHBOARD",
       "DONOR",
       "RECEIPT",
       "SCHOOL",
@@ -333,6 +332,7 @@ const USER_ROLE_PERMISSIONS = {
       "RECEIPT_MULTIPLE",
       "FOLDER",
       "MULTIALLOTMENT",
+      "PROMOTERDASHBOARD",
     ],
   },
 };

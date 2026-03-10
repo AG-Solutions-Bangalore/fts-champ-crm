@@ -1,37 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { Calendar, Download, Mail, Users } from "lucide-react";
+import { Calendar, Mail, Receipt, Users } from "lucide-react";
 import { useParams } from "react-router-dom";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 import { PROMOTER_DASHBOARD_VIEW } from "@/api";
-import moment from "moment";
 import DonorMembersTable from "./promoter-dashboard-donorlist";
+import { useState } from "react";
 
 const PromoterDashboardView = () => {
   const { id } = useParams();
   const token = Cookies.get("token");
-
+  const [selectedType, setSelectedType] = useState(null);
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ["promoter-dashboard-by-ftsid"],
+    queryKey: ["promoter-dashboard-by-ftsid", id],
     queryFn: async () => {
       const response = await axios.get(`${PROMOTER_DASHBOARD_VIEW}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -136,126 +121,180 @@ const PromoterDashboardView = () => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Total Members</p>
-              <h3 className="text-lg font-semibold">
-                {memberrecepit.length ?? 0}
-              </h3>
-            </div>
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600">
-              <Users className="w-4 h-4 text-white" />
-            </div>
-          </div>
-        </Card>
+        {[
+          {
+            label: "Active Members",
+            sub: "Registered individuals",
+            value: memberrecepit?.length ?? 0,
+            accent: "border-l-slate-400",
+            num: "text-slate-800",
+            icon: Users,
+            iconBg: "bg-slate-100",
+            iconColor: "text-slate-500",
+          },
+          {
+            label: "Financial Years",
+            sub: "Years with activity",
+            value: years?.length ?? 0,
+            accent: "border-l-teal-400",
+            num: "text-slate-800",
+            icon: Calendar,
+            iconBg: "bg-teal-50",
+            iconColor: "text-teal-500",
+          },
+          {
+            label: "Total Receipts",
+            sub: "Across all years",
+            value: totalReceipts ?? 0,
+            accent: "border-l-amber-400",
+            num: "text-slate-800",
+            icon: Receipt,
+            iconBg: "bg-amber-50",
+            iconColor: "text-amber-500",
+          },
+        ].map(
+          ({
+            label,
+            sub,
+            value,
+            accent,
+            num,
+            icon: Icon,
+            iconBg,
+            iconColor,
+          }) => (
+            <div
+              key={label}
+              className={`group relative bg-white border border-gray-100 border-l-4 ${accent}
+        rounded-xl px-5 py-4 flex flex-col justify-between gap-3 transition-all duration-200`}
+            >
+              {/* Top */}
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
+                  {label}
+                </p>
+              </div>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Total Years</p>
-              <h3 className="text-lg font-semibold">{years.length ?? 0}</h3>
-            </div>
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-600">
-              <Calendar className="w-4 h-4 text-white" />
-            </div>
-          </div>
-        </Card>
+              {/* Middle */}
+              <div className="flex items-center justify-between">
+                <p
+                  className={`text-4xl font-bold ${num} leading-none tracking-tight tabular-nums`}
+                >
+                  {(value ?? 0).toLocaleString()}
+                </p>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Total Recepits</p>
-              <h3 className="text-lg font-semibold">{totalReceipts}</h3>
+                <div
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconBg}`}
+                >
+                  <Icon className={`w-6 h-6 ${iconColor}`} />
+                </div>
+              </div>
+
+              {/* Bottom */}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-[11px] text-gray-400 font-medium">{sub}</p>
+              </div>
             </div>
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-600">
-              <Mail className="w-4 h-4 text-white" />
-            </div>
-          </div>
-        </Card>
+          ),
+        )}
       </div>
 
       <Card className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <CardHeader className="px-4 py-3 border-b border-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <Calendar className="text-emerald-600 w-3.5 h-3.5" />
-              </div>
-              <div>
-                <CardTitle className="text-sm font-semibold text-gray-800">
-                  Receipts
-                </CardTitle>
-                <p className="text-[10px] text-gray-400">
-                  {years.length} financial years
-                </p>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Calendar className="text-emerald-600 w-3.5 h-3.5" />
+            </div>
+
+            <div>
+              <CardTitle className="text-sm font-semibold text-gray-800">
+                Receipts
+              </CardTitle>
+              <p className="text-[10px] text-gray-400">
+                {years.length} financial years
+              </p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="p-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {years.map(([year, data]) => (
-              <div
-                key={year}
-                className="rounded-lg border border-gray-100 bg-gray-50 hover:border-emerald-200 hover:bg-white hover:shadow-sm transition-all duration-150 p-3"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {year}
-                  </span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {data.total}
-                  </span>
-                </div>
+          {years?.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                {/* THEAD */}
+                <thead>
+                  <tr className="border-b bg-gray-50 text-gray-600">
+                    <th className="text-left px-3 py-2 font-semibold">Type</th>
 
-                <div className="w-full h-0.5 bg-gray-200 rounded-full mb-2">
-                  <div
-                    className="h-full bg-emerald-400 rounded-full"
-                    style={{
-                      width: `${Math.min((data.total / Math.max(...years.map(([, d]) => d.total))) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  {Object.entries(data.types).map(([type, count], i) => {
-                    const colors = [
-                      { dot: "bg-blue-400", text: "text-blue-600" },
-                      { dot: "bg-emerald-400", text: "text-emerald-600" },
-                      { dot: "bg-orange-400", text: "text-orange-600" },
-                      { dot: "bg-purple-400", text: "text-purple-600" },
-                    ];
-                    const c = colors[i % colors.length];
-                    return (
-                      <div
-                        key={type}
-                        className="flex items-center justify-between"
+                    {years.map(([year]) => (
+                      <th
+                        key={year}
+                        className="text-center px-3 py-2 font-semibold"
                       >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span
-                            className={`w-1 h-1 rounded-full flex-shrink-0 ${c.dot}`}
-                          />
-                          <span className="text-[12px] text-gray-500 truncate">
-                            {type}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-[12px] font-semibold flex-shrink-0 ml-1 ${c.text}`}
+                        {year}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                {/* BODY */}
+                <tbody>
+                  {[
+                    ...new Set(
+                      years.flatMap(([, data]) => Object.keys(data.types)),
+                    ),
+                  ].map((type) => (
+                    <tr
+                      key={type}
+                      onClick={() => setSelectedType(type)}
+                      className="border-b hover:bg-gray-50 transition cursor-pointer"
+                    >
+                      <td className="px-3 py-2 font-medium text-gray-600">
+                        {type}
+                      </td>
+
+                      {years.map(([year, data]) => (
+                        <td
+                          key={year}
+                          className="text-center px-3 py-2 text-gray-700"
                         >
-                          {count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
+                          {data.types[type] ?? 0}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+
+                {/* FOOTER */}
+                <tfoot>
+                  <tr className="border-t bg-gray-50 font-semibold">
+                    <td className="px-3 py-2 text-gray-700">Total</td>
+
+                    {years.map(([year, data]) => (
+                      <td
+                        key={year}
+                        className="text-center px-3 py-2 text-gray-900"
+                      >
+                        {data.total}
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-sm text-gray-500">
+              No data found
+            </div>
+          )}
         </CardContent>
       </Card>
-      {memberrecepit?.length > 0 && <DonorMembersTable data={memberrecepit} />}
+      {selectedType && (
+        <DonorMembersTable
+          data={memberrecepit}
+          selectedType={selectedType}
+        />
+      )}
     </div>
   );
 };
