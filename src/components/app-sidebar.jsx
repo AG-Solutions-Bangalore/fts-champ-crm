@@ -82,12 +82,7 @@ const NAVIGATION_CONFIG = {
         },
       ],
     },
-    PROMOTERDASHBOARD: {
-      title: "Promoter Dashboard",
-      url: "/dashboard-promoter",
-      isActive: false,
-      icon: Package,
-    },
+
     DONOR: {
       title: "Donor",
       url: "#",
@@ -244,7 +239,12 @@ const NAVIGATION_CONFIG = {
       icon: Blocks,
       isActive: false,
     },
-
+    PROMOTERDASHBOARD: {
+      title: "Promoter Dashboard",
+      url: "/dashboard-promoter",
+      isActive: false,
+      icon: Package,
+    },
     RECEIPT_ZERO: {
       title: "Recepit-S",
       url: "/recepit/zero-list",
