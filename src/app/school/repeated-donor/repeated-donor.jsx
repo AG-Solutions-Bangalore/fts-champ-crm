@@ -75,7 +75,7 @@ const RepeatDonor = () => {
     {
       page: pagination.pageIndex + 1,
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-    }
+    },
   );
   const storeCurrentPage = () => {
     Cookies.set(
@@ -83,7 +83,7 @@ const RepeatDonor = () => {
       (pagination.pageIndex + 1).toString(),
       {
         expires: 1,
-      }
+      },
     );
   };
   const handleEditRepeated = (id) => {
@@ -208,10 +208,7 @@ const RepeatDonor = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          // onClick={() =>
-                          //   navigateToRepeatDonorEdit(navigate, id)
-                          // }
-                          onClick={() => handleEditRepeated(row?.original?.id)}
+                          onClick={() => handleEditRepeated(id)}
                         >
                           <Edit className="h-5 w-5 text-blue-500" />
                         </Button>
@@ -305,14 +302,14 @@ const RepeatDonor = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
       buttons.push(
         <span key="ellipsis1" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -331,7 +328,7 @@ const RepeatDonor = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
@@ -340,7 +337,7 @@ const RepeatDonor = () => {
       buttons.push(
         <span key="ellipsis2" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -354,7 +351,7 @@ const RepeatDonor = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -435,7 +432,7 @@ const RepeatDonor = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -457,7 +454,7 @@ const RepeatDonor = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
