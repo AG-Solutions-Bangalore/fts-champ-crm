@@ -55,13 +55,20 @@ import { TableShimmer } from "../school/loadingtable/TableShimmer";
 import axios from "axios";
 import Cookies from "js-cookie";
 import BASE_URL from "@/config/base-url";
-
+import moment from "moment";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 const SuperReceiptDonor = () => {
-  const [receiptRefNo, setReceiptRefNo] = useState("");
+  // const [receiptRefNo, setReceiptRefNo] = useState("");
   const [receiptData, setReceiptData] = useState(null);
   const [showDonorSelection, setShowDonorSelection] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState(null);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState();
@@ -73,7 +80,17 @@ const SuperReceiptDonor = () => {
     pageIndex: 0,
     pageSize: 10,
   });
+  const year = moment().year();
+  const month = moment().month() + 1;
 
+  const currentYear =
+    month >= 4
+      ? `${year}-${String(year + 1).slice(-2)}`
+      : `${year - 1}-${String(year).slice(-2)}`;
+
+  const [type, setType] = useState("GEN");
+  const [receiptNumber, setReceiptNumber] = useState("");
+  const receiptRefNo = `${type}/${receiptNumber}/${currentYear}`;
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
 
@@ -91,7 +108,7 @@ const SuperReceiptDonor = () => {
         method: "post",
         data: { receipt_ref_no: receiptRefNo },
       });
-      
+
       if (res.data && res.data.length > 0) {
         setReceiptData(res.data);
       } else {
@@ -107,7 +124,7 @@ const SuperReceiptDonor = () => {
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }, 500);
 
     return () => {
@@ -119,29 +136,37 @@ const SuperReceiptDonor = () => {
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = donorsData?.last_page || 1;
-    
+
     // Prefetch next page
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
       queryClient.prefetchQuery({
-        queryKey: ["chnage-donor", debouncedSearchTerm, nextPage],
+        queryKey: [
+          "chnage-donor",
+          debouncedSearchTerm,
+          nextPage,
+          selectedChapter,
+        ],
         queryFn: async () => {
           const token = Cookies.get("token");
           const params = new URLSearchParams({
             page: nextPage.toString(),
           });
-          
+
           if (debouncedSearchTerm) {
             params.append("search", debouncedSearchTerm);
           }
 
+          if (selectedChapter) {
+            params.append("chapter", selectedChapter);
+          }
           const response = await axios.get(
-            `${BASE_URL}/${CHANGE_DONOR}?${params}`,
+            `${BASE_URL}${CHANGE_DONOR}?${params}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
-            }
+            },
           );
           return response.data?.data || response.data;
         },
@@ -152,27 +177,42 @@ const SuperReceiptDonor = () => {
     // Prefetch previous page
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
-    
-      if (!queryClient.getQueryData(["chnage-donor", debouncedSearchTerm, prevPage])) {
+
+      if (
+        !queryClient.getQueryData([
+          "chnage-donor",
+          debouncedSearchTerm,
+          prevPage,
+          selectedChapter,
+        ])
+      ) {
         queryClient.prefetchQuery({
-          queryKey: ["chnage-donor", debouncedSearchTerm, prevPage],
+          queryKey: [
+            "chnage-donor",
+            debouncedSearchTerm,
+            prevPage,
+            selectedChapter,
+          ],
           queryFn: async () => {
             const token = Cookies.get("token");
             const params = new URLSearchParams({
               page: prevPage.toString(),
             });
-            
+
             if (debouncedSearchTerm) {
               params.append("search", debouncedSearchTerm);
             }
 
+            if (selectedChapter) {
+              params.append("chapter", selectedChapter);
+            }
             const response = await axios.get(
-              `${BASE_URL}/${CHANGE_DONOR}?${params}`,
+              `${BASE_URL}${CHANGE_DONOR}?${params}`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              }
+              },
             );
             return response.data?.data || response.data;
           },
@@ -180,8 +220,7 @@ const SuperReceiptDonor = () => {
         });
       }
     }
-  }, [pagination.pageIndex, debouncedSearchTerm, queryClient]);
-
+  }, [pagination.pageIndex, debouncedSearchTerm, queryClient, selectedChapter]);
   const {
     data: donorsData,
     isLoading: isDonorsLoading,
@@ -189,25 +228,31 @@ const SuperReceiptDonor = () => {
     refetch: donorsRefetch,
     isFetching: isDonorsFetching,
   } = useQuery({
-    queryKey: ["chnage-donor", debouncedSearchTerm, pagination.pageIndex + 1],
+    queryKey: [
+      "chnage-donor",
+      debouncedSearchTerm,
+      pagination.pageIndex + 1,
+      selectedChapter,
+    ],
     queryFn: async () => {
       const token = Cookies.get("token");
       const params = new URLSearchParams({
         page: (pagination.pageIndex + 1).toString(),
       });
-      
+
+      if (selectedChapter) {
+        params.append("chapter", selectedChapter);
+      }
+
       if (debouncedSearchTerm) {
         params.append("search", debouncedSearchTerm);
       }
 
-      const response = await axios.get(
-        `${BASE_URL}/${CHANGE_DONOR}?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get(`${BASE_URL}${CHANGE_DONOR}?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response.data?.data || response.data;
     },
     enabled: showDonorSelection,
@@ -215,14 +260,16 @@ const SuperReceiptDonor = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleOpenDonorSelection = () => {
+  const handleOpenDonorSelection = (receiptData) => {
+    console.log(receiptData[0]?.chapter?.chapter_name, "receiptData");
+    setSelectedChapter(receiptData[0]?.chapter?.chapter_name);
     setShowDonorSelection(true);
     donorsRefetch();
   };
 
   const handleUpdateDonor = async () => {
     if (!selectedDonor || !receiptData || receiptData.length === 0) return;
-    
+
     try {
       const res = await updateDonor({
         url: `${UPDATE_CHANGE_RECEPIT}`,
@@ -232,7 +279,7 @@ const SuperReceiptDonor = () => {
           receipt_ref_no: receiptRefNo,
         },
       });
-      
+
       if (res.code == 201) {
         toast.success(res.message);
         setShowDonorSelection(false);
@@ -248,7 +295,7 @@ const SuperReceiptDonor = () => {
   };
 
   const handleClear = () => {
-    setReceiptRefNo("");
+    // setReceiptRefNo("");
     setReceiptData(null);
     setShowDonorSelection(false);
     setSelectedDonor(null);
@@ -381,10 +428,15 @@ const SuperReceiptDonor = () => {
 
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
-    const cachedData = queryClient.getQueryData(["chnage-donor", debouncedSearchTerm, targetPage]);
-    
+    const cachedData = queryClient.getQueryData([
+      "chnage-donor",
+      debouncedSearchTerm,
+      targetPage,
+      selectedChapter,
+    ]);
+
     if (cachedData) {
-      setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
     } else {
       table.setPageIndex(newPageIndex);
     }
@@ -406,9 +458,9 @@ const SuperReceiptDonor = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
     const buttons = [];
-    
+
     if (totalPages === 0) return buttons;
-    
+
     // Always show first page
     buttons.push(
       <Button
@@ -419,16 +471,24 @@ const SuperReceiptDonor = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
-  
+
     // Show ellipsis if needed
     if (currentPage > 3) {
-      buttons.push(<span key="ellipsis1" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis1" className="px-2">
+          ...
+        </span>,
+      );
     }
-  
+
     // Show pages around current page
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
       if (i !== 1 && i !== totalPages) {
         buttons.push(
           <Button
@@ -439,16 +499,20 @@ const SuperReceiptDonor = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
-  
+
     // Show ellipsis if needed
     if (currentPage < totalPages - 2) {
-      buttons.push(<span key="ellipsis2" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis2" className="px-2">
+          ...
+        </span>,
+      );
     }
-  
+
     // Always show last page if there is more than one page
     if (totalPages > 1) {
       buttons.push(
@@ -460,10 +524,10 @@ const SuperReceiptDonor = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
-  
+
     return buttons;
   };
 
@@ -509,7 +573,7 @@ const SuperReceiptDonor = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col sm:flex-row gap-4 mb-6"
               >
-                <Input
+                {/* <Input
                   value={receiptRefNo}
                   onChange={(e) => setReceiptRefNo(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
@@ -521,8 +585,37 @@ const SuperReceiptDonor = () => {
                       ? "border-primary ring-primary/30"
                       : "border-gray-300"
                   }`}
-                />
+                /> */}
+                <div className="flex items-center gap-2">
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GEN">GEN</SelectItem>
+                      <SelectItem value="EKAL">EKAL</SelectItem>
+                    </SelectContent>
+                  </Select>
 
+                  {/* <span className="font-semibold">/</span> */}
+
+                  <Input
+                    type="number"
+                    value={receiptNumber}
+                    onChange={(e) => setReceiptNumber(e.target.value)}
+                    placeholder="No"
+                    className="w-[120px]"
+                    min={1}
+                  />
+
+                  {/* <span className="font-semibold">/</span> */}
+
+                  <Input
+                    value={currentYear}
+                    readOnly
+                    className="w-[140px] bg-gray-100"
+                  />
+                </div>
                 <Button
                   onClick={handleFetchReceipt}
                   disabled={loadingrecepit}
@@ -568,12 +661,15 @@ const SuperReceiptDonor = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
               <div className="flex items-center flex-wrap gap-2 md:gap-3">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleClear}
-                    className="text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-1.5 transition-all"
+                    className="text-primary border-primary/30  flex items-center gap-1.5 transition-all"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
@@ -584,12 +680,15 @@ const SuperReceiptDonor = () => {
                 </h2>
               </div>
 
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleOpenDonorSelection}
-                  className="text-primary border-primary/30 bg-primary/10 hover:bg-primary/20 flex items-center gap-1.5"
+                  onClick={() => handleOpenDonorSelection(receiptData)}
+                  className="text-primary border-primary/30 bg-primary/10  flex items-center gap-1.5"
                 >
                   <Edit2 className="w-4 h-4" />
                   Change Donor
@@ -613,7 +712,8 @@ const SuperReceiptDonor = () => {
                       <FileText className="h-5 w-5" />
                     </div>
                     <h3 className="text-base md:text-lg font-semibold text-foreground">
-                      Receipt Details {receiptData.length > 1 ? `#${index + 1}` : ""}
+                      Receipt Details{" "}
+                      {receiptData.length > 1 ? `#${index + 1}` : ""}
                     </h3>
                   </div>
 
@@ -632,7 +732,9 @@ const SuperReceiptDonor = () => {
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <div>
                           <p className="text-xs">Date</p>
-                          <p className="font-medium text-foreground">{receipt.receipt_no}</p>
+                          <p className="font-medium text-foreground">
+                            {receipt.receipt_no}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs">Promoter</p>
@@ -643,7 +745,9 @@ const SuperReceiptDonor = () => {
                         </div>
                         <div>
                           <p className="text-xs">Receipt ID</p>
-                          <p className="font-medium text-foreground">{receipt.id}</p>
+                          <p className="font-medium text-foreground">
+                            {receipt.id}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -675,7 +779,8 @@ const SuperReceiptDonor = () => {
                         <div>
                           <p className="text-xs">Chapter</p>
                           <p className="font-medium text-foreground">
-                            {receipt.chapter.chapter_name} ({receipt.chapter.chapter_code})
+                            {receipt.chapter.chapter_name} (
+                            {receipt.chapter.chapter_code})
                           </p>
                         </div>
                       </div>
@@ -725,65 +830,65 @@ const SuperReceiptDonor = () => {
       <AnimatePresence>
         {showDonorSelection && (
           <>
-    {selectedDonor && (
-  <motion.div
-    initial={{ opacity: 0, y: -10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35, ease: "easeOut" }}
-    className="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border border-primary/20 shadow-sm bg-gradient-to-r from-background via-primary/5 to-primary/10"
-  >
-    {/* Icon */}
-    <div className="bg-primary rounded-full p-2 text-primary-foreground shadow ring-1 ring-white/40 shrink-0">
-      <User className="w-4 h-4" />
-    </div>
+            {selectedDonor && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border border-primary/20 shadow-sm bg-gradient-to-r from-background via-primary/5 to-primary/10"
+              >
+                {/* Icon */}
+                <div className="bg-primary rounded-full p-2 text-primary-foreground shadow ring-1 ring-white/40 shrink-0">
+                  <User className="w-4 h-4" />
+                </div>
 
-    {/* Name */}
-    <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
-      {selectedDonor.indicomp_full_name}
-    </h3>
+                {/* Name */}
+                <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
+                  {selectedDonor.indicomp_full_name}
+                </h3>
 
-    {/* Separator */}
-    <span className="hidden sm:inline text-muted-foreground">•</span>
+                {/* Separator */}
+                <span className="hidden sm:inline text-muted-foreground">
+                  •
+                </span>
 
-    {/* Phone */}
-    <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
-      <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
-      <span>{selectedDonor.indicomp_mobile_phone || "N/A"}</span>
-    </div>
+                {/* Phone */}
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
+                  <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>{selectedDonor.indicomp_mobile_phone || "N/A"}</span>
+                </div>
 
-    {/* Chapter */}
-    <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
-      <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-      <span>{selectedDonor.chapter_name || "N/A"}</span>
-    </div>
+                {/* Chapter */}
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>{selectedDonor.chapter_name || "N/A"}</span>
+                </div>
 
-    {/* Type */}
-    <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
-      <UserCircle className="w-3.5 h-3.5 text-primary shrink-0" />
-      <span>{selectedDonor.indicomp_type || "N/A"}</span>
-    </div>
+                {/* Type */}
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground truncate">
+                  <UserCircle className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>{selectedDonor.indicomp_type || "N/A"}</span>
+                </div>
 
-    {/* Status */}
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-400 text-green-950 border-primary-foreground/30 backdrop-blur-sm">
-      <Check className="w-3 h-3" />
-      Active
-    </span>
+                {/* Status */}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-400 text-green-950 border-primary-foreground/30 backdrop-blur-sm">
+                  <Check className="w-3 h-3" />
+                  Active
+                </span>
 
-    {/* Update Button */}
-    <div className="ml-auto">
-      <Button
-        size="sm"
-        className="h-7 px-2.5 text-[11px] bg-primary hover:bg-primary/90 text-primary-foreground"
-        onClick={handleUpdateDonor}
-      >
-        {isUpdating ? "Updating..." : "Update"}
-        <ArrowRight className="w-3 h-3 ml-1" />
-      </Button>
-    </div>
-  </motion.div>
-)}
-
-
+                {/* Update Button */}
+                <div className="ml-auto">
+                  <Button
+                    size="sm"
+                    className="h-7 px-2.5 text-[11px] bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={handleUpdateDonor}
+                  >
+                    {isUpdating ? "Updating..." : "Update"}
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
 
             <motion.div
               key="donor-selection"
@@ -863,7 +968,7 @@ const SuperReceiptDonor = () => {
                                 ? null
                                 : flexRender(
                                     header.column.columnDef.header,
-                                    header.getContext()
+                                    header.getContext(),
                                   )}
                             </TableHead>
                           ))}
@@ -885,7 +990,7 @@ const SuperReceiptDonor = () => {
                               <TableCell key={cell.id} className="px-3 py-1">
                                 {flexRender(
                                   cell.column.columnDef.cell,
-                                  cell.getContext()
+                                  cell.getContext(),
                                 )}
                               </TableCell>
                             ))}
@@ -904,54 +1009,56 @@ const SuperReceiptDonor = () => {
                     </TableBody>
                   </Table>
                 </div>
-            <div className="flex items-center justify-between py-1">
-  <div className="text-sm text-muted-foreground">
-    Showing {donorsData?.from || 0} to {donorsData?.to || 0} of{" "}
-    {donorsData?.total || 0} donors
-  </div>
-  
-  <div className="flex items-center space-x-2">
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => handlePageChange(pagination.pageIndex - 1)}
-      disabled={pagination.pageIndex === 0}
-      className="h-8 px-2"
-    >
-      <ChevronLeft className="h-4 w-4" />
-    </Button>
-    
-    <div className="flex items-center space-x-1">
-      {generatePageButtons()}
-    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {donorsData?.from || 0} to {donorsData?.to || 0} of{" "}
+                    {donorsData?.total || 0} donors
+                  </div>
 
-    <div className="flex items-center space-x-2 text-sm">
-      <span>Go to</span>
-      <Input
-        type="tel"
-        min="1"
-        max={table.getPageCount()}
-        value={pageInput}
-        onChange={handlePageInput}
-        onBlur={() => setPageInput("")}
-        onKeyDown={keyDown}
-        className="w-16 h-8 text-sm"
-        placeholder="Page"
-      />
-      <span>of {table.getPageCount()}</span>
-    </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                      disabled={pagination.pageIndex === 0}
+                      className="h-8 px-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
 
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => handlePageChange(pagination.pageIndex + 1)}
-      disabled={pagination.pageIndex >= table.getPageCount() - 1}
-      className="h-8 px-2"
-    >
-      <ChevronRight className="h-4 w-4" />
-    </Button>
-  </div>
-</div>
+                    <div className="flex items-center space-x-1">
+                      {generatePageButtons()}
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span>Go to</span>
+                      <Input
+                        type="tel"
+                        min="1"
+                        max={table.getPageCount()}
+                        value={pageInput}
+                        onChange={handlePageInput}
+                        onBlur={() => setPageInput("")}
+                        onKeyDown={keyDown}
+                        className="w-16 h-8 text-sm"
+                        placeholder="Page"
+                      />
+                      <span>of {table.getPageCount()}</span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                      disabled={
+                        pagination.pageIndex >= table.getPageCount() - 1
+                      }
+                      className="h-8 px-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
