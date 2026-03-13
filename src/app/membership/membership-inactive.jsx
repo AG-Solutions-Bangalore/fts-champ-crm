@@ -33,12 +33,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
+  MessageCircle,
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import mailSentGif from "../../assets/mail-sent-fast.gif";
 import moment from "moment";
+import { useApiMutation } from "@/hooks/use-mutation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { MEMBERSHIP_RENEWAL_WHATSAPP_LIST } from "@/api";
 
 const MemberShipInactive = () => {
   const token = Cookies.get("token");
@@ -50,6 +59,8 @@ const MemberShipInactive = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [previousSearchTerm, setPreviousSearchTerm] = useState("");
+  const { trigger: sendWhatsapp, loading: whatsappLoading } = useApiMutation();
+  const [whatsappSending, setWhatsappSending] = useState({});
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -106,7 +117,7 @@ const MemberShipInactive = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       return response.data;
     },
@@ -143,7 +154,7 @@ const MemberShipInactive = () => {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
           return response.data;
         },
@@ -179,7 +190,7 @@ const MemberShipInactive = () => {
                   Authorization: `Bearer ${token}`,
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
             return response.data;
           },
@@ -201,7 +212,7 @@ const MemberShipInactive = () => {
         `${BASE_URL}/api/send-membership-renewal-email/${memberId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -225,7 +236,35 @@ const MemberShipInactive = () => {
     setMailSending((prev) => ({ ...prev, [memberId]: true }));
     sendEmailMutation.mutate(memberId);
   };
+  const handleWhatsapp = async (id) => {
+    if (!id) {
+      toast.error("Member ID is missing. Please try again.");
+      return;
+    }
 
+    try {
+      setWhatsappSending((prev) => ({ ...prev, [id]: true }));
+
+      const res = await sendWhatsapp({
+        url: `${MEMBERSHIP_RENEWAL_WHATSAPP_LIST}/${id}`,
+        method: "get",
+      });
+
+      if (res?.code === 201 || res?.code === 200) {
+        toast.success(res?.message || "WhatsApp message sent successfully");
+        setOpen(false);
+      } else {
+        toast.error(res?.message || "Failed to send WhatsApp message");
+      }
+    } catch (err) {
+      console.error("WhatsApp send error:", err);
+      toast.error(
+        err?.message || "Something went wrong while sending WhatsApp",
+      );
+    } finally {
+      setWhatsappSending((prev) => ({ ...prev, [id]: false }));
+    }
+  };
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -419,30 +458,65 @@ const MemberShipInactive = () => {
             cell: ({ row }) => {
               const memberId = row.original.id;
               const email = row.original.indicomp_email;
+              const mobile = row.original.indicomp_mobile_phone;
+              const isValidMobile = mobile && mobile !== "null";
               const isValidEmail = email && email.toLowerCase() !== "null";
 
               return (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSendEmail(memberId, email)}
-                  disabled={!isValidEmail || mailSending[memberId]}
-                  className="h-7 w-7 p-0 flex items-center justify-center"
-                >
-                  {mailSending[memberId] ? (
-                    <img
-                      src={mailSentGif}
-                      alt="Sending..."
-                      className="h-5 w-5 object-contain"
-                    />
-                  ) : (
-                    <Mail
-                      className={`w-3 h-3 ${
-                        isValidEmail ? "text-blue-500" : "text-gray-300"
-                      }`}
-                    />
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSendEmail(memberId, email)}
+                          disabled={!isValidEmail || mailSending[memberId]}
+                          className="h-7 w-7 p-0 flex items-center justify-center"
+                        >
+                          {mailSending[memberId] ? (
+                            <img
+                              src={mailSentGif}
+                              alt="Sending..."
+                              className="h-5 w-5 object-contain"
+                            />
+                          ) : (
+                            <Mail
+                              className={`w-3 h-3 ${
+                                isValidEmail ? "text-blue-500" : "text-gray-300"
+                              }`}
+                            />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Send Email</TooltipContent>
+                    </Tooltip>
+
+                    {/* WhatsApp Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleWhatsapp(memberId)}
+                          disabled={!isValidMobile || whatsappSending[memberId]}
+                          className="h-7 w-7 p-0 flex items-center justify-center"
+                        >
+                          {whatsappSending[memberId] ? (
+                            <img
+                              src={mailSentGif}
+                              alt="Sending..."
+                              className="h-5 w-5 object-contain"
+                            />
+                          ) : (
+                            <MessageCircle className="w-3 h-3 text-green-500" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Send WhatsApp</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               );
             },
             size: 80,
@@ -522,14 +596,14 @@ const MemberShipInactive = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
       buttons.push(
         <span key="ellipsis1" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -548,7 +622,7 @@ const MemberShipInactive = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
@@ -557,7 +631,7 @@ const MemberShipInactive = () => {
       buttons.push(
         <span key="ellipsis2" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -571,7 +645,7 @@ const MemberShipInactive = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -668,7 +742,7 @@ const MemberShipInactive = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -690,7 +764,7 @@ const MemberShipInactive = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

@@ -43,6 +43,11 @@ const ChapterCreate = () => {
     chapter_website: "",
     chapter_date_of_incorporation: "",
     chapter_region_code: "",
+
+    chapter_bank_name: "",
+    chapter_acc_no: "",
+    chapter_bank_branch: "",
+    chapter_ifsc_code: "",
   });
 
   // Fetch states
@@ -164,7 +169,8 @@ const ChapterCreate = () => {
     onError: (error) => {
       console.error("Create chapter error:", error.response.data.message);
       toast.error(
-        error.response.data.message || "An error occurred during create chapter"
+        error.response.data.message ||
+          "An error occurred during create chapter",
       );
     },
     onSettled: () => {
@@ -197,6 +203,10 @@ const ChapterCreate = () => {
         chapter_website: chapter.chapter_website,
         chapter_date_of_incorporation: chapter.chapter_date_of_incorporation,
         chapter_region_code: chapter.chapter_region_code,
+        chapter_bank_name: chapter.chapter_bank_name,
+        chapter_acc_no: chapter.chapter_acc_no,
+        chapter_bank_branch: chapter.chapter_bank_branch,
+        chapter_ifsc_code: chapter.chapter_ifsc_code,
       };
 
       setIsButtonDisabled(true);
@@ -518,6 +528,68 @@ const ChapterCreate = () => {
                     type="date"
                     value={chapter.chapter_date_of_incorporation}
                     onChange={onInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="">
+                  <Label
+                    htmlFor="chapter_bank_name"
+                    className="text-xs font-medium"
+                  >
+                    Bank Name
+                  </Label>
+                  <Input
+                    id="chapter_bank_name"
+                    name="chapter_bank_name"
+                    value={chapter.chapter_bank_name}
+                    onChange={onInputChange}
+                    placeholder="Enter Bank Name"
+                  />
+                </div>
+                <div className="">
+                  <Label
+                    htmlFor="chapter_acc_no"
+                    className="text-xs font-medium"
+                  >
+                    Bank Acc No
+                  </Label>
+                  <Input
+                    id="chapter_acc_no"
+                    name="chapter_acc_no"
+                    value={chapter.chapter_acc_no}
+                    onChange={onInputChange}
+                    placeholder="Enter Bank Acc No"
+                  />
+                </div>
+                <div className="">
+                  <Label
+                    htmlFor="chapter_bank_branch"
+                    className="text-xs font-medium"
+                  >
+                    Bank Branch
+                  </Label>
+                  <Input
+                    id="chapter_bank_branch"
+                    name="chapter_bank_branch"
+                    value={chapter.chapter_bank_branch}
+                    onChange={onInputChange}
+                    placeholder="Enter Bank Branch"
+                  />
+                </div>
+                <div className="">
+                  <Label
+                    htmlFor="chapter_ifsc_code"
+                    className="text-xs font-medium"
+                  >
+                    IFSC Code
+                  </Label>
+                  <Input
+                    id="chapter_ifsc_code"
+                    name="chapter_ifsc_code"
+                    value={chapter.chapter_ifsc_code}
+                    onChange={onInputChange}
+                    placeholder="Enter IFSC Code"
                   />
                 </div>
               </div>

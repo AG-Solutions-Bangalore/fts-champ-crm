@@ -61,6 +61,10 @@ const ChapterViewAdmin = () => {
     chapter_region_code: "",
     auth_sign: "",
     chapter_status: "",
+    chapter_bank_name: "",
+    chapter_acc_no: "",
+    chapter_bank_branch: "",
+    chapter_ifsc_code: "",
   });
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [initialFormData, setInitialFormData] = useState({});
@@ -109,6 +113,10 @@ const ChapterViewAdmin = () => {
         chapter_region_code: chapter.chapter_region_code || "",
         auth_sign: chapter.auth_sign || "",
         chapter_status: chapter.chapter_status || "",
+        chapter_bank_name: chapter.chapter_bank_name || "",
+        chapter_acc_no: chapter.chapter_acc_no || "",
+        chapter_bank_branch: chapter.chapter_bank_branch || "",
+        chapter_ifsc_code: chapter.chapter_ifsc_code || "",
       };
 
       setFormData(newFormData);
@@ -387,10 +395,78 @@ const ChapterViewAdmin = () => {
                       onChange={(e) =>
                         handleInputChange(
                           "chapter_date_of_incorporation",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="chapter_bank_name"
+                      className="text-xs font-medium"
+                    >
+                      Bank Name
+                    </Label>
+                    <Input
+                      id="chapter_bank_name"
+                      value={formData.chapter_bank_name}
+                      onChange={(e) =>
+                        handleInputChange("chapter_bank_name", e.target.value)
+                      }
+                      className="h-8 text-xs"
+                      placeholder="Enter Bank Name"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="chapter_acc_no"
+                      className="text-xs font-medium"
+                    >
+                      Bank Acc No
+                    </Label>
+                    <Input
+                      id="chapter_acc_no"
+                      value={formData.chapter_acc_no}
+                      onChange={(e) =>
+                        handleInputChange("chapter_acc_no", e.target.value)
+                      }
+                      className="h-8 text-xs"
+                      placeholder="Enter Bank Acc No"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="chapter_bank_branch"
+                      className="text-xs font-medium"
+                    >
+                      Bank Branch
+                    </Label>
+                    <Input
+                      id="chapter_bank_branch"
+                      value={formData.chapter_bank_branch}
+                      onChange={(e) =>
+                        handleInputChange("chapter_bank_branch", e.target.value)
+                      }
+                      className="h-8 text-xs"
+                      placeholder="Enter Bank Branch"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="chapter_ifsc_code"
+                      className="text-xs font-medium"
+                    >
+                      Bank IFSC Code
+                    </Label>
+                    <Input
+                      id="chapter_ifsc_code"
+                      value={formData.chapter_ifsc_code}
+                      onChange={(e) =>
+                        handleInputChange("chapter_ifsc_code", e.target.value)
+                      }
+                      className="h-8 text-xs"
+                      placeholder="Enter IFSC Code"
                     />
                   </div>
                   <div className="space-y-1">

@@ -26,7 +26,6 @@ export const STATES_LIST = `${BASE_URL}/api/fetch-states`;
 export const CREATE_STATES = `${BASE_URL}/api/create-states`;
 export const UPDATES_STATES = `${BASE_URL}/api/update-states`;
 
-
 //DESIGNATION
 export const DESIGNATION_LIST = `${BASE_URL}/api/fetch-designation`;
 export const CREATE_DESIGNATION = `${BASE_URL}/api/create-designation`;
@@ -46,7 +45,7 @@ export const UPDATES_FAQ = `${BASE_URL}/api/update-faqs`;
 
 /*--------------------------Master-end----------------------------------- */
 
-//CREATE FOLLOWUP 
+//CREATE FOLLOWUP
 export const CREATE_FOLLOWUP_API_URL = `${BASE_URL}/api/followup`;
 export const FOLLOWUP_GET_DATA = `${BASE_URL}/api/followup`;
 
@@ -59,6 +58,7 @@ export const DONOR_VIEW_DATA = `${BASE_URL}/api/fetch-donor-by-id`;
 export const DONOR_VIEW_OLD_RECEIPT_LIST = `${BASE_URL}/api/fetch-receipts-by-old-id`;
 export const DONATION_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-receipt-by-id`;
 export const MEMBERSHIP_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-receipt-by-id`;
+export const MEMBERSHIP_RENEWAL_WHATSAPP_LIST = `/api/send-membership-renewal-whatsapp`;
 export const FAMILY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const COMPANY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
@@ -166,6 +166,8 @@ export const SCHOOL_ALLOT_LETTER = `/api/school-alloted-letter`;
 //SCHOOL TO ALLOT
 // export const SCHOOL_TO_ALOT_LIST = `/api/fetch-ots`;
 export const SCHOOL_TO_ALOT_LIST = `/api/school-allotment`;
+export const APPEAL_EMAIL = `/api/send-appeal-letter-csr-donoor-email`;
+export const APPEAL_WHATSAPP = `/api/send-appeal-letter-csr-donoor-whatsapp`;
 // (DONOR DETAILS )
 // export const SCHOOL_DATA_BY_ID = `/api/fetch-schoolsallotdonor-by-id/`;
 export const SCHOOL_DATA_BY_ID = `/api/school-alloted-donor-by-id`;
@@ -418,8 +420,8 @@ export const navigateToOldReceiptEdit = (navigate, viewId) => {
 export const navigateToDonorDetailsView = (navigate, id, year, fYear) => {
   navigate(
     `/school/donor-details/${encryptId(id)}/${encryptId(year)}/${encryptId(
-      fYear
-    )}`
+      fYear,
+    )}`,
   );
 };
 
@@ -472,13 +474,13 @@ export const fetchAdminSchoolViewById = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -497,7 +499,7 @@ export const fetchChapterViewById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -517,7 +519,7 @@ export const fetchChapterEditById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -535,7 +537,7 @@ export const fetchChapterUpdateEditById = async (encryptedId, formData) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -558,7 +560,7 @@ export const fetchChapterDatasourceById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -579,7 +581,7 @@ export const fetchReceiptEditById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -598,7 +600,7 @@ export const fetchReceiptEditOldById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -618,7 +620,7 @@ export const fetchReceiptEditByIdDonorData = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -636,7 +638,7 @@ export const fetchReceiptEditByIdUpdate = async (encryptedId, formData) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -656,7 +658,7 @@ export const fetchReceiptEditByIdOldUpdate = async (encryptedId, formData) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -679,7 +681,7 @@ export const fetchReceiptViewById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -698,7 +700,7 @@ export const fetchReceiptOldViewById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -714,13 +716,13 @@ export const fetchReceiptOld20to22ViewById = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -739,7 +741,7 @@ export const fetchSchoolFullListViewById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -753,12 +755,12 @@ export const fetchRepeatDonorEditList = async (encryptedId) => {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }); 
+    });
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -777,7 +779,7 @@ export const fetchViewerEditById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -797,7 +799,7 @@ export const fetchDuplicateEditById = async (encryptedId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -815,7 +817,7 @@ export const fetchDuplicateEditByIdUpdate = async (encryptedId, formData) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -835,13 +837,13 @@ export const fetchDonorDataInCreateReceiptById = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -860,13 +862,13 @@ export const fetchReceiptOldOneSendMail = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -882,13 +884,13 @@ export const fetchReceiptOldOne20TO22SendMail = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };
@@ -905,13 +907,13 @@ export const fetchReceiptOneSendMail = async (encryptedId) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || "Failed to fetch purchase details"
+      error.response?.data?.message || "Failed to fetch purchase details",
     );
   }
 };

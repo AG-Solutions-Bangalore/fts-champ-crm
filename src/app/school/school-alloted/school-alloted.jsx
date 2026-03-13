@@ -51,12 +51,13 @@ import {
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import AppealLetterDialog from "./appeal-letterdialog";
 
 const SchoolAlloted = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get("user_type_id");
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -74,9 +75,13 @@ const SchoolAlloted = () => {
 
   // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
-    Cookies.set("schoolAllotedReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 // expires in 1 day
-    });
+    Cookies.set(
+      "schoolAllotedReturnPage",
+      (pagination.pageIndex + 1).toString(),
+      {
+        expires: 1, // expires in 1 day
+      },
+    );
   };
 
   // Navigation handlers that store current page
@@ -101,13 +106,13 @@ const SchoolAlloted = () => {
     if (savedPage) {
       // Remove the cookie first to prevent infinite loops
       Cookies.remove("schoolAllotedReturnPage");
-      
+
       // Set the pagination after a small delay to ensure proper rendering
       setTimeout(() => {
         const pageIndex = parseInt(savedPage) - 1;
         if (pageIndex >= 0) {
-          setPagination(prev => ({ ...prev, pageIndex }));
-          
+          setPagination((prev) => ({ ...prev, pageIndex }));
+
           // Also update the page input field
           setPageInput(savedPage);
 
@@ -125,12 +130,13 @@ const SchoolAlloted = () => {
   useEffect(() => {
     const timerId = setTimeout(() => {
       // Check if this is a genuine new search (not just initialization)
-      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
-      
+      const isNewSearch =
+        searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+
       if (isNewSearch) {
         setPagination((prev) => ({ ...prev, pageIndex: 0 }));
       }
-      
+
       setDebouncedSearchTerm(searchTerm);
       setPreviousSearchTerm(searchTerm);
     }, 500);
@@ -272,64 +278,69 @@ const SchoolAlloted = () => {
     },
 
     // Actions
-    ...(userType !== '4'? [
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const id = row.original.id;
-          const year = row.original.schoolalot_financial_year;
+    ...(userType !== "4"
+      ? [
+          {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+              const id = row.original.id;
+              const year = row.original.schoolalot_financial_year;
 
-          return (
-            <div className="flex">
-              <TooltipProvider>
-                {/* Edit */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditAllotment(id, year)}
-                    >
-                      <Edit className="h-5 w-5 " />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Edit</TooltipContent>
-                </Tooltip>
+              return (
+                <div className="flex">
+                  <TooltipProvider>
+                    {/* Edit */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditAllotment(id, year)}
+                        >
+                          <Edit className="h-5 w-5 " />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
 
-                {/* View */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewAllotment(id)}
-                    >
-                      <Eye className="h-5 w-5 " />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>View</TooltipContent>
-                </Tooltip>
+                    {/* View */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewAllotment(id)}
+                        >
+                          <Eye className="h-5 w-5 " />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>View</TooltipContent>
+                    </Tooltip>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleAllotmentLetter(id)}
-                    >
-                      <ClipboardList className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Allotment</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          );
-        },
-        size: 120,
-      },
-    ]: [])
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleAllotmentLetter(id)}
+                        >
+                          <ClipboardList className="h-5 w-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Allotment</TooltipContent>
+                    </Tooltip>
+                    <div className="flex gap-1">
+                      <AppealLetterDialog row={row.original} />
+                    </div>
+                  </TooltipProvider>
+                </div>
+              );
+            },
+            size: 120,
+          },
+        ]
+      : []),
   ];
 
   const table = useReactTable({
@@ -410,14 +421,14 @@ const SchoolAlloted = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
       buttons.push(
         <span key="ellipsis1" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -436,7 +447,7 @@ const SchoolAlloted = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
@@ -445,7 +456,7 @@ const SchoolAlloted = () => {
       buttons.push(
         <span key="ellipsis2" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -459,7 +470,7 @@ const SchoolAlloted = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -552,7 +563,7 @@ const SchoolAlloted = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -574,7 +585,7 @@ const SchoolAlloted = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
