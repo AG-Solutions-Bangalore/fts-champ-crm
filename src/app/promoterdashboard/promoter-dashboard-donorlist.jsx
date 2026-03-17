@@ -100,11 +100,15 @@ const DonorMembersTable = ({ data = [], selectedType }) => {
                       </span>
                     </div>
                   </TableCell>
-                  {years.map((year) => (
-                    <TableCell key={year} className="text-center">
-                      ₹ {row[year] ?? 0}
-                    </TableCell>
-                  ))}
+                  {years.map((year) => {
+                    const value = row[year];
+
+                    return (
+                      <TableCell key={year} className="text-center">
+                        {value === 0 || value == null ? "-" : `₹ ${value}`}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

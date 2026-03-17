@@ -334,6 +334,12 @@ const SuperReceiptDonor = () => {
       size: 90,
     },
     {
+      accessorKey: "indicomp_fts_id",
+      header: "FTS ID",
+      id: "FTS ID",
+      cell: ({ row }) => <span>{row.original.indicomp_fts_id}</span>,
+    },
+    {
       accessorKey: "indicomp_full_name",
       header: "Donor Name",
       id: "Donor Name",
