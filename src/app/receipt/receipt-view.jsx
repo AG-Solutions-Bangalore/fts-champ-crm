@@ -17,13 +17,13 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Lucide React icons
-import { 
-  ArrowLeft, 
-  FileType, 
-  Mail, 
-  Printer, 
-  FileText, 
-  Loader2, 
+import {
+  ArrowLeft,
+  FileType,
+  Mail,
+  Printer,
+  FileText,
+  Loader2,
   MailPlus,
   X,
   History,
@@ -53,7 +53,7 @@ const ReceiptOne = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const id = searchParams.get('ref');
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const token = Cookies.get("token");
   const [donor1, setDonor1] = useState({ indicomp_email: "" });
   const [open, setOpen] = useState(false);
@@ -77,10 +77,10 @@ const ReceiptOne = () => {
       return data;
     },
     enabled: !!id,
-    refetchOnWindowFocus: false,  
-  refetchOnReconnect: false,     
-  refetchOnMount: false,        
-  staleTime: 1000 * 60 * 5, 
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   const receipts = receiptData?.data || {};
@@ -91,9 +91,10 @@ const ReceiptOne = () => {
 
   const authsign = receiptData?.auth_sign || [];
   const country = receiptData?.country || [];
+  const receipt80gCode = receiptData?.receipt80GCode || {};
   const amountInWords = numWords(receipts.receipt_total_amount || 0);
 
-  
+
   const { data: receiptControl } = useQuery({
     queryKey: ['receiptControl'],
     queryFn: async () => {
@@ -106,79 +107,79 @@ const ReceiptOne = () => {
     },
   });
 
- 
+
   const sendEmailMutation = useMutation({
-  mutationFn: async () => {
-    const response = await axios.get(
-      `${BASE_URL}/api/send-receipt-email?id=${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${Cookies.get("token")}`,
-        },
+    mutationFn: async () => {
+      const response = await axios.get(
+        `${BASE_URL}/api/send-receipt-email?id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${Cookies.get("token")}`,
+          },
+        }
+      );
+      return response.data;
+    },
+
+    onSuccess: (response) => {
+      if (response?.code === 201) {
+
+        toast.success(response.message);
+
+
+
+        // receipts.receipt_email_count
+
+
+
+        const followUpFormData = new FormData();
+        followUpFormData.append('chapter_id', receipts.chapter_id);
+        followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
+
+        const emailCount = receipts.receipt_email_count || 0;
+        const emailNumber = emailCount + 1;
+
+
+
+
+        followUpFormData.append('followup_heading', emailCount === 0
+          ? `${getOrdinal(emailNumber)} Email Delivered`
+          : `${getOrdinal(emailNumber)} Email Sent`
+        );
+        followUpFormData.append('followup_description', emailCount === 0
+          ? `Initial receipt email sent to ${receipts.donor.indicomp_email}`
+          : `Follow-up email sent to ${receipts.donor.indicomp_email}`
+        );
+        followUpFormData.append('followup_status', emailCount === 0
+          ? `Delivered`
+          : `Sent`
+        );
+
+
+        createFollowupMutation.mutate(followUpFormData);
+
+        queryClient.invalidateQueries(["receiptView", id]);
+        queryClient.invalidateQueries(["followup-data", receipts.indicomp_fts_id]);
+      } else {
+        toast.error(response.message);
       }
-    );
-    return response.data; 
-  },
+    },
 
-  onSuccess: (response) => {
-    if (response?.code === 201) {
-    
-      toast.success(response.message);
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Sent mail error");
+    },
+  });
 
+  const getFileName = (prefix = 'R') => {
+    const donorFirstName = receipts?.donor?.indicomp_full_name
+      ? receipts.donor.indicomp_full_name.split(' ')[0]
+      : 'Unknown';
 
+    return `${prefix}-${donorFirstName}-${receipts?.receipt_no || 'N/A'}`;
+  };
 
-      // receipts.receipt_email_count
-
-
-
-      const followUpFormData = new FormData();
-      followUpFormData.append('chapter_id', receipts.chapter_id);
-      followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
-      
-      const emailCount = receipts.receipt_email_count || 0;
-      const emailNumber = emailCount + 1;
-      
-    
-
-
-      followUpFormData.append('followup_heading', emailCount === 0 
-        ? `${getOrdinal(emailNumber)} Email Delivered`
-        : `${getOrdinal(emailNumber)} Email Sent`
-      );
-      followUpFormData.append('followup_description', emailCount === 0 
-        ? `Initial receipt email sent to ${receipts.donor.indicomp_email}`
-        : `Follow-up email sent to ${receipts.donor.indicomp_email}`
-      );
-      followUpFormData.append('followup_status', emailCount === 0 
-        ? `Delivered`
-        : `Sent`
-      );
-      
-  
-      createFollowupMutation.mutate(followUpFormData);
-
-      queryClient.invalidateQueries(["receiptView", id]);
-      queryClient.invalidateQueries(["followup-data", receipts.indicomp_fts_id]);
-    } else {
-      toast.error(response.message);
-    }
-  },
-
-  onError: (error) => {
-    toast.error(error.response?.data?.message || "Sent mail error");
-  },
-});
-
-const getFileName = (prefix = 'R') => {
-  const donorFirstName = receipts?.donor?.indicomp_full_name 
-    ? receipts.donor.indicomp_full_name.split(' ')[0]
-    : 'Unknown';
-  
-  return `${prefix}-${donorFirstName}-${receipts?.receipt_no || 'N/A'}`;
-};
-  
   const updateEmailMutation = useMutation({
-    mutationFn: (formData) => 
+    mutationFn: (formData) =>
       axios.patch(`${BASE_URL}/api/update-donor-email/${Cookies.get("ftsid")}`, formData, {
         headers: {
           Authorization: `Bearer ${Cookies.get("token")}`,
@@ -253,8 +254,8 @@ const getFileName = (prefix = 'R') => {
         const imgWidth = pdfWidth - 2 * margin;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-          
-const fileName = `${getFileName('R')}.pdf`;
+
+        const fileName = `${getFileName('R')}.pdf`;
         pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
         pdf.save(fileName);
         const followUpFormData = new FormData();
@@ -263,7 +264,7 @@ const fileName = `${getFileName('R')}.pdf`;
         followUpFormData.append('followup_heading', "PDF Downloaded");
         followUpFormData.append('followup_description', `Receipt PDF was downloaded by ${Cookies.get('name')}`);
         followUpFormData.append('followup_status', "Completed");
-        
+
         createFollowupMutation.mutate(followUpFormData);
       })
       .catch((error) => {
@@ -294,7 +295,7 @@ const fileName = `${getFileName('R')}.pdf`;
 
   const handlPrintPdf = useReactToPrint({
     content: () => containerRef.current,
-     documentTitle: () => getFileName('L'),
+    documentTitle: () => getFileName('L'),
     pageStyle: `
       @page {
         size: auto;
@@ -318,22 +319,22 @@ const fileName = `${getFileName('R')}.pdf`;
     onBeforeGetContent: () => setIsPrintingLetter(true),
     onAfterPrint: () => {
       setIsPrintingLetter(false);
-      
-  
+
+
       const followUpFormData = new FormData();
       followUpFormData.append('chapter_id', receipts.chapter_id);
       followUpFormData.append('indicomp_fts_id', receipts.indicomp_fts_id);
       followUpFormData.append('followup_heading', "Letter Head Printed");
       followUpFormData.append('followup_description', "Thank you letter was printed for physical copy");
       followUpFormData.append('followup_status', "Completed");
-      
+
       createFollowupMutation.mutate(followUpFormData);
     },
   });
 
   const handlReceiptPdf = useReactToPrint({
     content: () => tableRef.current,
-     documentTitle: () => getFileName('R'),
+    documentTitle: () => getFileName('R'),
     pageStyle: `
       @page {
         size: auto;
@@ -386,138 +387,138 @@ const fileName = `${getFileName('R')}.pdf`;
   return (
     <TooltipProvider>
       <div className=" ">
-      
 
 
-      {receiptControl?.download_open === "Yes" && Cookies.get("user_type_id") != 4 && (
-  <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
-    <Card className="p-3 shadow-2xl border border-white/30 backdrop-blur-lg bg-white/80 rounded-2xl hover:bg-white/90 transition-all duration-300">
-      <div className="flex items-center gap-2">
-      {tallyReceipt == "True" && (
-        <div className="flex items-center pr-2  border-r border-gray-300/50 mr-1">
-    
-            <img src={tallyImg} alt="tallyImg" className="h-6 mr-1 opacity-90" />
-        
-        </div>
-      )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSavePDF}
-              disabled={isSavingPDF}
-              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
-            >
-              {isSavingPDF ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <FileType className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Download PDF</TooltipContent>
-        </Tooltip>
 
-        {receipts?.donor?.indicomp_email ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={sendEmail}
-                disabled={sendEmailMutation.isPending}
-                className=" rounded-md relative transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-              >
-                {!sendEmailMutation.isPending && (
-                  <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
-                    {receipts.receipt_email_count || 0}
-                  </span>
+        {receiptControl?.download_open === "Yes" && Cookies.get("user_type_id") != 4 && (
+          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
+            <Card className="p-3 shadow-2xl border border-white/30 backdrop-blur-lg bg-white/80 rounded-2xl hover:bg-white/90 transition-all duration-300">
+              <div className="flex items-center gap-2">
+                {tallyReceipt == "True" && (
+                  <div className="flex items-center pr-2  border-r border-gray-300/50 mr-1">
+
+                    <img src={tallyImg} alt="tallyImg" className="h-6 mr-1 opacity-90" />
+
+                  </div>
                 )}
-                {sendEmailMutation.isPending ? (
-                  <img src={mailSentGif} alt="Sending..." className="h-5 w-5" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSavePDF}
+                      disabled={isSavingPDF}
+                      className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)] hover:shadow-md"
+                    >
+                      {isSavingPDF ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <FileType className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Download PDF</TooltipContent>
+                </Tooltip>
+
+                {receipts?.donor?.indicomp_email ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={sendEmail}
+                        disabled={sendEmailMutation.isPending}
+                        className=" rounded-md relative transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+                      >
+                        {!sendEmailMutation.isPending && (
+                          <span className="absolute -top-2 -right-2 rounded-full bg-blue-500 text-white text-[12px] w-6 h-6 flex items-center justify-center border-2 border-white font-medium">
+                            {receipts.receipt_email_count || 0}
+                          </span>
+                        )}
+                        {sendEmailMutation.isPending ? (
+                          <img src={mailSentGif} alt="Sending..." className="h-5 w-5" />
+                        ) : (
+                          <Mail className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Send Mail</TooltipContent>
+                  </Tooltip>
                 ) : (
-                  <Mail className="h-5 w-5" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleClickOpen}
+                        className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+                      >
+                        <MailPlus className="h-5 w-5 text-red-500" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add Mail</TooltipContent>
+                  </Tooltip>
                 )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Send Mail</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleClickOpen}
-                className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-              >
-                <MailPlus className="h-5 w-5 text-red-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add Mail</TooltipContent>
-          </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handlReceiptPdf}
+                      disabled={isPrintingReceipt}
+                      className="h-11 w-11 rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
+                    >
+                      {isPrintingReceipt ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Printer className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Print Receipt</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handlPrintPdf}
+                      disabled={isPrintingLetter}
+                      className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+                    >
+                      {isPrintingLetter ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <FileText className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Print Letter</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled
+                      className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
+                    >
+
+                      <MessageCircleIcon className="h-5 w-5 text-green-700" />
+
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Print Letter</TooltipContent>
+                </Tooltip>
+
+
+                <TimelineReceipt donorId={receipts.indicomp_fts_id} />
+              </div>
+            </Card>
+          </div>
         )}
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlReceiptPdf}
-              disabled={isPrintingReceipt}
-              className="h-11 w-11 rounded-md transition-all duration-300 hover:scale-110 border  border-[var(--color-border)] hover:shadow-md"
-            >
-              {isPrintingReceipt ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Printer className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Print Receipt</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlPrintPdf}
-              disabled={isPrintingLetter}
-              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-            >
-              {isPrintingLetter ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <FileText className="h-5 w-5" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Print Letter</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled
-              className=" rounded-md transition-all duration-300 hover:scale-110 border border-[var(--color-border)]  hover:shadow-md"
-            >
-       
-                <MessageCircleIcon className="h-5 w-5 text-green-700" />
-         
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Print Letter</TooltipContent>
-        </Tooltip>
-
-
-        <TimelineReceipt donorId={receipts.indicomp_fts_id} />
-      </div>
-    </Card>
-  </div>
-)}
 
         {/* Main Content - 66/33 Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
@@ -541,9 +542,8 @@ const fileName = `${getFileName('R')}.pdf`;
 
               <div className="text-center border-x border-b border-black p-1 h-14">
                 <p className="text-sm font-semibold mx-auto max-w-[90%]">
-                  {`${chapter?.chapter_address || ""}, ${chapter?.chapter_city || ""} - ${
-                    chapter?.chapter_pin || ""
-                  }, ${chapter?.chapter_state || ""} 
+                  {`${chapter?.chapter_address || ""}, ${chapter?.chapter_city || ""} - ${chapter?.chapter_pin || ""
+                    }, ${chapter?.chapter_state || ""} 
                   ${chapter?.chapter_email ? `Email: ${chapter.chapter_email} |` : ""} 
                   ${chapter?.chapter_website ? `${chapter.chapter_website} |` : ""} 
                   ${chapter?.chapter_phone ? `Ph: ${chapter.chapter_phone} |` : ""} 
@@ -553,7 +553,7 @@ const fileName = `${getFileName('R')}.pdf`;
 
               <div className="text-center border-x h-7 border-black p-1">
                 <p className="text-[11px] font-medium mx-auto">
-                  Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road, Kolkata-26. 
+                  Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road, Kolkata-26.
                   Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13 PAN: AAAAF0290L
                 </p>
               </div>
@@ -580,56 +580,56 @@ const fileName = `${getFileName('R')}.pdf`;
                             {receipts.donor.indicomp_full_name}
                           </p>
 
-                          {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Branch Office" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Office") && (
-                            <div>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_off_branch_address}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_off_branch_area}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_off_branch_ladmark}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_off_branch_city} -{" "}
-                                {receipts.donor.indicomp_off_branch_pin_code},
-                                {receipts.donor.indicomp_off_branch_state}
-                              </p>
-                            </div>
-                          )}
+                          {receipts.donor.indicomp_off_branch_address && (receipts.donor
+                            .indicomp_corr_preffer ===
+                            "Branch Office" ||
+                            receipts.donor
+                              .indicomp_corr_preffer ===
+                            "Office") && (
+                              <div>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_off_branch_address}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_off_branch_area}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_off_branch_ladmark}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_off_branch_city} -{" "}
+                                  {receipts.donor.indicomp_off_branch_pin_code},
+                                  {receipts.donor.indicomp_off_branch_state}
+                                </p>
+                              </div>
+                            )}
 
-                          {receipts.donor.indicomp_res_reg_address &&     (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Registered" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Residence" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Digital") && (
-                            <div>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_res_reg_address}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_res_reg_area}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_res_reg_ladmark}
-                              </p>
-                              <p className="text-sm leading-tight">
-                                {receipts.donor.indicomp_res_reg_city} -{" "}
-                                {receipts.donor.indicomp_res_reg_pin_code},
-                                {receipts.donor.indicomp_res_reg_state}
-                              </p>
-                            </div>
-                          )}
+                          {receipts.donor.indicomp_res_reg_address && (receipts.donor
+                            .indicomp_corr_preffer ===
+                            "Registered" ||
+                            receipts.donor
+                              .indicomp_corr_preffer ===
+                            "Residence" ||
+                            receipts.donor
+                              .indicomp_corr_preffer ===
+                            "Digital") && (
+                              <div>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_res_reg_address}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_res_reg_area}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_res_reg_ladmark}
+                                </p>
+                                <p className="text-sm leading-tight">
+                                  {receipts.donor.indicomp_res_reg_city} -{" "}
+                                  {receipts.donor.indicomp_res_reg_pin_code},
+                                  {receipts.donor.indicomp_res_reg_state}
+                                </p>
+                              </div>
+                            )}
                         </div>
                       )}
                     </td>
@@ -697,7 +697,8 @@ const fileName = `${getFileName('R')}.pdf`;
                               Donation is exempt U/Sec.80G of the
                               <br />
                               Income Tax Act 1961 vide Order No.
-                              AAAAF0290LF20214 Dt. 28-05-2021.
+                              {/* AAAAF0290LF20214 Dt. 28-05-2021. */}
+                              {receipt80gCode.receipt_80g_code}
                             </>
                           ) : (
                             <>
@@ -747,191 +748,191 @@ const fileName = `${getFileName('R')}.pdf`;
 
           {/* Letter Section - Right Side */}
           <Card className="p-4 rounded-md">
-  <div>
-    <div className="flex justify-between">
-      <div className="text-[#464D69] md:text-base text-sm">
-        <p className="font-serif text-base">
-          Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
-        </p>
+            <div>
+              <div className="flex justify-between">
+                <div className="text-[#464D69] md:text-base text-sm">
+                  <p className="font-serif text-base">
+                    Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
+                  </p>
 
-        {Object.keys(receipts).length !== 0 && (
-          <div className="mt-1 space-y-1">
-            {receipts.receipt_donation_type !== "Membership" &&
-              receipts.donor.indicomp_type !== "Individual" && (
-                <p className="font-serif text-sm">
-                  {receipts.donor.title}{" "}
-                  {receipts.donor.indicomp_com_contact_name}
-                </p>
-              )}
+                  {Object.keys(receipts).length !== 0 && (
+                    <div className="mt-1 space-y-1">
+                      {receipts.receipt_donation_type !== "Membership" &&
+                        receipts.donor.indicomp_type !== "Individual" && (
+                          <p className="font-serif text-sm">
+                            {receipts.donor.title}{" "}
+                            {receipts.donor.indicomp_com_contact_name}
+                          </p>
+                        )}
 
-            {receipts.donor.indicomp_type !== "Individual" && (
-              <p className="font-serif text-sm">
-                M/s {receipts.donor.indicomp_full_name}
-              </p>
-            )}
+                      {receipts.donor.indicomp_type !== "Individual" && (
+                        <p className="font-serif text-sm">
+                          M/s {receipts.donor.indicomp_full_name}
+                        </p>
+                      )}
 
-            {receipts.donor.indicomp_type === "Individual" && (
-              <p className="font-serif text-sm">
-                {receipts.donor.title}{" "}
-                {receipts.donor.indicomp_full_name}
-              </p>
-            )}
+                      {receipts.donor.indicomp_type === "Individual" && (
+                        <p className="font-serif text-sm">
+                          {receipts.donor.title}{" "}
+                          {receipts.donor.indicomp_full_name}
+                        </p>
+                      )}
 
-            {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Branch Office" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Office")  && (
-              <div className="space-y-0.5">
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_off_branch_address}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_off_branch_area}
-                </p>
-                <p className="text-sm">
-                  {receipts.donor.indicomp_off_branch_ladmark}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_off_branch_city} -{" "}
-                  {receipts.donor.indicomp_off_branch_pin_code},{" "}
-                  {receipts.donor.indicomp_off_branch_state}
-                </p>
+                      {receipts.donor.indicomp_off_branch_address && (receipts.donor
+                        .indicomp_corr_preffer ===
+                        "Branch Office" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Office") && (
+                          <div className="space-y-0.5">
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_off_branch_address}
+                            </p>
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_off_branch_area}
+                            </p>
+                            <p className="text-sm">
+                              {receipts.donor.indicomp_off_branch_ladmark}
+                            </p>
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_off_branch_city} -{" "}
+                              {receipts.donor.indicomp_off_branch_pin_code},{" "}
+                              {receipts.donor.indicomp_off_branch_state}
+                            </p>
+                          </div>
+                        )}
+
+                      {receipts.donor.indicomp_res_reg_address && (receipts.donor
+                        .indicomp_corr_preffer ===
+                        "Registered" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Residence" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Digital") && (
+                          <div className="space-y-0.5">
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_res_reg_address}
+                            </p>
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_res_reg_area}
+                            </p>
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_res_reg_ladmark}
+                            </p>
+                            <p className="font-serif text-sm">
+                              {receipts.donor.indicomp_res_reg_city} -{" "}
+                              {receipts.donor.indicomp_res_reg_pin_code},{" "}
+                              {receipts.donor.indicomp_res_reg_state}
+                            </p>
+                          </div>
+                        )}
+                    </div>
+                  )}
+
+                  <p className="my-2 font-serif text-sm">
+                    {receipts.donor?.indicomp_gender === "Female" &&
+                      "Respected Madam,"}
+                    {receipts.donor?.indicomp_gender === "Male" &&
+                      "Respected Sir,"}
+                    {receipts.donor?.indicomp_gender === null &&
+                      "Respected Sir,"}
+                  </p>
+
+                  {/* One Teacher School */}
+                  {receipts.receipt_donation_type === "One Teacher School" && (
+                    <div className="mt-1 text-justify space-y-2">
+                      <p className="font-serif text-sm text-center">
+                        Sub: Adoption of One Teacher School
+                      </p>
+                      <p className="font-serif text-sm leading-tight">
+                        We acknowledge with thanks the receipt of Rs.
+                        {receipts.receipt_total_amount}/- Rupees {amountInWords} Only via{" "}
+                        {receipts.receipt_tran_pay_mode == "Cash" ? (
+                          <>Cash for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
+                        ) : (
+                          <>{receipts.receipt_tran_pay_details} being for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
+                        )}
+                      </p>
+                      <p className="font-serif text-sm leading-tight">
+                        We convey our sincere thanks and gratitude for your kind support towards
+                        the need of our tribals...
+                      </p>
+                      <p className="font-serif text-sm leading-tight">
+                        We would like to state that our efforts are not only for mitigating the
+                        hardship...
+                      </p>
+                      <p className="font-serif text-sm leading-tight">
+                        We are pleased to enclose herewith our money receipt no.{" "}
+                        {receipts.receipt_ref_no} dated{" "}
+                        {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* General Donation */}
+                  {receipts.receipt_donation_type === "General" && (
+                    <div className="mt-1 space-y-2">
+                      <p className="font-serif text-sm leading-tight">
+                        We thankfully acknowledge the receipt of Rs.
+                        {receipts.receipt_total_amount}/- via your{" "}
+                        {receipts.receipt_tran_pay_mode === "Cash"
+                          ? "Cash"
+                          : receipts.receipt_tran_pay_details}{" "}
+                        being Donation for Education.
+                      </p>
+                      <p className="font-serif text-sm leading-tight">
+                        We are pleased to enclose herewith our money receipt no.{" "}
+                        {receipts.receipt_ref_no} dated{" "}
+                        {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Membership */}
+                  {receipts.receipt_donation_type === "Membership" && (
+                    <div>
+                      <p className="font-serif text-sm leading-tight">
+                        We acknowledge with thanks receipt of your membership subscription upto{" "}
+                        {receipts?.m_ship_vailidity}.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Closing Lines */}
+                  {receipts.receipt_donation_type !== "Membership" && (
+                    <div className="space-y-1 mt-2">
+                      <p className="font-serif text-sm">Thanking you once again</p>
+                      <p className="font-serif text-sm">Yours faithfully,</p>
+                      <p className="font-serif text-sm">For Friends of Tribals Society</p>
+                      <p className="font-serif text-sm mt-4">
+                        {authsign.map((sig, key) => (
+                          <span key={key}>{sig.indicomp_full_name}</span>
+                        ))}
+                      </p>
+                      <p className="font-serif text-sm">{chapter.auth_sign}</p>
+                      <p className="font-serif text-sm">Encl: As stated above</p>
+                    </div>
+                  )}
+
+                  {receipts.receipt_donation_type === "Membership" && (
+                    <div className="space-y-1 mt-2">
+                      <p className="font-serif text-sm">With Best regards</p>
+                      <p className="font-serif text-sm">Yours sincerely</p>
+                      <p className="font-serif text-sm">
+                        {authsign.map((sig, key) => (
+                          <span key={key}>{sig.indicomp_full_name}</span>
+                        ))}
+                      </p>
+                      <p className="font-serif text-sm">{chapter.auth_sign}</p>
+                      <p className="font-serif text-sm">Encl: As stated above</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-
-            {receipts.donor.indicomp_res_reg_address  &&     (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Registered" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Residence" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Digital") && (
-              <div className="space-y-0.5">
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_res_reg_address}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_res_reg_area}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_res_reg_ladmark}
-                </p>
-                <p className="font-serif text-sm">
-                  {receipts.donor.indicomp_res_reg_city} -{" "}
-                  {receipts.donor.indicomp_res_reg_pin_code},{" "}
-                  {receipts.donor.indicomp_res_reg_state}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        <p className="my-2 font-serif text-sm">
-          {receipts.donor?.indicomp_gender === "Female" &&
-            "Respected Madam,"}
-          {receipts.donor?.indicomp_gender === "Male" &&
-            "Respected Sir,"}
-          {receipts.donor?.indicomp_gender === null &&
-            "Respected Sir,"}
-        </p>
-
-        {/* One Teacher School */}
-        {receipts.receipt_donation_type === "One Teacher School" && (
-          <div className="mt-1 text-justify space-y-2">
-            <p className="font-serif text-sm text-center">
-              Sub: Adoption of One Teacher School
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We acknowledge with thanks the receipt of Rs.
-              {receipts.receipt_total_amount}/- Rupees {amountInWords} Only via{" "}
-              {receipts.receipt_tran_pay_mode == "Cash" ? (
-                <>Cash for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-              ) : (
-                <>{receipts.receipt_tran_pay_details} being for your contribution and adoption of {receipts.receipt_no_of_ots} OTS.</>
-              )}
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We convey our sincere thanks and gratitude for your kind support towards
-              the need of our tribals...
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We would like to state that our efforts are not only for mitigating the
-              hardship...
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We are pleased to enclose herewith our money receipt no.{" "}
-              {receipts.receipt_ref_no} dated{" "}
-              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
-            </p>
-          </div>
-        )}
-
-        {/* General Donation */}
-        {receipts.receipt_donation_type === "General" && (
-          <div className="mt-1 space-y-2">
-            <p className="font-serif text-sm leading-tight">
-              We thankfully acknowledge the receipt of Rs.
-              {receipts.receipt_total_amount}/- via your{" "}
-              {receipts.receipt_tran_pay_mode === "Cash"
-                ? "Cash"
-                : receipts.receipt_tran_pay_details}{" "}
-              being Donation for Education.
-            </p>
-            <p className="font-serif text-sm leading-tight">
-              We are pleased to enclose herewith our money receipt no.{" "}
-              {receipts.receipt_ref_no} dated{" "}
-              {moment(receipts.receipt_date).format("DD-MM-YYYY")}.
-            </p>
-          </div>
-        )}
-
-        {/* Membership */}
-        {receipts.receipt_donation_type === "Membership" && (
-          <div>
-            <p className="font-serif text-sm leading-tight">
-              We acknowledge with thanks receipt of your membership subscription upto{" "}
-              {receipts?.m_ship_vailidity}.
-            </p>
-          </div>
-        )}
-
-        {/* Closing Lines */}
-        {receipts.receipt_donation_type !== "Membership" && (
-          <div className="space-y-1 mt-2">
-            <p className="font-serif text-sm">Thanking you once again</p>
-            <p className="font-serif text-sm">Yours faithfully,</p>
-            <p className="font-serif text-sm">For Friends of Tribals Society</p>
-            <p className="font-serif text-sm mt-4">
-              {authsign.map((sig, key) => (
-                <span key={key}>{sig.indicomp_full_name}</span>
-              ))}
-            </p>
-            <p className="font-serif text-sm">{chapter.auth_sign}</p>
-            <p className="font-serif text-sm">Encl: As stated above</p>
-          </div>
-        )}
-
-        {receipts.receipt_donation_type === "Membership" && (
-          <div className="space-y-1 mt-2">
-            <p className="font-serif text-sm">With Best regards</p>
-            <p className="font-serif text-sm">Yours sincerely</p>
-            <p className="font-serif text-sm">
-              {authsign.map((sig, key) => (
-                <span key={key}>{sig.indicomp_full_name}</span>
-              ))}
-            </p>
-            <p className="font-serif text-sm">{chapter.auth_sign}</p>
-            <p className="font-serif text-sm">Encl: As stated above</p>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</Card>
+            </div>
+          </Card>
 
 
 
@@ -967,56 +968,56 @@ const fileName = `${getFileName('R')}.pdf`;
                         </p>
                       )}
 
-                      {receipts.donor.indicomp_off_branch_address &&   (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Branch Office" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Office") && (
-                        <div>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_off_branch_address}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_off_branch_area}
-                          </p>
-                          <p className="mb-0 text-xl">
-                            {receipts.donor.indicomp_off_branch_ladmark}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_off_branch_city} -{" "}
-                            {receipts.donor.indicomp_off_branch_pin_code},
-                            {receipts.donor.indicomp_off_branch_state}
-                          </p>
-                        </div>
-                      )}
+                      {receipts.donor.indicomp_off_branch_address && (receipts.donor
+                        .indicomp_corr_preffer ===
+                        "Branch Office" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Office") && (
+                          <div>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_off_branch_address}
+                            </p>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_off_branch_area}
+                            </p>
+                            <p className="mb-0 text-xl">
+                              {receipts.donor.indicomp_off_branch_ladmark}
+                            </p>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_off_branch_city} -{" "}
+                              {receipts.donor.indicomp_off_branch_pin_code},
+                              {receipts.donor.indicomp_off_branch_state}
+                            </p>
+                          </div>
+                        )}
 
-                      {receipts.donor.indicomp_res_reg_address  &&     (receipts.donor
-                                                        .indicomp_corr_preffer ===
-                                                        "Registered" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Residence" ||
-                                                        receipts.donor
-                                                          .indicomp_corr_preffer ===
-                                                          "Digital") && (
-                        <div>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_res_reg_address}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_res_reg_area}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_res_reg_ladmark}
-                          </p>
-                          <p className="font-serif text-[18px]">
-                            {receipts.donor.indicomp_res_reg_city} -{" "}
-                            {receipts.donor.indicomp_res_reg_pin_code},
-                            {receipts.donor.indicomp_res_reg_state}
-                          </p>
-                        </div>
-                      )}
+                      {receipts.donor.indicomp_res_reg_address && (receipts.donor
+                        .indicomp_corr_preffer ===
+                        "Registered" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Residence" ||
+                        receipts.donor
+                          .indicomp_corr_preffer ===
+                        "Digital") && (
+                          <div>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_res_reg_address}
+                            </p>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_res_reg_area}
+                            </p>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_res_reg_ladmark}
+                            </p>
+                            <p className="font-serif text-[18px]">
+                              {receipts.donor.indicomp_res_reg_city} -{" "}
+                              {receipts.donor.indicomp_res_reg_pin_code},
+                              {receipts.donor.indicomp_res_reg_state}
+                            </p>
+                          </div>
+                        )}
                     </div>
                   )}
 
