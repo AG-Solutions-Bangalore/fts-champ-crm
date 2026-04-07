@@ -96,14 +96,12 @@ const MemberDashboard = () => {
     .sort((a, b) => b - a);
 
   const handleYearCardClick = (year) => {
-    const membersForYear = membersByYear[year] || [];
-    const serializedMembers = encodeURIComponent(btoa(JSON.stringify(membersForYear)));
-    navigate(`/member-list?year=${year}&members=${serializedMembers}`);
+    navigate(`/member-list?year=${year}`);
   };
 
+
   const handleViewAllMembers = () => {
-    const serializedMembers = encodeURIComponent(btoa(JSON.stringify(members)));
-    navigate(`/member-list?year=all&members=${serializedMembers}`);
+    navigate(`/member-list?year=all`);
   };
 
   const handleSendEmail = (year, e) => {
