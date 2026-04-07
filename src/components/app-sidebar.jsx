@@ -324,7 +324,7 @@ const USER_ROLE_PERMISSIONS = {
   },
 
   5: {
-    navMain: ["DASHBOARD", "CHAPTER", "PROMOTER", "PANEL", "EVENt"],
+    navMain: ["DASHBOARD", "CHAPTER", "PROMOTER", "PANEL", "EVENt", "RECEIPT"],
     navMainReport: [
       "SETTINGS",
       "RECEIPT_ZERO",
