@@ -48,7 +48,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useApiMutation } from "@/hooks/use-mutation";
-import { MEMBERSHIP_RENEWAL_WHATSAPP_LIST } from "@/api";
+import { MEMBERSHIP_RENEWAL_WHATSAPP_LIST, MEMBER_DASHBOARD } from "@/api";
+
 
 const MembershipList = () => {
   const [searchParams] = useSearchParams();
@@ -65,26 +66,26 @@ const MembershipList = () => {
     queryKey: ["member-list", searchParams.get("year")],
     queryFn: async () => {
       const year = searchParams.get("year");
-      const serializedMembers = searchParams.get("members");
+      
+      const response = await axios.get(MEMBER_DASHBOARD, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (year && serializedMembers) {
-        try {
-          const decodedMembers = JSON.parse(
-            atob(decodeURIComponent(serializedMembers)),
-          );
-          return {
-            members: decodedMembers,
-            year: year,
-          };
-        } catch (error) {
-          throw new Error("Failed to decode member data");
-        }
-      } else {
-        throw new Error("No data found in URL");
-      }
+      const allMembers = response.data?.data || [];
+      const filteredMembers = year === "all" 
+        ? allMembers 
+        : allMembers.filter(m => String(m.last_payment_vailidity) === String(year));
+
+      return {
+        members: filteredMembers,
+        year: year,
+      };
     },
-    retry: false,
+    retry: 2,
+    staleTime: 30 * 60 * 1000,
+    cacheTime: 60 * 60 * 1000,
   });
+
 
   const sendEmailMutation = useMutation({
     mutationFn: async (memberId) => {
