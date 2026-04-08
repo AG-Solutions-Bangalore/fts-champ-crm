@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import BASE_URL from "@/config/base-url";
-import Select from 'react-select';
+import Select from "react-select";
+import { Input } from "@/components/ui/input";
 
 const EditPanelCondition = ({ id }) => {
   const [open, setOpen] = useState(false);
@@ -27,18 +28,17 @@ const EditPanelCondition = ({ id }) => {
   const [formData, setFormData] = useState({
     chapter_ids: [],
     description: "",
+    condition_date: "",
     status: "",
   });
 
   const queryClient = useQueryClient();
 
-  
   const statusOptions = [
     { label: "Active", value: "Active" },
-    { label: "Inactive", value: "Inactive" }
+    { label: "Inactive", value: "Inactive" },
   ];
 
- 
   const fetchPanelConditionData = async () => {
     if (!id) {
       toast.error("No ID provided for editing");
@@ -52,53 +52,47 @@ const EditPanelCondition = ({ id }) => {
         `${BASE_URL}/api/panel-condition/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response?.data?.data) {
         const data = response.data.data;
-        
-       
-        const chapterIdsArray = data.chapter_ids 
-          ? data.chapter_ids.split(',').map(id => id.trim())
+
+        const chapterIdsArray = data.chapter_ids
+          ? data.chapter_ids.split(",").map((id) => id.trim())
           : [];
 
         setFormData({
           chapter_ids: chapterIdsArray,
           description: data.description || "",
           status: data.status || "",
+          condition_date: data.condition_date || "",
         });
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch panel condition data"
+        error.response?.data?.message || "Failed to fetch panel condition data",
       );
     } finally {
       setIsLoadingData(false);
     }
   };
 
-
   const fetchChapters = async () => {
-    if (chapters.length > 0) return; 
+    if (chapters.length > 0) return;
 
     setIsLoadingChapters(true);
     try {
       const token = Cookies.get("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/chapter-active`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get(`${BASE_URL}/api/chapter-active`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response?.data?.data) {
         setChapters(response.data.data);
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to fetch chapters"
-      );
+      toast.error(error.response?.data?.message || "Failed to fetch chapters");
     } finally {
       setIsLoadingChapters(false);
     }
@@ -113,8 +107,15 @@ const EditPanelCondition = ({ id }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.description.trim() || formData.chapter_ids.length === 0 || !formData.status) {
-      toast.error("Description, at least one Chapter, and Status are required");
+    if (
+      !formData.condition_date ||
+      !formData.description.trim() ||
+      formData.chapter_ids.length === 0 ||
+      !formData.status
+    ) {
+      toast.error(
+        "Date, Description, at least one Chapter, and Status are required",
+      );
       return;
     }
 
@@ -126,11 +127,10 @@ const EditPanelCondition = ({ id }) => {
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      
-   
+
       const putData = {
         ...formData,
-        chapter_ids: formData.chapter_ids.join(",") 
+        chapter_ids: formData.chapter_ids.join(","),
       };
 
       const response = await axios.put(
@@ -138,11 +138,13 @@ const EditPanelCondition = ({ id }) => {
         putData,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response?.data.code == 201) {
-        toast.success(response.data.message || "Panel Condition updated successfully");
+        toast.success(
+          response.data.message || "Panel Condition updated successfully",
+        );
 
         setFormData({
           chapter_ids: [],
@@ -152,11 +154,13 @@ const EditPanelCondition = ({ id }) => {
         await queryClient.invalidateQueries(["panelConditionList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.message || "Failed to update Panel Condition");
+        toast.error(
+          response.data.message || "Failed to update Panel Condition",
+        );
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to update Panel Condition"
+        error.response?.data?.message || "Failed to update Panel Condition",
       );
     } finally {
       setIsLoading(false);
@@ -169,35 +173,34 @@ const EditPanelCondition = ({ id }) => {
   };
 
   const handleChapterChange = (selectedOptions) => {
-
-    const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-    setFormData((prev) => ({ 
-      ...prev, 
-      chapter_ids: selectedValues 
+    const selectedValues = selectedOptions
+      ? selectedOptions.map((option) => option.value)
+      : [];
+    setFormData((prev) => ({
+      ...prev,
+      chapter_ids: selectedValues,
     }));
   };
 
   const handleStatusChange = (selectedOption) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      status: selectedOption ? selectedOption.value : "" 
+    setFormData((prev) => ({
+      ...prev,
+      status: selectedOption ? selectedOption.value : "",
     }));
   };
 
+  const chapterOptions =
+    chapters?.map((item) => ({
+      label: `${item.chapter_name} (${item.chapter_code})`,
+      value: item.chapter_code.toString(),
+    })) || [];
 
-  const chapterOptions = chapters?.map((item) => ({
-    label: `${item.chapter_name} (${item.chapter_code})`,
-    value: item.chapter_code.toString(),
-  })) || [];
-
-
-  const selectedChapterOptions = chapterOptions.filter(option => 
-    formData.chapter_ids.includes(option.value)
+  const selectedChapterOptions = chapterOptions.filter((option) =>
+    formData.chapter_ids.includes(option.value),
   );
 
-
-  const selectedStatusOption = statusOptions.find(option => 
-    option.value === formData.status
+  const selectedStatusOption = statusOptions.find(
+    (option) => option.value === formData.status,
   );
   const customStyles = {
     control: (provided, state) => ({
@@ -217,8 +220,8 @@ const EditPanelCondition = ({ id }) => {
       backgroundColor: state.isSelected
         ? "#A5D6A7"
         : state.isFocused
-        ? "#f3f4f6"
-        : "white",
+          ? "#f3f4f6"
+          : "white",
       color: state.isSelected ? "black" : "#1f2937",
       "&:hover": {
         backgroundColor: "#EEEEEE",
@@ -265,7 +268,16 @@ const EditPanelCondition = ({ id }) => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-         
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date</label>
+              <Input
+                type="date"
+                id="condition_date"
+                value={formData.condition_date}
+                onChange={handleInputChange}
+                className="w-full"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Chapters</label>
               <Select
@@ -278,8 +290,8 @@ const EditPanelCondition = ({ id }) => {
                 styles={customStyles}
                 classNamePrefix="react-select"
                 placeholder={
-                  (isLoadingChapters || isLoadingData)
-                    ? "Loading..." 
+                  isLoadingChapters || isLoadingData
+                    ? "Loading..."
                     : "Select chapters"
                 }
                 noOptionsMessage={() => "No chapters available"}
@@ -292,7 +304,6 @@ const EditPanelCondition = ({ id }) => {
               )}
             </div>
 
-     
             <div className="space-y-2">
               <label className="text-sm font-medium">Description</label>
               <Textarea
@@ -305,7 +316,6 @@ const EditPanelCondition = ({ id }) => {
               />
             </div>
 
-        
             <div className="space-y-2">
               <label className="text-sm font-medium">Status</label>
               <Select
@@ -322,7 +332,7 @@ const EditPanelCondition = ({ id }) => {
               />
             </div>
           </div>
-          
+
           <Button
             onClick={handleSubmit}
             disabled={isLoading || isLoadingChapters || isLoadingData}

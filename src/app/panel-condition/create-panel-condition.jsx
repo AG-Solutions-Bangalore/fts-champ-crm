@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import BASE_URL from "@/config/base-url";
-import Select from 'react-select';
+import Select from "react-select";
+import { Input } from "@/components/ui/input";
 
 const CreatePanelCondition = () => {
   const [open, setOpen] = useState(false);
@@ -26,6 +27,7 @@ const CreatePanelCondition = () => {
   const [formData, setFormData] = useState({
     chapter_ids: [],
     description: "",
+    condition_date: "",
   });
 
   const queryClient = useQueryClient();
@@ -36,20 +38,15 @@ const CreatePanelCondition = () => {
     setIsLoadingChapters(true);
     try {
       const token = Cookies.get("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/chapter-active`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get(`${BASE_URL}/api/chapter-active`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response?.data?.data) {
         setChapters(response.data.data);
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to fetch chapters"
-      );
+      toast.error(error.response?.data?.message || "Failed to fetch chapters");
     } finally {
       setIsLoadingChapters(false);
     }
@@ -63,18 +60,22 @@ const CreatePanelCondition = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.description.trim() || formData.chapter_ids.length === 0) {
-      toast.error("Description and at least one Chapter are required");
+    if (
+      !formData.condition_date ||
+      !formData.description.trim() ||
+      formData.chapter_ids.length === 0
+    ) {
+      toast.error("Date, Description and at least one Chapter are required");
       return;
     }
 
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      
+
       const postData = {
         ...formData,
-        chapter_ids: formData.chapter_ids.join(",")
+        chapter_ids: formData.chapter_ids.join(","),
       };
 
       const response = await axios.post(
@@ -82,24 +83,29 @@ const CreatePanelCondition = () => {
         postData,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response?.data.code == 201) {
-        toast.success(response.data.message || "Panel Condition created successfully");
+        toast.success(
+          response.data.message || "Panel Condition created successfully",
+        );
 
         setFormData({
           chapter_ids: [],
           description: "",
+          condition_date: "",
         });
         await queryClient.invalidateQueries(["panelConditionList"]);
         setOpen(false);
       } else {
-        toast.error(response.data.message || "Failed to create Panel Condition");
+        toast.error(
+          response.data.message || "Failed to create Panel Condition",
+        );
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to create Panel Condition"
+        error.response?.data?.message || "Failed to create Panel Condition",
       );
     } finally {
       setIsLoading(false);
@@ -112,45 +118,58 @@ const CreatePanelCondition = () => {
   };
 
   const handleChapterChange = (selectedOptions) => {
-    const selectedValues = selectedOptions ? selectedOptions.map(option => option.value) : [];
-    
-    if (selectedValues.includes("all") && !formData.chapter_ids.includes("all")) {
-      const allChapterValues = chapters.map(item => item.chapter_code.toString());
-      setFormData(prev => ({ 
-        ...prev, 
-        chapter_ids: [ ...allChapterValues]
+    const selectedValues = selectedOptions
+      ? selectedOptions.map((option) => option.value)
+      : [];
+
+    if (
+      selectedValues.includes("all") &&
+      !formData.chapter_ids.includes("all")
+    ) {
+      const allChapterValues = chapters.map((item) =>
+        item.chapter_code.toString(),
+      );
+      setFormData((prev) => ({
+        ...prev,
+        chapter_ids: [...allChapterValues],
       }));
-    } else if (!selectedValues.includes("all") && formData.chapter_ids.includes("all")) {
-      setFormData(prev => ({ 
-        ...prev, 
-        chapter_ids: selectedValues
+    } else if (
+      !selectedValues.includes("all") &&
+      formData.chapter_ids.includes("all")
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        chapter_ids: selectedValues,
       }));
-    } else if (selectedValues.includes("all") && formData.chapter_ids.includes("all")) {
-      const filteredValues = selectedValues.filter(value => value !== "all");
-      setFormData(prev => ({ 
-        ...prev, 
-        chapter_ids: filteredValues
+    } else if (
+      selectedValues.includes("all") &&
+      formData.chapter_ids.includes("all")
+    ) {
+      const filteredValues = selectedValues.filter((value) => value !== "all");
+      setFormData((prev) => ({
+        ...prev,
+        chapter_ids: filteredValues,
       }));
     } else {
-      setFormData(prev => ({ 
-        ...prev, 
-        chapter_ids: selectedValues
+      setFormData((prev) => ({
+        ...prev,
+        chapter_ids: selectedValues,
       }));
     }
   };
 
   const allOption = { label: "Select All", value: "all" };
-  
+
   const chapterOptions = [
     allOption,
     ...(chapters?.map((item) => ({
       label: `${item.chapter_name} (${item.chapter_code})`,
       value: item.chapter_code.toString(),
-    })) || [])
+    })) || []),
   ];
 
-  const selectedChapterOptions = chapterOptions.filter(option => 
-    formData.chapter_ids.includes(option.value)
+  const selectedChapterOptions = chapterOptions.filter((option) =>
+    formData.chapter_ids.includes(option.value),
   );
 
   const customStyles = {
@@ -171,8 +190,8 @@ const CreatePanelCondition = () => {
       backgroundColor: state.isSelected
         ? "#A5D6A7"
         : state.isFocused
-        ? "#f3f4f6"
-        : "white",
+          ? "#f3f4f6"
+          : "white",
       color: state.isSelected ? "black" : "#1f2937",
       "&:hover": {
         backgroundColor: "#EEEEEE",
@@ -221,6 +240,16 @@ const CreatePanelCondition = () => {
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <div className="space-y-2">
+              <label className="text-sm font-medium">Condition Date</label>
+              <Input
+                type="date"
+                id="condition_date"
+                value={formData.condition_date}
+                onChange={handleInputChange}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Select Chapters</label>
               <Select
                 isMulti
@@ -232,17 +261,19 @@ const CreatePanelCondition = () => {
                 styles={customStyles}
                 classNamePrefix="react-select"
                 placeholder={
-                  isLoadingChapters 
-                    ? "Loading chapters..." 
-                    : "Select chapters"
+                  isLoadingChapters ? "Loading chapters..." : "Select chapters"
                 }
                 noOptionsMessage={() => "No chapters available"}
                 isDisabled={isLoadingChapters}
               />
               {formData.chapter_ids.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Selected: {formData.chapter_ids.includes("all") ? "All chapters" : `${formData.chapter_ids.length} chapter(s)`} 
-                  {!formData.chapter_ids.includes("all") && ` - Codes: ${formData.chapter_ids.join(", ")}`}
+                  Selected:{" "}
+                  {formData.chapter_ids.includes("all")
+                    ? "All chapters"
+                    : `${formData.chapter_ids.length} chapter(s)`}
+                  {!formData.chapter_ids.includes("all") &&
+                    ` - Codes: ${formData.chapter_ids.join(", ")}`}
                 </p>
               )}
             </div>
@@ -258,7 +289,7 @@ const CreatePanelCondition = () => {
               />
             </div>
           </div>
-          
+
           <Button
             onClick={handleSubmit}
             disabled={isLoading || isLoadingChapters}
