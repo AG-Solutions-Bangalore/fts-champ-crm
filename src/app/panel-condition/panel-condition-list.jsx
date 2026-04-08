@@ -29,7 +29,12 @@ import { ArrowUpDown, ChevronDown, Edit, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import BASE_URL from "@/config/base-url";
 import Cookies from "js-cookie";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import EditPanelCondition from "./edit-panel-condition";
 import CreatePanelCondition from "./create-panel-condition";
@@ -44,11 +49,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import moment from "moment";
 
 const PanelConditionList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [panelConditionToDelete, setPanelConditionToDelete] = useState(null);
-  
+
   const queryClient = useQueryClient();
 
   const {
@@ -61,22 +67,18 @@ const PanelConditionList = () => {
     queryKey: ["panel-condition"],
     queryFn: async () => {
       const token = Cookies.get("token");
-      
-      const response = await axios.get(
-        `${BASE_URL}/api/panel-condition`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
+
+      const response = await axios.get(`${BASE_URL}/api/panel-condition`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data.data;
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
   });
-
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
@@ -84,23 +86,23 @@ const PanelConditionList = () => {
       const response = await axios.delete(
         `${BASE_URL}/api/panel-condition/${id}`,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-        }
+        },
       );
       return response.data;
     },
     onSuccess: (data) => {
       toast.success(data.message || "Panel Condition deleted successfully");
-      refetch()
+      refetch();
       setDeleteDialogOpen(false);
       setPanelConditionToDelete(null);
     },
     onError: (error) => {
       toast.error(
-        error.response?.data?.message || "Failed to delete Panel Condition"
+        error.response?.data?.message || "Failed to delete Panel Condition",
       );
       setDeleteDialogOpen(false);
       setPanelConditionToDelete(null);
@@ -140,6 +142,20 @@ const PanelConditionList = () => {
       size: 60,
     },
     {
+      id: "condition_date",
+      accessorKey: "condition_date",
+      header: "Date",
+      cell: ({ row }) => {
+        const date = row.getValue("condition_date");
+        return (
+          <div className="text-xs font-medium">
+            {moment(date).format("DD-MM-YYYY")}
+          </div>
+        );
+      },
+      size: 60,
+    },
+    {
       accessorKey: "chapter_ids",
       id: "Chapter Ids",
       header: ({ column }) => (
@@ -155,14 +171,17 @@ const PanelConditionList = () => {
       ),
       cell: ({ row }) => {
         const chapterIds = row.getValue("Chapter Ids");
-        if (!chapterIds) return <div className="text-[13px] font-medium">-</div>;
-        
-        const idsArray = String(chapterIds).split(',').map(id => id.trim());
-        
+        if (!chapterIds)
+          return <div className="text-[13px] font-medium">-</div>;
+
+        const idsArray = String(chapterIds)
+          .split(",")
+          .map((id) => id.trim());
+
         return (
           <div className="flex flex-wrap gap-1 max-w-[200px]">
             {idsArray.map((id, index) => (
-              <Badge 
+              <Badge
                 key={index}
                 variant="outline"
                 className="px-2 py-1 text-xs font-medium rounded-md shadow-sm bg-gray-50 border-gray-200"
@@ -182,14 +201,14 @@ const PanelConditionList = () => {
       cell: ({ row }) => {
         const status = row.getValue("Status");
         const isActive = status === "active" || status === "Active";
-        
+
         return (
           <div className="flex items-center">
-            <Badge 
+            <Badge
               variant={isActive ? "default" : "secondary"}
               className={`px-2 py-1 text-xs font-medium ${
-                isActive 
-                  ? "bg-green-100 text-green-800 hover:bg-green-100" 
+                isActive
+                  ? "bg-green-100 text-green-800 hover:bg-green-100"
                   : "bg-red-100 text-red-800 hover:bg-red-100"
               }`}
             >
@@ -205,20 +224,20 @@ const PanelConditionList = () => {
       header: "Action",
       cell: ({ row }) => {
         const panelCondition = row.original;
-        
+
         return (
           <div className="flex flex-row space-x-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <EditPanelCondition id={panelCondition.id}/>
+                  <EditPanelCondition id={panelCondition.id} />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Edit Panel Condition</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -271,16 +290,16 @@ const PanelConditionList = () => {
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11"> 
+      <TableRow key={index} className="animate-pulse h-11">
         {table.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div> 
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
           </TableCell>
         ))}
       </TableRow>
     ));
   };
-  
+
   if (isError) {
     return (
       <div className="w-full p-4">
@@ -327,26 +346,27 @@ const PanelConditionList = () => {
                       key={column.id}
                       className="text-xs capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <CreatePanelCondition/>
+            <CreatePanelCondition />
           </div>
         </div>
 
- 
         <div className="rounded-none border min-h-[31rem] flex flex-col">
           <Table className="flex-1">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead 
-                      key={header.id} 
+                    <TableHead
+                      key={header.id}
                       className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)] text-sm font-medium"
                       style={{ width: header.column.columnDef.size }}
                     >
@@ -354,14 +374,14 @@ const PanelConditionList = () => {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
                 </TableRow>
               ))}
             </TableHeader>
-            
+
             <TableBody>
               {isFetching && !table.getRowModel().rows.length ? (
                 <TableShimmer />
@@ -376,7 +396,7 @@ const PanelConditionList = () => {
                       <TableCell key={cell.id} className="px-3 py-1">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -384,7 +404,10 @@ const PanelConditionList = () => {
                 ))
               ) : (
                 <TableRow className="h-12">
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-sm"
+                  >
                     No panel conditions found.
                   </TableCell>
                 </TableRow>
@@ -392,7 +415,6 @@ const PanelConditionList = () => {
             </TableBody>
           </Table>
         </div>
-
 
         <div className="flex items-center justify-end space-x-2 py-1">
           <div className="flex-1 text-sm text-muted-foreground">
@@ -420,21 +442,26 @@ const PanelConditionList = () => {
         </div>
       </div>
 
-      
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the panel condition
-              {panelConditionToDelete && ` with Chapter IDs: ${panelConditionToDelete.chapter_ids}`}.
+              This action cannot be undone. This will permanently delete the
+              panel condition
+              {panelConditionToDelete &&
+                ` with Chapter IDs: ${panelConditionToDelete.chapter_ids}`}
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeleteCancel} disabled={deleteMutation.isLoading}>
+            <AlertDialogCancel
+              onClick={handleDeleteCancel}
+              disabled={deleteMutation.isLoading}
+            >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={deleteMutation.isLoading}

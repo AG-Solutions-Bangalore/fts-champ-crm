@@ -105,15 +105,26 @@ const PromoterDashboardView = () => {
       {/* Header Section */}
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full">
             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
               <Users className="text-blue-600 w-4 h-4" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">Promoter Dashboard</h1>
-              <p className="text-sm text-gray-500">
-                Manage donors across different years
-              </p>
+            <div className="w-full">
+              <div className="flex justify-between w-full">
+                <h1 className="text-lg font-semibold">Promoter Dashboard</h1>
+                <h2 className="text-lg font-semibold">
+                  {dashboardData?.data?.promoter?.title}{" "}
+                  {dashboardData?.data?.promoter?.indicomp_full_name}
+                </h2>
+              </div>
+              <div className="flex justify-between w-full">
+                <p className="text-sm text-gray-500">
+                  Manage donors across different years
+                </p>
+                <p className="text-sm text-gray-500">
+                  {dashboardData?.data?.promoter?.chapter?.chapter_name}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -290,10 +301,7 @@ const PromoterDashboardView = () => {
         </CardContent>
       </Card>
       {selectedType && (
-        <DonorMembersTable
-          data={memberrecepit}
-          selectedType={selectedType}
-        />
+        <DonorMembersTable data={memberrecepit} selectedType={selectedType} />
       )}
     </div>
   );
