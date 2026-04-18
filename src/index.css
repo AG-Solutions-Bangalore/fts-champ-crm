@@ -385,3 +385,20 @@
 .login-blob-3 {
   background-color: var(--login-blob-3);
 }
+
+/* CKEditor 4 Interaction Fix for Modals */
+.cke_float, 
+.cke_dialog, 
+.cke_panel, 
+.cke_panel_container, 
+.cke_panel_block, 
+.cke_colorbox {
+    pointer-events: auto !important;
+    z-index: 11000 !important;
+}
+
+.cke_panel_item a, 
+.cke_colorbox, 
+.cke_panel_list a {
+    cursor: pointer !important;
+}
