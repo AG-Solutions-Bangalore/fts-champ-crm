@@ -18,8 +18,9 @@ import { toast } from "sonner";
 import BASE_URL from "@/config/base-url";
 import Select from "react-select";
 import { Input } from "@/components/ui/input";
+import { CKEditor } from "ckeditor4-react";
 
-const EditPanelCondition = ({ id }) => {
+const EditPanelCondition = React.forwardRef(({ id }, ref) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
@@ -254,12 +255,19 @@ const EditPanelCondition = ({ id }) => {
   };
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild ref={ref}>
         <Button variant="ghost" size="icon">
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="max-w-4xl"
+        onInteractOutside={(e) => {
+          if (e.target.closest('.cke_dialog, .cke_float, .cke_panel')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Panel Condition</DialogTitle>
           <DialogDescription>
@@ -267,69 +275,128 @@ const EditPanelCondition = ({ id }) => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date</label>
-              <Input
-                type="date"
-                id="condition_date"
-                value={formData.condition_date}
-                onChange={handleInputChange}
-                className="w-full"
-              />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date</label>
+                <Input
+                  type="date"
+                  id="condition_date"
+                  value={formData.condition_date}
+                  onChange={handleInputChange}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Chapters</label>
+                <Select
+                  isMulti
+                  name="chapter_ids"
+                  value={selectedChapterOptions}
+                  onChange={handleChapterChange}
+                  options={chapterOptions}
+                  isLoading={isLoadingChapters || isLoadingData}
+                  styles={customStyles}
+                  classNamePrefix="react-select"
+                  placeholder={
+                    isLoadingChapters || isLoadingData
+                      ? "Loading..."
+                      : "Select chapters"
+                  }
+                  noOptionsMessage={() => "No chapters available"}
+                  isDisabled={isLoadingChapters || isLoadingData}
+                />
+                {formData.chapter_ids.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selected: {formData.chapter_ids.length} chapter(s)
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select
+                  name="status"
+                  value={selectedStatusOption}
+                  onChange={handleStatusChange}
+                  options={statusOptions}
+                  isLoading={isLoadingData}
+                  styles={customStyles}
+                  classNamePrefix="react-select"
+                  placeholder="Select status"
+                  noOptionsMessage={() => "No status available"}
+                  isDisabled={isLoadingData}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Chapters</label>
-              <Select
-                isMulti
-                name="chapter_ids"
-                value={selectedChapterOptions}
-                onChange={handleChapterChange}
-                options={chapterOptions}
-                isLoading={isLoadingChapters || isLoadingData}
-                styles={customStyles}
-                classNamePrefix="react-select"
-                placeholder={
-                  isLoadingChapters || isLoadingData
-                    ? "Loading..."
-                    : "Select chapters"
-                }
-                noOptionsMessage={() => "No chapters available"}
-                isDisabled={isLoadingChapters || isLoadingData}
-              />
-              {formData.chapter_ids.length > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Selected: {formData.chapter_ids.length} chapter(s)
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Textarea
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                {/* <Textarea
                 id="description"
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={5}
                 disabled={isLoadingData}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select
-                name="status"
-                value={selectedStatusOption}
-                onChange={handleStatusChange}
-                options={statusOptions}
-                isLoading={isLoadingData}
-                styles={customStyles}
-                classNamePrefix="react-select"
-                placeholder="Select status"
-                noOptionsMessage={() => "No status available"}
-                isDisabled={isLoadingData}
-              />
+              /> */}
+                <div className="min-h-[200px]">
+                  {!isLoadingData ? (
+                    <CKEditor
+                      key={`editor-${id}`}
+                      editorUrl="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"
+                      initData={formData.description || ""}
+                      config={{
+                        versionCheck: false,
+                        baseFloatZIndex: 10000,
+                        toolbar: [
+                          {
+                            name: "basicstyles",
+                            items: ["Bold", "Italic", "Underline", "Strike"],
+                          },
+                          {
+                            name: "paragraph",
+                            items: [
+                              "NumberedList",
+                              "BulletedList",
+                              "-",
+                              "Outdent",
+                              "Indent",
+                            ],
+                          },
+                          {
+                            name: "links",
+                            items: ["Link", "Unlink"],
+                          },
+                          {
+                            name: "insert",
+                            items: ["Image", "Table"],
+                          },
+                          {
+                            name: "styles",
+                            items: ["Styles", "Format", "Font", "FontSize"],
+                          },
+                          {
+                            name: "colors",
+                            items: ["TextColor", "BGColor"],
+                          },
+                          { name: "tools", items: ["Maximize"] },
+                        ],
+                        height: 200,
+                        removePlugins: "elementspath",
+                        resize_enabled: false,
+                      }}
+                      onChange={(event) => {
+                        const data = event.editor.getData();
+                        setFormData((prev) => ({ ...prev, description: data }));
+                      }}
+                    />
+                  ) : (
+                    <div className="h-[200px] flex items-center justify-center border rounded-md bg-gray-50">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -351,6 +418,6 @@ const EditPanelCondition = ({ id }) => {
       </DialogContent>
     </Dialog>
   );
-};
+});
 
 export default EditPanelCondition;

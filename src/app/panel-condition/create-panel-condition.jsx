@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import { CKEditor } from "ckeditor4-react";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -19,7 +20,7 @@ import BASE_URL from "@/config/base-url";
 import Select from "react-select";
 import { Input } from "@/components/ui/input";
 
-const CreatePanelCondition = () => {
+const CreatePanelCondition = React.forwardRef((props, ref) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingChapters, setIsLoadingChapters] = useState(false);
@@ -225,12 +226,19 @@ const CreatePanelCondition = () => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild ref={ref}>
         <Button variant="default" className="ml-2">
           <SquarePlus className="h-4 w-4 mr-2" /> Panel Condition
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="max-w-4xl"
+        onInteractOutside={(e) => {
+          if (e.target.closest('.cke_dialog, .cke_float, .cke_panel')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Create New Panel Condition</DialogTitle>
           <DialogDescription>
@@ -238,7 +246,7 @@ const CreatePanelCondition = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Condition Date</label>
               <Input
@@ -277,16 +285,68 @@ const CreatePanelCondition = () => {
                 </p>
               )}
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Textarea
+            <div className="col-span-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                {/* <Textarea
                 id="description"
                 placeholder="Enter description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={5}
-              />
+              /> */}
+                <div className="min-h-[200px]">
+                  <CKEditor
+                    key="editor-create"
+                    editorUrl="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"
+                    initData={formData.description || ""}
+                    config={{
+                      versionCheck: false,
+                      baseFloatZIndex: 10000,
+                      toolbar: [
+                        {
+                          name: "basicstyles",
+                          items: ["Bold", "Italic", "Underline", "Strike"],
+                        },
+                        {
+                          name: "paragraph",
+                          items: [
+                            "NumberedList",
+                            "BulletedList",
+                            "-",
+                            "Outdent",
+                            "Indent",
+                          ],
+                        },
+                        {
+                          name: "links",
+                          items: ["Link", "Unlink"],
+                        },
+                        {
+                          name: "insert",
+                          items: ["Image", "Table"],
+                        },
+                        {
+                          name: "styles",
+                          items: ["Styles", "Format", "Font", "FontSize"],
+                        },
+                        {
+                          name: "colors",
+                          items: ["TextColor", "BGColor"],
+                        },
+                        { name: "tools", items: ["Maximize"] },
+                      ],
+                      height: 200,
+                      removePlugins: "elementspath",
+                      resize_enabled: false,
+                    }}
+                    onChange={(event) => {
+                      const data = event.editor.getData();
+                      setFormData((prev) => ({ ...prev, description: data }));
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -308,6 +368,6 @@ const CreatePanelCondition = () => {
       </DialogContent>
     </Dialog>
   );
-};
+});
 
 export default CreatePanelCondition;
