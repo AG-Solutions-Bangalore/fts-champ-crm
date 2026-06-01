@@ -40,7 +40,12 @@ const NAVIGATION_CONFIG = {
       icon: Frame,
       isActive: false,
     },
-
+    ALL_CHAPTER: {
+      title: "All Chapter",
+      url: "/allchapter",
+      icon: Frame,
+      isActive: false,
+    },
     MASTER_SETTINGS: {
       title: "Master Settings",
       url: "#",
@@ -276,6 +281,7 @@ const USER_ROLE_PERMISSIONS = {
       "DONOR",
       "RECEIPT",
       "SCHOOL",
+
       "PROMOTER",
       "EVENt",
     ],
@@ -286,9 +292,11 @@ const USER_ROLE_PERMISSIONS = {
     navMain: [
       "DASHBOARD",
       "CHAPTER",
+
       "MEMBERSHIP",
       "DONOR",
       "RECEIPT",
+
       "SCHOOL",
       "PROMOTER",
       "EVENt",
@@ -324,7 +332,15 @@ const USER_ROLE_PERMISSIONS = {
   },
 
   5: {
-    navMain: ["DASHBOARD", "CHAPTER", "PROMOTER", "PANEL", "EVENt", "RECEIPT"],
+    navMain: [
+      "DASHBOARD",
+      "CHAPTER",
+      "ALL_CHAPTER",
+      "PROMOTER",
+      "PANEL",
+      "EVENt",
+      "RECEIPT",
+    ],
     navMainReport: [
       "SETTINGS",
       "RECEIPT_ZERO",

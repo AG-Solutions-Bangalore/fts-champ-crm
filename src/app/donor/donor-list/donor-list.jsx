@@ -15,7 +15,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import BASE_URL from "@/config/base-url";
 import useNumericInput from "@/hooks/use-numeric-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,17 +34,27 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Edit, Eye, ReceiptText, Search, SquarePlus } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Eye,
+  ReceiptText,
+  Search,
+  SquarePlus,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { navigateToCreateReceipt } from "@/api";
+import { navigateToCreateReceipt, navigateToCreateOldReceipt } from "@/api";
 import { Link, useNavigate } from "react-router-dom";
 
 const DonorList = () => {
-  const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get("user_type_id");
   const queryClient = useQueryClient();
-  const keyDown = useNumericInput()
-  const navigate = useNavigate()
+  const keyDown = useNumericInput();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [previousSearchTerm, setPreviousSearchTerm] = useState("");
@@ -51,8 +66,8 @@ const DonorList = () => {
 
   const [pageInput, setPageInput] = useState("");
   const storeCurrentPage = () => {
-    Cookies.set("donorReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 
+    Cookies.set("donorReturnPage", (pagination.pageIndex + 1).toString(), {
+      expires: 1,
     });
   };
 
@@ -76,19 +91,23 @@ const DonorList = () => {
     navigateToCreateReceipt(navigate, id);
   };
 
+  const handleCreateoLDReceipt = (id) => {
+    storeCurrentPage();
+    navigateToCreateOldReceipt(navigate, id);
+  };
   // Restore page from cookies when component mounts
   useEffect(() => {
     const savedPage = Cookies.get("donorReturnPage");
     if (savedPage) {
       // Remove the cookie first to prevent infinite loops
       Cookies.remove("donorReturnPage");
-      
+
       // Set the pagination after a small delay to ensure proper rendering
       setTimeout(() => {
         const pageIndex = parseInt(savedPage) - 1;
         if (pageIndex >= 0) {
-          setPagination(prev => ({ ...prev, pageIndex }));
-          
+          setPagination((prev) => ({ ...prev, pageIndex }));
+
           // Also update the page input field
           setPageInput(savedPage);
 
@@ -106,12 +125,13 @@ const DonorList = () => {
   useEffect(() => {
     const timerId = setTimeout(() => {
       // Check if this is a genuine new search (not just initialization)
-      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
-      
+      const isNewSearch =
+        searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+
       if (isNewSearch) {
-        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
       }
-      
+
       setDebouncedSearchTerm(searchTerm);
       setPreviousSearchTerm(searchTerm);
     }, 500);
@@ -134,30 +154,27 @@ const DonorList = () => {
       const params = new URLSearchParams({
         page: (pagination.pageIndex + 1).toString(),
       });
-      
+
       if (debouncedSearchTerm) {
         params.append("search", debouncedSearchTerm);
       }
 
-      const response = await axios.get(
-        `${BASE_URL}/api/donor?${params}`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
-      return response.data.data;
+      const response = await axios.get(`${BASE_URL}/api/donor?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
     },
     keepPreviousData: true,
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = donorsData?.last_page || 1;
-    
+    const totalPages = donorsData?.data?.last_page || 1;
+
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
       queryClient.prefetchQuery({
@@ -167,30 +184,29 @@ const DonorList = () => {
           const params = new URLSearchParams({
             page: nextPage.toString(),
           });
-          
+
           if (debouncedSearchTerm) {
             params.append("search", debouncedSearchTerm);
           }
 
-          const response = await axios.get(
-            `${BASE_URL}/api/donor?${params}`,
-            {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-              },
-            }
-          );
-          return response.data.data;
+          const response = await axios.get(`${BASE_URL}/api/donor?${params}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          return response.data;
         },
-        staleTime: 5 * 60 * 1000, 
+        staleTime: 5 * 60 * 1000,
       });
     }
 
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
-    
-      if (!queryClient.getQueryData(["donors", debouncedSearchTerm, prevPage])) {
+
+      if (
+        !queryClient.getQueryData(["donors", debouncedSearchTerm, prevPage])
+      ) {
         queryClient.prefetchQuery({
           queryKey: ["donors", debouncedSearchTerm, prevPage],
           queryFn: async () => {
@@ -198,7 +214,7 @@ const DonorList = () => {
             const params = new URLSearchParams({
               page: prevPage.toString(),
             });
-            
+
             if (debouncedSearchTerm) {
               params.append("search", debouncedSearchTerm);
             }
@@ -206,11 +222,11 @@ const DonorList = () => {
             const response = await axios.get(
               `${BASE_URL}/api/donor?${params}`,
               {
-                headers: { 
+                headers: {
                   Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
                 },
-              }
+              },
             );
             return response.data.data;
           },
@@ -218,7 +234,12 @@ const DonorList = () => {
         });
       }
     }
-  }, [pagination.pageIndex, debouncedSearchTerm, queryClient, donorsData?.last_page]);
+  }, [
+    pagination.pageIndex,
+    debouncedSearchTerm,
+    queryClient,
+    donorsData?.data?.last_page,
+  ]);
 
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -232,7 +253,8 @@ const DonorList = () => {
       id: "S. No.",
       header: "S. No.",
       cell: ({ row }) => {
-        const globalIndex = (pagination.pageIndex * pagination.pageSize) + row.index + 1;
+        const globalIndex =
+          pagination.pageIndex * pagination.pageSize + row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;
       },
       size: 60,
@@ -251,15 +273,21 @@ const DonorList = () => {
           <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-[13px] font-medium">{row.getValue("Full Name")}</div>,
+      cell: ({ row }) => (
+        <div className="text-[13px] font-medium">
+          {row.getValue("Full Name")}
+        </div>
+      ),
       size: 120,
     },
-    
+
     {
       accessorKey: "indicomp_fts_id",
-      id: "Fts Id", 
+      id: "Fts Id",
       header: "Fts Id",
-      cell: ({ row }) => <div className="text-xs">{row.getValue("Fts Id")}</div>,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("Fts Id")}</div>
+      ),
       size: 120,
     },
     {
@@ -268,7 +296,8 @@ const DonorList = () => {
       cell: ({ row }) => (
         <div className="space-y-1">
           <div className="text-xs">
-            <span className="font-medium">Phone:</span> {row.original.indicomp_mobile_phone}
+            <span className="font-medium">Phone:</span>{" "}
+            {row.original.indicomp_mobile_phone}
           </div>
           <div className="text-xs text-blue-600 ">
             {row.original.indicomp_email}
@@ -286,10 +315,21 @@ const DonorList = () => {
             <span className="font-medium"></span> {row.original.indicomp_type}
           </div>
           <div className="text-xs">
-            {row.original.indicomp_type === 'Individual' ? (
-              <span> <span className="text-xs text-gray-500">Spouse :</span>  <span  className="font-medium">{row.original.indicomp_spouse_name || '-'}</span></span> 
-            ):(
-              <span ><span className="text-xs text-gray-500"> Contact :</span> <span className="font-medium">{row.original.indicomp_com_contact_name || '-'}</span></span> 
+            {row.original.indicomp_type === "Individual" ? (
+              <span>
+                {" "}
+                <span className="text-xs text-gray-500">Spouse :</span>{" "}
+                <span className="font-medium">
+                  {row.original.indicomp_spouse_name || "-"}
+                </span>
+              </span>
+            ) : (
+              <span>
+                <span className="text-xs text-gray-500"> Contact :</span>{" "}
+                <span className="font-medium">
+                  {row.original.indicomp_com_contact_name || "-"}
+                </span>
+              </span>
             )}
           </div>
         </div>
@@ -304,32 +344,35 @@ const DonorList = () => {
 
         return (
           <div className="flex flex-row">
-            {userType !== '4' && (
+            {userType !== "4" && (
               <>
+                {userType !== "2" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleCreateReceipt(id)}
+                        >
+                          <ReceiptText />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Receipt Creation</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleCreateReceipt(id)}
-                      >
-                        <ReceiptText />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Receipt Creation</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditDonor(id, row.original.indicomp_type)}
+                        onClick={() =>
+                          handleEditDonor(id, row.original.indicomp_type)
+                        }
                       >
                         <Edit />
                       </Button>
@@ -358,6 +401,26 @@ const DonorList = () => {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            {userType !== "2" &&
+              donorsData?.conditionOld?.old_year &&
+              donorsData?.conditionOld?.condition_date && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCreateoLDReceipt(id)}
+                      >
+                        <ReceiptText />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Receipt Old Creation</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
           </div>
         );
       },
@@ -365,7 +428,7 @@ const DonorList = () => {
   ];
 
   const table = useReactTable({
-    data: donorsData?.data || [],
+    data: donorsData?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -376,7 +439,7 @@ const DonorList = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: donorsData?.last_page || -1,
+    pageCount: donorsData?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -394,10 +457,14 @@ const DonorList = () => {
 
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
-    const cachedData = queryClient.getQueryData(["donors", debouncedSearchTerm, targetPage]);
-    
+    const cachedData = queryClient.getQueryData([
+      "donors",
+      debouncedSearchTerm,
+      targetPage,
+    ]);
+
     if (cachedData) {
-      setPagination(prev => ({ ...prev, pageIndex: newPageIndex }));
+      setPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
     } else {
       table.setPageIndex(newPageIndex);
     }
@@ -406,7 +473,7 @@ const DonorList = () => {
   const handlePageInput = (e) => {
     const value = e.target.value;
     setPageInput(value);
-    
+
     if (value && !isNaN(value)) {
       const pageNum = parseInt(value);
       if (pageNum >= 1 && pageNum <= table.getPageCount()) {
@@ -419,7 +486,7 @@ const DonorList = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
     const buttons = [];
-    
+
     buttons.push(
       <Button
         key={1}
@@ -429,14 +496,22 @@ const DonorList = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
-      buttons.push(<span key="ellipsis1" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis1" className="px-2">
+          ...
+        </span>,
+      );
     }
 
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
       if (i !== 1 && i !== totalPages) {
         buttons.push(
           <Button
@@ -447,13 +522,17 @@ const DonorList = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
 
     if (currentPage < totalPages - 2) {
-      buttons.push(<span key="ellipsis2" className="px-2">...</span>);
+      buttons.push(
+        <span key="ellipsis2" className="px-2">
+          ...
+        </span>,
+      );
     }
 
     if (totalPages > 1) {
@@ -466,7 +545,7 @@ const DonorList = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -475,16 +554,16 @@ const DonorList = () => {
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11"> 
+      <TableRow key={index} className="animate-pulse h-11">
         {table.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div> 
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
           </TableCell>
         ))}
       </TableRow>
     ));
   };
-  
+
   if (isError) {
     return (
       <div className="w-full p-4  ">
@@ -535,25 +614,27 @@ const DonorList = () => {
                     key={column.id}
                     className="text-xs capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          {userType !== '4' && (
+          {userType !== "4" && (
             <>
-              <Link 
-                to='/donor/donors-indiviusal-create'
+              <Link
+                to="/donor/donors-indiviusal-create"
                 onClick={storeCurrentPage}
               >
                 <Button variant="default">
                   <SquarePlus className="h-3 w-3 mr-2" /> Individual
                 </Button>
               </Link>
-              <Link 
-                to='/donor/donors-company-create'
+              <Link
+                to="/donor/donors-company-create"
                 onClick={storeCurrentPage}
               >
                 <Button variant="default">
@@ -572,8 +653,8 @@ const DonorList = () => {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="h-10 px-3 bg-[var(--team-color)] text-[var(--label-color)]  text-sm font-medium"
                     style={{ width: header.column.columnDef.size }}
                   >
@@ -581,14 +662,14 @@ const DonorList = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
-          
+
           <TableBody>
             {isFetching && !table.getRowModel().rows.length ? (
               <TableShimmer />
@@ -603,15 +684,18 @@ const DonorList = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
-              <TableRow className="h-12"> 
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
+              <TableRow className="h-12">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-sm"
+                >
                   No donors found.
                 </TableCell>
               </TableRow>
@@ -623,10 +707,10 @@ const DonorList = () => {
       {/* Pagination */}
       <div className="flex items-center justify-between py-1">
         <div className="text-sm text-muted-foreground">
-          Showing {donorsData?.from || 0} to {donorsData?.to || 0} of{" "}
-          {donorsData?.total || 0} donors
+          Showing {donorsData?.data?.from || 0} to {donorsData?.data?.to || 0}{" "}
+          of {donorsData?.data?.total || 0} donors
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -637,7 +721,7 @@ const DonorList = () => {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          
+
           <div className="flex items-center space-x-1">
             {generatePageButtons()}
           </div>

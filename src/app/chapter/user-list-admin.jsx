@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Loader2, Mail, Phone, User, Edit, ArrowUpDown } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Search,
+  Loader2,
+  Mail,
+  Phone,
+  User,
+  Edit,
+  ArrowUpDown,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -20,10 +33,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import CreateUserAdmin from './create-user-admin';
-import EditUserAdmin from './edit-user-admin';
+import CreateUserAdmin from "./create-user-admin";
+import EditUserAdmin from "./edit-user-admin";
 
-const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, ImageUrl, chapterCodeForCreateUser}) => {
+const UserListAdmin = ({
+  id,
+  isLoading,
+  isError,
+  refetch,
+  isFetching,
+  users,
+  ImageUrl,
+  chapterCodeForCreateUser,
+}) => {
   const [editUser, setEditUser] = useState(null);
   const [userSorting, setUserSorting] = useState([]);
   const [userColumnFilters, setUserColumnFilters] = useState([]);
@@ -37,14 +59,17 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
       header: "Image",
       cell: ({ row }) => {
         const { image, name } = row.original;
-        const imageUrl = ImageUrl?.find(img => img.image_for === "User")?.image_url || "";
+        const imageUrl =
+          ImageUrl?.find((img) => img.image_for === "User")?.image_url || "";
         const userImageUrl = image ? `${imageUrl}${image}` : "";
-        const noImageUrl = ImageUrl?.find(img => img.image_for === "No Image")?.image_url || "";
-        
+        const noImageUrl =
+          ImageUrl?.find((img) => img.image_for === "No Image")?.image_url ||
+          "";
+
         return (
           <div className="flex justify-center">
-            <img 
-              src={userImageUrl || noImageUrl} 
+            <img
+              src={userImageUrl || noImageUrl}
               alt={name}
               className="h-8 w-8 rounded-full object-cover"
             />
@@ -93,11 +118,13 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
       header: "Status",
       cell: ({ row }) => (
         <div className="text-xs">
-          <span className={`px-2 py-1 rounded-full ${
-            row.original.user_status === 'Active' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
+          <span
+            className={`px-2 py-1 rounded-full ${
+              row.original.user_status === "Active"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
             {row.original.user_status || "Inactive"}
           </span>
         </div>
@@ -118,7 +145,7 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs"
-                    onClick={() => setEditUser(userData)} 
+                    onClick={() => setEditUser(userData)}
                   >
                     <Edit className="w-3 h-3" />
                   </Button>
@@ -162,10 +189,10 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
 
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse h-11"> 
+      <TableRow key={index} className="animate-pulse h-11">
         {userTable.getVisibleFlatColumns().map((column) => (
           <TableCell key={column.id} className="py-1">
-            <div className="h-8 bg-gray-200 rounded w-full"></div> 
+            <div className="h-8 bg-gray-200 rounded w-full"></div>
           </TableCell>
         ))}
       </TableRow>
@@ -202,7 +229,10 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
           />
         </div>
         <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
-          <CreateUserAdmin chapterCodeForCreateUser={chapterCodeForCreateUser} refetch={refetch}/>
+          <CreateUserAdmin
+            chapterCodeForCreateUser={chapterCodeForCreateUser}
+            refetch={refetch}
+          />
         </div>
       </div>
 
@@ -213,8 +243,8 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
             {userTable.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="h-9 px-3 bg-[var(--team-color)] text-white text-xs font-medium"
                     style={{ width: header.column.columnDef.size }}
                   >
@@ -222,14 +252,14 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
-          
+
           <TableBody>
             {isFetching && !userTable.getRowModel().rows.length ? (
               <TableShimmer />
@@ -244,7 +274,7 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
                     <TableCell key={cell.id} className="px-3 py-1 text-xs">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -252,7 +282,10 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
               ))
             ) : (
               <TableRow className="h-12">
-                <TableCell colSpan={userColumns.length} className="h-24 text-center text-xs">
+                <TableCell
+                  colSpan={userColumns.length}
+                  className="h-24 text-center text-xs"
+                >
                   No users found for this chapter.
                 </TableCell>
               </TableRow>
@@ -299,6 +332,6 @@ const UserListAdmin = ({id, isLoading, isError, refetch, isFetching, users, Imag
       )}
     </div>
   );
-}
+};
 
 export default UserListAdmin;

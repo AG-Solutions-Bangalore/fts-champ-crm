@@ -14,10 +14,14 @@ import PromoterPendingList from "@/app/promoter/promoter-pending-list";
 import PanelConditionList from "@/app/panel-condition/panel-condition-list";
 import PromoterDashboard from "@/app/promoterdashboard/promoterdashboard";
 import PromoterDashboardView from "@/app/promoterdashboard/promoter-dashboard-view";
+import AllChapter from "@/app/donor/AllChapter/AllChapter";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(
   () => import("@/app/donor/donor-list/receipt-create"),
+);
+const ReceiptOldCreate = lazy(
+  () => import("@/app/donor/donor-list/receipt-old-create"),
 );
 const AllDownload = lazy(() => import("@/app/download/all-download"));
 const NotFound = lazy(() => import("@/app/errors/not-found"));
@@ -151,6 +155,7 @@ function AppRoutes() {
             </Suspense>
           }
         />
+
         <Route path="/maintenance" element={<Maintenance />} />
       </Route>
 
@@ -406,6 +411,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/allchapter"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <AllChapter />
+            </Suspense>
+          }
+        />
+        <Route
           path="/receipt-view"
           element={
             <Suspense fallback={<LoadingBar />}>
@@ -428,6 +441,15 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <ReceiptCreate />
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/donor-create-old-receipt/:id"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <ReceiptOldCreate />
             </Suspense>
           }
         />
