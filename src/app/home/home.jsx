@@ -1,51 +1,71 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { 
-  Users, 
-  Building2, 
-  Bell, 
-  BarChart3, 
-  PieChart, 
-  RefreshCcw, 
-  User, 
+import React, { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
+import {
+  Users,
+  Building2,
+  Bell,
+  BarChart3,
+  PieChart,
+  RefreshCcw,
+  User,
   IndianRupee,
   MoreVertical,
-} from 'lucide-react';
-import Cookies from 'js-cookie';
+} from "lucide-react";
+import Cookies from "js-cookie";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Doughnut } from "react-chartjs-2";
+import { Chart, ArcElement, registerables } from "chart.js";
+import { NumericFormat } from "react-number-format";
+import moment from "moment";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart, ArcElement, registerables } from 'chart.js';
-import { NumericFormat } from 'react-number-format';
-import moment from 'moment';
-
-import { 
-  DASHBOARD_DATA, 
-  DASHBOARD_MARK_NOTICE_AS_READ, 
-  DASHBOARD_NOTICE, 
-} from '@/api';
+import {
+  DASHBOARD_DATA,
+  DASHBOARD_MARK_NOTICE_AS_READ,
+  DASHBOARD_NOTICE,
+} from "@/api";
 
 Chart.register(ArcElement, ...registerables);
-
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
   <Card className="hover:shadow-md transition-all duration-200 border">
     <CardContent className="p-3">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            {title}
+          </p>
           <h3 className="text-xl font-bold text-gray-900">
             {value?.toLocaleString()}
           </h3>
         </div>
-        <div className={`w-8 h-8 flex items-center justify-center rounded-lg ${color} shadow-sm`}>
+        <div
+          className={`w-8 h-8 flex items-center justify-center rounded-lg ${color} shadow-sm`}
+        >
           <Icon className="w-4 h-4 text-white" />
         </div>
       </div>
@@ -53,11 +73,12 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
   </Card>
 );
 
-
 const DonationItem = ({ title, amount, count, color, textColor }) => (
   <div className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border">
     <div className="flex items-center gap-2 flex-1">
-      <div className={`w-6 h-6 rounded-full ${color} flex items-center justify-center flex-shrink-0`}>
+      <div
+        className={`w-6 h-6 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
+      >
         <IndianRupee className={`w-3 h-3 ${textColor}`} />
       </div>
       <div className="min-w-0 flex-1">
@@ -72,12 +93,14 @@ const DonationItem = ({ title, amount, count, color, textColor }) => (
         />
       </div>
     </div>
-    <Badge variant="secondary" className={`${color} ${textColor} text-xs px-1.5 py-0 h-5 min-w-[1.5rem] justify-center`}>
+    <Badge
+      variant="secondary"
+      className={`${color} ${textColor} text-xs px-1.5 py-0 h-5 min-w-[1.5rem] justify-center`}
+    >
       {count}
     </Badge>
   </div>
 );
-
 
 const NoticeItem = ({ notice, onAcknowledge, onView }) => (
   <div className="group p-2 rounded border hover:border-gray-300 hover:bg-gray-50 transition-all">
@@ -91,24 +114,34 @@ const NoticeItem = ({ notice, onAcknowledge, onView }) => (
         </p>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <Badge 
-          variant={notice.is_read == 0 ? "default" : "secondary"} 
+        <Badge
+          variant={notice.is_read == 0 ? "default" : "secondary"}
           className="text-xs px-1.5 py-0 h-5"
         >
-          {notice.is_read == 0 ? 'New' : 'Read'}
+          {notice.is_read == 0 ? "New" : "Read"}
         </Badge>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
               <MoreVertical className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onView(notice)} className="text-xs">
+            <DropdownMenuItem
+              onClick={() => onView(notice)}
+              className="text-xs"
+            >
               View Details
             </DropdownMenuItem>
             {notice.is_read == 0 && (
-              <DropdownMenuItem onClick={() => onAcknowledge(notice)} className="text-xs">
+              <DropdownMenuItem
+                onClick={() => onAcknowledge(notice)}
+                className="text-xs"
+              >
                 Acknowledge
               </DropdownMenuItem>
             )}
@@ -118,7 +151,7 @@ const NoticeItem = ({ notice, onAcknowledge, onView }) => (
     </div>
     <div className="flex justify-between items-center mt-1">
       <span className="text-xs text-gray-500">
-        {moment(notice.created_at).format('MMM DD')}
+        {moment(notice.created_at).format("MMM DD")}
       </span>
       {notice.is_read == 0 && (
         <Button
@@ -134,20 +167,17 @@ const NoticeItem = ({ notice, onAcknowledge, onView }) => (
 );
 
 const Home = () => {
-  const token = Cookies.get('token');
-  const userTypeId = Cookies.get('user_type_id');
+  const token = Cookies.get("token");
+  const userTypeId = Cookies.get("user_type_id");
   const [open, setOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState(null);
-
-
-
-  const { 
-    data: noticesData, 
+  const {
+    data: noticesData,
     isLoading: loadingNotices,
-    isFetching:fetchingNotices,
-    refetch: refetchNotices 
+    isFetching: fetchingNotices,
+    refetch: refetchNotices,
   } = useQuery({
-    queryKey: ['dashboard-notices', userTypeId],
+    queryKey: ["dashboard-notices", userTypeId],
     queryFn: async () => {
       const url = DASHBOARD_NOTICE;
       const response = await axios.get(url, {
@@ -156,55 +186,51 @@ const Home = () => {
       return response.data;
     },
     enabled: !!userTypeId,
-   
   });
 
   const datanotification = noticesData?.data || [];
 
-
-  const { 
-    data: dashboardData, 
+  const {
+    data: dashboardData,
     isLoading: loadingDashboardData,
-    isFetching:fetchingDashbpardData,
-    refetch: refetchDashboard 
+    isFetching: fetchingDashbpardData,
+    refetch: refetchDashboard,
   } = useQuery({
-    queryKey: ['dashboard-data'],
+    queryKey: ["dashboard-data"],
     queryFn: async () => {
       const response = await axios.get(`${DASHBOARD_DATA}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.data;
     },
- 
+
     staleTime: 30 * 60 * 1000,
-    cacheTime: 60 * 60 * 1000, 
-    refetchOnMount: false, 
-    refetchOnWindowFocus: false, 
-    refetchOnReconnect: false, 
+    cacheTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const result = dashboardData || {};
 
-
   const markNoticeAsReadMutation = useMutation({
     mutationFn: async (noticeId) => {
-      
       const response = await axios.post(
         `${DASHBOARD_MARK_NOTICE_AS_READ}/${noticeId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
-   onSuccess: (data) => {
-         toast.success(data.message || 'Notice acknowledged successfully');
-         refetchNotices();
-       },
-       onError: (error) => {
-         toast.error(error.response.data.message || 'Error acknowledging notice');
-       },
+    onSuccess: (data) => {
+      toast.success(data.message || "Notice acknowledged successfully");
+      refetchNotices();
+    },
+    onError: (error) => {
+      toast.error(error.response.data.message || "Error acknowledging notice");
+    },
   });
 
   const handleMarkNoticeAsRead = (notice) => {
@@ -224,54 +250,56 @@ const Home = () => {
     setOpen(false);
   };
 
-
-  const graphData = result?.graph1?.length > 0 ? {
-    labels: result.graph1.map((item) => item.receipt_donation_type),
-    datasets: [
-      {
-        data: result.graph1.map((item) => item.total_count),
-        backgroundColor: [
-          '#3b82f6', // blue-500
-          '#f59e0b', // amber-500
-          '#10b981', // emerald-500
-          '#6366f1', // indigo-500
-        ],
-        hoverBackgroundColor: [
-          '#2563eb', // blue-600
-          '#d97706', // amber-600
-          '#059669', // emerald-600
-          '#4f46e5', // indigo-600
-        ],
-        borderWidth: 2,
-        borderColor: '#ffffff',
-      },
-    ],
-  } : null;
+  const graphData =
+    result?.graph1?.length > 0
+      ? {
+          labels: result.graph1.map((item) => item.receipt_donation_type),
+          datasets: [
+            {
+              data: result.graph1.map((item) => item.total_count),
+              backgroundColor: [
+                "#3b82f6", // blue-500
+                "#f59e0b", // amber-500
+                "#10b981", // emerald-500
+                "#6366f1", // indigo-500
+              ],
+              hoverBackgroundColor: [
+                "#2563eb", // blue-600
+                "#d97706", // amber-600
+                "#059669", // emerald-600
+                "#4f46e5", // indigo-600
+              ],
+              borderWidth: 2,
+              borderColor: "#ffffff",
+            },
+          ],
+        }
+      : null;
 
   const cardConfig = [
     {
-      title: 'Total Donors',
+      title: "Total Donors",
       value: result.total_companies_count,
       icon: Users,
-      color: 'bg-blue-600',
+      color: "bg-blue-600",
     },
     {
-      title: 'Individuals',
+      title: "Individuals",
       value: result.individual_company_count,
       icon: User,
-      color: 'bg-green-600',
+      color: "bg-green-600",
     },
     {
-      title: 'Companies/Trusts',
+      title: "Companies/Trusts",
       value: result.other_companies_count,
       icon: Building2,
-      color: 'bg-purple-600',
+      color: "bg-purple-600",
     },
     {
-      title: 'Total Donation',
+      title: "Total Donation",
       value: result.total_donation,
       icon: IndianRupee,
-      color: 'bg-amber-600',
+      color: "bg-amber-600",
     },
   ];
 
@@ -281,22 +309,22 @@ const Home = () => {
       amount: result.total_ots_donation,
       count: result.ots_receipts_count,
       color: "bg-blue-50",
-      textColor: "text-blue-600"
+      textColor: "text-blue-600",
     },
     {
       title: "Membership",
       amount: result.total_membership_donation,
       count: result.mem_receipts_count,
       color: "bg-amber-50",
-      textColor: "text-amber-600"
+      textColor: "text-amber-600",
     },
     {
       title: "General",
       amount: result.total_general_donation,
       count: result.gen_receipts_count,
       color: "bg-green-50",
-      textColor: "text-green-600"
-    }
+      textColor: "text-green-600",
+    },
   ];
 
   const isLoading = loadingNotices || loadingDashboardData;
@@ -305,13 +333,12 @@ const Home = () => {
   const handleRefresh = () => {
     refetchDashboard();
     refetchNotices();
-    toast.success('Dashboard updated');
+    toast.success("Dashboard updated");
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen p-3 space-y-3">
-  
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="p-3">
@@ -357,7 +384,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen p-3 space-y-3 bg-gray-50">
-   
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
@@ -370,11 +396,10 @@ const Home = () => {
           className="h-8"
         >
           {isFetching ? (
-   <RefreshCcw className="h-3 w-3 mr-1 animate-spin" />
-          ):(
+            <RefreshCcw className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
             <RefreshCcw className="h-3 w-3 mr-1" />
           )}
-       
           Refresh
         </Button>
       </div>
@@ -391,11 +416,8 @@ const Home = () => {
         ))}
       </div>
 
-     
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
- 
         <div className="lg:col-span-4 space-y-3">
-    
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -405,11 +427,13 @@ const Home = () => {
                   </div>
                   <div>
                     <CardTitle className="text-base">Recent Notices</CardTitle>
-                    <CardDescription className="text-xs">Updates and announcements</CardDescription>
+                    <CardDescription className="text-xs">
+                      Updates and announcements
+                    </CardDescription>
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {datanotification.filter(n => n.is_read == 0).length} New
+                  {datanotification.filter((n) => n.is_read == 0).length} New
                 </Badge>
               </div>
             </CardHeader>
@@ -427,14 +451,15 @@ const Home = () => {
                 ) : (
                   <div className="text-center py-6">
                     <Bell className="h-6 w-6 mx-auto mb-1 text-gray-400" />
-                    <p className="text-gray-500 text-xs">No new notices available</p>
+                    <p className="text-gray-500 text-xs">
+                      No new notices available
+                    </p>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-     
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-1.5">
@@ -443,7 +468,9 @@ const Home = () => {
                 </div>
                 <div>
                   <CardTitle className="text-base">Donation Summary</CardTitle>
-                  <CardDescription className="text-xs">Breakdown by type</CardDescription>
+                  <CardDescription className="text-xs">
+                    Breakdown by type
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -464,9 +491,7 @@ const Home = () => {
           </Card>
         </div>
 
-
         <div className="space-y-3">
-        
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-1.5">
@@ -475,7 +500,9 @@ const Home = () => {
                 </div>
                 <div>
                   <CardTitle className="text-base">Distribution</CardTitle>
-                  <CardDescription className="text-xs">Receipt type distribution</CardDescription>
+                  <CardDescription className="text-xs">
+                    Receipt type distribution
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -489,17 +516,17 @@ const Home = () => {
                       maintainAspectRatio: false,
                       plugins: {
                         legend: {
-                          position: 'bottom',
+                          position: "bottom",
                           labels: {
                             boxWidth: 10,
                             font: {
-                              size: 10
+                              size: 10,
                             },
-                            padding: 12
-                          }
+                            padding: 12,
+                          },
                         },
                       },
-                      cutout: '55%',
+                      cutout: "55%",
                     }}
                   />
                 </div>
@@ -513,25 +540,30 @@ const Home = () => {
         </div>
       </div>
 
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">Acknowledge Notice</DialogTitle>
             <DialogDescription className="text-sm">
               Confirm you have read and understood this notice?
-          
             </DialogDescription>
           </DialogHeader>
           {selectedNotice && (
             <div className="bg-gray-50 p-2 rounded border">
-                 
-              <h4 className="font-medium text-sm mb-1">{selectedNotice.notice_name}</h4>
-              <p className="text-xs text-gray-600 line-clamp-3">{selectedNotice.notice_detail}</p>
+              <h4 className="font-medium text-sm mb-1">
+                {selectedNotice.notice_name}
+              </h4>
+              <p className="text-xs text-gray-600 line-clamp-3">
+                {selectedNotice.notice_detail}
+              </p>
             </div>
           )}
           <DialogFooter className="flex gap-1 sm:gap-1">
-            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1 h-8 text-xs">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="flex-1 h-8 text-xs"
+            >
               Cancel
             </Button>
             <Button onClick={confirmAcknowledge} className="flex-1 h-8 text-xs">

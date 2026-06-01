@@ -62,7 +62,6 @@ export const MEMBERSHIP_RENEWAL_WHATSAPP_LIST = `/api/send-membership-renewal-wh
 export const FAMILY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const COMPANY_DETAILS_LIST = `${BASE_URL}/api/fetch-donor-by-id`;
 export const DONOR_INDIVISUAL_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
-
 export const DONOR_CHANGE_PROMOTER_UPDATE_SUMBIT = `/api/update-promoter`;
 
 export const DONOR_COMPANY_CREATE_SUMBIT = `${BASE_URL}/api/donor`;
@@ -371,6 +370,8 @@ export const ROUTES = {
   DONOR_LIST_EDIT: (id) => `/donor-edit/${encryptId(id)}`,
   DONOR_LIST_REDIRECT_CREATE_RECEIPT: (id) =>
     `/donor-create-receipt/${encryptId(id)}`,
+  DONOR_LIST_REDIRECT_CREATE_OLD_RECEIPT: (id) =>
+    `/donor-create-old-receipt/${encryptId(id)}`,
   VIEWER_RECEIPTS_FROM_CREATE_RECEIPT: (id) =>
     `/view-receipts/${encryptId(id)}`,
   VIEWER_RECEIPTS_FROM_OLD_RECEIPT: (id) => `/view-receipts/${encryptId(id)}`,
@@ -448,6 +449,9 @@ export const navigateToDuplicateEdit = (navigate, viewId) => {
 };
 export const navigateToCreateReceipt = (navigate, viewId) => {
   navigate(ROUTES.DONOR_LIST_REDIRECT_CREATE_RECEIPT(viewId));
+};
+export const navigateToCreateOldReceipt = (navigate, viewId) => {
+  navigate(ROUTES.DONOR_LIST_REDIRECT_CREATE_OLD_RECEIPT(viewId));
 };
 export const navigateToViewReceiptFromCreateReceipt = (navigate, viewId) => {
   navigate(ROUTES.VIEWER_RECEIPTS_FROM_CREATE_RECEIPT(viewId));

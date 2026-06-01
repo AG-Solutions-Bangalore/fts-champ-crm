@@ -313,10 +313,11 @@ const SuperReceiptDonor = () => {
           <Button
             variant={isSelected ? "default" : "outline"}
             size="sm"
-            className={`text-xs font-medium transition-all ${isSelected
-              ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
-              : "bg-white text-primary border border-primary/30 hover:bg-primary/10"
-              }`}
+            className={`text-xs font-medium transition-all ${
+              isSelected
+                ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                : "bg-white text-primary border border-primary/30 hover:bg-primary/10"
+            }`}
             onClick={() => setSelectedDonor(row.original)}
           >
             {isSelected ? (
@@ -625,10 +626,11 @@ const SuperReceiptDonor = () => {
                 <Button
                   onClick={handleFetchReceipt}
                   disabled={loadingrecepit}
-                  className={`w-full sm:w-36 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 ${loadingrecepit
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
-                    }`}
+                  className={`w-full sm:w-36 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 ${
+                    loadingrecepit
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary"
+                  }`}
                 >
                   {loadingrecepit ? (
                     <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -972,9 +974,9 @@ const SuperReceiptDonor = () => {
                               {header.isPlaceholder
                                 ? null
                                 : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                  )}
                             </TableHead>
                           ))}
                         </TableRow>
