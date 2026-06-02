@@ -4,18 +4,13 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from 'sonner';
 
-
-
-
 const useCreateFollowup = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (formData) => {
-      
+    mutationFn: async (formData) => {     
       const token = Cookies.get('token'); 
       if (!token) throw new Error('No authentication token found.');
-
       const response = await axios.post(CREATE_FOLLOWUP_API_URL, formData, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -110,7 +110,7 @@ const AllChapter = () => {
   const updateOldReceiptStatus = useCallback(
     async (id, value) => {
       try {
-        await axios.put(
+        const response = await axios.put(
           `${BASE_URL}/api/old-receipt-chapter/${id}`,
           {
             // If backend specifically needs "Yes"/"No" when saving, change this to: value ? "Yes" : "No"
@@ -126,7 +126,7 @@ const AllChapter = () => {
         refetch();
 
         // <-- 2. FIXED TOAST SYNTAX HERE
-        toast.success("Old receipt status has been successfully saved.");
+        toast.success(response.data.message || "Status updated successfully.");
       } catch (error) {
         console.error("Error updating status:", error);
 

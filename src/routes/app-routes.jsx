@@ -15,6 +15,7 @@ import PanelConditionList from "@/app/panel-condition/panel-condition-list";
 import PromoterDashboard from "@/app/promoterdashboard/promoterdashboard";
 import PromoterDashboardView from "@/app/promoterdashboard/promoter-dashboard-view";
 import AllChapter from "@/app/donor/AllChapter/AllChapter";
+import Nopan from "@/app/donor/Nopan/Nopan";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(
@@ -169,6 +170,7 @@ function AppRoutes() {
             </Suspense>
           }
         />
+
         <Route
           path="/chapter"
           element={
@@ -301,6 +303,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <DonorList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/donor/no-pan"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <Nopan />
             </Suspense>
           }
         />

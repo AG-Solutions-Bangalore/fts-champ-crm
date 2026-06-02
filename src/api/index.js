@@ -149,6 +149,7 @@ export const REAPEAT_DONOR_EDIT_LIST = `/api/school-alloted-list`;
 // export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-schoolsallot-repeat`;
 export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-repeated-donor`;
 
+
 //SCHOOL ALLOT
 // export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
 export const SCHOOL_ALLOT_LIST = `/api/school-alloted-list`;
