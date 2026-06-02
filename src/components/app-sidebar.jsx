@@ -102,6 +102,10 @@ const NAVIGATION_CONFIG = {
           title: "Duplicate",
           url: "/donor/duplicate",
         },
+        {
+          title: "No pan",
+          url: "/donor/no-pan",
+        },
       ],
     },
 

@@ -6,7 +6,6 @@ export const useCurrentYear = () => {
   const fetchCurrentYear = async () => {
     const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
-
     const response = await fetch(`${BASE_URL}/api/panel-fetch-year`, {
       headers: {
         Authorization: `Bearer ${token}`,

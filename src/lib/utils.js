@@ -6,10 +6,6 @@ export function cn(...inputs) {
 }
 
 
-
-
-
-
 export const createStars = (count, color) => {
   const stars = [];
   for (let i = 0; i < count; i++) {

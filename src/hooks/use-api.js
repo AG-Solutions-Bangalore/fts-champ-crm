@@ -49,7 +49,14 @@ export const useFetchChapterActive = () => {
 };
 
 
-
+export const useFetchDonorWithoutPannoList = () => {
+  return useQuery(
+    createQueryConfig(
+      ["donor-without-panno-list"],
+      "/api/donor-with-out-panno-list"
+    )
+  );
+};
 
 export const useFetchMembershipYear = () => {
   return useQuery(createQueryConfig(["memership-year"], "/api/fetch-membership-year"));

@@ -17,7 +17,6 @@ function App() {
   };
   return (
     <>
-
       {/* <DisabledRightClick /> */}
       <Toaster richColors position="top-right" />
       <ScrollToTop />
