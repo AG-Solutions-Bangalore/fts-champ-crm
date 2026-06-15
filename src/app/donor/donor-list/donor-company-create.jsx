@@ -41,6 +41,7 @@ import belongs_to from "@/utils/belongs-to";
 import company_type from "@/utils/company-type";
 import donor_type from "@/utils/donor-type";
 import honorific from "@/utils/honorific";
+import { Textarea } from "@/components/ui/textarea";
 
 // Constants
 const gender = [
@@ -87,11 +88,12 @@ const DonorCompanyCreate = () => {
     indicomp_mobile_phone: "",
     indicomp_mobile_whatsapp: "",
     indicomp_email: "",
- indicomp_is_promoter: "No",
+    indicomp_is_promoter: "No",
     indicomp_website: "",
     indicomp_res_reg_address: "",
     indicomp_res_reg_area: "",
     indicomp_res_reg_ladmark: "",
+    indicomp_multiple_emaill: "",
     indicomp_res_reg_city: "",
     indicomp_res_reg_state: "",
     indicomp_res_reg_pin_code: "",
@@ -177,7 +179,7 @@ const DonorCompanyCreate = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (response.data.code === 422) {
@@ -188,7 +190,7 @@ const DonorCompanyCreate = () => {
       } catch (error) {
         console.error(
           "Error checking duplicate donor",
-          error.response.data.message
+          error.response.data.message,
         );
         return true;
       }
@@ -249,8 +251,6 @@ const DonorCompanyCreate = () => {
         "Valid PAN Number is required (format: AAAAA9999A)";
       isValid = false;
     }
-
-
 
     if (
       !donor.indicomp_mobile_phone ||
@@ -326,6 +326,7 @@ const DonorCompanyCreate = () => {
           indicomp_email: "",
           indicomp_website: "",
           indicomp_res_reg_address: "",
+          indicomp_multiple_emaill: "",
           indicomp_res_reg_area: "",
           indicomp_res_reg_ladmark: "",
           indicomp_res_reg_city: "",
@@ -339,7 +340,7 @@ const DonorCompanyCreate = () => {
           indicomp_off_branch_pin_code: "",
           indicomp_corr_preffer: "Registered",
           indicomp_csr: "",
-           indicomp_is_promoter: "No",
+          indicomp_is_promoter: "No",
         });
 
         navigate("/donor/donors");
@@ -350,10 +351,10 @@ const DonorCompanyCreate = () => {
     onError: (error) => {
       console.error(
         "Donor Company Creation Error:",
-        error.response.data.message
+        error.response.data.message,
       );
       toast.error(
-        error.response.data.message || "Donor Company Creation Error"
+        error.response.data.message || "Donor Company Creation Error",
       );
     },
     onSettled: () => {
@@ -381,20 +382,24 @@ const DonorCompanyCreate = () => {
       const formData = new FormData();
       formData.append("indicomp_full_name", donor.indicomp_full_name || "");
       formData.append("title", donor.title || "");
-  formData.append("indicomp_is_promoter", donor.indicomp_is_promoter);
+      formData.append("indicomp_is_promoter", donor.indicomp_is_promoter);
       formData.append("indicomp_type", donor.indicomp_type || "");
       formData.append(
         "indicomp_com_contact_name",
-        donor.indicomp_com_contact_name || ""
+        donor.indicomp_com_contact_name || "",
+      );
+      formData.append(
+        "indicomp_multiple_email",
+        donor.indicomp_multiple_email || "",
       );
       formData.append(
         "indicomp_com_contact_designation",
-        donor.indicomp_com_contact_designation || ""
+        donor.indicomp_com_contact_designation || "",
       );
       formData.append("indicomp_gender", donor.indicomp_gender || "");
       formData.append(
         "indicomp_dob_annualday",
-        donor.indicomp_dob_annualday || ""
+        donor.indicomp_dob_annualday || "",
       );
       formData.append("indicomp_pan_no", donor.indicomp_pan_no || "");
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
@@ -404,65 +409,65 @@ const DonorCompanyCreate = () => {
       formData.append("indicomp_source", donor.indicomp_source || "");
       formData.append(
         "indicomp_mobile_phone",
-        donor.indicomp_mobile_phone || ""
+        donor.indicomp_mobile_phone || "",
       );
       formData.append(
         "indicomp_mobile_whatsapp",
-        donor.indicomp_mobile_whatsapp || ""
+        donor.indicomp_mobile_whatsapp || "",
       );
       formData.append("indicomp_email", donor.indicomp_email || "");
       formData.append("indicomp_website", donor.indicomp_website || "");
       formData.append(
         "indicomp_res_reg_address",
-        donor.indicomp_res_reg_address || ""
+        donor.indicomp_res_reg_address || "",
       );
       formData.append(
         "indicomp_res_reg_area",
-        donor.indicomp_res_reg_area || ""
+        donor.indicomp_res_reg_area || "",
       );
       formData.append(
         "indicomp_res_reg_ladmark",
-        donor.indicomp_res_reg_ladmark || ""
+        donor.indicomp_res_reg_ladmark || "",
       );
       formData.append(
         "indicomp_res_reg_city",
-        donor.indicomp_res_reg_city || ""
+        donor.indicomp_res_reg_city || "",
       );
       formData.append(
         "indicomp_res_reg_state",
-        donor.indicomp_res_reg_state || ""
+        donor.indicomp_res_reg_state || "",
       );
       formData.append(
         "indicomp_res_reg_pin_code",
-        donor.indicomp_res_reg_pin_code || ""
+        donor.indicomp_res_reg_pin_code || "",
       );
       formData.append(
         "indicomp_off_branch_address",
-        donor.indicomp_off_branch_address || ""
+        donor.indicomp_off_branch_address || "",
       );
       formData.append(
         "indicomp_off_branch_area",
-        donor.indicomp_off_branch_area || ""
+        donor.indicomp_off_branch_area || "",
       );
       formData.append(
         "indicomp_off_branch_ladmark",
-        donor.indicomp_off_branch_ladmark || ""
+        donor.indicomp_off_branch_ladmark || "",
       );
       formData.append(
         "indicomp_off_branch_city",
-        donor.indicomp_off_branch_city || ""
+        donor.indicomp_off_branch_city || "",
       );
       formData.append(
         "indicomp_off_branch_state",
-        donor.indicomp_off_branch_state || ""
+        donor.indicomp_off_branch_state || "",
       );
       formData.append(
         "indicomp_off_branch_pin_code",
-        donor.indicomp_off_branch_pin_code || ""
+        donor.indicomp_off_branch_pin_code || "",
       );
       formData.append(
         "indicomp_corr_preffer",
-        donor.indicomp_corr_preffer || ""
+        donor.indicomp_corr_preffer || "",
       );
       formData.append("indicomp_belongs_to", donor.indicomp_belongs_to || "");
       formData.append("indicomp_donor_type", donor.indicomp_donor_type || "");
@@ -727,7 +732,6 @@ const DonorCompanyCreate = () => {
 
                 {/* PAN Number */}
                 <div className="">
-               
                   <InputMask
                     mask="aaaaa9999a"
                     value={donor.indicomp_pan_no}
@@ -801,7 +805,7 @@ const DonorCompanyCreate = () => {
                     placeholder="Enter remarks"
                   />
                 </div>
-<div className=" ">
+                <div className=" ">
                   <Label
                     htmlFor="indicomp_is_promoter"
                     className="text-xs font-medium"
@@ -845,7 +849,7 @@ const DonorCompanyCreate = () => {
                     // onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
                     onChange={(value) => {
                       const selectedPromoter = promoter.find(
-                        (p) => p.indicomp_promoter == value
+                        (p) => p.indicomp_promoter == value,
                       );
                       setDonor((prev) => ({
                         ...prev,
@@ -865,7 +869,6 @@ const DonorCompanyCreate = () => {
                     </p>
                   )}
                 </div>
-
 
                 <div className="">
                   <Label
@@ -1077,6 +1080,29 @@ const DonorCompanyCreate = () => {
                     placeholder="Enter website URL"
                   />
                 </div>
+              </div>
+              <div className="">
+                <Label
+                  htmlFor="indicomp_mobile_phone"
+                  className="text-xs  font-medium"
+                >
+                  Multiple Email (eg:abc@gmail.com xyz@gmail.com)
+                </Label>
+                <Textarea
+                  id="indicomp_multiple_emaill"
+                  name="indicomp_multiple_emaill"
+                  type="text"
+                  value={donor.indicomp_multiple_emaill}
+                  onChange={onInputChange}
+                  maxLength={10}
+                  placeholder="eg abc@gmail.com xyz@gmail.com"
+                  className={isDuplicate ? "border-red-500" : ""}
+                />
+                {errors?.indicomp_multiple_emaill && (
+                  <p className="text-red-500 text-xs">
+                    {errors.indicomp_multiple_emaill}
+                  </p>
+                )}
               </div>
             </div>
 

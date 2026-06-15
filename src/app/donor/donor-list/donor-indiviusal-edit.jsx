@@ -14,14 +14,7 @@ import {
 import belongs_to from "@/utils/belongs-to";
 import donor_type from "@/utils/donor-type";
 import honorific from "@/utils/honorific";
-import {
-  ArrowLeft,
-  Building,
-  Info,
-  MapPin,
-  Phone,
-  User
-} from "lucide-react";
+import { ArrowLeft, Building, Info, MapPin, Phone, User } from "lucide-react";
 import AddToGroup from "./add-to-group";
 
 import {
@@ -33,10 +26,7 @@ import {
 // Shadcn Components
 import { MemoizedSelect } from "@/components/common/memoized-select";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -46,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 // Constants
 const gender = [
@@ -92,8 +83,10 @@ const DonorEditIndv = () => {
     indicomp_mobile_whatsapp: "",
     indicomp_email: "",
     indicomp_website: "",
+    indicomp_multiple_email: "",
     indicomp_res_reg_address: "",
     indicomp_res_reg_area: "",
+    indicomp_banner_name: "",
     indicomp_res_reg_ladmark: "",
     indicomp_res_reg_city: "",
     indicomp_res_reg_state: "",
@@ -137,10 +130,10 @@ const DonorEditIndv = () => {
       setDonor(cleanedData);
       setInitialDonor(cleanedData);
       const userImageBase = response.data.image_url.find(
-        (img) => img.image_for === "Donor"
+        (img) => img.image_for === "Donor",
       )?.image_url;
       const noImageUrl = response.data.image_url.find(
-        (img) => img.image_for === "No Image"
+        (img) => img.image_for === "No Image",
       )?.image_url;
 
       setUserImageBase(userImageBase);
@@ -180,7 +173,7 @@ const DonorEditIndv = () => {
     onError: (error) => {
       console.error("Update error:", error.response.data.message);
       toast.error(
-        error.response.data.message || "An error occurred during updating"
+        error.response.data.message || "An error occurred during updating",
       );
     },
   });
@@ -203,7 +196,7 @@ const DonorEditIndv = () => {
     },
     onError: (error) => {
       toast.error(
-        error.response.data.message || "Failed to update family group"
+        error.response.data.message || "Failed to update family group",
       );
     },
   });
@@ -244,7 +237,6 @@ const DonorEditIndv = () => {
     }
   };
 
-
   const onChangePanNumber = (e) => {
     const panValue = e.target.value;
     // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
@@ -262,7 +254,7 @@ const DonorEditIndv = () => {
     if (!donor.indicomp_gender) {
       newErrors.indicomp_gender = "Gender is required";
     }
-  
+
     if (
       !donor.indicomp_mobile_phone ||
       !/^\d{10}$/.test(donor.indicomp_mobile_phone)
@@ -310,35 +302,33 @@ const DonorEditIndv = () => {
 
     formData.append(
       "indicomp_full_name",
-      processValue(donor.indicomp_full_name)
+      processValue(donor.indicomp_full_name),
     );
     formData.append("title", processValue(donor.title));
     formData.append(
       "indicomp_is_promoter",
-      processValue(donor.indicomp_is_promoter)
+      processValue(donor.indicomp_is_promoter),
     );
     formData.append("indicomp_type", processValue(donor.indicomp_type));
     formData.append(
       "indicomp_father_name",
-      processValue(donor.indicomp_father_name)
+      processValue(donor.indicomp_father_name),
     );
     formData.append(
       "indicomp_mother_name",
-      processValue(donor.indicomp_mother_name)
+      processValue(donor.indicomp_mother_name),
     );
     formData.append("indicomp_gender", processValue(donor.indicomp_gender));
     formData.append(
       "indicomp_spouse_name",
-      processValue(donor.indicomp_spouse_name)
+      processValue(donor.indicomp_spouse_name),
     );
     formData.append(
       "indicomp_dob_annualday",
-      processValue(donor.indicomp_dob_annualday)
+      processValue(donor.indicomp_dob_annualday),
     );
     formData.append("indicomp_doa", processValue(donor.indicomp_doa));
     formData.append("indicomp_pan_no", processValue(donor.indicomp_pan_no));
-
-
 
     if (donor.indicomp_image_logo instanceof File) {
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
@@ -347,78 +337,86 @@ const DonorEditIndv = () => {
     formData.append("indicomp_promoter", processValue(donor.indicomp_promoter));
     formData.append(
       "indicomp_newpromoter",
-      processValue(donor.indicomp_newpromoter)
+      processValue(donor.indicomp_newpromoter),
     );
     formData.append("indicomp_source", processValue(donor.indicomp_source));
     formData.append(
       "indicomp_mobile_phone",
-      processValue(donor.indicomp_mobile_phone)
+      processValue(donor.indicomp_mobile_phone),
     );
     formData.append(
       "indicomp_mobile_whatsapp",
-      processValue(donor.indicomp_mobile_whatsapp)
+      processValue(donor.indicomp_mobile_whatsapp),
+    );
+    formData.append(
+      "indicomp_multiple_email",
+      processValue(donor.indicomp_multiple_email),
+    );
+    formData.append(
+      "indicomp_banner_name",
+      processValue(donor.indicomp_banner_name),
     );
     formData.append("indicomp_email", processValue(donor.indicomp_email));
     formData.append("indicomp_website", processValue(donor.indicomp_website));
     formData.append(
       "indicomp_res_reg_address",
-      processValue(donor.indicomp_res_reg_address)
+      processValue(donor.indicomp_res_reg_address),
     );
     formData.append(
       "indicomp_res_reg_area",
-      processValue(donor.indicomp_res_reg_area)
+      processValue(donor.indicomp_res_reg_area),
     );
     formData.append(
       "indicomp_res_reg_ladmark",
-      processValue(donor.indicomp_res_reg_ladmark)
+      processValue(donor.indicomp_res_reg_ladmark),
     );
     formData.append(
       "indicomp_res_reg_city",
-      processValue(donor.indicomp_res_reg_city)
+      processValue(donor.indicomp_res_reg_city),
     );
     formData.append(
       "indicomp_res_reg_state",
-      processValue(donor.indicomp_res_reg_state)
+      processValue(donor.indicomp_res_reg_state),
     );
     formData.append(
       "indicomp_res_reg_pin_code",
-      processValue(donor.indicomp_res_reg_pin_code)
+      processValue(donor.indicomp_res_reg_pin_code),
     );
     formData.append(
       "indicomp_off_branch_address",
-      processValue(donor.indicomp_off_branch_address)
+      processValue(donor.indicomp_off_branch_address),
     );
     formData.append(
       "indicomp_off_branch_area",
-      processValue(donor.indicomp_off_branch_area)
+      processValue(donor.indicomp_off_branch_area),
     );
     formData.append(
       "indicomp_off_branch_ladmark",
-      processValue(donor.indicomp_off_branch_ladmark)
+      processValue(donor.indicomp_off_branch_ladmark),
     );
     formData.append(
       "indicomp_off_branch_city",
-      processValue(donor.indicomp_off_branch_city)
+      processValue(donor.indicomp_off_branch_city),
     );
     formData.append(
       "indicomp_off_branch_state",
-      processValue(donor.indicomp_off_branch_state)
+      processValue(donor.indicomp_off_branch_state),
     );
     formData.append(
       "indicomp_off_branch_pin_code",
-      processValue(donor.indicomp_off_branch_pin_code)
+      processValue(donor.indicomp_off_branch_pin_code),
     );
     formData.append(
       "indicomp_corr_preffer",
-      processValue(donor.indicomp_corr_preffer)
+      processValue(donor.indicomp_corr_preffer),
     );
     formData.append(
       "indicomp_belongs_to",
-      processValue(donor.indicomp_belongs_to)
+      processValue(donor.indicomp_belongs_to),
     );
     formData.append(
       "indicomp_donor_type",
-      processValue(donor.indicomp_donor_type)
+      processValue(donor.indicomp_donor_type),
     );
 
     updateMutation.mutate(formData);
@@ -794,20 +792,18 @@ const DonorEditIndv = () => {
                     <MemoizedSelect
                       value={
                         promoter.find(
-                          (p) => p.indicomp_fts_id == donor.indicomp_promoter
+                          (p) => p.indicomp_fts_id == donor.indicomp_promoter,
                         )?.indicomp_fts_id || ""
                       }
                       onChange={(value) => {
-                   
-
                         setDonor((prev) => ({
                           ...prev,
-                          indicomp_promoter: value, 
+                          indicomp_promoter: value,
                         }));
                       }}
                       options={promoter?.map((option) => ({
-                        value: option.indicomp_fts_id, 
-                        label: option.indicomp_full_name, 
+                        value: option.indicomp_fts_id,
+                        label: option.indicomp_full_name,
                       }))}
                       placeholder="Select Promoter"
                     />
@@ -1037,6 +1033,27 @@ const DonorEditIndv = () => {
                     placeholder="Enter website URL"
                   />
                 </div>
+              </div>
+              <div className="">
+                <Label
+                  htmlFor=" indicomp_multiple_email"
+                  className="text-xs font-medium"
+                >
+                  Multiple Email("eg:abc@gmail.com,xyz@gmail.com")
+                </Label>
+                <Textarea
+                  id="indicomp_multiple_email"
+                  name="indicomp_multiple_email"
+                  type="text"
+                  value={donor.indicomp_multiple_email}
+                  onChange={onInputChange}
+                  placeholder="eg abc@gmail.com,xyx@gmail.com"
+                />
+                {errors?.indicomp_multiple_email && (
+                  <p className="text-red-500 text-xs">
+                    {errors.indicomp_multiple_email}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1342,6 +1359,30 @@ const DonorEditIndv = () => {
               </div>
             </div>
 
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm p-1 rounded-md px-1 font-medium bg-[var(--team-color)] text-white">
+                <Building className="w-4 h-4" />
+                School Allotment Banner name{" "}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="">
+                  <Label
+                    htmlFor="indicomp_banner_name"
+                    className="text-xs font-medium"
+                  >
+                    Banner
+                  </Label>
+                  <Input
+                    id="indicomp_banner_name"
+                    name="indicomp_banner_name"
+                    value={donor.indicomp_banner_name}
+                    onChange={onInputChange}
+                    placeholder="Enter banner name"
+                  />
+                </div>
+              </div>
+            </div>
             {/* Form Actions */}
             <div className="flex gap-3 pt-6 border-t">
               <Button
@@ -1411,7 +1452,6 @@ const DonorEditIndv = () => {
           </form>
         </CardContent>
       </Card>
-
 
       {showModal && (
         <AddToGroup

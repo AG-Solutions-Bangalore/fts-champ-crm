@@ -64,6 +64,7 @@ const ChapterViewSuperAdmin = () => {
     chapter_email: "",
     chapter_website: "",
     chapter_date_of_incorporation: "",
+    auth_sign_required: "",
     chapter_region_code: "",
     auth_sign: "",
     chapter_status: "",
@@ -120,6 +121,7 @@ const ChapterViewSuperAdmin = () => {
         chapter_date_of_incorporation:
           chapter.chapter_date_of_incorporation || "",
         chapter_region_code: chapter.chapter_region_code || "",
+        auth_sign_required: chapter.auth_sign_required || "",
         auth_sign: chapter.auth_sign || "",
         chapter_status: chapter.chapter_status || "",
         chapter_bank_name: chapter.chapter_bank_name || "",
@@ -537,7 +539,26 @@ const ChapterViewSuperAdmin = () => {
                     className="h-8 text-xs"
                   />
                 </div>
+                <div className="space-y-1">
+                  <Label htmlFor="auth_sign" className="text-xs font-medium">
+                    Signature to print <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.auth_sign_required}
+                    onValueChange={(value) =>
+                      handleInputChange("auth_sign_required", value)
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Select Yes or No" />
+                    </SelectTrigger>
 
+                    <SelectContent>
+                      <SelectItem value="No">No</SelectItem>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="auth_sign" className="text-xs font-medium">
                     Comm. Member for Sign{" "}
