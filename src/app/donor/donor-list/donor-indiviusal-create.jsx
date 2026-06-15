@@ -95,6 +95,7 @@ const DonorIndiviusalCreate = () => {
     indicomp_res_reg_ladmark: "",
     indicomp_res_reg_city: "",
     indicomp_res_reg_state: "",
+    indicomp_multiple_email: "",
     indicomp_res_reg_pin_code: "",
     indicomp_off_branch_address: "",
     indicomp_off_branch_area: "",
@@ -165,7 +166,7 @@ const DonorIndiviusalCreate = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (response.data.code === 422) {
@@ -175,7 +176,7 @@ const DonorIndiviusalCreate = () => {
         return true;
       } catch (error) {
         console.error(
-          error.response.data.message || "Error checking duplicate donor"
+          error.response.data.message || "Error checking duplicate donor",
         );
         return true;
       }
@@ -218,7 +219,6 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-  
     if (
       !donor.indicomp_mobile_phone ||
       !/^\d{10}$/.test(donor.indicomp_mobile_phone)
@@ -251,7 +251,6 @@ const DonorIndiviusalCreate = () => {
       isValid = false;
     }
 
-
     setErrors(newErrors);
     return { isValid, errors: newErrors };
   };
@@ -266,7 +265,7 @@ const DonorIndiviusalCreate = () => {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return response.data;
     },
@@ -296,6 +295,7 @@ const DonorIndiviusalCreate = () => {
           indicomp_type: "Individual",
           indicomp_mobile_phone: "",
           indicomp_mobile_whatsapp: "",
+          indicomp_multiple_email: "",
           indicomp_email: "",
           indicomp_website: "",
           indicomp_res_reg_address: "",
@@ -322,10 +322,10 @@ const DonorIndiviusalCreate = () => {
     onError: (error) => {
       console.error(
         "Donor Indiviusal Creation Error:",
-        error.response.data.message
+        error.response.data.message,
       );
       toast.error(
-        error.response.data.message || "Donor Indiviusal Creation Error"
+        error.response.data.message || "Donor Indiviusal Creation Error",
       );
     },
     onSettled: () => {
@@ -371,7 +371,7 @@ const DonorIndiviusalCreate = () => {
       formData.append("indicomp_spouse_name", donor.indicomp_spouse_name);
       formData.append("indicomp_dob_annualday", donor.indicomp_dob_annualday);
       formData.append("indicomp_doa", donor.indicomp_doa);
-      formData.append("indicomp_pan_no", donor.indicomp_pan_no);
+      formData.append("indicomp_multiple_email", donor.indicomp_multiple_email);
       formData.append("indicomp_image_logo", donor.indicomp_image_logo);
       formData.append("indicomp_remarks", donor.indicomp_remarks);
       formData.append("indicomp_promoter", donor.indicomp_promoter);
@@ -380,48 +380,48 @@ const DonorIndiviusalCreate = () => {
       formData.append("indicomp_mobile_phone", donor.indicomp_mobile_phone);
       formData.append(
         "indicomp_mobile_whatsapp",
-        donor.indicomp_mobile_whatsapp
+        donor.indicomp_mobile_whatsapp,
       );
       formData.append("indicomp_email", donor.indicomp_email);
       formData.append("indicomp_website", donor.indicomp_website);
       formData.append(
         "indicomp_res_reg_address",
-        donor.indicomp_res_reg_address
+        donor.indicomp_res_reg_address,
       );
       formData.append("indicomp_res_reg_area", donor.indicomp_res_reg_area);
       formData.append(
         "indicomp_res_reg_ladmark",
-        donor.indicomp_res_reg_ladmark
+        donor.indicomp_res_reg_ladmark,
       );
       formData.append("indicomp_res_reg_city", donor.indicomp_res_reg_city);
       formData.append("indicomp_res_reg_state", donor.indicomp_res_reg_state);
       formData.append(
         "indicomp_res_reg_pin_code",
-        donor.indicomp_res_reg_pin_code
+        donor.indicomp_res_reg_pin_code,
       );
       formData.append(
         "indicomp_off_branch_address",
-        donor.indicomp_off_branch_address
+        donor.indicomp_off_branch_address,
       );
       formData.append(
         "indicomp_off_branch_area",
-        donor.indicomp_off_branch_area
+        donor.indicomp_off_branch_area,
       );
       formData.append(
         "indicomp_off_branch_ladmark",
-        donor.indicomp_off_branch_ladmark
+        donor.indicomp_off_branch_ladmark,
       );
       formData.append(
         "indicomp_off_branch_city",
-        donor.indicomp_off_branch_city
+        donor.indicomp_off_branch_city,
       );
       formData.append(
         "indicomp_off_branch_state",
-        donor.indicomp_off_branch_state
+        donor.indicomp_off_branch_state,
       );
       formData.append(
         "indicomp_off_branch_pin_code",
-        donor.indicomp_off_branch_pin_code
+        donor.indicomp_off_branch_pin_code,
       );
       formData.append("indicomp_corr_preffer", donor.indicomp_corr_preffer);
       formData.append("indicomp_belongs_to", donor.indicomp_belongs_to);
@@ -680,7 +680,6 @@ const DonorIndiviusalCreate = () => {
 
                 {/* PAN Number */}
                 <div className=" ">
-              
                   <InputMask
                     mask="aaaaa9999a"
                     value={donor.indicomp_pan_no}
@@ -795,7 +794,7 @@ const DonorIndiviusalCreate = () => {
                     // onChange={(value) => setDonor(prev => ({ ...prev, indicomp_promoter: value }))}
                     onChange={(value) => {
                       const selectedPromoter = promoter.find(
-                        (p) => p.indicomp_promoter === value
+                        (p) => p.indicomp_promoter === value,
                       );
                       setDonor((prev) => ({
                         ...prev,
@@ -817,7 +816,6 @@ const DonorIndiviusalCreate = () => {
                   )}
                 </div>
 
- 
                 <div className=" ">
                   <Label
                     htmlFor="indicomp_belongs_to"
@@ -1017,6 +1015,19 @@ const DonorIndiviusalCreate = () => {
                     placeholder="Enter website URL"
                   />
                 </div>
+              </div>
+              <div className=" ">
+                <Label htmlFor="" className="text-xs  font-medium">
+                  Multiple mail (eg:abc@gmail.com xyz@gmail.com)
+                </Label>
+                <Textarea
+                  id="indicomp_multiple_email"
+                  name="indicomp_multiple_email"
+                  type="text"
+                  value={donor.indicomp_multiple_email}
+                  onChange={onInputChange}
+                  placeholder="eg:abc@gmail.com xyz@gmail.com"
+                />
               </div>
             </div>
 

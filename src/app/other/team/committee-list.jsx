@@ -13,7 +13,10 @@ import { useApiMutation } from "@/hooks/use-mutation";
 import { ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { OTHER_TEAM_COMMITTEE_CREATE_IMAGE } from "../../../api";
+import {
+  OTHER_TEAM_COMMITTEE_CREATE_IMAGE,
+  OTHER_TEAM_COMMITTEE_CREATE_SIGN,
+} from "../../../api";
 import Cookies from "js-cookie";
 
 const CommitteeList = ({ committeeResponse, refetch }) => {
@@ -21,6 +24,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDonorId, setSelectedDonorId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [dialogMode, setDialogMode] = useState("upload");
   const { trigger, loading: isSubmitting } = useApiMutation();
   const committeeData = committeeResponse?.data || [];
   const userImageBase =
@@ -35,42 +39,116 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
     acc[type].push(item);
     return acc;
   }, {});
-
-  const handleOpenDialog = (id) => {
+  const dialogTitle =
+    dialogMode === "upload" ? "Add Donor Image" : "Add Donor Sign";
+  const label = dialogMode === "upload" ? "Donor Image" : "Donor Sign";
+  // const handleOpenDialog = (id) => {
+  //   setSelectedFile(null);
+  //   setSelectedDonorId(id);
+  //   setOpenDialog(true);
+  // };
+  const handleOpenDialog = (id, mode) => {
     setSelectedFile(null);
     setSelectedDonorId(id);
+    setDialogMode(mode);
     setOpenDialog(true);
   };
-
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedDonorId(null);
     setSelectedFile(null);
   };
 
+  // const handleFileSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!selectedFile) {
+  //     toast.error("Please select an image before submitting.");
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("indicomp_fts_id", selectedDonorId);
+  //   formData.append("indicomp_image_logo", selectedFile);
+
+  //   try {
+  //     const res = await trigger({
+  //       url: OTHER_TEAM_COMMITTEE_CREATE_IMAGE,
+  //       method: "post",
+  //       data: formData,
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     });
+
+  //     if (res?.code === 201) {
+  //       toast.success(res.msg || "Image uploaded successfully");
+  //       handleCloseDialog();
+  //       refetch();
+  //     } else {
+  //       toast.error(res?.msg || "Failed to upload image");
+  //     }
+  //   } catch (error) {
+  //     toast.error(
+  //       error.message || "Something went wrong while uploading image.",
+  //     );
+  //     console.error(error);
+  //   }
+  // };
+
+  const validateUpdateImage = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!file) return reject("No file selected");
+
+      if (file.type !== "image/png") {
+        return reject("Only PNG images are allowed for update");
+      }
+
+      resolve(true);
+    });
+  };
   const handleFileSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) {
       toast.error("Please select an image before submitting.");
       return;
     }
-
-    const formData = new FormData();
-    formData.append("indicomp_fts_id", selectedDonorId);
-    formData.append("indicomp_image_logo", selectedFile);
-
     try {
-      const res = await trigger({
-        url: OTHER_TEAM_COMMITTEE_CREATE_IMAGE,
-        method: "post",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const formData = new FormData();
 
-      if (res?.code === 201) {
-        toast.success(res.msg || "Image uploaded successfully");
+      let res;
+      if (dialogMode === "upload") {
+        formData.append("indicomp_fts_id", selectedDonorId);
+        formData.append("indicomp_image_logo", selectedFile);
+        res = await trigger({
+          url: OTHER_TEAM_COMMITTEE_CREATE_IMAGE,
+          method: "post",
+          data: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+      if (dialogMode === "update") {
+        console.log("entering pae");
+        const formData = new FormData();
+
+        const val = await validateUpdateImage(selectedFile);
+        console.log(val);
+
+        formData.append("indicomp_fts_id", selectedDonorId);
+        formData.append("indicomp_image_sign", selectedFile);
+        res = await trigger({
+          url: OTHER_TEAM_COMMITTEE_CREATE_SIGN, // replace if you have update API
+          method: "post", // or patch
+          data: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      if (res?.code === 201 || res?.code === 200) {
+        toast.success(res.msg || "Success");
         handleCloseDialog();
         refetch();
       } else {
@@ -78,12 +156,10 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
       }
     } catch (error) {
       toast.error(
-        error.message || "Something went wrong while uploading image."
+        error.message || "Something went wrong while uploading image.",
       );
-      console.error(error);
     }
   };
-
   const committeeTypes = Object.keys(groupedCommittees);
 
   return (
@@ -130,15 +206,35 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
                             onError={(e) => (e.currentTarget.src = noImageUrl)}
                           />
                           {(userType === "1" || userType === "2") && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleOpenDialog(member?.indicomp_fts_id)
-                              }
-                              className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-md shadow-md hover:scale-105 transition"
-                            >
-                              <ImagePlus size={14} />
-                            </button>
+                            <div className="absolute bottom-0 right-0 flex gap-4">
+                              {/* LEFT BUTTON */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenDialog(
+                                    member?.indicomp_fts_id,
+                                    "update",
+                                  )
+                                }
+                                className="bg-gray-600  text-white p-1 rounded-md shadow-md hover:scale-105 transition"
+                              >
+                                <ImagePlus size={14} />
+                              </button>
+
+                              {/* RIGHT BUTTON */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleOpenDialog(
+                                    member?.indicomp_fts_id,
+                                    "upload",
+                                  )
+                                }
+                                className="bg-primary text-white p-1 rounded-md shadow-md hover:scale-105 transition"
+                              >
+                                <ImagePlus size={14} />
+                              </button>
+                            </div>
                           )}
                         </div>
 
@@ -167,7 +263,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Add Donor Image</DialogTitle>
+            <DialogTitle>{dialogTitle}</DialogTitle>{" "}
           </DialogHeader>
 
           <form
@@ -177,7 +273,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
           >
             <div>
               <Label className="font-medium" htmlFor="indicomp_image_logo">
-                Donor Image <span className="text-red-500">*</span>
+                {label} <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="file"

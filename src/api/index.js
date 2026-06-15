@@ -296,7 +296,7 @@ export const OTHER_TEAM_COMMITTEE_LIST = `/api/committee`;
 export const OTHER_TEAM_COMMITTEE_DELETE = `${BASE_URL}/api/delete-commitee`;
 // export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/create-committee-image`;
 export const OTHER_TEAM_COMMITTEE_CREATE_IMAGE = `/api/committee-image`;
-
+export const OTHER_TEAM_COMMITTEE_CREATE_SIGN=`/api/committee-sign`;
 //NOTIFICATION
 export const OTHER_NOTIFICATION_SUPERADMIN = `${BASE_URL}/api/superadmin-fetch-notices`;
 export const OTHER_NOTIFICATION = `${BASE_URL}/api/notice`;
