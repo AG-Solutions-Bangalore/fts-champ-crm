@@ -26,7 +26,7 @@ import {
   Mail,
   Phone,
   PlusCircle,
-  Printer
+  Printer,
 } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
@@ -115,7 +115,7 @@ const TimelineReceipt = ({ donorId }) => {
   };
 
   const followUpData = mapApiDataToUiFormat(followupData) || [];
-
+  console.log(followUpData);
   const getStatusBadge = (status) => {
     const statusConfig = {
       completed: {
@@ -334,6 +334,7 @@ const TimelineReceipt = ({ donorId }) => {
             ) : (
               followUpData.map((item, index) => {
                 const IconComponent = item.icon;
+
                 return (
                   <div
                     key={item.id}
@@ -381,7 +382,7 @@ const TimelineReceipt = ({ donorId }) => {
                             ⏱️ {moment(item.followDate).format("MMM DD, YYYY")}{" "}
                             ,
                             {moment(item.followTime, "HH:mm:ss").format(
-                              "h:mm A"
+                              "h:mm A",
                             )}{" "}
                           </span>
                         </div>

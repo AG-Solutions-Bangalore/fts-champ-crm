@@ -17,6 +17,7 @@ import {
   Loader2,
   Mail,
   MailPlus,
+  PenTool,
   Printer,
 } from "lucide-react";
 import moment from "moment";
@@ -45,6 +46,8 @@ const SchoolAllotLetter = () => {
   const { id } = useParams();
   const donorId = decryptId(id);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSignature, setShowSignature] = useState("Yes");
+
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [donoremail, setDonorEmail] = useState("");
@@ -60,7 +63,7 @@ const SchoolAllotLetter = () => {
     refetch,
   } = useGetMutation(
     `schoolletter-${donorId}`,
-    `${SCHOOL_ALLOT_LETTER}/${donorId}`
+    `${SCHOOL_ALLOT_LETTER}/${donorId}`,
   );
 
   const handlePrintPdf = useReactToPrint({
@@ -129,7 +132,7 @@ const SchoolAllotLetter = () => {
               imgWidth,
               imgHeight,
               "",
-              "FAST"
+              "FAST",
             );
           }
         }
@@ -167,6 +170,8 @@ const SchoolAllotLetter = () => {
       </div>
     );
   }
+  const signBaseUrl = schoolLetter?.data?.image_url?.image_url;
+  const signFile = schoolLetter?.data?.auth_sign?.indicomp_image_sign;
   const SchoolAlotReceipt = schoolLetter?.data?.individualCompany || {};
   const SchoolAlotView = schoolLetter?.data?.SchoolAlotView || [];
   const OTSReceipts = schoolLetter?.data?.OTSReceipts || [];
@@ -294,6 +299,39 @@ const SchoolAllotLetter = () => {
                 </TooltipTrigger>
                 <TooltipContent>Add Mail</TooltipContent>
               </Tooltip>
+            )}
+            {schoolLetter?.data?.chapter?.auth_sign_required === "Yes" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="relative flex items-center justify-center h-11 w-11 rounded-md border border-[var(--color-border)] hover:scale-110 transition-all duration-300 hover:shadow-md"
+                      onClick={() =>
+                        setShowSignature((prev) =>
+                          prev === "Yes" ? "No" : "Yes",
+                        )
+                      }
+                    >
+                      <PenTool className="h-5 w-5" />
+
+                      <span
+                        className={`absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center border-2 border-white ${
+                          showSignature === "Yes"
+                            ? "bg-green-500 text-white"
+                            : "bg-red-500 text-white"
+                        }`}
+                      >
+                        {showSignature}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+
+                  <TooltipContent>
+                    <p>Signature</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             <TooltipProvider>
               <Tooltip>
@@ -452,6 +490,15 @@ const SchoolAllotLetter = () => {
             <p className="mt-2">
               We hope to get your continued patronage for serving the society.
             </p>
+            {showSignature === "Yes" && (
+              <div className="flex">
+                <img
+                  src={`${signBaseUrl}${signFile}`}
+                  alt="Authorized Signature"
+                  className="h-12"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -468,6 +515,9 @@ const SchoolAllotLetter = () => {
           SchoolAlotView={SchoolAlotView}
           OTSReceipts={OTSReceipts}
           SchoolAlotReceipt={SchoolAlotReceipt}
+          authSign={schoolLetter?.data?.auth_sign}
+          imageUrl={schoolLetter?.data?.image_url?.image_url}
+          showSignature={showSignature}
           componentRef={componentRef}
         />
       </div>

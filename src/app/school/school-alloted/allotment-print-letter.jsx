@@ -7,6 +7,9 @@ const AllotmentPrintLetter = ({
   SchoolAlotView,
   OTSReceipts,
   SchoolAlotReceipt,
+  authSign,
+  imageUrl,
+  showSignature,
   componentRef,
 }) => {
   const today = moment().format("DD/MM/YYYY");
@@ -47,7 +50,7 @@ const AllotmentPrintLetter = ({
                       </p>
                     )}
                     {SchoolAlotReceipt.donor.hasOwnProperty(
-                      "indicomp_off_branch_address"
+                      "indicomp_off_branch_address",
                     ) && (
                       <div className="text-lg">
                         <p>
@@ -67,7 +70,7 @@ const AllotmentPrintLetter = ({
                       </div>
                     )}
                     {SchoolAlotReceipt.donor.hasOwnProperty(
-                      "indicomp_res_reg_address"
+                      "indicomp_res_reg_address",
                     ) && (
                       <div className="text-lg">
                         <p>
@@ -151,6 +154,15 @@ const AllotmentPrintLetter = ({
                 </div>
                 <div className="my-2 mb-3 text-justify  text-lg">
                   <label className="flex my-4">Niraj Harodia</label>
+                  {showSignature === "Yes" && authSign?.indicomp_image_sign && (
+                    <div className="flex ">
+                      <img
+                        src={`${imageUrl}${authSign.indicomp_image_sign}`}
+                        alt="Authorized Signature"
+                        className="h-16"
+                      />
+                    </div>
+                  )}
                   <label className="flex my-4">(Secretary)</label>
                 </div>
               </div>

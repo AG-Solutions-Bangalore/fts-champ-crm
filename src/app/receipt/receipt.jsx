@@ -66,7 +66,7 @@ const Receipt = () => {
   // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
     Cookies.set("receiptReturnPage", (pagination.pageIndex + 1).toString(), {
-      expires: 1, // expires in 1 day
+      expires: 1, 
     });
   };
 
