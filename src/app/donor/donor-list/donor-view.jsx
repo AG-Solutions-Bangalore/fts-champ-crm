@@ -1,13 +1,26 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import BASE_URL from '@/config/base-url';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import Cookies from 'js-cookie';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BASE_URL from "@/config/base-url";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import Cookies from "js-cookie";
 import {
   Activity,
   Award,
@@ -28,97 +41,148 @@ import {
   TrendingUp,
   User,
   Users,
-  XCircle
-} from 'lucide-react';
-import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+  XCircle,
+} from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 
 const getAuthHeaders = () => {
-  const token = Cookies.get('token');
+  const token = Cookies.get("token");
   return {
-    headers: { 
+    headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   };
 };
 
 const fetchDonorById = async (id) => {
-  const { data } = await axios.get(`${BASE_URL}/api/donor-view/${id}`, getAuthHeaders());
+  const { data } = await axios.get(
+    `${BASE_URL}/api/donor-view/${id}`,
+    getAuthHeaders(),
+  );
   return data;
 };
 
 const fetchOldReceipts = async (id) => {
-  const { data } = await axios.get(`${BASE_URL}/api/fetch-receipts-by-old-id/${id}`, getAuthHeaders());
+  const { data } = await axios.get(
+    `${BASE_URL}/api/fetch-receipts-by-old-id/${id}`,
+    getAuthHeaders(),
+  );
   return data;
 };
 
 const fetchDonorReceipts = async (id) => {
-  const { data } = await axios.get(`${BASE_URL}/api/donor-all-receipts/${id}`, getAuthHeaders());
+  const { data } = await axios.get(
+    `${BASE_URL}/api/donor-all-receipts/${id}`,
+    getAuthHeaders(),
+  );
   return data;
 };
 
 const DonorView = () => {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const { data: donorData, isLoading: donorLoading, error: donorError } = useQuery({
-    queryKey: ['donor-view', id],
+  const {
+    data: donorData,
+    isLoading: donorLoading,
+    error: donorError,
+  } = useQuery({
+    queryKey: ["donor-view", id],
     queryFn: () => fetchDonorById(id),
   });
 
-
-  const { data: donorReceiptsData, isLoading: donorReceiptsLoading } = useQuery({
-    queryKey: ['donorReceipts', id],
-    queryFn: () => fetchDonorReceipts(id),
-  });
+  const { data: donorReceiptsData, isLoading: donorReceiptsLoading } = useQuery(
+    {
+      queryKey: ["donorReceipts", id],
+      queryFn: () => fetchDonorReceipts(id),
+    },
+  );
 
   const statistics = useMemo(() => {
-    if (!donorData  || !donorReceiptsData) return null;
+    if (!donorData || !donorReceiptsData) return null;
 
-   
     const donorReceipts = donorReceiptsData?.donor_receipts || [];
     const membershipDetails = donorReceiptsData?.membership_details || [];
     const familyDetails = donorData?.family_details || [];
     const companyDetails = donorData?.company_details || [];
     const toNumber = (val) => Number(val) || 0;
-    const totalDonations = donorReceipts.reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
-  
-    const totalMembershipAmount = membershipDetails.reduce((sum, member) => sum + (toNumber(member.receipt_total_amount) || 0), 0);
-    
+    const totalDonations = donorReceipts.reduce(
+      (sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0),
+      0,
+    );
+
+    const totalMembershipAmount = membershipDetails.reduce(
+      (sum, member) => sum + (toNumber(member.receipt_total_amount) || 0),
+      0,
+    );
+
     const currentYear = new Date().getFullYear();
     const previousYear = currentYear - 1;
 
     const currentYearDonations = donorReceipts
-      .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(currentYear))
-      .reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
+      .filter(
+        (receipt) =>
+          receipt.receipt_date && receipt.receipt_date.includes(currentYear),
+      )
+      .reduce(
+        (sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0),
+        0,
+      );
 
     const previousYearDonations = donorReceipts
-    .filter(receipt => receipt.receipt_date && receipt.receipt_date.includes(previousYear.toString()))
-    .reduce((sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0), 0);
+      .filter(
+        (receipt) =>
+          receipt.receipt_date &&
+          receipt.receipt_date.includes(previousYear.toString()),
+      )
+      .reduce(
+        (sum, receipt) => sum + (toNumber(receipt.receipt_total_amount) || 0),
+        0,
+      );
 
-    const avgDonation = donorReceipts.length > 0 ? totalDonations / donorReceipts.length : 0;
-    const largestDonation = donorReceipts.length > 0 ? Math.max(...donorReceipts.map(r => toNumber(r.receipt_total_amount) || 0)) : 0;
+    const avgDonation =
+      donorReceipts.length > 0 ? totalDonations / donorReceipts.length : 0;
+    const largestDonation =
+      donorReceipts.length > 0
+        ? Math.max(
+            ...donorReceipts.map((r) => toNumber(r.receipt_total_amount) || 0),
+          )
+        : 0;
 
     return {
-      totalDonations: totalDonations  + totalMembershipAmount,
+      totalDonations: totalDonations + totalMembershipAmount,
       currentYearDonations,
       previousYearDonations,
-      totalReceipts: donorReceipts.length ,
+      totalReceipts: donorReceipts.length,
       totalFamilyMembers: familyDetails.length,
       totalCompanies: companyDetails.length,
       totalMemberships: membershipDetails.length,
       avgDonation,
       largestDonation,
       membershipAmount: totalMembershipAmount,
-      donationGrowth: previousYearDonations > 0 ? ((currentYearDonations - previousYearDonations) / previousYearDonations * 100) : 0
+      donationGrowth:
+        previousYearDonations > 0
+          ? ((currentYearDonations - previousYearDonations) /
+              previousYearDonations) *
+            100
+          : 0,
     };
   }, [donorData, donorReceiptsData]);
 
   if (donorLoading || donorReceiptsLoading) {
     return <LoadingSkeleton />;
   }
-
+  const fullAddress = [
+    donorData?.individualCompany?.indicomp_res_reg_address,
+    donorData?.individualCompany?.indicomp_res_reg_area,
+    donorData?.individualCompany?.indicomp_res_reg_city,
+    donorData?.individualCompany?.indicomp_res_reg_state,
+    donorData?.individualCompany?.indicomp_res_reg_pin_code,
+  ]
+    .filter(Boolean)
+    .join(", ");
   if (donorError) {
     return (
       <div className="container mx-auto p-6">
@@ -126,7 +190,9 @@ const DonorView = () => {
           <CardContent className="pt-6">
             <div className="text-center text-destructive">
               <XCircle className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold">Error loading donor data</h3>
+              <h3 className="text-lg font-semibold">
+                Error loading donor data
+              </h3>
               <p>{donorError.message}</p>
             </div>
           </CardContent>
@@ -135,7 +201,13 @@ const DonorView = () => {
     );
   }
 
-  const { individualCompany, family_details = [], company_details = [], related_group, image_url } = donorData || {};
+  const {
+    individualCompany,
+    family_details = [],
+    company_details = [],
+    related_group,
+    image_url,
+  } = donorData || {};
   // const oldReceipts = oldReceiptsData?.receipts || [];
   const donorReceipts = donorReceiptsData?.donor_receipts || [];
   const membershipDetails = donorReceiptsData?.membership_details || [];
@@ -145,24 +217,30 @@ const DonorView = () => {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       minimumFractionDigits: 0,
     }).format(amount || 0);
   };
 
   const getInitials = (name) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'D';
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase() || "D"
+    );
   };
 
   const getStatusVariant = (status) => {
@@ -172,13 +250,17 @@ const DonorView = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
       <div className="container mx-auto  space-y-2">
-        
         <div className="flex flex-col lg:flex-row gap-3">
           <Card className="lg:w-1/3">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
-                  <AvatarImage src={image_url?.find(img => img.image_for === 'Donor')?.image_url} />
+                  <AvatarImage
+                    src={
+                      image_url?.find((img) => img.image_for === "Donor")
+                        ?.image_url
+                    }
+                  />
                   <AvatarFallback className="bg-gradient-to-br from-orange-500 via-yellow-500/20 to-purple-600 text-black text-lg font-bold">
                     {getInitials(individualCompany.indicomp_full_name)}
                   </AvatarFallback>
@@ -191,14 +273,32 @@ const DonorView = () => {
                     <IdCard className="w-4 h-4" />
                     Donor ID: {individualCompany.indicomp_fts_id}
                   </p>
+                  {fullAddress && (
+                    <div className="flex items-start gap-2 mt-2 text-sm text-gray-600">
+                      <MapPin className="w-4 h-4 mt-0.5" />
+                      <span>{fullAddress || ""}</span>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-800"
+                    >
                       {individualCompany.indicomp_type}
                     </Badge>
-                    <Badge variant={getStatusVariant(individualCompany.indicomp_status)}>
-                      {individualCompany.indicomp_status ? "Active" : "Inactive"}
+                    <Badge
+                      variant={getStatusVariant(
+                        individualCompany.indicomp_status,
+                      )}
+                    >
+                      {individualCompany.indicomp_status
+                        ? "Active"
+                        : "Inactive"}
                     </Badge>
-                    <Badge variant="outline" className="bg-green-50 text-green-700">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-50 text-green-700"
+                    >
                       {individualCompany.indicomp_donor_type}
                     </Badge>
                   </div>
@@ -276,7 +376,11 @@ const DonorView = () => {
           />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-2">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-2"
+        >
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
@@ -327,8 +431,12 @@ const DonorView = () => {
                     <TableBody>
                       {donorReceipts.slice(0, 5).map((receipt, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">#{receipt.receipt_no}</TableCell>
-                          <TableCell>{formatDate(receipt.receipt_date)}</TableCell>
+                          <TableCell className="font-medium">
+                            #{receipt.receipt_no}
+                          </TableCell>
+                          <TableCell>
+                            {formatDate(receipt.receipt_date)}
+                          </TableCell>
                           <TableCell className="font-bold text-green-600">
                             {formatCurrency(receipt.receipt_total_amount)}
                           </TableCell>
@@ -352,11 +460,16 @@ const DonorView = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {membershipDetails.slice(0, 3).map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
                         <div>
-                          <p className="font-medium">Membership #{member.receipt_no}</p>
+                          <p className="font-medium">
+                            Membership #{member.receipt_no}
+                          </p>
                           <p className="text-sm text-gray-500">
-                            Valid until: {member.m_ship_vailidity || 'N/A'}
+                            Valid until: {member.m_ship_vailidity || "N/A"}
                           </p>
                         </div>
                         <Badge variant="secondary">
@@ -402,13 +515,19 @@ const DonorView = () => {
                               {member.indicomp_full_name}
                             </div>
                           </TableCell>
-                          <TableCell>{member.indicomp_mobile_phone || 'N/A'}</TableCell>
-                          <TableCell>{member.indicomp_email || 'N/A'}</TableCell>
                           <TableCell>
-                            {member.indicomp_res_reg_city || 'N/A'}
+                            {member.indicomp_mobile_phone || "N/A"}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusVariant(member.indicomp_status)}>
+                            {member.indicomp_email || "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            {member.indicomp_res_reg_city || "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getStatusVariant(member.indicomp_status)}
+                            >
                               {member.indicomp_status ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
@@ -416,7 +535,10 @@ const DonorView = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                        <TableCell
+                          colSpan={5}
+                          className="text-center py-4 text-gray-500"
+                        >
                           No family members found
                         </TableCell>
                       </TableRow>
@@ -440,20 +562,45 @@ const DonorView = () => {
                       title="Basic Information"
                       icon={<User className="w-4 h-4" />}
                       items={[
-                        { label: 'Full Name', value: individualCompany.indicomp_full_name },
-                        { label: 'Title', value: individualCompany.title },
-                        { label: 'Gender', value: individualCompany.indicomp_gender },
-                        { label: 'Date of Birth', value: formatDate(individualCompany.indicomp_dob_annualday) },
+                        {
+                          label: "Full Name",
+                          value: individualCompany.indicomp_full_name,
+                        },
+                        { label: "Title", value: individualCompany.title },
+                        {
+                          label: "Gender",
+                          value: individualCompany.indicomp_gender,
+                        },
+                        {
+                          label: "Date of Birth",
+                          value: formatDate(
+                            individualCompany.indicomp_dob_annualday,
+                          ),
+                        },
                       ]}
                     />
                     <DetailSection
                       title="Identification"
                       icon={<IdCard className="w-4 h-4" />}
                       items={[
-                        { label: 'PAN Number', value: individualCompany.indicomp_pan_no },
-                        { label: 'Donor Type', value: individualCompany.indicomp_donor_type },
-                        { label: 'Member Type', value: individualCompany.indicomp_type },
-                        { label: 'Joining Date', value: formatDate(individualCompany.indicomp_joining_date) },
+                        {
+                          label: "PAN Number",
+                          value: individualCompany.indicomp_pan_no,
+                        },
+                        {
+                          label: "Donor Type",
+                          value: individualCompany.indicomp_donor_type,
+                        },
+                        {
+                          label: "Member Type",
+                          value: individualCompany.indicomp_type,
+                        },
+                        {
+                          label: "Joining Date",
+                          value: formatDate(
+                            individualCompany.indicomp_joining_date,
+                          ),
+                        },
                       ]}
                     />
                   </div>
@@ -465,12 +612,27 @@ const DonorView = () => {
                   <CardTitle>Contact Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ContactItem icon={<Phone />} label="Mobile" value={individualCompany.indicomp_mobile_phone} />
-                  <ContactItem icon={<Mail />} label="Email" value={individualCompany.indicomp_email} />
-                  <ContactItem icon={<MapPin />} label="Address" 
-                    value={`${individualCompany.indicomp_res_reg_city}, ${individualCompany.indicomp_res_reg_state} - ${individualCompany.indicomp_res_reg_pin_code}`} 
+                  <ContactItem
+                    icon={<Phone />}
+                    label="Mobile"
+                    value={individualCompany.indicomp_mobile_phone}
                   />
-                  <ContactItem icon={<Globe />} label="Correspondence" value={individualCompany.indicomp_corr_preffer} />
+
+                  <ContactItem
+                    icon={<Mail />}
+                    label="Email"
+                    value={individualCompany.indicomp_email}
+                  />
+                  <ContactItem
+                    icon={<MapPin />}
+                    label="Address"
+                    value={`${individualCompany.indicomp_res_reg_city}, ${individualCompany.indicomp_res_reg_state} - ${individualCompany.indicomp_res_reg_pin_code}`}
+                  />
+                  <ContactItem
+                    icon={<Globe />}
+                    label="Correspondence"
+                    value={individualCompany.indicomp_corr_preffer}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -482,7 +644,8 @@ const DonorView = () => {
               <CardHeader>
                 <CardTitle>Family Members Management</CardTitle>
                 <CardDescription>
-                  {statistics?.totalFamilyMembers || 0} family members associated with this donor
+                  {statistics?.totalFamilyMembers || 0} family members
+                  associated with this donor
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -509,28 +672,43 @@ const DonorView = () => {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{member.indicomp_full_name}</div>
-                                <div className="text-sm text-gray-500">{member.title}</div>
+                                <div className="font-medium">
+                                  {member.indicomp_full_name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {member.title}
+                                </div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="text-sm">{member.indicomp_mobile_phone}</div>
-                              <div className="text-sm text-gray-500">{member.indicomp_email}</div>
+                              <div className="text-sm">
+                                {member.indicomp_mobile_phone}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {member.indicomp_email}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              {member.indicomp_res_reg_city}, {member.indicomp_res_reg_state}
+                              {member.indicomp_res_reg_city},{" "}
+                              {member.indicomp_res_reg_state}
                             </div>
                           </TableCell>
-                          <TableCell>{formatDate(member.indicomp_joining_date)}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{member.indicomp_promoter}</Badge>
+                            {formatDate(member.indicomp_joining_date)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusVariant(member.indicomp_status)}>
+                            <Badge variant="outline">
+                              {member.indicomp_promoter}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getStatusVariant(member.indicomp_status)}
+                            >
                               {member.indicomp_status ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
@@ -538,7 +716,10 @@ const DonorView = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-4 text-gray-500"
+                        >
                           No family members found
                         </TableCell>
                       </TableRow>
@@ -555,7 +736,8 @@ const DonorView = () => {
               <CardHeader>
                 <CardTitle>Associated Companies</CardTitle>
                 <CardDescription>
-                  {statistics?.totalCompanies || 0} companies linked to this donor
+                  {statistics?.totalCompanies || 0} companies linked to this
+                  donor
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -582,24 +764,42 @@ const DonorView = () => {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{company.indicomp_full_name}</div>
-                                <div className="text-sm text-gray-500">{company.indicomp_com_contact_designation}</div>
+                                <div className="font-medium">
+                                  {company.indicomp_full_name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {company.indicomp_com_contact_designation}
+                                </div>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-medium">{company.indicomp_com_contact_name}</TableCell>
+                          <TableCell className="font-medium">
+                            {company.indicomp_com_contact_name}
+                          </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="text-sm">{company.indicomp_mobile_phone}</div>
-                              <div className="text-sm text-gray-500">{company.indicomp_email}</div>
+                              <div className="text-sm">
+                                {company.indicomp_mobile_phone}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {company.indicomp_email}
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{company.indicomp_pan_no}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{company.indicomp_type}</Badge>
+                          <TableCell className="font-mono text-sm">
+                            {company.indicomp_pan_no}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusVariant(company.indicomp_status)}>
+                            <Badge variant="outline">
+                              {company.indicomp_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getStatusVariant(
+                                company.indicomp_status,
+                              )}
+                            >
                               {company.indicomp_status ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
@@ -607,7 +807,10 @@ const DonorView = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-4 text-gray-500"
+                        >
                           No companies found
                         </TableCell>
                       </TableRow>
@@ -641,7 +844,9 @@ const DonorView = () => {
                     <TableBody>
                       {donorReceipts.map((receipt, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">#{receipt.receipt_no}</TableCell>
+                          <TableCell className="font-medium">
+                            #{receipt.receipt_no}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Calendar className="w-3 h-3 text-gray-500" />
@@ -667,7 +872,6 @@ const DonorView = () => {
                   </Table>
                 </CardContent>
               </Card>
-
             </div>
           </TabsContent>
 
@@ -696,13 +900,19 @@ const DonorView = () => {
                   <TableBody>
                     {membershipDetails.map((membership) => (
                       <TableRow key={membership.id}>
-                        <TableCell className="font-medium">#{membership.receipt_no}</TableCell>
-                        <TableCell>{formatDate(membership.receipt_date)}</TableCell>
+                        <TableCell className="font-medium">
+                          #{membership.receipt_no}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(membership.receipt_date)}
+                        </TableCell>
                         <TableCell className="font-bold text-purple-600">
                           {formatCurrency(membership.receipt_total_amount)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{membership.m_ship_vailidity}</Badge>
+                          <Badge variant="outline">
+                            {membership.m_ship_vailidity}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -710,10 +920,20 @@ const DonorView = () => {
                             {membership.receipt_tran_pay_mode}
                           </div>
                         </TableCell>
-                        <TableCell>{membership.receipt_financial_year}</TableCell>
                         <TableCell>
-                          <Badge variant={membership.tally_status === "False" ? "secondary" : "default"}>
-                            {membership.tally_status === "False" ? "Pending" : "Processed"}
+                          {membership.receipt_financial_year}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              membership.tally_status === "False"
+                                ? "secondary"
+                                : "default"
+                            }
+                          >
+                            {membership.tally_status === "False"
+                              ? "Pending"
+                              : "Processed"}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -753,7 +973,7 @@ const DetailSection = ({ title, icon, items }) => (
       {items.map((item, index) => (
         <div key={index} className="flex justify-between">
           <span className="text-sm text-gray-500">{item.label}:</span>
-          <span className="text-sm font-medium">{item.value || 'N/A'}</span>
+          <span className="text-sm font-medium">{item.value || "N/A"}</span>
         </div>
       ))}
     </div>
@@ -762,10 +982,12 @@ const DetailSection = ({ title, icon, items }) => (
 
 const ContactItem = ({ icon, label, value }) => (
   <div className="flex items-center gap-3">
-    <div className="text-gray-500">{React.cloneElement(icon, { className: "w-4 h-4" })}</div>
+    <div className="text-gray-500">
+      {React.cloneElement(icon, { className: "w-4 h-4" })}
+    </div>
     <div className="flex-1">
       <div className="text-sm font-medium text-gray-500">{label}</div>
-      <div className="text-sm">{value || 'N/A'}</div>
+      <div className="text-sm">{value || "N/A"}</div>
     </div>
   </div>
 );

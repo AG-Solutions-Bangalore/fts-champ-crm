@@ -102,8 +102,22 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
       if (file.type !== "image/png") {
         return reject("Only PNG images are allowed for update");
       }
-
-      resolve(true);
+      const img = new Image();
+      console.log(img);
+      const imageUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(imageUrl);
+        if (img.height > 70) {
+          reject("Image height must be exactly 70px");
+        } else {
+          resolve(true);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(imageUrl);
+        reject("Invalid image file");
+      };
+      img.src = imageUrl; // REQUIRED
     });
   };
   const handleFileSubmit = async (e) => {
@@ -133,13 +147,12 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
         const formData = new FormData();
 
         const val = await validateUpdateImage(selectedFile);
-        console.log(val);
 
         formData.append("indicomp_fts_id", selectedDonorId);
         formData.append("indicomp_image_sign", selectedFile);
         res = await trigger({
-          url: OTHER_TEAM_COMMITTEE_CREATE_SIGN, // replace if you have update API
-          method: "post", // or patch
+          url: OTHER_TEAM_COMMITTEE_CREATE_SIGN,
+          method: "post",
           data: formData,
           headers: {
             "Content-Type": "multipart/form-data",
@@ -155,9 +168,7 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
         toast.error(res?.msg || "Failed to upload image");
       }
     } catch (error) {
-      toast.error(
-        error.message || "Something went wrong while uploading image.",
-      );
+      toast.error(error?.message || error || "Something went wrong");
     }
   };
   const committeeTypes = Object.keys(groupedCommittees);
