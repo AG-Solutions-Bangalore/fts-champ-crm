@@ -72,7 +72,7 @@ const SchoolAllotView = () => {
     {
       page: pagination.pageIndex + 1,
       ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-    }
+    },
   );
   const keyDown = useNumericInput();
   useEffect(() => {
@@ -277,14 +277,14 @@ const SchoolAllotView = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
       buttons.push(
         <span key="ellipsis1" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -303,7 +303,7 @@ const SchoolAllotView = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
@@ -312,7 +312,7 @@ const SchoolAllotView = () => {
       buttons.push(
         <span key="ellipsis2" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -326,7 +326,7 @@ const SchoolAllotView = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -387,7 +387,7 @@ const SchoolAllotView = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -404,7 +404,7 @@ const SchoolAllotView = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

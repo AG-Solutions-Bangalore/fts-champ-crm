@@ -3,12 +3,14 @@ import Logo3 from "../../../assets/receipt/ekal.png";
 import Logo1 from "../../../assets/receipt/fts.png";
 import Logo2 from "../../../assets/receipt/top.png";
 import moment from "moment";
+
 const AllotmentPrintLetter = ({
   SchoolAlotView,
   OTSReceipts,
   SchoolAlotReceipt,
   authSign,
   imageUrl,
+  chapters,
   showSignature,
   componentRef,
 }) => {
@@ -23,7 +25,6 @@ const AllotmentPrintLetter = ({
                 <div className="invoice-logo">
                   <img src={Logo1} alt="session-logo" width="80" height="80" />
                 </div>
-
                 <div className="invoice-logo text-right">
                   <img src={Logo3} alt="session-logo" width="80" height="80" />
                 </div>
@@ -90,7 +91,7 @@ const AllotmentPrintLetter = ({
                   </div>
                 )}
 
-                <label className="flex my-4  text-lg">
+                <label className="flex my-4 text-lg">
                   {SchoolAlotReceipt?.donor?.indicomp_gender === "Female" && (
                     <>Respected Madam,</>
                   )}
@@ -103,11 +104,11 @@ const AllotmentPrintLetter = ({
                 </label>
 
                 <div className="text-lg">
-                  <div className=" mb-5 text-justify">
+                  <div className="mb-5 text-justify">
                     <label>
                       <b>
-                        “Giving is not just about making donation, it’s about
-                        making a difference”
+                        "Giving is not just about making donation, it's about
+                        making a difference"
                       </b>
                       <span>
                         {" "}
@@ -123,7 +124,6 @@ const AllotmentPrintLetter = ({
                     </label>
                   </div>
                   <div className="my-4 text-justify">
-                    {" "}
                     <label>
                       Please find enclosed herewith details of the Ekal
                       Vidyalaya running with your assistance. You may also view
@@ -139,7 +139,6 @@ const AllotmentPrintLetter = ({
                   <label className="flex my-4">
                     Please find enclosed herewith:
                   </label>
-
                   <label className="flex my-4">
                     • List of your adopted schools
                   </label>
@@ -148,24 +147,31 @@ const AllotmentPrintLetter = ({
                     society.
                   </label>
                 </div>
-                <div className="text-lg">
+
+                {/* ── Thanking / Regards / Signature block ── */}
+                {/* ── Thanking / Regards / Signature block ── */}
+                <div className="relative text-lg">
                   <label className="flex my-4">Thanking you once again!!</label>
                   <label className="flex my-4">With Regards,</label>
-                </div>
-                <div className="my-2 mb-3 text-justify  text-lg">
-                  <label className="flex my-4">Niraj Harodia</label>
-                  {showSignature === "Yes" && authSign?.indicomp_image_sign && (
-                    <div className="flex ">
+
+                  <div className="relative my-1 mb-3 text-lg">
+                    {showSignature === "Yes" &&
+                    authSign?.indicomp_image_sign ? (
                       <img
                         src={`${imageUrl}${authSign.indicomp_image_sign}`}
                         alt="Authorized Signature"
-                        className="h-16"
+                        className="h-24 absolute -top-16 -left-2 z-10"
                       />
-                    </div>
-                  )}
-                  <label className="flex my-4">(Secretary)</label>
+                    ) : null}
+                    <label className="flex flex-col mt-12 z-0">
+                      {authSign.indicomp_full_name}
+                      <br />
+                      {chapters.auth_sign}
+                    </label>
+                  </div>
                 </div>
               </div>
+              {/* ✅ Fixed: closing </div> for outer content wrapper added above */}
 
               <div>
                 <div className="invoice-logo">
@@ -189,10 +195,10 @@ const AllotmentPrintLetter = ({
                   </label>
                 </div>
               </div>
-              {/* page break from here  */}
 
+              {/* page break from here */}
               <div className="page-break">
-                <div className="flex justify-between items-center mb-4  mt-12">
+                <div className="flex justify-between items-center mb-4 mt-12">
                   <div className="invoice-logo">
                     <img
                       src={Logo1}
@@ -201,7 +207,6 @@ const AllotmentPrintLetter = ({
                       height="80"
                     />
                   </div>
-
                   <div className="invoice-logo text-right">
                     <img
                       src={Logo3}
@@ -219,6 +224,7 @@ const AllotmentPrintLetter = ({
                     </label>
                   </div>
                 </div>
+
                 <div className="flex justify-between">
                   <div>
                     {SchoolAlotReceipt?.donor?.indicomp_type !==
@@ -228,7 +234,6 @@ const AllotmentPrintLetter = ({
                         {SchoolAlotReceipt?.donor?.indicomp_full_name}
                       </label>
                     )}
-
                     {SchoolAlotReceipt?.donor?.indicomp_type ===
                       "Individual" && (
                       <label>
@@ -241,24 +246,25 @@ const AllotmentPrintLetter = ({
                     <label>
                       No of Schools :
                       {OTSReceipts.map((otsreceipt, key) => (
-                        <> {otsreceipt.receipt_no_of_ots}</>
+                        <span key={key}> {otsreceipt.receipt_no_of_ots}</span>
                       ))}
                     </label>
                   </div>
                 </div>
+
                 <div className="my-5 overflow-x-auto mb-14">
                   <table className="min-w-full border-collapse border border-black">
                     <thead>
-                      <tr className="bg-gray-200 ">
+                      <tr className="bg-gray-200">
                         {[
                           "STATE",
-                          "ANCHAL  CLUSTER",
+                          "ANCHAL CLUSTER",
                           "CLUSTER",
                           "SUB CLUSTER",
                           "VILLAGE",
                           "TEACHER",
                           "BOYS",
-                          "GIRLS  ",
+                          "GIRLS",
                           "TOTAL",
                         ].map((header, index) => (
                           <th
@@ -306,6 +312,7 @@ const AllotmentPrintLetter = ({
                     </tbody>
                   </table>
                 </div>
+
                 <div>
                   <div className="invoice-logo">
                     <div className="flex justify-center">
