@@ -105,7 +105,7 @@ const ReceiptOne = () => {
   const receipts = receiptData?.data || {};
 
   const chapter = receiptData?.data?.chapter || {};
-  let signature = `${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`;
+  const signature = `${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`;
 
   const authsign = receiptData?.auth_sign || [];
   const country = receiptData?.country || [];
@@ -126,7 +126,9 @@ const ReceiptOne = () => {
       return response.data.data;
     },
   });
+  const imgepdf = `${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`;
 
+  console.log("consol", imgepdf);
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
       const response = await axios.get(
@@ -225,7 +227,7 @@ const ReceiptOne = () => {
       setIsButtonDisabled(false);
     },
   });
-  const handleSavePDF = () => {
+  const handleSavePDF = async () => {
     const input = tableRef.current;
     if (!input) return;
 
@@ -246,6 +248,16 @@ const ReceiptOne = () => {
     clone.style.left = "-9999px";
     clone.style.top = "0";
     clone.style.visibility = "visible";
+    const pdfSignature = clone.querySelector('img[alt="Authorized Signature"]');
+
+    if (pdfSignature) {
+      pdfSignature.src = imgepdf;
+
+      await new Promise((resolve) => {
+        pdfSignature.onload = resolve;
+        pdfSignature.onerror = resolve;
+      });
+    }
     document.body.appendChild(clone);
 
     html2canvas(clone, {
@@ -720,8 +732,9 @@ const ReceiptOne = () => {
               <div className="text-center border-x h-7 border-black p-1">
                 <p className="text-[11px] font-medium mx-auto">
                   Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road,
-                  Kolkata-26. Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13
-                  PAN: AAAAF0290L
+                  Kolkata-26.
+                  <br /> Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13 PAN:
+                  AAAAF0290L
                 </p>
               </div>
 
@@ -920,11 +933,11 @@ const ReceiptOne = () => {
                       <br />
                       {showSignature === "Yes" &&
                         receiptData?.auth_sign?.[0]?.indicomp_image_sign && (
-                          <div className="flex justify-end mr-2 mb-2">
+                          <div className="flex justify-end">
                             <img
                               src={signature}
                               alt="Authorized Signature"
-                              className="h-12"
+                              className="absolute right-12 bottom-7 h-16"
                             />
                           </div>
                         )}
@@ -967,6 +980,14 @@ const ReceiptOne = () => {
           {/* Letter Section - Right Side */}
           <Card className="p-4 rounded-md">
             <div>
+              {showSignature === "Yes" ? (
+                <div className="h-20 flex justify-between">
+                  <img src={Logo1} alt="FTS logo" className="w-auto h-16" />
+                  <img src={Logo3} alt="Ekal logo" className=" w-16 h-16" />
+                </div>
+              ) : (
+                <div className="h-20"></div>
+              )}
               <div className="flex justify-between">
                 <div className="text-[#464D69] md:text-base text-sm">
                   <p className="font-serif text-base">
@@ -1130,29 +1151,70 @@ const ReceiptOne = () => {
                         Thanking you once again
                       </p>
                       <p className="font-serif text-sm">Yours faithfully,</p>
-                      <p className="font-serif text-sm">
-                        For Friends of Tribals Society
-                      </p>
+                      <div className="relative w-fit h-28">
+                        {/* TOP TEXT */}
+                        <p className="font-serif text-sm">
+                          For Friends of Tribals Society
+                        </p>
 
-                      <p className="font-serif text-sm">{chapter.auth_sign}</p>
-                      {showSignature === "Yes" &&
-                        receiptData?.auth_sign?.[0]?.indicomp_image_sign && (
-                          <div className="flex">
-                            <img
-                              src={`${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
-                              alt="Authorized Signature"
-                              className="h-12"
-                            />
-                          </div>
-                        )}
-                      <p className="font-serif text-sm mt-4">
-                        {authsign.map((sig, key) => (
-                          <span key={key}>{sig.indicomp_full_name}</span>
-                        ))}
-                      </p>
+                        {/* SIGNATURE + NAME OVERLAP AREA */}
+                        <div className="relative mt-2 h-16">
+                          {/* NAME (behind signature) */}
+                          <p className="absolute bottom-0 left-0 z-0 font-serif text-sm">
+                            {authsign.map((sig, key) => (
+                              <span key={key}>{sig.indicomp_full_name}</span>
+                            ))}
+                          </p>
+
+                          {/* SIGNATURE (overlapping name) */}
+                          {showSignature === "Yes" &&
+                            receiptData?.auth_sign?.[0]
+                              ?.indicomp_image_sign && (
+                              <img
+                                src={`${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
+                                alt="Signature"
+                                className="absolute bottom-2 -left-2 h-20 z-10 px-1"
+                              />
+                            )}
+                        </div>
+
+                        {/* DESIGNATION (always below everything) */}
+                        <p className="font-serif text-sm mt-2">
+                          {chapter?.auth_sign}
+                        </p>
+                      </div>
+
                       <p className="font-serif text-sm">
                         Encl: As stated above
                       </p>
+                      {showSignature == "Yes" ? (
+                        <div className="">
+                          <img
+                            src={Logo2}
+                            alt="Top banner"
+                            className="mx-auto mb-0 w-80"
+                          />
+                          <h2 className="text-sm font-bold text-center mt-1">
+                            (AFFILIATED TO EKAL ABHIYAN TRUST)
+                          </h2>
+                          <h2 className="text-xl font-bold text-center mt-1"></h2>
+                          <div className="text-center p-1">
+                            <p className="text-xs font-medium mx-auto max-w-[100%]">
+                              {`${chapter.chapter_name}`}{" "}
+                              {`${chapter?.chapter_address || ""}, ${chapter?.chapter_city || ""} - ${
+                                chapter?.chapter_pin || ""
+                              }, ${chapter?.chapter_state || ""} `}
+                              <br />
+                              {` ${chapter?.chapter_email ? `Email: ${chapter.chapter_email} |` : ""} 
+                  ${chapter?.chapter_website ? `${chapter.chapter_website} |` : ""} 
+                  ${chapter?.chapter_phone ? `Ph: ${chapter.chapter_phone} |` : ""} 
+                  ${chapter?.chapter_whatsapp ? `Mob: ${chapter.chapter_whatsapp}` : ""}`}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-32"></div>
+                      )}
                     </div>
                   )}
 
@@ -1179,7 +1241,18 @@ const ReceiptOne = () => {
           {/* only for print  */}
           <Card className="p-6 hidden ">
             <div ref={containerRef}>
-              <div className="flex justify-between p-6 mt-44">
+              <div className=" p-6 mt-2">
+                {" "}
+                {showSignature === "Yes" ? (
+                  <div className="h-50 flex justify-between">
+                    <img src={Logo1} alt="FTS logo" className="w-auto h-28" />
+                    <img src={Logo3} alt="Ekal logo" className=" w-28 h-28" />
+                  </div>
+                ) : (
+                  <div className="h-20"></div>
+                )}
+              </div>
+              <div className="flex justify-between p-6">
                 <div className="text-[#464D69] md:text-xl text-sm">
                   <p className="font-serif text-[20px]">
                     Date: {moment(receipts.receipt_date).format("DD-MM-YYYY")}
@@ -1355,17 +1428,59 @@ const ReceiptOne = () => {
                       <p className="my-3 font-serif text-[18px]">
                         For Friends of Tribals Society
                       </p>
-                      <p className="font-serif text-[18px] mt-10">
-                        {authsign.map((sig, key) => (
-                          <span key={key}>{sig.indicomp_full_name}</span>
-                        ))}
-                      </p>
+
+                      <div className="relative h-24">
+                        {/* NAME (bottom layer) */}
+                        <p className="font-serif text-[18px] absolute bottom-0 left-0 z-0">
+                          {authsign.map((sig, key) => (
+                            <span key={key}>{sig.indicomp_full_name}</span>
+                          ))}
+                        </p>
+
+                        {/* SIGNATURE (overlapping layer) */}
+                        {showSignature === "Yes" &&
+                          receiptData?.auth_sign?.[0]?.indicomp_image_sign && (
+                            <img
+                              src={signature}
+                              alt="Authorized Signature"
+                              className="absolute bottom-1 left-0 h-[122px] w-auto z-10 p-1"
+                            />
+                          )}
+                      </div>
+
                       <p className="font-serif text-[18px]">
                         {chapter.auth_sign}{" "}
                       </p>
                       <p className="my-2 font-serif text-[18px]">
                         Encl: As stated above
                       </p>
+                      {showSignature == "Yes" ? (
+                        <div className="fixed bottom-0">
+                          <img
+                            src={Logo2}
+                            alt="Top banner"
+                            className="mx-auto mb-0 w-80"
+                          />
+                          <h2 className="text-sm font-bold text-center mt-1">
+                            (AFFILIATED TO EKAL ABHIYAN TRUST)
+                          </h2>
+                          <h2 className="text-xl font-bold text-center mt-1"></h2>
+                          <div className="text-center p-1">
+                            <p className="text-xs font-medium mx-auto max-w-[100%]">
+                              {`${chapter.chapter_name}`}{" "}
+                              {`${chapter?.chapter_address || ""}, ${chapter?.chapter_city || ""} - ${
+                                chapter?.chapter_pin || ""
+                              }, ${chapter?.chapter_state || ""} 
+                  ${chapter?.chapter_email ? `Email: ${chapter.chapter_email} |` : ""} 
+                  ${chapter?.chapter_website ? `${chapter.chapter_website} |` : ""} 
+                  ${chapter?.chapter_phone ? `Ph: ${chapter.chapter_phone} |` : ""} 
+                  ${chapter?.chapter_whatsapp ? `Mob: ${chapter.chapter_whatsapp}` : ""}`}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-32"></div>
+                      )}
                     </div>
                   )}
 

@@ -11,6 +11,11 @@ import { useApiMutation } from "@/hooks/use-mutation";
 import { decryptId } from "@/utils/encyrption/encyrption";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+
+// Assets
+import Logo1 from "../../../assets/receipt/fts_log.png";
+import Logo2 from "../../../assets/receipt/top.png";
+import Logo3 from "../../../assets/receipt/ekal.png";
 import {
   Download,
   Loader,
@@ -65,6 +70,7 @@ const SchoolAllotLetter = () => {
     `schoolletter-${donorId}`,
     `${SCHOOL_ALLOT_LETTER}/${donorId}`,
   );
+  console.log(schoolLetter);
 
   const handlePrintPdf = useReactToPrint({
     content: () => componentRef.current,
@@ -175,6 +181,7 @@ const SchoolAllotLetter = () => {
   const SchoolAlotReceipt = schoolLetter?.data?.individualCompany || {};
   const SchoolAlotView = schoolLetter?.data?.SchoolAlotView || [];
   const OTSReceipts = schoolLetter?.data?.OTSReceipts || [];
+  const chapters = schoolLetter?.data?.chapter || [];
   const handleClickOpen = (id) => {
     setSelectedId(id);
     setOpen(true);
@@ -441,6 +448,22 @@ const SchoolAllotLetter = () => {
             </div>
           </div>
           <div className="bg-white text-sm lg:col-span-2  text-[#464D69] font-serif  shadow-md rounded-md p-6 border  transition-all hover:shadow-lg leading-relaxed">
+            <div className="flex justify-between items-center mb-4">
+              {showSignature === "Yes" ? (
+                <>
+                  <div className="invoice-logo">
+                    <img src={Logo1} alt="session-logo" className="w-40" />
+                  </div>
+
+                  <div className="invoice-logo text-right">
+                    <img src={Logo3} alt="session-logo" width="80" />
+                  </div>
+                </>
+              ) : (
+                <div className="h-20"></div>
+              )}
+            </div>
+
             <p className="font-medium">Date: {today}</p>
             <p>To,</p>
 
@@ -490,14 +513,54 @@ const SchoolAllotLetter = () => {
             <p className="mt-2">
               We hope to get your continued patronage for serving the society.
             </p>
-            {showSignature === "Yes" && (
-              <div className="flex">
-                <img
-                  src={`${signBaseUrl}${signFile}`}
-                  alt="Authorized Signature"
-                  className="h-12"
-                />
+            <div className="">
+              <p className="flex my-4">Thanking you once again!!</p>
+              <div className="relative w-fit h-28">
+                {/* TOP TEXT */}
+                <p className="flex my-4">With Regards,</p>
+
+                {/* NAME + DESIGNATION (BOTTOM LAYER) */}
+                <div className="absolute bottom-0 left-0 z-10 leading-tight font-serif text-sm">
+                  {schoolLetter?.data?.auth_sign?.indicomp_full_name}
+                  <br />
+                  {schoolLetter?.data?.chapter?.[0]?.auth_sign}
+                </div>
+
+                {/* SIGNATURE (MIDDLE OVERLAP LAYER) */}
+                {showSignature === "Yes" ? (
+                  <img
+                    src={`${signBaseUrl}${signFile}`}
+                    alt="Authorized Signature"
+                    className="absolute top-2 left-0 h-20 z-20  px-1"
+                  />
+                ) : (
+                  <div className="h-14" />
+                )}
               </div>
+            </div>
+            {showSignature == "Yes" ? (
+              <div className="">
+                <img
+                  src={Logo2}
+                  alt="Top banner"
+                  className="mx-auto mb-0 w-80"
+                />
+
+                <h2 className="text-xl fixed bottom-0 font-bold text-center mt-1"></h2>
+                <div className="text-center p-1">
+                  <div className="text-center text-sm">
+                    <label>
+                      <small>
+                        Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road,
+                        Kolkata-26. Web: www.ftsindia.com Ph: 033 - 2454
+                        4510/11/12/13 PAN: AAAAF0290L
+                      </small>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-32"></div>
             )}
           </div>
         </div>
@@ -517,6 +580,7 @@ const SchoolAllotLetter = () => {
           SchoolAlotReceipt={SchoolAlotReceipt}
           authSign={schoolLetter?.data?.auth_sign}
           imageUrl={schoolLetter?.data?.image_url?.image_url}
+          chapters={chapters}
           showSignature={showSignature}
           componentRef={componentRef}
         />

@@ -220,7 +220,7 @@ export default function LoginAuth() {
           </div>
         </div> */}
 
- <div className="w-full  px-4   ">
+ <div className="w-full  px-4 ">
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

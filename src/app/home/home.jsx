@@ -514,9 +514,9 @@ const Home = () => {
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: "bottom",
+                      pluend: {
+                          posigins: {
+                        legtion: "bottom",
                           labels: {
                             boxWidth: 10,
                             font: {
