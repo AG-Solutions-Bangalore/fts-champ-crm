@@ -70,7 +70,6 @@ const SchoolAllotLetter = () => {
     `schoolletter-${donorId}`,
     `${SCHOOL_ALLOT_LETTER}/${donorId}`,
   );
-  console.log(schoolLetter);
 
   const handlePrintPdf = useReactToPrint({
     content: () => componentRef.current,

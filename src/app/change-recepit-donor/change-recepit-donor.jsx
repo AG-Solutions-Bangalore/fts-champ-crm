@@ -261,7 +261,6 @@ const SuperReceiptDonor = () => {
   });
 
   const handleOpenDonorSelection = (receiptData) => {
-    console.log(receiptData[0]?.chapter?.chapter_name, "receiptData");
     setSelectedChapter(receiptData[0]?.chapter?.chapter_name);
     setShowDonorSelection(true);
     donorsRefetch();

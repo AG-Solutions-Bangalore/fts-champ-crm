@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/effect-fade';
-import 'swiper/css/autoplay';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, EffectFade } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/effect-fade";
+import "swiper/css/autoplay";
 import { motion } from "framer-motion";
 import Cookies from "js-cookie";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -27,17 +27,20 @@ const sliderImages = [
   {
     id: 1,
     title: "Empowering Tribal Communities",
-    description: "Providing five-fold education and holistic development for tribal upliftment since 1989",
-    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+    description:
+      "Providing five-fold education and holistic development for tribal upliftment since 1989",
+    image:
+      "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
   },
- 
 
   {
     id: 2,
     title: "Education for All",
-    description: "Spreading literacy and values education to create empowered communities",
-    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-  }
+    description:
+      "Spreading literacy and values education to create empowered communities",
+    image:
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+  },
 ];
 
 export default function LoginAuth() {
@@ -133,14 +136,14 @@ export default function LoginAuth() {
         Cookies.set(
           "viewer_chapter_ids",
           UserInfo.user.viewer_chapter_ids,
-          cookieOptions
+          cookieOptions,
         );
         Cookies.set("user_type_id", UserInfo.user.user_type_id, cookieOptions);
         Cookies.set("email", UserInfo.user.email, cookieOptions);
         Cookies.set(
           "token-expire-time",
           UserInfo?.token_expires_at,
-          cookieOptions
+          cookieOptions,
         );
         Cookies.set("ver_con", version?.version_panel, cookieOptions);
         Cookies.set("currentYear", year?.current_year, cookieOptions);
@@ -159,7 +162,7 @@ export default function LoginAuth() {
     } catch (error) {
       console.error(
         "❌ Login Error:",
-        error.response?.data?.message || error.message
+        error.response?.data?.message || error.message,
       );
 
       toast.error(error.response?.data?.message);
@@ -177,14 +180,12 @@ export default function LoginAuth() {
         <div className="absolute top-40 left-1/2 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000 login-blob-3"></div>
       </div>
 
- <motion.div
+      <motion.div
         className="flex flex-row shadow-2xl rounded-2xl overflow-hidden max-w-md w-full  relative z-10"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-
- 
         {/* <div className="hidden md:flex flex-col items-center justify-center p-1 w-1/2 bg-gradient-to-br from-blue-50 to-indigo-100">
           <div className="w-full h-full rounded-xl overflow-hidden shadow-lg">
             <Swiper
@@ -220,21 +221,19 @@ export default function LoginAuth() {
           </div>
         </div> */}
 
- <div className="w-full  px-4 ">
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-transparent"
-      
-      >
-             <Card className="border-none shadow-none bg-transparent">
+        <div className="w-full px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="bg-transparent"
+          >
+            <Card className="border-none shadow-none bg-transparent">
               <CardHeader className="pb-4 md:pb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
                 <div className="flex-shrink-0">
-                  <img 
-                    src={logoLogin} 
-                    className="w-auto h-16 md:h-20" 
+                  <img
+                    src={logoLogin}
+                    className="w-auto h-16 md:h-20"
                     alt="FTS Champ Logo"
                   />
                 </div>
@@ -247,12 +246,15 @@ export default function LoginAuth() {
                   </CardDescription>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-2 ">
                 <form onSubmit={handleSubmit} onKeyPress={handleKeyPress}>
                   <div className="space-y-4 ">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      <Label
+                        htmlFor="email"
+                        className="text-sm font-medium text-gray-700"
+                      >
                         Username
                       </Label>
                       <motion.div
@@ -277,7 +279,10 @@ export default function LoginAuth() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      <Label
+                        htmlFor="password"
+                        className="text-sm font-medium text-gray-700"
+                      >
                         Password
                       </Label>
                       <motion.div
@@ -304,7 +309,11 @@ export default function LoginAuth() {
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                             tabIndex={-1}
                           >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showPassword ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
                           </button>
                         </div>
                       </motion.div>
@@ -340,33 +349,30 @@ export default function LoginAuth() {
                     </motion.div>
                   </div>
                 </form>
-                
-                
               </CardContent>
               <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="mb-4 mt-4 flex flex-row items-center  justify-between mx-5 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="mb-4 mt-4 flex flex-row items-center  justify-between mx-5 text-center"
+              >
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
                 >
-                  <button
-                    onClick={() => navigate("/signup")}
-                    className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
-                  >
-                    Signup
-                  </button>
-                  <button
-                    onClick={() => navigate("/forgot-password")}
-                    className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
-                  >
-                    Forgot your password?
-                  </button>
-                </motion.div>
-             
+                  Signup
+                </button>
+                <button
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-xs md:text-sm text-[var(--color)] hover:text-[var(--color-dark)] font-medium transition-colors duration-200 hover:underline"
+                >
+                  Forgot your password?
+                </button>
+              </motion.div>
             </Card>
+          </motion.div>
+        </div>
       </motion.div>
-      </div>
-</motion.div>
       {/* Add CSS for blob animation */}
       <style>{`
         @keyframes blob {

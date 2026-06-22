@@ -128,7 +128,6 @@ const ReceiptOne = () => {
   });
   const imgepdf = `${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`;
 
-  console.log("consol", imgepdf);
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
       const response = await axios.get(
@@ -419,7 +418,6 @@ const ReceiptOne = () => {
       [e.target.name]: e.target.value,
     });
   };
-  console.log(signature);
   const handlPrintPdf = useReactToPrint({
     content: () => containerRef.current,
     documentTitle: () => getFileName("L"),

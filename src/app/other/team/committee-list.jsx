@@ -103,7 +103,6 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
         return reject("Only PNG images are allowed for update");
       }
       const img = new Image();
-      console.log(img);
       const imageUrl = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(imageUrl);
@@ -143,7 +142,6 @@ const CommitteeList = ({ committeeResponse, refetch }) => {
         });
       }
       if (dialogMode === "update") {
-        console.log("entering pae");
         const formData = new FormData();
 
         const val = await validateUpdateImage(selectedFile);
