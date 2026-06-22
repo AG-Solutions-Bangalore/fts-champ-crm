@@ -115,7 +115,6 @@ const TimelineReceipt = ({ donorId }) => {
   };
 
   const followUpData = mapApiDataToUiFormat(followupData) || [];
-  console.log(followUpData);
   const getStatusBadge = (status) => {
     const statusConfig = {
       completed: {

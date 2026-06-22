@@ -17,7 +17,6 @@ import { ADMIN_CHAPTER_EDIT_UPDATE } from "../../api";
 
 const EditUserAdmin = ({ userData, ImageUrl, open, onClose, refetch }) => {
   const [isLoading, setIsLoading] = useState(false);
-  console.log(userData)
   const [user, setUser] = useState({
     name: "",
     email: "",

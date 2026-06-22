@@ -215,7 +215,6 @@ const EditPromoterPending = ({ name, refetchPendingPromoters }) => {
       }
     } catch (error) {
       if (axios.isCancel(error)) {
-        console.log("Fetch cancelled");
         return;
       }
       console.error("Error fetching donors:", error);

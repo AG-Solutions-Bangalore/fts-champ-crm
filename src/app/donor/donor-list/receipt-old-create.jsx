@@ -403,7 +403,6 @@ const ReceiptOldCreate = () => {
 
   const handleFinalSubmit = async (formData) => {
     setIsButtonDisabled(true);
-    console.log("Final Form Data:", donorData?.conditionOld?.old_year);
     const finalFormData = new FormData();
     finalFormData.append("indicomp_fts_id", userdata.indicomp_fts_id);
 
