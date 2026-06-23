@@ -929,16 +929,23 @@ const ReceiptOne = () => {
                       <br />
                       <br />
                       <br />
-                      {showSignature === "Yes" &&
-                        receiptData?.auth_sign?.[0]?.indicomp_image_sign && (
-                          <div className="flex justify-end">
-                            <img
-                              src={signature}
-                              alt="Authorized Signature"
-                              className="absolute right-12 bottom-7 h-16"
-                            />
-                          </div>
-                        )}
+                      {receiptData?.auth_sign?.[0] != null ? (
+                        <>
+                          {showSignature === "Yes" &&
+                            receiptData?.auth_sign?.[0]
+                              ?.indicomp_image_sign && (
+                              <div className="flex justify-end relative">
+                                <img
+                                  src={`${receiptData?.image_url?.image_url || receiptData?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
+                                  alt="Authorized Signature"
+                                  className="absolute right-12 -bottom-5 h-16"
+                                />
+                              </div>
+                            )}
+                        </>
+                      ) : (
+                        <div className="h-14" /> // Placeholder when no signature
+                      )}
                       {authsign.length > 0 && (
                         <div className="signature-section">
                           <div className="flex flex-col items-end">
@@ -1165,15 +1172,21 @@ const ReceiptOne = () => {
                           </p>
 
                           {/* SIGNATURE (overlapping name) */}
-                          {showSignature === "Yes" &&
-                            receiptData?.auth_sign?.[0]
-                              ?.indicomp_image_sign && (
-                              <img
-                                src={`${receiptData?.image_url?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
-                                alt="Signature"
-                                className="absolute bottom-2 -left-2 h-20 z-10 px-1"
-                              />
-                            )}
+                          {receiptData?.auth_sign?.[0] != null ? (
+                            <>
+                              {showSignature === "Yes" &&
+                                receiptData?.auth_sign?.[0]
+                                  ?.indicomp_image_sign && (
+                                  <img
+                                    src={`${receiptData?.image_url?.image_url || receiptData?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
+                                    alt="Signature"
+                                    className="absolute bottom-2 -left-2 h-20 z-10 px-1"
+                                  />
+                                )}
+                            </>
+                          ) : (
+                            <div className="h-14" /> // Placeholder when no signature
+                          )}
                         </div>
 
                         {/* DESIGNATION (always below everything) */}

@@ -47,9 +47,10 @@ import {
   Edit,
   Eye,
   Search,
+  Filter,
 } from "lucide-react";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppealLetterDialog from "./appeal-letterdialog";
 
@@ -68,10 +69,23 @@ const SchoolAlloted = () => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+  const [statusFilter, setStatusFilter] = useState("All");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const statusOptions = [
+    { value: "All", label: "All" },
+    { value: "0", label: "Completed" },
+    { value: "1", label: "Wrong" },
+    { value: "2", label: "Pending" },
+  ];
+
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
 
   // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
@@ -104,19 +118,12 @@ const SchoolAlloted = () => {
   useEffect(() => {
     const savedPage = Cookies.get("schoolAllotedReturnPage");
     if (savedPage) {
-      // Remove the cookie first to prevent infinite loops
       Cookies.remove("schoolAllotedReturnPage");
-
-      // Set the pagination after a small delay to ensure proper rendering
       setTimeout(() => {
         const pageIndex = parseInt(savedPage) - 1;
         if (pageIndex >= 0) {
           setPagination((prev) => ({ ...prev, pageIndex }));
-
-          // Also update the page input field
           setPageInput(savedPage);
-
-          // Invalidate queries to refetch data for the correct page
           queryClient.invalidateQueries({
             queryKey: ["schoolallotmentlist"],
             exact: false,
@@ -129,7 +136,6 @@ const SchoolAlloted = () => {
   // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
     const timerId = setTimeout(() => {
-      // Check if this is a genuine new search (not just initialization)
       const isNewSearch =
         searchTerm !== previousSearchTerm && previousSearchTerm !== "";
 
@@ -155,6 +161,7 @@ const SchoolAlloted = () => {
   } = useGetMutation("schoolallotmentlist", SCHOOL_ALLOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    type: statusFilter, // always send type with the value (All or 1/2/3)
   });
 
   useEffect(() => {
@@ -177,6 +184,7 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
+    statusFilter,
     schoolData?.data?.last_page,
     prefetchPage,
   ]);
@@ -204,6 +212,16 @@ const SchoolAlloted = () => {
         const name = row.original.indicomp_full_name;
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
+    },
+    {
+      accessorKey: "rept_fin_year",
+      header: "Receipt financia Year",
+      id: "Receipt financia Year",
+      cell: ({ row }) => {
+        const year = row.original.schoolalot_financial_year;
+        return year ? <div className="text-xs">{year}</div> : null;
+      },
+      size: 200,
     },
 
     // School Allotment Year
@@ -376,6 +394,7 @@ const SchoolAlloted = () => {
     const cachedData = queryClient.getQueryData([
       "schoolallotmentlist",
       debouncedSearchTerm,
+      statusFilter,
       targetPage,
     ]);
 
@@ -508,21 +527,54 @@ const SchoolAlloted = () => {
 
   return (
     <div className="max-w-full p-2">
-      <div className="flex items-center justify-between py-1">
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="Search allotment..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setSearchTerm("");
-              }
-            }}
-            className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-          />
+      <div className="flex items-center justify-between py-1 flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Search Input */}
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search allotment..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchTerm("");
+                }
+              }}
+              className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
+            />
+          </div>
+
+          {/* Status Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Filter className="h-4 w-4" />
+                Status
+                {statusFilter !== "all" && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                    {statusOptions.find((s) => s.value === statusFilter)?.label}
+                  </span>
+                )}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              {statusOptions.map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.value}
+                  className="text-xs capitalize"
+                  checked={statusFilter === option.value}
+                  onCheckedChange={() => handleStatusFilter(option.value)}
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+        {/* Columns Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">

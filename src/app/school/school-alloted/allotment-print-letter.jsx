@@ -127,12 +127,11 @@ const AllotmentPrintLetter = ({
                     <label>
                       Please find enclosed herewith details of the Ekal
                       Vidyalaya running with your assistance. You may also view
-                      the details through our website: www.ekal.org. Please
-                      click on <b>INSIGHTS</b> and enter your user ID{" "}
-                      <b>{SchoolAlotReceipt?.donor?.indicomp_fts_code || ""}</b>{" "}
-                      and Password{" "}
-                      <b>{SchoolAlotReceipt?.donor?.indicomp_password || ""}</b>
-                      .
+                      the details through our website:
+                      www.ftsindia.com/donor-login. Please click on{" "}
+                      <b>INSIGHTS</b> and enter your user ID{" "}
+                      {SchoolAlotReceipt?.donor?.indicomp_fts_id || ""} and
+                      password {SchoolAlotReceipt?.donor?.cpassword || ""}
                     </label>
                   </div>
 
@@ -155,16 +154,20 @@ const AllotmentPrintLetter = ({
                   <label className="flex my-4">With Regards,</label>
 
                   <div className="relative my-1 mb-3 text-lg">
-                    {showSignature === "Yes" &&
-                    authSign?.indicomp_image_sign ? (
-                      <img
-                        src={`${imageUrl}${authSign.indicomp_image_sign}`}
-                        alt="Authorized Signature"
-                        className="h-24 absolute -top-16 -left-2 z-10"
-                      />
-                    ) : null}
+                    {authSign != null && (
+                      <>
+                        {showSignature === "Yes" &&
+                        authSign?.indicomp_image_sign ? (
+                          <img
+                            src={`${imageUrl}${authSign?.indicomp_image_sign}`}
+                            alt="Authorized Signature"
+                            className="h-24 absolute -top-16 -left-2 z-10"
+                          />
+                        ) : null}
+                      </>
+                    )}
                     <label className="flex flex-col mt-12 z-0">
-                      {authSign.indicomp_full_name}
+                      {authSign?.indicomp_full_name}
                       <br />
                       {chapters.auth_sign}
                     </label>

@@ -47,7 +47,7 @@ import Cookies from "js-cookie";
 
 const SchoolToAllot = () => {
   const navigate = useNavigate();
-  const userType = Cookies.get('user_type_id');
+  const userType = Cookies.get("user_type_id");
   const queryClient = useQueryClient();
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,9 +62,13 @@ const SchoolToAllot = () => {
 
   // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
-    Cookies.set("schoolToAllotReturnPage", (pagination.pageIndex + 1).toString(), { 
-      expires: 1 // expires in 1 day
-    });
+    Cookies.set(
+      "schoolToAllotReturnPage",
+      (pagination.pageIndex + 1).toString(),
+      {
+        expires: 1, // expires in 1 day
+      },
+    );
   };
 
   // Navigation handlers that store current page
@@ -79,13 +83,13 @@ const SchoolToAllot = () => {
     if (savedPage) {
       // Remove the cookie first to prevent infinite loops
       Cookies.remove("schoolToAllotReturnPage");
-      
+
       // Set the pagination after a small delay to ensure proper rendering
       setTimeout(() => {
         const pageIndex = parseInt(savedPage) - 1;
         if (pageIndex >= 0) {
-          setPagination(prev => ({ ...prev, pageIndex }));
-          
+          setPagination((prev) => ({ ...prev, pageIndex }));
+
           // Also update the page input field
           setPageInput(savedPage);
 
@@ -103,12 +107,13 @@ const SchoolToAllot = () => {
   useEffect(() => {
     const timerId = setTimeout(() => {
       // Check if this is a genuine new search (not just initialization)
-      const isNewSearch = searchTerm !== previousSearchTerm && previousSearchTerm !== "";
-      
+      const isNewSearch =
+        searchTerm !== previousSearchTerm && previousSearchTerm !== "";
+
       if (isNewSearch) {
         setPagination((prev) => ({ ...prev, pageIndex: 0 }));
       }
-      
+
       setDebouncedSearchTerm(searchTerm);
       setPreviousSearchTerm(searchTerm);
     }, 500);
@@ -216,6 +221,16 @@ const SchoolToAllot = () => {
 
     // Allotment Year
     {
+      accessorKey: "receipt_financial_year",
+      header: "Financial Year",
+      id: "receiptFinancialYear", // ✅ unique, matches the data
+      cell: ({ row }) => {
+        const year = row.original.receipt_financial_year;
+        return year ? <div className="text-xs">{year}</div> : null;
+      },
+      size: 120,
+    },
+    {
       accessorKey: "schoolalot_year",
       header: "Allotment Year",
       id: "Allotment Year",
@@ -237,48 +252,56 @@ const SchoolToAllot = () => {
       },
       size: 100,
     },
-    ...(userType !== '4'? [
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const item = row.original;
-          const company = item?.donor;
-          if (!company) return null;
+    ...(userType !== "4"
+      ? [
+          {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+              const item = row.original;
+              const company = item?.donor;
+              if (!company) return null;
 
-          const status = company.indicomp_status;
-          const donorId = company.id;
-          const schoolAllotYear = item.schoolalot_year;
-          const receiptYear = item.receipt_financial_year;
-          return (
-            <div className="flex items-center gap-2">
-              {status == "Active" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleAllotment(donorId, schoolAllotYear, receiptYear)}
-                      >
-                        <ClipboardList
-                          className="h-5 w-5 text-blue-500"
-                          title="Allotment"
-                        />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Allotment</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          );
-        },
-        size: 80,
-      },
-    ] : []),
+              const status = company.indicomp_status;
+              const donorId = company.id;
+              const schoolAllotYear = item.schoolalot_year;
+              const receiptYear = item.receipt_financial_year;
+              return (
+                <div className="flex items-center gap-2">
+                  {status == "Active" && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              handleAllotment(
+                                donorId,
+                                schoolAllotYear,
+                                receiptYear,
+                              )
+                            }
+                          >
+                            <ClipboardList
+                              className="h-5 w-5 text-blue-500"
+                              title="Allotment"
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Allotment</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              );
+            },
+            size: 80,
+          },
+        ]
+      : []),
   ];
 
   const table = useReactTable({
@@ -359,14 +382,14 @@ const SchoolToAllot = () => {
         className="h-8 w-8 p-0 text-xs"
       >
         1
-      </Button>
+      </Button>,
     );
 
     if (currentPage > 3) {
       buttons.push(
         <span key="ellipsis1" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -385,7 +408,7 @@ const SchoolToAllot = () => {
             className="h-8 w-8 p-0 text-xs"
           >
             {i}
-          </Button>
+          </Button>,
         );
       }
     }
@@ -394,7 +417,7 @@ const SchoolToAllot = () => {
       buttons.push(
         <span key="ellipsis2" className="px-2">
           ...
-        </span>
+        </span>,
       );
     }
 
@@ -408,7 +431,7 @@ const SchoolToAllot = () => {
           className="h-8 w-8 p-0 text-xs"
         >
           {totalPages}
-        </Button>
+        </Button>,
       );
     }
 
@@ -489,7 +512,7 @@ const SchoolToAllot = () => {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -511,7 +534,7 @@ const SchoolToAllot = () => {
                     <TableCell key={cell.id} className="px-3 py-1">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
