@@ -13,7 +13,7 @@ import ChapterSelection from "@/components/common/chapter-selection";
 import { Breadcrumbs } from "@/components/new/breadcrumbs";
 import Cookies from "js-cookie";
 
-export default function Page({ children }) {
+export default function Page({ children }) { 
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 

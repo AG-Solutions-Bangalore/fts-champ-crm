@@ -503,10 +503,10 @@ const SchoolAllotLetter = () => {
             <p className="mt-1 text-justify">
               Please find enclosed the details of the Ekal Vidyalaya running
               with your assistance. You may also view the details through our
-              website www.ekal.org. Click on INSIGHTSand enter your user ID{" "}
-              <p>{SchoolAlotReceipt?.donor?.indicomp_fts_code || ""}</p> and
-              password{" "}
-              <p>{SchoolAlotReceipt?.donor?.indicomp_password || ""}</p>
+              website www.ftsindia.com/donor-login. Click on INSIGHTS and enter
+              your user ID {}
+              {SchoolAlotReceipt?.donor?.indicomp_fts_id || ""} and password{" "}
+              {SchoolAlotReceipt?.donor?.cpassword || ""}
             </p>
 
             <p className="mt-2">
@@ -526,12 +526,25 @@ const SchoolAllotLetter = () => {
                 </div>
 
                 {/* SIGNATURE (MIDDLE OVERLAP LAYER) */}
-                {showSignature === "Yes" ? (
+                {/* {showSignature === "Yes" ? (
                   <img
                     src={`${signBaseUrl}${signFile}`}
                     alt="Authorized Signature"
                     className="absolute top-2 left-0 h-20 z-20  px-1"
                   />
+                ) : (
+                )} */}
+                {schoolLetter?.data?.auth_sign != null ? (
+                  <>
+                    {showSignature === "Yes" &&
+                      schoolLetter?.data?.auth_sign?.indicomp_image_sign && (
+                        <img
+                          src={`${schoolLetter?.data?.image_url?.image_url}${schoolLetter?.data?.auth_sign?.indicomp_image_sign}`}
+                          alt="Authorized Signature"
+                          className="h-24 absolute top-2 -left-1 z-10"
+                        />
+                      )}
+                  </>
                 ) : (
                   <div className="h-14" />
                 )}
