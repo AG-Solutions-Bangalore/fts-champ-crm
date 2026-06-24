@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,8 @@ const SchoolToAllot = () => {
   const [previousSearchTerm, setPreviousSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
   const [pageInput, setPageInput] = useState("");
+  const [selectedYear, setSelectedYear] = useState(null);
+
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -102,6 +105,9 @@ const SchoolToAllot = () => {
       }, 100);
     }
   }, [queryClient]);
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [selectedYear]);
 
   // Updated search effect - only reset pagination for genuine search changes
   useEffect(() => {
@@ -132,7 +138,10 @@ const SchoolToAllot = () => {
   } = useGetMutation("schooltoallot", SCHOOL_TO_ALOT_LIST, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+    ...(selectedYear ? { financial_year: selectedYear } : {}), // add year filter
   });
+  const yearCounts = schooltoallotData?.year_counts || {};
+  const years = Object.keys(yearCounts).sort();
 
   useEffect(() => {
     const currentPage = pagination.pageIndex + 1;
@@ -183,10 +192,10 @@ const SchoolToAllot = () => {
         return (
           <div className="space-y-1">
             {name && (
-              <div className="text-sm font-medium text-gray-900">{name}</div>
+              <span className="text-sm font-medium text-gray-900">{name}</span>
             )}
             {type && (
-              <span className="inline-block bg-primary text-white text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="inline-block bg-primary text-white text-[10px] font-light ml-2 px-1 py-0.5 rounded-full">
                 {type}
               </span>
             )}
@@ -248,7 +257,17 @@ const SchoolToAllot = () => {
       id: "OTS",
       cell: ({ row }) => {
         const ots = row.original.receipt_no_of_ots;
-        return ots ? <div className="text-xs">{ots} Schools</div> : null;
+        const amount = row.original.receipt_total_amount;
+        return (
+          <div>
+            {ots ? <div className="text-xs">{ots} Schools</div> : null}
+            {amount ? (
+              <span className="text-xs text-gray-600 break-all">₹{amount}</span>
+            ) : (
+              "-"
+            )}
+          </div>
+        );
       },
       size: 100,
     },
@@ -472,30 +491,61 @@ const SchoolToAllot = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9">
-              Columns <ChevronDown className="ml-2 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="text-xs capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+        <div className="flex justify-between">
+          {years.length > 0 && (
+            <div className="">
+              <Tabs
+                value={selectedYear || ""}
+                onValueChange={(value) => setSelectedYear(value || null)}
+              >
+                <TabsList className="flex flex-wrap gap-1 bg-transparent">
+                  <TabsTrigger
+                    value=""
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white px-3 py-1 text-sm border rounded-md"
+                  >
+                    All
+                  </TabsTrigger>
 
+                  {years.map((year) => (
+                    <TabsTrigger
+                      key={year}
+                      value={year}
+                      className="data-[state=active]:bg-primary data-[state=active]:text-white px-3 py-1 text-sm border rounded-md"
+                    >
+                      {year} ({yearCounts[year]})
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                Columns <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="text-xs capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
       {/* Table */}
       <div className="rounded-none border min-h-[31rem] flex flex-col">
         <Table className="flex-1">

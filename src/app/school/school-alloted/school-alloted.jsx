@@ -215,10 +215,10 @@ const SchoolAlloted = () => {
     },
     {
       accessorKey: "rept_fin_year",
-      header: "Receipt financia Year",
-      id: "Receipt financia Year",
+      header: "Receipt financial Year",
+      id: "Receipt financial Year",
       cell: ({ row }) => {
-        const year = row.original.schoolalot_financial_year;
+        const year = row.original.rept_fin_year;
         return year ? <div className="text-xs">{year}</div> : null;
       },
       size: 200,
