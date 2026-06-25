@@ -730,9 +730,8 @@ const ReceiptOne = () => {
               <div className="text-center border-x h-7 border-black p-1">
                 <p className="text-[11px] font-medium mx-auto">
                   Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road,
-                  Kolkata-26.
-                  <br /> Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13 PAN:
-                  AAAAF0290L
+                  Kolkata-26. Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13
+                  PAN: AAAAF0290L
                 </p>
               </div>
 
