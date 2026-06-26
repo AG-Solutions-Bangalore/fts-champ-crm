@@ -136,6 +136,7 @@ export const RECEIPT_VIEW_SUMBIT = `${BASE_URL}/api/update-donor-email`;
 //FULL LIST
 // export const SCHOOL_ALLOTED_LIST = `/api/fetch-school-alloted-list`;
 export const SCHOOL_LIST = `/api/school-list`;
+export const SCHOOL_CLOSED_LIST="/api/school-closed-list";
 export const SCHOOL_COUNT_CHAPTERWISE_LIST = `/api/fetch-school-count-chapterwise`;
 export const SCHOOL_VIEW_BY_ID = `/api/fetch-schools-by-id`;
 // export const SCHOOL_FULL_LIST_VIEW = "/students-full-list-view";

@@ -16,6 +16,7 @@ import PromoterDashboard from "@/app/promoterdashboard/promoterdashboard";
 import PromoterDashboardView from "@/app/promoterdashboard/promoter-dashboard-view";
 import AllChapter from "@/app/donor/AllChapter/AllChapter";
 import Nopan from "@/app/donor/Nopan/Nopan";
+import ClosedSchooll from "@/app/school/closed scholl/ClosesScholl";
 const Login = lazy(() => import("@/app/auth/login"));
 const DonorList = lazy(() => import("@/app/donor/donor-list/donor-list"));
 const ReceiptCreate = lazy(
@@ -470,6 +471,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <SchoolList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/closed-school/list"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <ClosedSchooll />
             </Suspense>
           }
         />

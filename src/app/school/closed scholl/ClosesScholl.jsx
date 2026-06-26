@@ -3,6 +3,7 @@ import {
   navigateToSchoolAllotmentLetter,
   navigateToSchoolAllotView,
   SCHOOL_ALLOT_LIST,
+  SCHOOL_CLOSED_LIST,
 } from "@/api";
 import PaginationShimmer from "@/components/common/pagination-schimmer";
 import { Button } from "@/components/ui/button";
@@ -52,9 +53,9 @@ import {
 import moment from "moment";
 import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AppealLetterDialog from "./appeal-letterdialog";
+import AppealLetterDialog from "../school-alloted/appeal-letterdialog";
 
-const SchoolAlloted = () => {
+const ClosedSchooll = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -69,7 +70,6 @@ const SchoolAlloted = () => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
-  const [statusFilter, setStatusFilter] = useState("All");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -81,11 +81,6 @@ const SchoolAlloted = () => {
     { value: "1", label: "Wrong" },
     { value: "2", label: "Pending" },
   ];
-
-  const handleStatusFilter = (status) => {
-    setStatusFilter(status);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  };
 
   // Store current page in cookies when navigating away
   const storeCurrentPage = () => {
@@ -158,11 +153,7 @@ const SchoolAlloted = () => {
     isFetching,
     prefetchPage,
     refetch,
-  } = useGetMutation("schoolallotmentlist", SCHOOL_ALLOT_LIST, {
-    page: pagination.pageIndex + 1,
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-    type: statusFilter, // always send type with the value (All or 1/2/3)
-  });
+  } = useGetMutation("schoolallotmentlist", SCHOOL_CLOSED_LIST);
 
   useEffect(() => {
     if (location.state?.refetch) {
@@ -184,7 +175,6 @@ const SchoolAlloted = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    statusFilter,
     schoolData?.data?.last_page,
     prefetchPage,
   ]);
@@ -226,8 +216,8 @@ const SchoolAlloted = () => {
 
     // School Allotment Year
     {
-      accessorKey: "schoolalot_financial_year",
-      header: "School Allot Year",
+      accessorKey: "missing_school_codes",
+      header: "missing school",
       id: "School Allot Year",
       cell: ({ row }) => {
         const year = row.original.schoolalot_financial_year;
@@ -235,194 +225,135 @@ const SchoolAlloted = () => {
       },
       size: 200,
     },
-    {
-      id: "Date",
-      header: "Date",
-      cell: ({ row }) => {
-        const fromDate = row.original.schoolalot_from_date;
-        const toDate = row.original.schoolalot_to_date;
-        return (
-          <div className="space-y-1 text-xs">
-            {fromDate && (
-              <div>
-                From Date :{""}
-                {moment(fromDate).format("DD MMM YYYY")}
-              </div>
-            )}
-            {toDate && (
-              <div>
-                To Date : {""}
-                {moment(toDate).format("DD MMM YYYY")}
-              </div>
-            )}
-          </div>
-        );
-      },
-      size: 200,
-    },
 
-    // OTS Received
-    {
-      accessorKey: "receipt_no_of_ots",
-      header: "OTS Received",
-      id: "OTS Received",
-      cell: ({ row }) => {
-        const ots = row.original.receipt_no_of_ots;
-        return ots ? <div className="text-xs">{ots}</div> : null;
-      },
-    },
+    
+    // ...(userType !== "4"
+    //   ? [
+    //       {
+    //         id: "actions",
+    //         header: "Actions",
+    //         cell: ({ row }) => {
+    //           const id = row.original.id;
+    //           const year = row.original.schoolalot_financial_year;
+    //           const pending =
+    //             row.original.receipt_no_of_ots -
+    //             row.original.no_of_schools_allotted;
+    //           if (pending !== 0) {
+    //             return (
+    //               <>
+    //                 {" "}
+    //                 <div className="flex">
+    //                   <TooltipProvider>
+    //                     {/* Edit */}
+    //                     <Tooltip>
+    //                       <TooltipTrigger asChild>
+    //                         <Button
+    //                           variant="ghost"
+    //                           size="icon"
+    //                           onClick={() => handleEditAllotment(id, year)}
+    //                         >
+    //                           <Edit className="h-5 w-5 " />
+    //                         </Button>
+    //                       </TooltipTrigger>
+    //                       <TooltipContent>Edit</TooltipContent>
+    //                     </Tooltip>
 
-    // Schools Allotted
-    {
-      accessorKey: "no_of_schools_allotted",
-      header: "Schools Allotted",
-      id: "Schools Allotted",
-      cell: ({ row }) => {
-        const allotted = row.original.no_of_schools_allotted;
-        return allotted ? <div className="text-xs">{allotted}</div> : null;
-      },
-    },
+    //                     {/* View */}
+    //                     <Tooltip>
+    //                       <TooltipTrigger asChild>
+    //                         <Button
+    //                           variant="ghost"
+    //                           size="icon"
+    //                           onClick={() => handleViewAllotment(id)}
+    //                         >
+    //                           <Eye className="h-5 w-5 " />
+    //                         </Button>
+    //                       </TooltipTrigger>
+    //                       <TooltipContent>View</TooltipContent>
+    //                     </Tooltip>
 
-    // Pending
-    {
-      accessorKey: "pending",
-      header: "Pending",
-      id: "Pending",
-      cell: ({ row }) => {
-        const pending =
-          row.original.receipt_no_of_ots - row.original.no_of_schools_allotted;
-        return <div className="text-xs">{pending}</div>;
-      },
-    },
+    //                     {/* <Tooltip>
+    //                       <TooltipTrigger asChild>
+    //                         <Button
+    //                           variant="ghost"
+    //                           size="icon"
+    //                           disabled
+    //                           onClick={() => handleAllotmentLetter(id)}
+    //                         >
+    //                           <ClipboardList className="h-5 w-5" />
+    //                         </Button>
+    //                       </TooltipTrigger>
+    //                       <TooltipContent>Allotment</TooltipContent>
+    //                     </Tooltip>
+    //                     <div className="flex gap-1">
+    //                       <AppealLetterDialog row={row.original} />
+    //                     </div> */}
+    //                   </TooltipProvider>
+    //                 </div>
+    //               </>
+    //             );
+    //           }
+    //           return (
+    //             <div className="flex">
+    //               <TooltipProvider>
+    //                 {/* Edit */}
+    //                 <Tooltip>
+    //                   <TooltipTrigger asChild>
+    //                     <Button
+    //                       variant="ghost"
+    //                       size="icon"
+    //                       onClick={() => handleEditAllotment(id, year)}
+    //                     >
+    //                       <Edit className="h-5 w-5 " />
+    //                     </Button>
+    //                   </TooltipTrigger>
+    //                   <TooltipContent>Edit</TooltipContent>
+    //                 </Tooltip>
 
-    // Actions
-    ...(userType !== "4"
-      ? [
-          {
-            id: "actions",
-            header: "Actions",
-            cell: ({ row }) => {
-              const id = row.original.id;
-              const year = row.original.schoolalot_financial_year;
-              const pending =
-                row.original.receipt_no_of_ots -
-                row.original.no_of_schools_allotted;
-              if (pending !== 0) {
-                return (
-                  <>
-                    {" "}
-                    <div className="flex">
-                      <TooltipProvider>
-                        {/* Edit */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditAllotment(id, year)}
-                            >
-                              <Edit className="h-5 w-5 " />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Edit</TooltipContent>
-                        </Tooltip>
+    //                 {/* View */}
+    //                 <Tooltip>
+    //                   <TooltipTrigger asChild>
+    //                     <Button
+    //                       variant="ghost"
+    //                       size="icon"
+    //                       onClick={() => handleViewAllotment(id)}
+    //                     >
+    //                       <Eye className="h-5 w-5 " />
+    //                     </Button>
+    //                   </TooltipTrigger>
+    //                   <TooltipContent>View</TooltipContent>
+    //                 </Tooltip>
 
-                        {/* View */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleViewAllotment(id)}
-                            >
-                              <Eye className="h-5 w-5 " />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>View</TooltipContent>
-                        </Tooltip>
-
-                        {/* <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled
-                              onClick={() => handleAllotmentLetter(id)}
-                            >
-                              <ClipboardList className="h-5 w-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Allotment</TooltipContent>
-                        </Tooltip>
-                        <div className="flex gap-1">
-                          <AppealLetterDialog row={row.original} />
-                        </div> */}
-                      </TooltipProvider>
-                    </div>
-                  </>
-                );
-              }
-              return (
-                <div className="flex">
-                  <TooltipProvider>
-                    {/* Edit */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditAllotment(id, year)}
-                        >
-                          <Edit className="h-5 w-5 " />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
-
-                    {/* View */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewAllotment(id)}
-                        >
-                          <Eye className="h-5 w-5 " />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>View</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleAllotmentLetter(id)}
-                        >
-                          <ClipboardList className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Allotment</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <AppealLetterDialog row={row.original} />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Appeal Letter</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              );
-            },
-            size: 120,
-          },
-        ]
-      : []),
+    //                 <Tooltip>
+    //                   <TooltipTrigger asChild>
+    //                     <Button
+    //                       variant="ghost"
+    //                       size="icon"
+    //                       onClick={() => handleAllotmentLetter(id)}
+    //                     >
+    //                       <ClipboardList className="h-5 w-5" />
+    //                     </Button>
+    //                   </TooltipTrigger>
+    //                   <TooltipContent>Allotment</TooltipContent>
+    //                 </Tooltip>
+    //                 <Tooltip>
+    //                   <TooltipTrigger asChild>
+    //                     <div>
+    //                       <AppealLetterDialog row={row.original} />
+    //                     </div>
+    //                   </TooltipTrigger>
+    //                   <TooltipContent>
+    //                     <p>Appeal Letter</p>
+    //                   </TooltipContent>
+    //                 </Tooltip>
+    //               </TooltipProvider>
+    //             </div>
+    //           );
+    //         },
+    //         size: 120,
+    //       },
+    //     ]
+    //   : []),
   ];
 
   const table = useReactTable({
@@ -458,7 +389,6 @@ const SchoolAlloted = () => {
     const cachedData = queryClient.getQueryData([
       "schoolallotmentlist",
       debouncedSearchTerm,
-      statusFilter,
       targetPage,
     ]);
 
@@ -608,34 +538,6 @@ const SchoolAlloted = () => {
               className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
             />
           </div>
-
-          {/* Status Filter Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2">
-                <Filter className="h-4 w-4" />
-                Status
-                {statusFilter !== "all" && (
-                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
-                    {statusOptions.find((s) => s.value === statusFilter)?.label}
-                  </span>
-                )}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
-              {statusOptions.map((option) => (
-                <DropdownMenuCheckboxItem
-                  key={option.value}
-                  className="text-xs capitalize"
-                  checked={statusFilter === option.value}
-                  onCheckedChange={() => handleStatusFilter(option.value)}
-                >
-                  {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         {/* Columns Dropdown */}
@@ -779,4 +681,4 @@ const SchoolAlloted = () => {
   );
 };
 
-export default SchoolAlloted;
+export default ClosedSchooll;

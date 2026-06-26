@@ -77,19 +77,23 @@ const SchoolAllotLetter = () => {
     pageStyle: `
       @page {
         size: A4 portrait;
-        margin: 5mm 0mm;  /* top-bottom 15mm, left-right 10mm */
+        margin: 0;
       }
       @media print {
         body {
-          font-size: 11px;
           margin: 0 !important;
           padding: 0 !important;
         }
         .print-container {
-          padding: 10mm 8mm; /* extra breathing space inside */
+          padding: 0 !important;
+          margin: 0 !important;
+          width: 210mm !important;
         }
-        table {
-          font-size: 10px;
+        .pdf-page {
+          box-shadow: none !important;
+          margin-bottom: 0 !important;
+          page-break-after: always;
+          break-after: page;
         }
         .print-hide {
           display: none;
@@ -101,55 +105,38 @@ const SchoolAllotLetter = () => {
     onPrintError: () => setIsProcessing(false),
   });
 
-  const handleSavePDF = () => {
+  const handleSavePDF = async () => {
     setIsProcessingPdf(true);
 
-    const input = componentRef.current;
-    html2canvas(input, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: -window.scrollY,
-      height: input.scrollHeight,
-    })
-      .then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        const pdf = new jsPDF("p", "mm", "a4");
+    try {
+      const input = componentRef.current;
+      const pages = input.querySelectorAll(".pdf-page");
+      const pdf = new jsPDF("p", "mm", "a4");
 
-        const pdfWidth = 210;
-        const pdfHeight = 297;
-
-        const imgWidth = pdfWidth - 20;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight, "", "FAST");
-
-        if (imgHeight > pdfHeight) {
-          const totalPages = Math.ceil(imgHeight / pdfHeight);
-          for (let page = 1; page < totalPages; page++) {
-            pdf.addPage();
-            pdf.addImage(
-              imgData,
-              "PNG",
-              10,
-              -page * pdfHeight + 10,
-              imgWidth,
-              imgHeight,
-              "",
-              "FAST",
-            );
-          }
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        if (i > 0) {
+          pdf.addPage();
         }
 
-        pdf.save("Allotment-letter.pdf");
-      })
-      .catch((error) => {
-        console.error("Error generating PDF:", error);
-      })
-      .finally(() => {
-        setIsProcessingPdf(false);
-      });
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", 0, 0, 210, 297, "", "FAST");
+      }
+
+      pdf.save("Allotment-letter.pdf");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    } finally {
+      setIsProcessingPdf(false);
+    }
   };
 
   if (isLoading) {
@@ -186,7 +173,7 @@ const SchoolAllotLetter = () => {
     setOpen(true);
   };
 
-  const handleClose = () => {
+  const handleClose = () => { 
     setOpen(false);
     setDonorEmail("");
     setSelectedId(null);
@@ -365,7 +352,7 @@ const SchoolAllotLetter = () => {
       <div className="flex flex-col items-center ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
           <div className="bg-white text-[12px] lg:col-span-3 shadow-md rounded-md p-6 border  transition-all hover:shadow-lg leading-relaxed">
-            <div className="border-b flex justify-between  pb-2 mb-3">
+            <div className="border-b flex justify-between pb-2 mb-3">
               <p className="font-medium">
                 Donor ID: <span>{SchoolAlotReceipt?.indicomp_fts_id}</span>
               </p>
@@ -504,8 +491,8 @@ const SchoolAllotLetter = () => {
               Please find enclosed the details of the Ekal Vidyalaya running
               with your assistance. You may also view the details through our
               website www.ftsindia.com/donor-login. Click on INSIGHTS and enter
-              your user ID {}
-              {SchoolAlotReceipt?.donor?.indicomp_fts_id || ""} and password{" "}
+              your Donor ID {}
+              {SchoolAlotReceipt?.donor?.indicomp_fts_id || ""} and Password{" "}
               {SchoolAlotReceipt?.donor?.cpassword || ""}
             </p>
 
