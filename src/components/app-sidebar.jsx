@@ -138,6 +138,10 @@ const NAVIGATION_CONFIG = {
           title: "Repeated Donor",
           url: "/school/repeated",
         },
+        // {
+        //   title: "School closed",
+        //   url: "/closed-school/list",
+        // },
       ],
     },
     PROMOTER: {
