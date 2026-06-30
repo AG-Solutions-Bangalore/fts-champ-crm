@@ -512,11 +512,11 @@ const Wrongallotment = () => {
       ) : (
         wrongAllotedList?.data?.data?.length > 0 && (
           <div className="flex items-center justify-between py-1">
-            {/* <div className="text-sm text-muted-foreground">
-              Showing {schoolData?.data?.from || 0} to{" "}
-              {schoolData?.data?.to || 0} of {schoolData?.data?.total || 0}{" "}
-              schools
-            </div> */}
+            <div className="text-sm text-muted-foreground">
+              Showing {wrongAllotedList?.data?.from || 0} to{" "}
+              {wrongAllotedList?.data?.to || 0} of{" "}
+              {wrongAllotedList?.data?.total || 0} schools
+            </div>
 
             <div className="flex items-center space-x-2">
               <Button

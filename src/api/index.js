@@ -154,6 +154,8 @@ export const REAPEAT_DONOR_EDIT_UPDATE_NEXT = `/api/update-repeated-donor`;
 //SCHOOL ALLOT
 // export const SCHOOL_ALLOT_LIST = `/api/fetch-school-allot`;
 export const SCHOOL_ALLOT_LIST = `/api/school-alloted-list`;
+export const SCHOOL_ALLOT_MULTI_LIST = `/api/school-alloted-list-multi`;
+
 // export const FETCH_SCHOOL_ALLOT_LIST = `/api/fetch-schoolsallot-by-id`;
 export const FETCH_SCHOOL_ALLOT_LIST = `/api/school-allotment`;
 export const FETCH_SCHOOL_ALLOT_LIST_BY_ID = `/api/school-list-alloted`;
@@ -325,6 +327,8 @@ export const RECEIPT_SUPER_SUMBIT = `/api/receipt-zero`;
 // export const UPDATE_CHANGE_RECEPIT = `/api/update-change-receipts-donor`;
 export const RECEPIT_SUP_DOWNLOAD = `/api/receipt-view`;
 export const SCHOOL_ALLOTMENT_MULTI = `/api/download-school-alloted-multi`;
+export const SCHOOL_ALLOTMENT_MULTI_WITHOUT_HEADER = `/api/download-school-alloted-noheader-multi`;
+
 export const WRONG_ALLOTMENT = `/api/wrong-alloted-list`;
 
 
