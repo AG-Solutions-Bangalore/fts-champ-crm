@@ -203,30 +203,52 @@ const ClosedSchooll = () => {
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
     },
+    // Missing School Codes Count
     {
-      accessorKey: "rept_fin_year",
-      header: "Receipt financial Year",
-      id: "Receipt financial Year",
+      id: "missingCount", // unique id
+      header: " Count",
+      accessorFn: (row) => row.missing_school_codes?.length || 0,
       cell: ({ row }) => {
-        const year = row.original.rept_fin_year;
-        return year ? <div className="text-xs">{year}</div> : null;
+        const count = row.original.missing_school_codes?.length || 0;
+        return <div className="text-xs font-medium text-center">{count}</div>;
       },
-      size: 200,
+      size: 120,
     },
+    // {
+    //   accessorKey: "rept_fin_year",
+    //   header: "Receipt financial Year",
+    //   id: "Receipt financial Year",
+    //   cell: ({ row }) => {
+    //     const year = row.original.rept_fin_year;
+    //     return year ? <div className="text-xs">{year}</div> : null;
+    //   },
+    //   size: 200,
+    // },
 
     // School Allotment Year
     {
       accessorKey: "missing_school_codes",
-      header: "missing school",
-      id: "School Allot Year",
+      header: "School Codes",
+      id: "missingSchoolCodes",
       cell: ({ row }) => {
-        const year = row.original.schoolalot_financial_year;
-        return year ? <div className="text-xs">{year}</div> : null;
+        const codes = row.original.missing_school_codes;
+        if (!codes || codes.length === 0)
+          return <span className="text-gray-400">—</span>;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {codes.map((code, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded-full"
+              >
+                {code}
+              </span>
+            ))}
+          </div>
+        );
       },
       size: 200,
     },
-
-    
     // ...(userType !== "4"
     //   ? [
     //       {

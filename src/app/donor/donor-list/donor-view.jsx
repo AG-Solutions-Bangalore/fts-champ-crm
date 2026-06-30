@@ -266,8 +266,12 @@ const DonorView = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {individualCompany.indicomp_full_name}
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    {individualCompany.indicomp_type === "Individual"
+                      ? individualCompany.title
+                        ? `${individualCompany.title} ${individualCompany.indicomp_full_name}`
+                        : individualCompany.indicomp_full_name
+                      : `M/s ${individualCompany.indicomp_full_name}`}
                   </h1>
                   <p className="text-gray-600 flex items-center gap-2 mt-1">
                     <IdCard className="w-4 h-4" />

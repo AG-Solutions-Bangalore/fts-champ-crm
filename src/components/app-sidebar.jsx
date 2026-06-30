@@ -138,10 +138,10 @@ const NAVIGATION_CONFIG = {
           title: "Repeated Donor",
           url: "/school/repeated",
         },
-        // {
-        //   title: "School closed",
-        //   url: "/closed-school/list",
-        // },
+        {
+          title: "School Closed",
+          url: "/closed-school",
+        },
       ],
     },
     PROMOTER: {
@@ -252,6 +252,12 @@ const NAVIGATION_CONFIG = {
       icon: Blocks,
       isActive: false,
     },
+    WRONGALLOTMENT: {
+      title: "Wrong-Allotment",
+      url: "/wrong-allotment",
+      icon: Blocks,
+      isActive: false,
+    },
     PROMOTERDASHBOARD: {
       title: "Promoter Dashboard",
       url: "/dashboard-promoter",
@@ -356,6 +362,7 @@ const USER_ROLE_PERMISSIONS = {
       "RECEIPT_MULTIPLE",
       "FOLDER",
       "MULTIALLOTMENT",
+      "WRONGALLOTMENT",
       "PROMOTERDASHBOARD",
     ],
   },

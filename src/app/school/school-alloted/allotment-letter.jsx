@@ -173,7 +173,7 @@ const SchoolAllotLetter = () => {
     setOpen(true);
   };
 
-  const handleClose = () => { 
+  const handleClose = () => {
     setOpen(false);
     setDonorEmail("");
     setSelectedId(null);
@@ -293,39 +293,39 @@ const SchoolAllotLetter = () => {
                 <TooltipContent>Add Mail</TooltipContent>
               </Tooltip>
             )}
-            {schoolLetter?.data?.chapter?.auth_sign_required === "Yes" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="relative flex items-center justify-center h-11 w-11 rounded-md border border-[var(--color-border)] hover:scale-110 transition-all duration-300 hover:shadow-md"
-                      onClick={() =>
-                        setShowSignature((prev) =>
-                          prev === "Yes" ? "No" : "Yes",
-                        )
-                      }
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="relative flex items-center justify-center h-11 w-11 rounded-md border border-[var(--color-border)] hover:scale-110 transition-all duration-300 hover:shadow-md"
+                    onClick={() =>
+                      setShowSignature((prev) =>
+                        prev === "Yes" ? "No" : "Yes",
+                      )
+                    }
+                  >
+                    <PenTool className="h-5 w-5" />
+
+                    <span
+                      className={`absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center border-2 border-white ${
+                        showSignature === "Yes"
+                          ? "bg-green-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
                     >
-                      <PenTool className="h-5 w-5" />
+                      {showSignature}
+                    </span>
+                  </button>
+                </TooltipTrigger>
 
-                      <span
-                        className={`absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center border-2 border-white ${
-                          showSignature === "Yes"
-                            ? "bg-green-500 text-white"
-                            : "bg-red-500 text-white"
-                        }`}
-                      >
-                        {showSignature}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
+                <TooltipContent>
+                  <p>Signature</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-                  <TooltipContent>
-                    <p>Signature</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -456,8 +456,9 @@ const SchoolAllotLetter = () => {
             {Object.keys(SchoolAlotReceipt).length !== 0 && (
               <div className="mt-1">
                 <p>
-                  {SchoolAlotReceipt?.donor?.title}{" "}
-                  {SchoolAlotReceipt?.donor?.indicomp_full_name}
+                  {SchoolAlotReceipt?.donor?.indicomp_type === "Individual"
+                    ? `${SchoolAlotReceipt?.donor?.title || ""} ${SchoolAlotReceipt?.donor?.indicomp_full_name || ""}`
+                    : `M/s ${SchoolAlotReceipt?.donor?.indicomp_full_name || ""}`}
                 </p>
                 <p>{SchoolAlotReceipt?.donor?.indicomp_res_reg_address}</p>
                 <p>{SchoolAlotReceipt?.donor?.indicomp_res_reg_city}</p>
@@ -521,9 +522,10 @@ const SchoolAllotLetter = () => {
                   />
                 ) : (
                 )} */}
-                {schoolLetter?.data?.auth_sign != null ? (
+
+                {showSignature === "Yes" ? (
                   <>
-                    {showSignature === "Yes" &&
+                    {schoolLetter?.data?.chapter.auth_sign_required === "Yes" &&
                       schoolLetter?.data?.auth_sign?.indicomp_image_sign && (
                         <img
                           src={`${schoolLetter?.data?.image_url?.image_url}${schoolLetter?.data?.auth_sign?.indicomp_image_sign}`}
@@ -550,9 +552,13 @@ const SchoolAllotLetter = () => {
                   <div className="text-center text-sm">
                     <label>
                       <small>
-                        Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road,
-                        Kolkata-26. Web: www.ftsindia.com Ph: 033 - 2454
-                        4510/11/12/13 PAN: AAAAF0290L
+                        {chapters.chapter_name}
+                        {" : - "} {chapters.chapter_address},{" "}
+                        {chapters.chapter_city}, {chapters.chapter_state} {"  "}
+                        {chapters.chapter_pin}
+                        <br />
+                        {"Ph.no - "} {chapters.chapter_phone}, {"Email : - "}{" "}
+                        {chapters.chapter_email}
                       </small>
                     </label>
                   </div>
