@@ -1,4 +1,4 @@
-import { SCHOOL_ALLOT_LIST, SCHOOL_ALLOTMENT_MULTI } from "@/api";
+import { WRONG_ALLOTMENT } from "@/api";
 import PaginationShimmer from "@/components/common/pagination-schimmer";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -16,6 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { useGetMutation } from "@/hooks/use-get-mutation";
 import { useApiMutation } from "@/hooks/use-mutation";
 import useNumericInput from "@/hooks/use-numeric-input";
@@ -34,20 +43,25 @@ import {
   ChevronRight,
   Download,
   Loader,
+  Mail,
   Search,
 } from "lucide-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
-const MultiDownloadAllotment = () => {
+
+import React from "react";
+import { Input } from "@/components/ui/input";
+
+const Wrongallotment = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const keyDown = useNumericInput();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [debouncedPage, setDebouncedPage] = useState("");
-  const [range, setRange] = useState({ from_id: "", to_id: "" });
   const [pageInput, setPageInput] = useState("");
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -68,14 +82,34 @@ const MultiDownloadAllotment = () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
-
+  const handlePageInput = (e) => {
+    setPageInput(e.target.value);
+  };
+  const handleSubmitMail = async () => {
+    try {
+      const response = await trigger({
+        url: "/api/send-wrong-school-alloted-email",
+        method: "GET",
+      });
+      toast.success(response?.message || "Emails sent successfully!");
+    } catch (error) {
+      // Extract a readable error message
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to send emails.";
+      toast.error(message);
+    } finally {
+      setDialogOpen(false); // Close dialog regardless of success/error
+    }
+  };
   const {
-    data: schoolData,
+    data: wrongAllotedList,
     isError,
     isFetching,
     prefetchPage,
     refetch,
-  } = useGetMutation("schoolallotmentmultilist", SCHOOL_ALLOT_LIST, {
+  } = useGetMutation("wrongAllotedList", WRONG_ALLOTMENT, {
     page: pagination.pageIndex + 1,
     ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
   });
@@ -84,10 +118,11 @@ const MultiDownloadAllotment = () => {
       refetch();
     }
   }, [location.state, refetch]);
+
   useEffect(() => {
-    if (!schoolData?.data?.last_page) return;
+    if (!wrongAllotedList?.data?.last_page) return;
     const currentPage = pagination.pageIndex + 1;
-    const totalPages = schoolData?.data?.last_page;
+    const totalPages = wrongAllotedList?.data?.last_page;
     if (currentPage < totalPages) {
       prefetchPage({ page: currentPage + 1 });
     }
@@ -97,13 +132,12 @@ const MultiDownloadAllotment = () => {
   }, [
     pagination.pageIndex,
     debouncedSearchTerm,
-    schoolData?.data?.last_page,
+    wrongAllotedList?.data?.last_page,
     prefetchPage,
   ]);
   const columns = [
     {
       id: "serialNo",
-
       header: "S. No.",
       cell: ({ row }) => {
         const globalIndex =
@@ -116,29 +150,30 @@ const MultiDownloadAllotment = () => {
     },
 
     {
-      accessorKey: "id",
-      header: "ID",
-      id: "ID",
+      accessorKey: "indicomp_fts_id",
+      header: "FTS ID",
+      id: "FTS ID",
       cell: ({ row }) => {
-        const id = row.original.id;
+        const id = row.original.indicomp_fts_id;
         return id ? <div className="text-xs font-medium">{id}</div> : null;
       },
-      size: 10,
-    },
-    {
-      accessorKey: "indicomp_full_name",
-      header: "Donor Name",
-      id: "Donor Name",
-      cell: ({ row }) => {
-        const name = row.original.indicomp_full_name;
-        return name ? <div className="text-xs font-medium">{name}</div> : null;
-      },
+      size: 60,
     },
 
     {
+      accessorKey: "rept_fin_year",
+      header: "Reciept year",
+      id: "Reciept year",
+      cell: ({ row }) => {
+        const year = row.original.rept_fin_year;
+        return year ? <div className="text-xs">{year}</div> : null;
+      },
+      size: 200,
+    },
+    {
       accessorKey: "schoolalot_financial_year",
-      header: "School Allot Year",
-      id: "School Allot Year",
+      header: "Schoolalot financial year",
+      id: "Schoolalot financial year",
       cell: ({ row }) => {
         const year = row.original.schoolalot_financial_year;
         return year ? <div className="text-xs">{year}</div> : null;
@@ -146,64 +181,34 @@ const MultiDownloadAllotment = () => {
       size: 200,
     },
     {
-      id: "Date",
-      header: "Date",
+      accessorKey: "schoolalot_from_date",
+      header: "Schoolalot from date",
+      id: "Schoolalot financial year",
       cell: ({ row }) => {
-        const fromDate = row.original.schoolalot_from_date;
-        const toDate = row.original.schoolalot_to_date;
-        return (
-          <div className="space-y-1 text-xs">
-            {fromDate && (
-              <div>
-                From Date :{""}
-                {moment(fromDate).format("DD MMM YYYY")}
-              </div>
-            )}
-            {toDate && (
-              <div>
-                To Date : {""}
-                {moment(toDate).format("DD MMM YYYY")}
-              </div>
-            )}
-          </div>
-        );
+        const date = row.original.schoolalot_from_date;
+        return date ? (
+          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
+        ) : null;
       },
       size: 200,
     },
-
     {
-      accessorKey: "receipt_no_of_ots",
-      header: "OTS Received",
-      id: "OTS Received",
+      accessorKey: "schoolalot_to_date",
+      header: "Schoolalot to date",
+      id: "Schoolalot financial year",
       cell: ({ row }) => {
-        const ots = row.original.receipt_no_of_ots;
-        return ots ? <div className="text-xs">{ots}</div> : null;
+        const date = row.original.schoolalot_to_date;
+        return date ? (
+          <div className="text-xs">{moment(date).format("DD-MM-YYYY")}</div>
+        ) : null;
       },
-    },
 
-    {
-      accessorKey: "no_of_schools_allotted",
-      header: "Schools Allotted",
-      id: "Schools Allotted",
-      cell: ({ row }) => {
-        const allotted = row.original.no_of_schools_allotted;
-        return allotted ? <div className="text-xs">{allotted}</div> : null;
-      },
-    },
-
-    {
-      accessorKey: "pending",
-      header: "Pending",
-      id: "Pending",
-      cell: ({ row }) => {
-        const pending =
-          row.original.receipt_no_of_ots - row.original.no_of_schools_allotted;
-        return <div className="text-xs">{pending}</div>;
-      },
+      size: 200,
     },
   ];
+
   const table = useReactTable({
-    data: schoolData?.data?.data || [],
+    data: wrongAllotedList?.data?.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -214,7 +219,7 @@ const MultiDownloadAllotment = () => {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination: true,
-    pageCount: schoolData?.data?.last_page || -1,
+    pageCount: wrongAllotedList?.data?.last_page || -1,
     onPaginationChange: setPagination,
     state: {
       sorting,
@@ -229,11 +234,10 @@ const MultiDownloadAllotment = () => {
       },
     },
   });
-
   const handlePageChange = (newPageIndex) => {
     const targetPage = newPageIndex + 1;
     const cachedData = queryClient.getQueryData([
-      "schoolallotmentmultilist",
+      "wrongAllotedList",
       debouncedSearchTerm,
       targetPage,
     ]);
@@ -243,13 +247,6 @@ const MultiDownloadAllotment = () => {
     } else {
       table.setPageIndex(newPageIndex);
     }
-  };
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setRange((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
   };
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -267,11 +264,6 @@ const MultiDownloadAllotment = () => {
       }
     }
   }, [debouncedPage]);
-
-  const handlePageInput = (e) => {
-    setPageInput(e.target.value);
-  };
-
   const generatePageButtons = () => {
     const currentPage = pagination.pageIndex + 1;
     const totalPages = table.getPageCount();
@@ -341,55 +333,6 @@ const MultiDownloadAllotment = () => {
 
     return buttons;
   };
-  const handleDownload = async () => {
-    const { from_id, to_id } = range;
-
-    if (!from_id && !to_id) {
-      toast.warning("Please enter both From and To ID.");
-      return;
-    } else if (!from_id) {
-      toast.warning("From ID is required.");
-      return;
-    } else if (!to_id) {
-      toast.warning("To ID is required.");
-      return;
-    }
-
-    const payload = { from_id, to_id };
-
-    try {
-      const res = await trigger({
-        url: SCHOOL_ALLOTMENT_MULTI,
-        method: "post",
-        data: payload,
-        responseType: "blob",
-      });
-
-      if (!res) {
-        toast.warning("No response from server.");
-        return;
-      }
-      const blob = new Blob([res], { type: "application/zip" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `receipts_${from_id}_to_${to_id}.zip`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 100);
-
-      toast.success("Allotment downloaded successfully!");
-      setRange({ from_id: "", to_id: "" });
-    } catch (err) {
-      console.error("Error downloading receipt:", err);
-      toast.error(
-        err.message || "Something went wrong while downloading the receipt.",
-      );
-    }
-  };
   const TableShimmer = () => {
     return Array.from({ length: 10 }).map((_, index) => (
       <TableRow key={index} className="animate-pulse h-11">
@@ -408,7 +351,7 @@ const MultiDownloadAllotment = () => {
         <div className="flex items-center justify-center h-64 ">
           <div className="text-center ">
             <div className="text-destructive font-medium mb-2">
-              Error Fetching School Allotment Data
+              Error Fetching Allotment Data
             </div>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               Try Again
@@ -418,14 +361,13 @@ const MultiDownloadAllotment = () => {
       </div>
     );
   }
-
   return (
     <div className="max-w-full p-2">
       <div className="flex items-center justify-between py-1">
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
           <Input
-            placeholder="Search MultiAllotment..."
+            placeholder="Search Wrong Allotment..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(e) => {
@@ -436,62 +378,75 @@ const MultiDownloadAllotment = () => {
             className="pl-8 h-9 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Input
-            name="from_id"
-            placeholder="From Id..."
-            value={range.from_id}
-            onChange={handleChange}
-            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-          />
 
-          <Input
-            name="to_id"
-            placeholder="To Id..."
-            value={range.to_id}
-            onChange={handleChange}
-            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-          />
-
-          <Button
-            variant="default"
-            size="sm"
-            disabled={loading}
-            className="flex items-center gap-2"
-            onClick={handleDownload}
-          >
-            {loading ? (
-              <Loader className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
+        <div className=" flex justify-between gap-10 mb-0 items-center">
+          <div className="mb-0">
+            {wrongAllotedList?.data?.data?.length > 0 && (
+              <div>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="border-blue-600 text-blue-600 hover:bg-blue-500"
+                      size="sm"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Mail
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Confirm Email</DialogTitle>
+                      <DialogDescription>
+                        Do you want to send the email?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDialogOpen(false)}
+                        disabled={loading}
+                      >
+                        No
+                      </Button>
+                      <Button onClick={handleSubmitMail} disabled={loading}>
+                        {loading && (
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Yes
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             )}
-            {loading ? "Downloading..." : "Download Zip"}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                Columns <ChevronDown className="ml-2 h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="text-xs capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  Columns <ChevronDown className="ml-2 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="text-xs capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -555,13 +510,13 @@ const MultiDownloadAllotment = () => {
       {isFetching ? (
         <PaginationShimmer />
       ) : (
-        schoolData?.data?.data?.length > 0 && (
+        wrongAllotedList?.data?.data?.length > 0 && (
           <div className="flex items-center justify-between py-1">
-            <div className="text-sm text-muted-foreground">
+            {/* <div className="text-sm text-muted-foreground">
               Showing {schoolData?.data?.from || 0} to{" "}
               {schoolData?.data?.to || 0} of {schoolData?.data?.total || 0}{" "}
               schools
-            </div>
+            </div> */}
 
             <div className="flex items-center space-x-2">
               <Button
@@ -611,4 +566,4 @@ const MultiDownloadAllotment = () => {
   );
 };
 
-export default MultiDownloadAllotment;
+export default Wrongallotment;

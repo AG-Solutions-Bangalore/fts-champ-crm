@@ -641,40 +641,39 @@ const ReceiptOne = () => {
                     </TooltipTrigger>
                     <TooltipContent>Print Letter</TooltipContent>
                   </Tooltip>
-                  {receiptData?.auth_sign?.[0]?.indicomp_image_sign &&
-                    receiptData?.chapter?.auth_sign_required === "Yes" && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowSignature((prev) =>
-                                prev === "Yes" ? "No" : "Yes",
-                              )
-                            }
-                            className="relative flex items-center justify-center h-11 w-11 rounded-md border border-[var(--color-border)] hover:scale-110 transition-all duration-300 hover:shadow-md"
-                          >
-                            <PenTool className="h-5 w-5" />
 
-                            {/* Status Badge */}
-                            <span
-                              className={`absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center border-2 border-white
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowSignature((prev) =>
+                            prev === "Yes" ? "No" : "Yes",
+                          )
+                        }
+                        className="relative flex items-center justify-center h-11 w-11 rounded-md border border-[var(--color-border)] hover:scale-110 transition-all duration-300 hover:shadow-md"
+                      >
+                        <PenTool className="h-5 w-5" />
+
+                        {/* Status Badge */}
+                        <span
+                          className={`absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center border-2 border-white
               ${
                 showSignature === "Yes"
                   ? "bg-green-500 text-white"
                   : "bg-red-500 text-white"
               }`}
-                            >
-                              {showSignature}
-                            </span>
-                          </button>
-                        </TooltipTrigger>
+                        >
+                          {showSignature}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
 
-                        <TooltipContent>
-                          <p>Signature</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    <TooltipContent>
+                      <p>Signature</p>
+                    </TooltipContent>
+                  </Tooltip>
+
                   <TimelineReceipt donorId={receipts.indicomp_fts_id} />
                 </div>
               </Card>
@@ -928,11 +927,10 @@ const ReceiptOne = () => {
                       <br />
                       <br />
                       <br />
-                      {receiptData?.auth_sign?.[0] != null ? (
+                      {showSignature === "Yes" ? (
                         <>
-                          {showSignature === "Yes" &&
-                            receiptData?.auth_sign?.[0]
-                              ?.indicomp_image_sign && (
+                          {receiptData?.chapter?.auth_sign_required == "Yes" &&
+                            receiptData?.auth_sign?.[0].indicomp_image_sign && (
                               <div className="flex justify-end relative">
                                 <img
                                   src={`${receiptData?.image_url?.image_url || receiptData?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
@@ -943,7 +941,7 @@ const ReceiptOne = () => {
                             )}
                         </>
                       ) : (
-                        <div className="h-14" /> // Placeholder when no signature
+                        <div className="h-18" /> // Placeholder when no signature
                       )}
                       {authsign.length > 0 && (
                         <div className="signature-section">
@@ -1171,11 +1169,12 @@ const ReceiptOne = () => {
                           </p>
 
                           {/* SIGNATURE (overlapping name) */}
-                          {receiptData?.auth_sign?.[0] != null ? (
+                          {showSignature === "Yes" ? (
                             <>
-                              {showSignature === "Yes" &&
+                              {receiptData?.chapter?.auth_sign_required ==
+                                "Yes" &&
                                 receiptData?.auth_sign?.[0]
-                                  ?.indicomp_image_sign && (
+                                  .indicomp_image_sign && (
                                   <img
                                     src={`${receiptData?.image_url?.image_url || receiptData?.image_url}${receiptData?.auth_sign?.[0]?.indicomp_image_sign}`}
                                     alt="Signature"

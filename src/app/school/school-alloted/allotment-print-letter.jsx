@@ -196,17 +196,13 @@ const AllotmentPrintLetter = ({
 
             {Object.keys(SchoolAlotReceipt).length !== 0 && (
               <div className="text-base">
-                {SchoolAlotReceipt?.donor?.indicomp_type !== "Individual" && (
-                  <p>
-                    {SchoolAlotReceipt?.donor?.title || ""}{" "}
-                    {SchoolAlotReceipt?.donor?.indicomp_full_name || ""}
-                  </p>
-                )}
-                {SchoolAlotReceipt?.donor?.indicomp_type === "Individual" && (
+                {SchoolAlotReceipt?.donor?.indicomp_type === "Individual" ? (
                   <p>
                     {SchoolAlotReceipt?.donor?.title}{" "}
                     {SchoolAlotReceipt?.donor?.indicomp_full_name}
                   </p>
+                ) : (
+                  <p>{`M/s ${SchoolAlotReceipt?.donor?.indicomp_full_name}`}</p>
                 )}
                 {SchoolAlotReceipt?.donor?.indicomp_off_branch_address && (
                   <div className="text-base">
@@ -338,10 +334,13 @@ const AllotmentPrintLetter = ({
               <div className="text-center text-sm">
                 <label>
                   <small>
-                    Head Office: Ekal Bhawan, 123/A, Harish Mukherjee Road,
-                    Kolkata-26.
-                    <br /> Web: www.ftsindia.com Ph: 033 - 2454 4510/11/12/13
-                    PAN: AAAAF0290L
+                    {chapters.chapter_name}
+                    {" : - "} {chapters.chapter_address},{" "}
+                    {chapters.chapter_city}, {chapters.chapter_state} {"  "}
+                    {chapters.chapter_pin}
+                    <br />
+                    {"Ph.no - "} {chapters.chapter_phone}, {"Email : - "}{" "}
+                    {chapters.chapter_email}
                   </small>
                 </label>
               </div>
