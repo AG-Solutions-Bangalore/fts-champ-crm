@@ -39,10 +39,12 @@ const MultiDownloadAllotment = () => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [range, setRange] = useState({ from_id: "", to_id: "" });
+  // const [range, setRange] = useState({ from_id: "", to_id: "" });
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [globalFilter, setGlobalFilter] = useState("");
+
   const [rowSelection, setRowSelection] = useState({});
   const { trigger } = useApiMutation();
   const [isDownloadingWithoutHeader, setIsDownloadingWithoutHeader] =
@@ -56,6 +58,9 @@ const MultiDownloadAllotment = () => {
     }, 500);
     return () => clearTimeout(timerId);
   }, [searchTerm]);
+  useEffect(() => {
+    setGlobalFilter(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   // Fetch data – no page param, only search
   const {
@@ -63,9 +68,7 @@ const MultiDownloadAllotment = () => {
     isError,
     isFetching,
     refetch,
-  } = useGetMutation("schoolallotmentmultilist", SCHOOL_ALLOT_MULTI_LIST, {
-    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-  });
+  } = useGetMutation("schoolallotmentmultilist", SCHOOL_ALLOT_MULTI_LIST, {});
 
   useEffect(() => {
     if (location.state?.refetch) {
@@ -76,6 +79,29 @@ const MultiDownloadAllotment = () => {
   // Columns definition
   const columns = [
     {
+      id: "select",
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          className="w-4 h-4 accent-indigo-600"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          className="w-4 h-4 accent-indigo-600"
+        />
+      ),
+      size: 40,
+      enableSorting: false,
+      enableHiding: false,
+    },
+
+    {
       id: "serialNo",
       header: "S. No.",
       cell: ({ row }) => (
@@ -83,6 +109,7 @@ const MultiDownloadAllotment = () => {
       ),
       size: 60,
     },
+
     {
       accessorKey: "id",
       header: "ID",
@@ -99,6 +126,15 @@ const MultiDownloadAllotment = () => {
         const name = row.original.indicomp_full_name;
         return name ? <div className="text-xs font-medium">{name}</div> : null;
       },
+    },
+    {
+      accessorKey: "rept_fin_year",
+      header: "Receipt Year",
+      cell: ({ row }) => {
+        const year = row.original.rept_fin_year;
+        return year ? <div className="text-xs">{year}</div> : null;
+      },
+      size: 200,
     },
     {
       accessorKey: "schoolalot_financial_year",
@@ -172,35 +208,33 @@ const MultiDownloadAllotment = () => {
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
   });
 
   // Download handlers (unchanged)
   const handleDownload = async () => {
-    const { from_id, to_id } = range;
-    setIsDownloadingWithHeader(true);
+    // const { from_id, to_id } = range;
 
-    if (!from_id && !to_id) {
-      toast.warning("Please enter both From and To ID.");
-      setIsDownloadingWithHeader(false);
-      return;
-    } else if (!from_id) {
-      toast.warning("From ID is required.");
-      setIsDownloadingWithHeader(false);
-      return;
-    } else if (!to_id) {
-      toast.warning("To ID is required.");
-      setIsDownloadingWithHeader(false);
+    const selectedRows = table.getSelectedRowModel().rows;
+
+    if (selectedRows.length === 0) {
+      toast.warning("Please select at least one row to download.");
       return;
     }
-
-    const payload = { from_id, to_id };
+    const ids = selectedRows.map((row) => row.original.id).filter(Boolean);
+    if (ids.length === 0) {
+      toast.warning("Selected rows do not have valid IDs.");
+      return;
+    }
+    const idString = ids.join(",");
+    setIsDownloadingWithHeader(true);
 
     try {
       const res = await trigger({
         url: SCHOOL_ALLOTMENT_MULTI,
         method: "post",
-        data: payload,
+        data: { from_id: idString },
         responseType: "blob",
       });
 
@@ -213,7 +247,7 @@ const MultiDownloadAllotment = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `receipts_${from_id}_to_${to_id}.zip`);
+      link.setAttribute("download", `receipts_${idString}.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -222,7 +256,8 @@ const MultiDownloadAllotment = () => {
       }, 100);
 
       toast.success("Allotment downloaded successfully!");
-      setRange({ from_id: "", to_id: "" });
+      // setRange({ from_id: "", to_id: "" });
+      setRowSelection({}); // clear selection
     } catch (err) {
       console.error("Error downloading receipt:", err);
       toast.error(
@@ -234,48 +269,45 @@ const MultiDownloadAllotment = () => {
   };
 
   const handleDownloadWithoutHeader = async () => {
-    const { from_id, to_id } = range;
-    if (!from_id && !to_id) {
-      toast.warning("Please enter both From and To ID.");
-      return;
-    } else if (!from_id) {
-      toast.warning("From ID is required.");
-      return;
-    } else if (!to_id) {
-      toast.warning("To ID is required.");
+    const selectedRows = table.getSelectedRowModel().rows;
+    if (selectedRows.length === 0) {
+      toast.warning("Please select at least one row to download.");
       return;
     }
 
-    const payload = { from_id, to_id };
-    setIsDownloadingWithoutHeader(true);
+    const ids = selectedRows.map((row) => row.original.id).filter(Boolean);
+    if (ids.length === 0) {
+      toast.warning("Selected rows have no ID.");
+      return;
+    }
+    const idsString = ids.join(",");
 
+    setIsDownloadingWithoutHeader(true);
     try {
       const res = await trigger({
         url: SCHOOL_ALLOTMENT_MULTI_WITHOUT_HEADER,
         method: "post",
-        data: payload,
+        data: { from_id: idsString },
         responseType: "blob",
       });
 
       if (!res) {
         toast.warning("No response from server.");
-        setIsDownloadingWithoutHeader(false);
         return;
       }
+
       const blob = new Blob([res], { type: "application/zip" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `receipts_${from_id}_to_${to_id}.zip`);
+      link.setAttribute("download", `receipts_${idsString}.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 100);
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
       toast.success("Allotment downloaded successfully!");
-      setRange({ from_id: "", to_id: "" });
+      setRowSelection({});
     } catch (err) {
       console.error("Error downloading receipt:", err);
       toast.error(
@@ -285,7 +317,6 @@ const MultiDownloadAllotment = () => {
       setIsDownloadingWithoutHeader(false);
     }
   };
-
   // Shimmer component (adjusted to show 5 shimmer rows)
   const TableShimmer = () => {
     return Array.from({ length: 5 }).map((_, index) => (
@@ -334,28 +365,13 @@ const MultiDownloadAllotment = () => {
           />
         </div>
         <div className="flex items-center gap-2">
-          <Input
-            name="from_id"
-            placeholder="From Id..."
-            value={range.from_id}
-            onChange={(e) =>
-              setRange((prev) => ({ ...prev, from_id: e.target.value }))
-            }
-            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-          />
-          <Input
-            name="to_id"
-            placeholder="To Id..."
-            value={range.to_id}
-            onChange={(e) =>
-              setRange((prev) => ({ ...prev, to_id: e.target.value }))
-            }
-            className="h-9 w-24 text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200"
-          />
           <Button
             variant="default"
             size="sm"
-            disabled={isDownloadingWithHeader}
+            disabled={
+              isDownloadingWithHeader ||
+              !table.getSelectedRowModel().rows.length
+            }
             className="flex items-center gap-2"
             onClick={handleDownload}
           >
@@ -369,7 +385,10 @@ const MultiDownloadAllotment = () => {
           <Button
             variant="default"
             size="sm"
-            disabled={isDownloadingWithoutHeader}
+            disabled={
+              isDownloadingWithoutHeader ||
+              !table.getSelectedRowModel().rows.length
+            }
             className="flex items-center gap-2"
             onClick={handleDownloadWithoutHeader}
           >

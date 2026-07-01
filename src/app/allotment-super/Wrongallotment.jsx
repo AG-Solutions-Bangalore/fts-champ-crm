@@ -205,6 +205,17 @@ const Wrongallotment = () => {
 
       size: 200,
     },
+    {
+      accessorKey: "note",
+      header: "Note",
+      id: "Note",
+      cell: ({ row }) => {
+        const note = row.original.note;
+        return note ? <div className="text-xs">{note}</div> : null;
+      },
+
+      size: 200,
+    },
   ];
 
   const table = useReactTable({
