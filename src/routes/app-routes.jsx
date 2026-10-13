@@ -144,6 +144,9 @@ const FileView = lazy(() => import("@/app/folder/file/file-view"));
 const MultiAllotment = lazy(
   () => import("@/app/allotment-super/multi-download-allotment"),
 );
+const TestMasterAdmin = lazy(
+  () => import("@/app/test-master-admin/test-master-admin"),
+);
 
 function AppRoutes() {
   return (
@@ -767,6 +770,22 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <BannerReport />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/remainder"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <TestMasterAdmin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/test-master-admin"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <TestMasterAdmin />
             </Suspense>
           }
         />

@@ -140,6 +140,8 @@ export default function LoginAuth() {
         );
         Cookies.set("user_type_id", UserInfo.user.user_type_id, cookieOptions);
         Cookies.set("email", UserInfo.user.email, cookieOptions);
+        Cookies.set("login_username", email, cookieOptions);
+        localStorage.setItem("login_username", email);
         Cookies.set(
           "token-expire-time",
           UserInfo?.token_expires_at,

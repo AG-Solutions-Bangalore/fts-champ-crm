@@ -6,6 +6,7 @@ export const appLogout = () => {
     "id",
     "name",
     "username",
+    "login_username",
     "chapter_id",
     "viewer_chapter_ids",
     "user_type_id",

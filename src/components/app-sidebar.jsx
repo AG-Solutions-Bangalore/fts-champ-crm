@@ -1,5 +1,6 @@
 import {
   AudioWaveform,
+  Bell,
   Blocks,
   Command,
   Frame,
@@ -161,6 +162,12 @@ const NAVIGATION_CONFIG = {
       url: "/event-list",
       isActive: false,
       icon: Package,
+    },
+    REMAINDER: {
+      title: "Remainder",
+      url: "/remainder",
+      isActive: false,
+      icon: Bell,
     },
   },
 
@@ -388,7 +395,7 @@ const LIMITED_MASTER_SETTINGS = {
   ],
 };
 
-const useNavigationData = (userType) => {
+const useNavigationData = (userType, isTestMasterAdmin = false) => {
   return useMemo(() => {
     const permissions =
       USER_ROLE_PERMISSIONS[userType] || USER_ROLE_PERMISSIONS[1];
@@ -404,11 +411,15 @@ const useNavigationData = (userType) => {
         .filter(Boolean);
     };
 
-    const navMain = buildNavItems(
+    let navMain = buildNavItems(
       permissions.navMain,
       { ...NAVIGATION_CONFIG.COMMON, ...NAVIGATION_CONFIG.MODULES },
       { MASTER_SETTINGS_LIMITED: LIMITED_MASTER_SETTINGS },
     );
+
+    if (isTestMasterAdmin && !navMain.some((item) => item?.title === "Remainder")) {
+      navMain = [...navMain, NAVIGATION_CONFIG.MODULES.REMAINDER];
+    }
 
     const navMainReport = buildNavItems(
       permissions.navMainReport,
@@ -416,7 +427,7 @@ const useNavigationData = (userType) => {
     );
 
     return { navMain, navMainReport };
-  }, [userType]);
+  }, [userType, isTestMasterAdmin]);
 };
 
 const TEAMS_CONFIG = [
@@ -440,10 +451,31 @@ const TEAMS_CONFIG = [
 export function AppSidebar({ ...props }) {
   const nameL = Cookies.get("name");
   const emailL = Cookies.get("email");
+  const usernameL = Cookies.get("username");
+  const loginUserL = Cookies.get("login_username");
   const userType = Cookies.get("user_type_id") || "1";
   const [openItem, setOpenItem] = useState(null);
 
-  const { navMain, navMainReport } = useNavigationData(userType);
+  const localUser =
+    typeof window !== "undefined"
+      ? localStorage.getItem("username") ||
+        localStorage.getItem("login_username") ||
+        ""
+      : "";
+
+  const isTestMasterAdmin = [usernameL, emailL, nameL, loginUserL, localUser].some(
+    (val) => {
+      if (!val || typeof val !== "string") return false;
+      const clean = val.trim().toLowerCase();
+      return (
+        clean === "testmasteradmin" ||
+        clean === "test master admin" ||
+        clean.startsWith("testmasteradmin@")
+      );
+    }
+  );
+
+  const { navMain, navMainReport } = useNavigationData(userType, isTestMasterAdmin);
 
   const initialData = {
     user: {
