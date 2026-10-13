@@ -131,7 +131,7 @@ const SignUPList = () => {
   const columns = [
     {
       id: "S. No.",
-      header: "S. No.",
+      header: "Sl. No.",
       cell: ({ row }) => {
         const globalIndex = row.index + 1;
         return <div className="text-xs font-medium">{globalIndex}</div>;

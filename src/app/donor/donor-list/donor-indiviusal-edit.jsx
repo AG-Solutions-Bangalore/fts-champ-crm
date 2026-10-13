@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
-import InputMask from "react-input-mask";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import {
   DONOR_INDIVISUAL_EDIT_FETCH,
@@ -171,9 +171,9 @@ const DonorEditIndv = () => {
       }
     },
     onError: (error) => {
-      console.error("Update error:", error.response.data.message);
+      console.error("Update error:", error.response?.data?.message);
       toast.error(
-        error.response.data.message || "An error occurred during updating",
+        error.response?.data?.message || "An error occurred during updating",
       );
     },
   });
@@ -196,7 +196,7 @@ const DonorEditIndv = () => {
     },
     onError: (error) => {
       toast.error(
-        error.response.data.message || "Failed to update family group",
+        error.response?.data?.message || "Failed to update family group",
       );
     },
   });
@@ -218,6 +218,10 @@ const DonorEditIndv = () => {
   const onInputChange = (e) => {
     const { name, value } = e.target;
 
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+
     if (
       [
         "indicomp_mobile_phone",
@@ -237,10 +241,19 @@ const DonorEditIndv = () => {
     }
   };
 
+  const onSelectChange = (name, value) => {
+    setDonor((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const onChangePanNumber = (e) => {
-    const panValue = e.target.value;
-    // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
-    setDonor({ ...donor, indicomp_pan_no: panValue });
+    const panValue = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    setDonor((prev) => ({ ...prev, indicomp_pan_no: panValue }));
+    if (errors.indicomp_pan_no) {
+      setErrors((prev) => ({ ...prev, indicomp_pan_no: "" }));
+    }
   };
   const validateForm = () => {
     const newErrors = {};
@@ -254,7 +267,13 @@ const DonorEditIndv = () => {
     if (!donor.indicomp_gender) {
       newErrors.indicomp_gender = "Gender is required";
     }
-
+    if (
+      donor.indicomp_pan_no?.trim() &&
+      !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(donor.indicomp_pan_no)
+    ) {
+      newErrors.indicomp_pan_no =
+        "Valid PAN Number is required (format: AAAAA9999A)";
+    }
     if (
       !donor.indicomp_mobile_phone ||
       !/^\d{10}$/.test(donor.indicomp_mobile_phone)
@@ -279,15 +298,24 @@ const DonorEditIndv = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return { isValid: Object.keys(newErrors).length === 0, errors: newErrors };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      const firstError = Object.values(errors)[0];
+    const { isValid, errors: validationErrors } = validateForm();
+
+    if (!isValid) {
+      const firstError = Object.values(validationErrors)[0];
       toast.error(firstError);
+
+      const firstErrorKey = Object.keys(validationErrors)[0];
+      const element = document.getElementById(firstErrorKey);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.focus?.();
+      }
       return;
     }
 
@@ -495,11 +523,15 @@ const DonorEditIndv = () => {
                   </Label>
                   <Select
                     value={donor.title}
-                    onValueChange={(value) =>
-                      setDonor((prev) => ({ ...prev, title: value }))
-                    }
+                    onValueChange={(value) => onSelectChange("title", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="title"
+                      className={cn(
+                        errors?.title &&
+                          "border-red-500 focus-visible:ring-red-500",
+                      )}
+                    >
                       <SelectValue placeholder="Select Title" />
                     </SelectTrigger>
                     <SelectContent>
@@ -511,7 +543,7 @@ const DonorEditIndv = () => {
                     </SelectContent>
                   </Select>
                   {errors?.title && (
-                    <p className="text-red-500 text-xs">{errors.title}</p>
+                    <p className="text-red-500 text-xs mt-1">{errors.title}</p>
                   )}
                 </div>
 
@@ -529,9 +561,13 @@ const DonorEditIndv = () => {
                     value={donor.indicomp_full_name}
                     onChange={onInputChange}
                     placeholder="Enter full name"
+                    className={cn(
+                      errors?.indicomp_full_name &&
+                        "border-red-500 focus-visible:ring-red-500",
+                    )}
                   />
                   {errors?.indicomp_full_name && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_full_name}
                     </p>
                   )}
@@ -582,10 +618,16 @@ const DonorEditIndv = () => {
                   <Select
                     value={donor.indicomp_gender}
                     onValueChange={(value) =>
-                      setDonor((prev) => ({ ...prev, indicomp_gender: value }))
+                      onSelectChange("indicomp_gender", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="indicomp_gender"
+                      className={cn(
+                        errors?.indicomp_gender &&
+                          "border-red-500 focus-visible:ring-red-500",
+                      )}
+                    >
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
@@ -597,7 +639,7 @@ const DonorEditIndv = () => {
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_gender && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_gender}
                     </p>
                   )}
@@ -653,43 +695,31 @@ const DonorEditIndv = () => {
 
                 {/* PAN Number */}
                 <div className="">
-                  {/* <Label htmlFor="indicomp_pan_no" className="text-xs font-medium">
+                  <Label
+                    htmlFor="indicomp_pan_no"
+                    className="text-xs font-medium"
+                  >
                     PAN Number
                   </Label>
                   <Input
                     id="indicomp_pan_no"
                     name="indicomp_pan_no"
-                    value={donor.indicomp_pan_no}
+                    type="text"
+                    maxLength={10}
+                    value={donor.indicomp_pan_no || ""}
                     onChange={onChangePanNumber}
                     placeholder="Enter PAN number"
-                    className="uppercase"
-                  /> */}
-                  <InputMask
-                    mask="aaaaa9999a"
-                    value={donor.indicomp_pan_no}
-                    onChange={(e) => onChangePanNumber(e)}
-                    formatChars={{
-                      9: "[0-9]",
-                      a: "[A-Z]",
-                    }}
-                  >
-                    {() => (
-                      <div>
-                        <Label
-                          htmlFor="indicomp_pan_no"
-                          className="text-xs  font-medium"
-                        >
-                          PAN Number
-                        </Label>
-                        <Input
-                          type="text"
-                          label="PAN Number"
-                          name="panNumber"
-                          placeholder="Enter PAN number"
-                        />
-                      </div>
+                    className={cn(
+                      "uppercase",
+                      errors?.indicomp_pan_no &&
+                        "border-red-500 focus-visible:ring-red-500",
                     )}
-                  </InputMask>
+                  />
+                  {errors?.indicomp_pan_no && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.indicomp_pan_no}
+                    </p>
+                  )}
                 </div>
 
                 {/* Upload Image */}
@@ -972,9 +1002,13 @@ const DonorEditIndv = () => {
                     onChange={onInputChange}
                     maxLength={10}
                     placeholder="Enter mobile number"
+                    className={cn(
+                      errors?.indicomp_mobile_phone &&
+                        "border-red-500 focus-visible:ring-red-500",
+                    )}
                   />
                   {errors?.indicomp_mobile_phone && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_mobile_phone}
                     </p>
                   )}
@@ -1036,7 +1070,7 @@ const DonorEditIndv = () => {
               </div>
               <div className="">
                 <Label
-                  htmlFor=" indicomp_multiple_email"
+                  htmlFor="indicomp_multiple_email"
                   className="text-xs font-medium"
                 >
                   Multiple Email("eg:abc@gmail.com,xyz@gmail.com")
@@ -1050,7 +1084,7 @@ const DonorEditIndv = () => {
                   placeholder="eg abc@gmail.com,xyx@gmail.com"
                 />
                 {errors?.indicomp_multiple_email && (
-                  <p className="text-red-500 text-xs">
+                  <p className="text-red-500 text-xs mt-1">
                     {errors.indicomp_multiple_email}
                   </p>
                 )}
@@ -1130,9 +1164,13 @@ const DonorEditIndv = () => {
                     value={donor.indicomp_res_reg_city}
                     onChange={onInputChange}
                     placeholder="Enter city"
+                    className={cn(
+                      errors?.indicomp_res_reg_city &&
+                        "border-red-500 focus-visible:ring-red-500",
+                    )}
                   />
                   {errors?.indicomp_res_reg_city && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_res_reg_city}
                     </p>
                   )}
@@ -1149,13 +1187,16 @@ const DonorEditIndv = () => {
                   <Select
                     value={donor.indicomp_res_reg_state}
                     onValueChange={(value) =>
-                      setDonor((prev) => ({
-                        ...prev,
-                        indicomp_res_reg_state: value,
-                      }))
+                      onSelectChange("indicomp_res_reg_state", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="indicomp_res_reg_state"
+                      className={cn(
+                        errors?.indicomp_res_reg_state &&
+                          "border-red-500 focus-visible:ring-red-500",
+                      )}
+                    >
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1167,7 +1208,7 @@ const DonorEditIndv = () => {
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_res_reg_state && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_res_reg_state}
                     </p>
                   )}
@@ -1188,9 +1229,13 @@ const DonorEditIndv = () => {
                     onChange={onInputChange}
                     maxLength={6}
                     placeholder="Enter pincode"
+                    className={cn(
+                      errors?.indicomp_res_reg_pin_code &&
+                        "border-red-500 focus-visible:ring-red-500",
+                    )}
                   />
                   {errors?.indicomp_res_reg_pin_code && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_res_reg_pin_code}
                     </p>
                   )}
@@ -1285,13 +1330,10 @@ const DonorEditIndv = () => {
                   <Select
                     value={donor.indicomp_off_branch_state}
                     onValueChange={(value) =>
-                      setDonor((prev) => ({
-                        ...prev,
-                        indicomp_off_branch_state: value,
-                      }))
+                      onSelectChange("indicomp_off_branch_state", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="indicomp_off_branch_state">
                       <SelectValue placeholder="Select State" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1333,13 +1375,16 @@ const DonorEditIndv = () => {
                   <Select
                     value={donor.indicomp_corr_preffer}
                     onValueChange={(value) =>
-                      setDonor((prev) => ({
-                        ...prev,
-                        indicomp_corr_preffer: value,
-                      }))
+                      onSelectChange("indicomp_corr_preffer", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="indicomp_corr_preffer"
+                      className={cn(
+                        errors?.indicomp_corr_preffer &&
+                          "border-red-500 focus-visible:ring-red-500",
+                      )}
+                    >
                       <SelectValue placeholder="Select Preference" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1351,7 +1396,7 @@ const DonorEditIndv = () => {
                     </SelectContent>
                   </Select>
                   {errors?.indicomp_corr_preffer && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_corr_preffer}
                     </p>
                   )}
@@ -1387,7 +1432,7 @@ const DonorEditIndv = () => {
             <div className="flex gap-3 pt-6 border-t">
               <Button
                 type="submit"
-                disabled={updateMutation.isLoading || !isFormDirty}
+                disabled={updateMutation.isLoading}
                 size="sm"
                 className="flex items-center gap-2"
               >
