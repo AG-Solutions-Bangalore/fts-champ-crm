@@ -147,6 +147,7 @@ const MultiAllotment = lazy(
 const TestMasterAdmin = lazy(
   () => import("@/app/test-master-admin/test-master-admin"),
 );
+const PanVerify = lazy(() => import("@/app/pan-verify/pan-verify"));
 
 function AppRoutes() {
   return (
@@ -383,6 +384,16 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <DuplicateDonorEdit />
+            </Suspense>
+          }
+        />
+
+        {/* pan verify */}
+        <Route
+          path="/pan-verify"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <PanVerify />
             </Suspense>
           }
         />

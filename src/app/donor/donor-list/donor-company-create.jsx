@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Cookies from "js-cookie";
+import moment from "moment";
 import {
   AlertCircle,
   ArrowLeft,
@@ -9,8 +10,11 @@ import {
   Info,
   MapPin,
   Phone,
+  ShieldCheck,
+  CheckCircle,
+  Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import InputMask from "react-input-mask";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -157,10 +161,121 @@ const DonorCompanyCreate = () => {
     }
   };
 
+  const [panVerificationStatus, setPanVerificationStatus] = useState("idle"); // 'idle' | 'loading' | 'success_message' | 'success_data' | 'error'
+  const [panResponseData, setPanResponseData] = useState(null);
+  const [panSuccessMsg, setPanSuccessMsg] = useState("");
+  const [panErrorMsg, setPanErrorMsg] = useState("");
+
   const onChangePanNumber = (e) => {
-    const panValue = e.target.value;
-    // const panValue = e.target.value.toUpperCase().replace(/\s/g, '');
-    setDonor({ ...donor, indicomp_pan_no: panValue });
+    const panValue = (e.target.value || "").toUpperCase().replace(/\s/g, "");
+    setDonor((prev) => ({ ...prev, indicomp_pan_no: panValue }));
+    // Reset verification status when PAN changes
+    setPanVerificationStatus("idle");
+    setPanResponseData(null);
+    setPanSuccessMsg("");
+    setPanErrorMsg("");
+  };
+
+  const isPanValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(
+    donor.indicomp_pan_no?.trim() || ""
+  );
+
+  const normalizeName = (name) =>
+    (name || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+  const isNameMatched = useMemo(() => {
+    if (panVerificationStatus !== "success_data" || !panResponseData?.full_name) {
+      return false;
+    }
+    return (
+      normalizeName(donor.indicomp_full_name) ===
+      normalizeName(panResponseData.full_name)
+    );
+  }, [panVerificationStatus, panResponseData, donor.indicomp_full_name]);
+
+  const handleVerifyPan = async () => {
+    if (!isPanValid) {
+      toast.error("Please enter a valid 10-digit PAN number");
+      return;
+    }
+
+    setPanVerificationStatus("loading");
+    setPanResponseData(null);
+    setPanSuccessMsg("");
+    setPanErrorMsg("");
+
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/checkPanNoVerify/${donor.indicomp_pan_no}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const resData = response.data;
+      const panInfo = resData?.data;
+
+      // Check for backend error code/status even if HTTP status was 200
+      const isErrorResponse =
+        (resData?.code && (resData.code === 400 || resData.code === 422 || resData.code >= 400)) ||
+        resData?.status === false ||
+        resData?.success === false;
+
+      if (isErrorResponse) {
+        const errMsg = resData?.message || resData?.msg || "Failed to verify PAN";
+        setPanErrorMsg(errMsg);
+        setPanVerificationStatus("error");
+        toast.error(errMsg);
+        return;
+      }
+
+      // Case 2: Response contains data object with PAN details
+      if (
+        panInfo &&
+        typeof panInfo === "object" &&
+        (panInfo.full_name || panInfo.pan_number)
+      ) {
+        setPanResponseData(panInfo);
+        setPanVerificationStatus("success_data");
+
+        const matched =
+          normalizeName(donor.indicomp_full_name) ===
+          normalizeName(panInfo.full_name);
+
+        if (matched) {
+          const msg = resData?.message || `PAN is verified: Name matched (${panInfo.full_name})`;
+          setPanSuccessMsg(msg);
+          toast.success(msg);
+        } else {
+          const msg = `Name mismatch: Entered company name does not match PAN record "${panInfo.full_name}"`;
+          setPanErrorMsg(msg);
+          toast.error(msg);
+        }
+      } else if (resData?.status_code === 200 || resData?.code === 200 || response.status === 200) {
+        // Case 1: Status 200 with success message
+        const msg = resData?.message || resData?.msg || "PAN is verified";
+        setPanSuccessMsg(msg);
+        setPanVerificationStatus("success_message");
+        toast.success(msg);
+      } else {
+        const msg = resData?.message || resData?.msg || "Unable to verify PAN";
+        setPanErrorMsg(msg);
+        setPanVerificationStatus("error");
+        toast.error(msg);
+      }
+    } catch (err) {
+      // Case 3: Error
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        err.message ||
+        "Failed to verify PAN";
+      setPanErrorMsg(errMsg);
+      setPanVerificationStatus("error");
+      toast.error(errMsg);
+    }
   };
 
   const checkDuplicateDonor = async () => {
@@ -362,6 +477,19 @@ const DonorCompanyCreate = () => {
     },
   });
 
+  const isCreateDisabled = useMemo(() => {
+    if (isButtonDisabled || createDonorMutation.isPending) return true;
+    if (panVerificationStatus === "loading") return true;
+    if (panVerificationStatus === "error") return true;
+    if (panVerificationStatus === "success_data" && !isNameMatched) return true;
+    return false;
+  }, [
+    isButtonDisabled,
+    createDonorMutation.isPending,
+    panVerificationStatus,
+    isNameMatched,
+  ]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -472,6 +600,21 @@ const DonorCompanyCreate = () => {
       formData.append("indicomp_belongs_to", donor.indicomp_belongs_to || "");
       formData.append("indicomp_donor_type", donor.indicomp_donor_type || "");
       formData.append("indicomp_csr", donor.indicomp_csr || "");
+
+      const finalIsVerifiedPanNo =
+        panVerificationStatus === "success_message" ||
+        (panVerificationStatus === "success_data" && isNameMatched)
+          ? "yes"
+          : "no";
+
+      const finalIsPanNo =
+        panVerificationStatus === "success_message" ||
+        (panVerificationStatus === "success_data" && isNameMatched)
+          ? "yes"
+          : "no";
+
+      formData.append("isverified_pan_no", finalIsVerifiedPanNo);
+      formData.append("ispan_no", finalIsPanNo);
 
       setIsButtonDisabled(true);
       createDonorMutation.mutate(formData);
@@ -731,36 +874,80 @@ const DonorCompanyCreate = () => {
                 </div>
 
                 {/* PAN Number */}
-                <div className="">
-                  <InputMask
-                    mask="aaaaa9999a"
-                    value={donor.indicomp_pan_no}
-                    onChange={(e) => onChangePanNumber(e)}
-                    formatChars={{
-                      9: "[0-9]",
-                      a: "[A-Z]",
-                    }}
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="indicomp_pan_no"
+                    className="text-xs font-medium"
                   >
-                    {() => (
-                      <div>
-                        <Label
-                          htmlFor="indicomp_pan_no"
-                          className="text-xs  font-medium"
-                        >
-                          PAN Number *
-                        </Label>
-                        <Input
-                          type="text"
-                          label="PAN Number"
-                          name="panNumber"
-                          placeholder="Enter PAN number"
-                        />
-                      </div>
+                    PAN Number *
+                  </Label>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <InputMask
+                        mask="aaaaa9999a"
+                        value={donor.indicomp_pan_no}
+                        onChange={(e) => onChangePanNumber(e)}
+                        formatChars={{
+                          9: "[0-9]",
+                          a: "[A-Za-z]",
+                        }}
+                      >
+                        {() => (
+                          <Input
+                            type="text"
+                            id="indicomp_pan_no"
+                            name="indicomp_pan_no"
+                            placeholder="Enter PAN number"
+                            className="uppercase font-mono tracking-wider"
+                          />
+                        )}
+                      </InputMask>
+                    </div>
+                    {isPanValid && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={panVerificationStatus === "loading"}
+                        onClick={handleVerifyPan}
+                        className={`h-9 px-3 text-xs font-medium shrink-0 gap-1.5 transition-colors ${
+                          panVerificationStatus === "success_message" ||
+                          (panVerificationStatus === "success_data" && isNameMatched)
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : panVerificationStatus === "error" ||
+                              (panVerificationStatus === "success_data" && !isNameMatched)
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-[var(--team-color)] hover:bg-[var(--team-color)]/90 text-white"
+                        }`}
+                      >
+                        {panVerificationStatus === "loading" ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>Verifying...</span>
+                          </>
+                        ) : panVerificationStatus === "success_message" ||
+                          (panVerificationStatus === "success_data" && isNameMatched) ? (
+                          <>
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            <span>Verified</span>
+                          </>
+                        ) : panVerificationStatus === "error" ||
+                          (panVerificationStatus === "success_data" && !isNameMatched) ? (
+                          <>
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            <span>Retry</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span>Verify</span>
+                          </>
+                        )}
+                      </Button>
                     )}
-                  </InputMask>
+                  </div>
 
                   {errors?.indicomp_pan_no && (
-                    <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs mt-1">
                       {errors.indicomp_pan_no}
                     </p>
                   )}
@@ -830,6 +1017,92 @@ const DonorCompanyCreate = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* PAN Verification Details Strip (Spans full width across 1 single row) */}
+                {panVerificationStatus === "success_data" && panResponseData && (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
+                    <div
+                      className={`px-3 py-2 rounded-md border text-xs flex flex-wrap items-center justify-between gap-2.5 transition-colors ${
+                        isNameMatched
+                          ? "bg-emerald-50/80 border-emerald-300 text-emerald-950"
+                          : "bg-red-50/80 border-red-300 text-red-950"
+                      }`}
+                    >
+                      {/* Left: All details in one single horizontal row */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="font-semibold flex items-center gap-1.5 text-foreground">
+                          <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                          <span>PAN Details:</span>
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground text-[11px]">Full Name:</span>
+                          <span className="font-semibold">{panResponseData.full_name || "-"}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground text-[11px]">DOB:</span>
+                          <span className="font-medium">
+                            {panResponseData.dob
+                              ? moment(panResponseData.dob).isValid()
+                                ? moment(panResponseData.dob).format("DD-MM-YYYY")
+                                : panResponseData.dob
+                              : "-"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground text-[11px]">Category:</span>
+                          <span className="font-medium capitalize">{panResponseData.category || "-"}</span>
+                        </div>
+                      </div>
+
+                      {/* Right: Status badge & message */}
+                      <div className="flex items-center gap-2">
+                        {isNameMatched ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <CheckCircle className="h-3 w-3 text-emerald-600 shrink-0" />
+                            Name Matched
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-red-700 font-medium text-[11px]">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded font-semibold bg-red-100 text-red-800 border border-red-300 shrink-0">
+                              <AlertCircle className="h-3 w-3 text-red-600 shrink-0" />
+                              Name Mismatch
+                            </span>
+                            <span>Typed Company Name does not match PAN record name. Create Company is disabled.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {panVerificationStatus === "error" && panErrorMsg && (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
+                    <div className="px-3 py-2 rounded-md border border-red-300 bg-red-50/80 text-red-950 text-xs flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                        <span className="font-medium">{panErrorMsg}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleVerifyPan}
+                        className="h-6 text-[11px] px-2 text-red-700 border-red-300 hover:bg-red-100"
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {panVerificationStatus === "success_message" && (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
+                    <div className="px-3 py-2 rounded-md border border-emerald-300 bg-emerald-50/80 text-emerald-950 text-xs flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium">{panSuccessMsg || "PAN is verified"}</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-col justify-between">
                   <Label
@@ -1412,7 +1685,7 @@ const DonorCompanyCreate = () => {
             <div className="flex gap-3 pt-6 border-t">
               <Button
                 type="submit"
-                disabled={isButtonDisabled || createDonorMutation.isPending}
+                disabled={isCreateDisabled}
                 className="flex items-center gap-2"
               >
                 {createDonorMutation.isPending ? (

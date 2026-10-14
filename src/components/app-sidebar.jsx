@@ -7,6 +7,7 @@ import {
   GalleryVerticalEnd,
   Package,
   Settings2,
+  ShieldCheck,
   ShoppingBag,
 } from "lucide-react";
 
@@ -168,6 +169,12 @@ const NAVIGATION_CONFIG = {
       url: "/remainder",
       isActive: false,
       icon: Bell,
+    },
+    PAN_VERIFY: {
+      title: "PAN verify",
+      url: "/pan-verify",
+      isActive: false,
+      icon: ShieldCheck,
     },
   },
 
@@ -417,8 +424,22 @@ const useNavigationData = (userType, isTestMasterAdmin = false) => {
       { MASTER_SETTINGS_LIMITED: LIMITED_MASTER_SETTINGS },
     );
 
-    if (isTestMasterAdmin && !navMain.some((item) => item?.title === "Remainder")) {
-      navMain = [...navMain, NAVIGATION_CONFIG.MODULES.REMAINDER];
+    if (isTestMasterAdmin) {
+      if (!navMain.some((item) => item?.title === "Remainder")) {
+        navMain = [...navMain, NAVIGATION_CONFIG.MODULES.REMAINDER];
+      }
+      if (!navMain.some((item) => item?.title === "PAN verify")) {
+        const donorIndex = navMain.findIndex((item) => item?.title === "Donor");
+        if (donorIndex !== -1) {
+          navMain = [
+            ...navMain.slice(0, donorIndex + 1),
+            NAVIGATION_CONFIG.MODULES.PAN_VERIFY,
+            ...navMain.slice(donorIndex + 1),
+          ];
+        } else {
+          navMain = [...navMain, NAVIGATION_CONFIG.MODULES.PAN_VERIFY];
+        }
+      }
     }
 
     const navMainReport = buildNavItems(
