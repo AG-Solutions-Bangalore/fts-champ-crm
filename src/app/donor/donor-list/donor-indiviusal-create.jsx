@@ -852,47 +852,29 @@ const DonorIndiviusalCreate = () => {
                         )}
                       </InputMask>
                     </div>
-                    {isPanValid && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={panVerificationStatus === "loading"}
-                        onClick={handleVerifyPan}
-                        className={`h-9 px-3 text-xs font-medium shrink-0 gap-1.5 transition-colors ${
-                          panVerificationStatus === "success_message" ||
-                          (panVerificationStatus === "success_data" && isNameMatched)
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : panVerificationStatus === "error" ||
-                              (panVerificationStatus === "success_data" && !isNameMatched)
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                            : "bg-[var(--team-color)] hover:bg-[var(--team-color)]/90 text-white"
-                        }`}
-                      >
-                        {panVerificationStatus === "loading" ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span>Verifying...</span>
-                          </>
-                        ) : panVerificationStatus === "success_message" ||
-                          (panVerificationStatus === "success_data" && isNameMatched) ? (
-                          <>
-                            <CheckCircle className="h-3.5 w-3.5" />
-                            <span>Verified</span>
-                          </>
-                        ) : panVerificationStatus === "error" ||
-                          (panVerificationStatus === "success_data" && !isNameMatched) ? (
-                          <>
-                            <AlertCircle className="h-3.5 w-3.5" />
-                            <span>Retry</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            <span>Verify</span>
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    {isPanValid &&
+                      (panVerificationStatus === "idle" ||
+                        panVerificationStatus === "loading") && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={panVerificationStatus === "loading"}
+                          onClick={handleVerifyPan}
+                          className="h-9 px-3 text-xs font-medium shrink-0 gap-1.5 bg-[var(--team-color)] hover:bg-[var(--team-color)]/90 text-white"
+                        >
+                          {panVerificationStatus === "loading" ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <span>Verifying...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              <span>Verify</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
                   </div>
                 </div>
 
