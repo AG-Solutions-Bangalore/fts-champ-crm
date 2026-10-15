@@ -10,6 +10,7 @@ export const CHAPTER_LIST = `${BASE_URL}/api/fetch-chapters`;
 export const REMAINDER_GET_CHAPTERS = `${BASE_URL}/api/getChapters`;
 export const REMAINDER_SEND_REMINDER = `${BASE_URL}/api/sendReminder`;
 export const REMAINDER_CLEAR_REMINDER_SENT = `${BASE_URL}/api/clearReminderSent`;
+export const REMAINDER_UPDATE_REMINDER = `${BASE_URL}/api/updateReminder`;
 export const ADD_CHAPTER_SUMBIT = `${BASE_URL}/api/chapter`;
 // (view)-- add school pending
 export const CHAPTER_VIEW_BY_ID = `${BASE_URL}/api/fetch-chapter-by-id`;
