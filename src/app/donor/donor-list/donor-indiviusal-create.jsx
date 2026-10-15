@@ -181,6 +181,10 @@ const DonorIndiviusalCreate = () => {
     );
   }, [panVerificationStatus, panResponseData, donor.indicomp_full_name]);
 
+  const isPanVerified =
+    panVerificationStatus === "success_message" ||
+    (panVerificationStatus === "success_data" && isNameMatched);
+
   const handleVerifyPan = async () => {
     if (!isPanValid) {
       toast.error("Please enter a valid 10-digit PAN number");
@@ -852,9 +856,7 @@ const DonorIndiviusalCreate = () => {
                         )}
                       </InputMask>
                     </div>
-                    {isPanValid &&
-                      (panVerificationStatus === "idle" ||
-                        panVerificationStatus === "loading") && (
+                    {isPanValid && !isPanVerified && (
                         <Button
                           type="button"
                           size="sm"
