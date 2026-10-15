@@ -10,12 +10,15 @@ import {
   RefreshCw,
   Search,
   Send,
+  ShieldAlert,
   Trash2,
+  X,
 } from "lucide-react";
 import {
   REMAINDER_GET_CHAPTERS,
   REMAINDER_SEND_REMINDER,
   REMAINDER_CLEAR_REMINDER_SENT,
+  REMAINDER_UPDATE_REMINDER,
 } from "@/api";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,12 +47,37 @@ import { toast } from "sonner";
 const TestMasterAdmin = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [updatingChapterCode, setUpdatingChapterCode] = useState(null);
 
   // Send Reminder State
   const [recipientType, setRecipientType] = useState("1,2");
 
   // Clear Reminder Dialog State
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+
+  // Check if current logged-in user is testmasteradmin
+  const isTestMasterAdmin = useMemo(() => {
+    const nameL = Cookies.get("name");
+    const emailL = Cookies.get("email");
+    const usernameL = Cookies.get("username");
+    const loginUserL = Cookies.get("login_username");
+    const localUser =
+      typeof window !== "undefined"
+        ? localStorage.getItem("username") ||
+          localStorage.getItem("login_username") ||
+          ""
+        : "";
+
+    return [usernameL, emailL, nameL, loginUserL, localUser].some((val) => {
+      if (!val || typeof val !== "string") return false;
+      const clean = val.trim().toLowerCase();
+      return (
+        clean === "testmasteradmin" ||
+        clean === "test master admin" ||
+        clean.startsWith("testmasteradmin@")
+      );
+    });
+  }, []);
 
   // 1. Fetch Chapters API (GET /api/getChapters)
   const {
@@ -76,6 +104,7 @@ const TestMasterAdmin = () => {
       if (Array.isArray(resData?.chapters)) return resData.chapters;
       return [];
     },
+    enabled: !!isTestMasterAdmin,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
   });
@@ -83,6 +112,20 @@ const TestMasterAdmin = () => {
   const chapters = useMemo(() => {
     return Array.isArray(rawData) ? rawData : [];
   }, [rawData]);
+
+  // Counts for status
+  const counts = useMemo(() => {
+    let yes = 0;
+    let no = 0;
+    chapters.forEach((c) => {
+      if (String(c.chapter_received_data).toLowerCase() === "yes") {
+        yes++;
+      } else {
+        no++;
+      }
+    });
+    return { total: chapters.length, yes, no };
+  }, [chapters]);
 
   // 2. Send Reminder API (POST /api/sendReminder)
   const sendReminderMutation = useMutation({
@@ -138,19 +181,108 @@ const TestMasterAdmin = () => {
     },
   });
 
+  // 4. Update Reminder API (POST /api/updateReminder)
+  const updateReminderMutation = useMutation({
+    mutationFn: async ({ chapter_code, status, user_type }) => {
+      const token = Cookies.get("token");
+      const formData = new FormData();
+      formData.append("chapter_code", chapter_code);
+      formData.append("status", status);
+      if (user_type || recipientType) {
+        formData.append("user_type", user_type || recipientType);
+      }
+
+      const response = await axios.post(REMAINDER_UPDATE_REMINDER, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "Reminder status updated successfully!");
+      setUpdatingChapterCode(null);
+      setRowSelection({});
+      refetch();
+    },
+    onError: (err) => {
+      setUpdatingChapterCode(null);
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to update reminder status."
+      );
+    },
+  });
+
+  const handleToggleStatus = (code, currentStatus) => {
+    const isCurrentlyYes = String(currentStatus).toLowerCase() === "yes";
+    const newStatus = isCurrentlyYes ? "No" : "Yes";
+    setUpdatingChapterCode(code);
+    updateReminderMutation.mutate({
+      chapter_code: code,
+      status: newStatus,
+      user_type: recipientType || "1,2",
+    });
+  };
+
+  const handleBulkUpdateStatus = (status) => {
+    if (selectedChapterCodes.length === 0) {
+      toast.error("Please select at least one chapter.");
+      return;
+    }
+    setUpdatingChapterCode("bulk");
+    updateReminderMutation.mutate({
+      chapter_code: selectedChapterCodes.join(","),
+      status,
+      user_type: recipientType || "1,2",
+    });
+  };
+
   const selectedChapterCodes = useMemo(() => {
     return Object.keys(rowSelection).filter((key) => rowSelection[key]);
   }, [rowSelection]);
 
-  const filteredChapters = useMemo(() => {
+  const allChapters = useMemo(() => {
     if (!globalFilter) return chapters;
     const lower = globalFilter.toLowerCase();
     return chapters.filter(
       (c) =>
         String(c.chapter_code).toLowerCase().includes(lower) ||
-        String(c.chapter_name || "").toLowerCase().includes(lower)
+        String(c.chapter_name || "")
+          .toLowerCase()
+          .includes(lower)
     );
   }, [chapters, globalFilter]);
+
+  const pendingChapters = useMemo(() => {
+    return allChapters.filter(
+      (c) => String(c.chapter_received_data).toLowerCase() !== "yes"
+    );
+  }, [allChapters]);
+
+  const receivedChapters = useMemo(() => {
+    return allChapters.filter(
+      (c) => String(c.chapter_received_data).toLowerCase() === "yes"
+    );
+  }, [allChapters]);
+
+  const handleSelectColumn = (colChapters) => {
+    const allSelected =
+      colChapters.length > 0 &&
+      colChapters.every((c) => !!rowSelection[String(c.chapter_code)]);
+    setRowSelection((prev) => {
+      const updated = { ...prev };
+      colChapters.forEach((c) => {
+        if (allSelected) {
+          delete updated[String(c.chapter_code)];
+        } else {
+          updated[String(c.chapter_code)] = true;
+        }
+      });
+      return updated;
+    });
+  };
 
   const handleSendReminder = () => {
     if (selectedChapterCodes.length === 0) {
@@ -167,23 +299,140 @@ const TestMasterAdmin = () => {
     });
   };
 
+  if (!isTestMasterAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center p-6">
+        <div className="h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
+          <ShieldAlert className="h-7 w-7" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Remainder management is restricted and only accessible for Test Master Admin login.
+        </p>
+      </div>
+    );
+  }
+
   const GridShimmer = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 sm:p-6">
-      {Array.from({ length: 9 }).map((_, index) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 sm:p-6">
+      {[1, 2, 3].map((col) => (
         <div
-          key={index}
-          className="animate-pulse h-12 bg-muted/40 rounded-lg border p-3 flex items-center justify-between"
+          key={col}
+          className="bg-muted/20 border rounded-xl p-4 space-y-3"
         >
-          <div className="flex items-center gap-2.5 w-3/4">
-            <div className="h-4 w-4 bg-gray-200 dark:bg-gray-800 rounded" />
-            <div className="h-5 w-8 bg-gray-200 dark:bg-gray-800 rounded" />
-            <div className="h-4 w-28 bg-gray-200 dark:bg-gray-800 rounded" />
-          </div>
-          <div className="h-4 w-4 bg-gray-200 dark:bg-gray-800 rounded-full" />
+          <div className="h-6 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="animate-pulse h-11 bg-muted/40 rounded-lg border p-2.5 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2 w-3/4">
+                <div className="h-4 w-4 bg-gray-200 dark:bg-gray-800 rounded" />
+                <div className="h-4 w-28 bg-gray-200 dark:bg-gray-800 rounded" />
+              </div>
+              <div className="h-4 w-12 bg-gray-200 dark:bg-gray-800 rounded-full" />
+            </div>
+          ))}
         </div>
       ))}
     </div>
   );
+
+  const renderChapterCard = (chapter, sourceCol) => {
+    const code = String(chapter.chapter_code);
+    const isSelected = !!rowSelection[code];
+    const isYes =
+      String(chapter.chapter_received_data).toLowerCase() === "yes";
+    const displayName =
+      (chapter.chapter_name || "-").replace(/\bchapter\b/gi, "").trim() ||
+      chapter.chapter_name ||
+      "-";
+
+    return (
+      <div
+        key={`${sourceCol}-${code}`}
+        onClick={() => {
+          setRowSelection((prev) => {
+            const updated = { ...prev };
+            if (updated[code]) {
+              delete updated[code];
+            } else {
+              updated[code] = true;
+            }
+            return updated;
+          });
+        }}
+        className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${
+          isSelected
+            ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/40"
+            : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/30"
+        }`}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => {
+              setRowSelection((prev) => {
+                const updated = { ...prev };
+                if (updated[code]) {
+                  delete updated[code];
+                } else {
+                  updated[code] = true;
+                }
+                return updated;
+              });
+            }}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Select chapter ${displayName}`}
+            className="translate-y-[1px]"
+          />
+          <span
+            className="font-medium text-xs text-foreground truncate"
+            title={displayName}
+          >
+            {displayName}
+          </span>
+        </div>
+
+        {/* Interactive Status Toggle Badge / Button */}
+        <div
+          className="shrink-0 ml-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            disabled={updateReminderMutation.isPending}
+            onClick={() =>
+              handleToggleStatus(code, chapter.chapter_received_data)
+            }
+            title={`Data Received: ${
+              isYes ? "Yes" : "No"
+            }. Click to mark as ${isYes ? "No" : "Yes"}.`}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer select-none ${
+              isYes
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-900/60"
+                : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground dark:bg-muted/30"
+            } ${
+              updateReminderMutation.isPending &&
+              updatingChapterCode === code
+                ? "opacity-60 cursor-not-allowed"
+                : ""
+            }`}
+          >
+            {updateReminderMutation.isPending &&
+            updatingChapterCode === code ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : isYes ? (
+              <Check className="h-3 w-3 stroke-[2.5]" />
+            ) : (
+              <X className="h-3 w-3" />
+            )}
+            <span>{isYes ? "Yes" : "No"}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-full">
@@ -195,7 +444,7 @@ const TestMasterAdmin = () => {
             Remainder
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage chapter reminders and view data received status
+            Manage chapter reminders and update data received status
           </p>
         </div>
 
@@ -232,12 +481,12 @@ const TestMasterAdmin = () => {
         </div>
       </div>
 
-      {/* Main card with 3-columns layout */}
+      {/* Main card */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3 pt-4 px-4 sm:px-6">
-          <div className="flex items-center gap-2.5 overflow-x-auto py-0.5">
+          <div className="flex items-center gap-2.5 overflow-x-auto py-0.5 whitespace-nowrap">
             {/* Search */}
-            <div className="relative w-48 sm:w-56 shrink-0">
+            <div className="relative w-44 sm:w-48 shrink-0">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search chapters..."
@@ -247,25 +496,43 @@ const TestMasterAdmin = () => {
               />
             </div>
 
+            {/* User Type Dropdown */}
+            <Select value={recipientType} onValueChange={setRecipientType}>
+              <SelectTrigger className="h-9 w-44 text-xs bg-background shrink-0">
+                <SelectValue placeholder="Select user type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1,2" className="text-xs">
+                  Both (User & Admin)
+                </SelectItem>
+                <SelectItem value="1" className="text-xs">
+                  User
+                </SelectItem>
+                <SelectItem value="2" className="text-xs">
+                  Admin
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Select All Checkbox */}
             <label className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none px-2.5 h-9 border rounded-md hover:bg-muted/50 bg-background transition-colors shrink-0 whitespace-nowrap">
               <Checkbox
                 checked={
-                  filteredChapters.length > 0 &&
-                  filteredChapters.every((c) =>
+                  allChapters.length > 0 &&
+                  allChapters.every((c) =>
                     selectedChapterCodes.includes(String(c.chapter_code))
                   )
                 }
                 onCheckedChange={(checked) => {
                   if (checked) {
                     const newSel = { ...rowSelection };
-                    filteredChapters.forEach((c) => {
+                    allChapters.forEach((c) => {
                       newSel[String(c.chapter_code)] = true;
                     });
                     setRowSelection(newSel);
                   } else {
                     const newSel = { ...rowSelection };
-                    filteredChapters.forEach((c) => {
+                    allChapters.forEach((c) => {
                       delete newSel[String(c.chapter_code)];
                     });
                     setRowSelection(newSel);
@@ -273,38 +540,44 @@ const TestMasterAdmin = () => {
                 }}
                 className="translate-y-[1px]"
               />
-              <span>Select All ({filteredChapters.length})</span>
+              <span>Select All ({allChapters.length})</span>
             </label>
 
             {/* Selection controls right next to Select All in one line */}
             {selectedChapterCodes.length > 0 && (
-              <div className="flex items-center gap-2.5 bg-primary/10 border border-primary/20 rounded-md px-3 h-9 text-xs shrink-0 whitespace-nowrap">
-                <span className="font-semibold text-primary">
-                  {selectedChapterCodes.length} chapter
-                  {selectedChapterCodes.length === 1 ? "" : "s"} selected
-                </span>
-
-                {/* User Type Selection Dropdown */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">
-                    Send to:
-                  </span>
-                  <Select value={recipientType} onValueChange={setRecipientType}>
-                    <SelectTrigger className="h-7 w-36 text-xs bg-background dark:bg-background/80 px-2.5">
-                      <SelectValue placeholder="Select recipient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1,2" className="text-xs">
-                        Both (User & Admin)
-                      </SelectItem>
-                      <SelectItem value="1" className="text-xs">
-                        User
-                      </SelectItem>
-                      <SelectItem value="2" className="text-xs">
-                        Admin
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-md px-2.5 h-9 text-xs shrink-0 whitespace-nowrap">
+                {/* Bulk Status Update */}
+                <div className="flex items-center gap-1 border-r border-primary/20 pr-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkUpdateStatus("Yes")}
+                    disabled={updateReminderMutation.isPending}
+                    className="h-7 px-2 text-xs font-medium gap-1 text-emerald-600 hover:text-emerald-700 bg-background hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
+                  >
+                    {updateReminderMutation.isPending &&
+                    updatingChapterCode === "bulk" ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                    )}
+                    <span>Yes</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkUpdateStatus("No")}
+                    disabled={updateReminderMutation.isPending}
+                    className="h-7 px-2 text-xs font-medium gap-1 text-rose-600 hover:text-rose-700 bg-background hover:bg-rose-50 dark:hover:bg-rose-950/60"
+                  >
+                    {updateReminderMutation.isPending &&
+                    updatingChapterCode === "bulk" ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                    )}
+                    <span>No</span>
+                  </Button>
                 </div>
 
                 <Button
@@ -352,90 +625,146 @@ const TestMasterAdmin = () => {
                   Try Again
                 </Button>
               </div>
-            ) : filteredChapters.length ? (
+            ) : allChapters.length ? (
               <>
-                {/* 3 Columns Layout */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 sm:p-6">
-                  {filteredChapters.map((chapter) => {
-                    const code = String(chapter.chapter_code);
-                    const isSelected = !!rowSelection[code];
-                    const isYes =
-                      String(chapter.chapter_received_data).toLowerCase() ===
-                      "yes";
-
-                    return (
-                      <div
-                        key={code}
-                        onClick={() => {
-                          setRowSelection((prev) => {
-                            const updated = { ...prev };
-                            if (updated[code]) {
-                              delete updated[code];
-                            } else {
-                              updated[code] = true;
-                            }
-                            return updated;
-                          });
-                        }}
-                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                          isSelected
-                            ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-sm ring-1 ring-primary/40"
-                            : "border-border bg-card hover:bg-muted/40 hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => {
-                              setRowSelection((prev) => {
-                                const updated = { ...prev };
-                                if (updated[code]) {
-                                  delete updated[code];
-                                } else {
-                                  updated[code] = true;
-                                }
-                                return updated;
-                              });
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Select chapter ${chapter.chapter_code}`}
-                            className="translate-y-[1px]"
-                          />
-                          <Badge
-                            variant="outline"
-                            className="text-xs font-mono font-medium shrink-0"
-                          >
-                            {chapter.chapter_code}
-                          </Badge>
-                          <span
-                            className="font-medium text-xs text-foreground truncate"
-                            title={chapter.chapter_name}
-                          >
-                            {chapter.chapter_name || "-"}
-                          </span>
-                        </div>
-                        {isYes && (
-                          <span
-                            className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0 ml-2"
-                            title="Received Data: Yes"
-                          >
-                            <Check className="h-3.5 w-3.5 stroke-[2.5]" />
-                          </span>
-                        )}
+                {/* 3 Columns Layout: ALL, Pending (No), Received (Yes) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 sm:p-6 items-start">
+                  {/* Column 1: ALL */}
+                  <div className="flex flex-col bg-muted/20 border rounded-xl p-3 sm:p-4 min-w-0">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">All</span>
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                          {allChapters.length}
+                        </Badge>
                       </div>
-                    );
-                  })}
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={
+                            allChapters.length > 0 &&
+                            allChapters.every(
+                              (c) => !!rowSelection[String(c.chapter_code)]
+                            )
+                          }
+                          onCheckedChange={() => handleSelectColumn(allChapters)}
+                          className="translate-y-[1px]"
+                        />
+                        <span>Select All</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2 overflow-y-auto max-h-[620px] pr-1">
+                      {allChapters.length ? (
+                        allChapters.map((c) => renderChapterCard(c, "all"))
+                      ) : (
+                        <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">
+                          No chapters found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 2: Pending (No) */}
+                  <div className="flex flex-col bg-rose-50/30 dark:bg-rose-950/10 border border-rose-200/60 dark:border-rose-900/40 rounded-xl p-3 sm:p-4 min-w-0">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-rose-200/60 dark:border-rose-900/40">
+                      <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400">
+                        <X className="h-4 w-4" />
+                        <span className="font-semibold text-sm">Pending (No)</span>
+                        <Badge
+                          variant="outline"
+                          className="text-xs px-2 py-0.5 text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/40"
+                        >
+                          {pendingChapters.length}
+                        </Badge>
+                      </div>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={
+                            pendingChapters.length > 0 &&
+                            pendingChapters.every(
+                              (c) => !!rowSelection[String(c.chapter_code)]
+                            )
+                          }
+                          onCheckedChange={() => handleSelectColumn(pendingChapters)}
+                          className="translate-y-[1px]"
+                        />
+                        <span>Select All</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2 overflow-y-auto max-h-[620px] pr-1">
+                      {pendingChapters.length ? (
+                        pendingChapters.map((c) =>
+                          renderChapterCard(c, "pending")
+                        )
+                      ) : (
+                        <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">
+                          No pending chapters
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 3: Received (Yes) */}
+                  <div className="flex flex-col bg-emerald-50/30 dark:bg-emerald-950/10 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-3 sm:p-4 min-w-0">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-emerald-200/60 dark:border-emerald-900/40">
+                      <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                        <Check className="h-4 w-4 stroke-[2.5]" />
+                        <span className="font-semibold text-sm">Received (Yes)</span>
+                        <Badge
+                          variant="outline"
+                          className="text-xs px-2 py-0.5 text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/40"
+                        >
+                          {receivedChapters.length}
+                        </Badge>
+                      </div>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={
+                            receivedChapters.length > 0 &&
+                            receivedChapters.every(
+                              (c) => !!rowSelection[String(c.chapter_code)]
+                            )
+                          }
+                          onCheckedChange={() => handleSelectColumn(receivedChapters)}
+                          className="translate-y-[1px]"
+                        />
+                        <span>Select All</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2 overflow-y-auto max-h-[620px] pr-1">
+                      {receivedChapters.length ? (
+                        receivedChapters.map((c) =>
+                          renderChapterCard(c, "received")
+                        )
+                      ) : (
+                        <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">
+                          No received chapters
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-t text-xs text-muted-foreground">
                   <div>
-                    Total {filteredChapters.length} chapters
+                    Total {allChapters.length} chapter
+                    {allChapters.length === 1 ? "" : "s"}
                     {selectedChapterCodes.length > 0 && (
                       <span className="font-semibold text-primary ml-2">
                         • {selectedChapterCodes.length} selected
                       </span>
                     )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-muted-foreground">
+                      All: <strong className="text-foreground">{allChapters.length}</strong>
+                    </span>
+                    <span className="text-rose-600 font-medium">
+                      Pending (No): <strong>{pendingChapters.length}</strong>
+                    </span>
+                    <span className="text-emerald-600 font-medium">
+                      Received (Yes): <strong>{receivedChapters.length}</strong>
+                    </span>
                   </div>
                 </div>
               </>
