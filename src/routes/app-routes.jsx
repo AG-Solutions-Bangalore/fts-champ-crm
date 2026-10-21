@@ -6,6 +6,7 @@ import Maintenance from "@/components/common/maintenance";
 import SignUp from "@/app/auth/sign-up";
 import SignUPList from "@/app/master-settings/sign-up-list";
 import CprReport from "@/app/report/cpr/cpr-report";
+import CPRForm from "@/app/report/cpr/cpr-form";
 import EventList from "@/app/event/event-list";
 import EventCreate from "@/app/event/event-create";
 import EventEdit from "@/app/event/event-edit";
@@ -643,6 +644,14 @@ function AppRoutes() {
           element={
             <Suspense fallback={<LoadingBar />}>
               <CprReport />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr-report"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRForm />
             </Suspense>
           }
         />
