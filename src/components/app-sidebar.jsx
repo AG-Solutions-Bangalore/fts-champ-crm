@@ -164,6 +164,12 @@ const NAVIGATION_CONFIG = {
       isActive: false,
       icon: Package,
     },
+    CPR_REPORT: {
+      title: "CPR Report",
+      url: "/cpr-report",
+      isActive: false,
+      icon: Package,
+    },
     REMAINDER: {
       title: "Remainder",
       url: "/remainder",
@@ -402,7 +408,11 @@ const LIMITED_MASTER_SETTINGS = {
   ],
 };
 
-const useNavigationData = (userType, isTestMasterAdmin = false) => {
+const useNavigationData = (
+  userType,
+  isTestMasterAdmin = false,
+  isTestUser = false
+) => {
   return useMemo(() => {
     const permissions =
       USER_ROLE_PERMISSIONS[userType] || USER_ROLE_PERMISSIONS[1];
@@ -442,13 +452,30 @@ const useNavigationData = (userType, isTestMasterAdmin = false) => {
       }
     }
 
+    if (isTestUser) {
+      if (!navMain.some((item) => item?.title === "CPR Report")) {
+        const eventIndex = navMain.findIndex(
+          (item) => item?.title === "Event List"
+        );
+        if (eventIndex !== -1) {
+          navMain = [
+            ...navMain.slice(0, eventIndex + 1),
+            NAVIGATION_CONFIG.MODULES.CPR_REPORT,
+            ...navMain.slice(eventIndex + 1),
+          ];
+        } else {
+          navMain = [...navMain, NAVIGATION_CONFIG.MODULES.CPR_REPORT];
+        }
+      }
+    }
+
     const navMainReport = buildNavItems(
       permissions.navMainReport,
       NAVIGATION_CONFIG.REPORTS,
     );
 
     return { navMain, navMainReport };
-  }, [userType, isTestMasterAdmin]);
+  }, [userType, isTestMasterAdmin, isTestUser]);
 };
 
 const TEAMS_CONFIG = [
@@ -496,7 +523,26 @@ export function AppSidebar({ ...props }) {
     }
   );
 
-  const { navMain, navMainReport } = useNavigationData(userType, isTestMasterAdmin);
+  const isTestUser = [usernameL, emailL, nameL, loginUserL, localUser].some(
+    (val) => {
+      if (!val || typeof val !== "string") return false;
+      const clean = val.trim().toLowerCase();
+      return (
+        clean === "testuser" ||
+        clean === "testusers" ||
+        clean === "test user" ||
+        clean === "test users" ||
+        clean.startsWith("testuser") ||
+        clean.startsWith("gupta.govind1001")
+      );
+    }
+  );
+
+  const { navMain, navMainReport } = useNavigationData(
+    userType,
+    isTestMasterAdmin,
+    isTestUser
+  );
 
   const initialData = {
     user: {
