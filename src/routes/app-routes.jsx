@@ -6,7 +6,10 @@ import Maintenance from "@/components/common/maintenance";
 import SignUp from "@/app/auth/sign-up";
 import SignUPList from "@/app/master-settings/sign-up-list";
 import CprReport from "@/app/report/cpr/cpr-report";
-import CPRForm from "@/app/report/cpr/cpr-form";
+import CPRReportIndex from "@/app/report/cpr/cpr-report-index";
+import CPRBank from "@/app/report/cpr/cpr-bank";
+import CPRVanyatra from "@/app/report/cpr/cpr-vanyatra";
+import CPRDisbursement from "@/app/report/cpr/cpr-disbursement";
 import EventList from "@/app/event/event-list";
 import EventCreate from "@/app/event/event-create";
 import EventEdit from "@/app/event/event-edit";
@@ -651,7 +654,47 @@ function AppRoutes() {
           path="/cpr-report"
           element={
             <Suspense fallback={<LoadingBar />}>
-              <CPRForm />
+              <CPRReportIndex />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr-bank"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRBank />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr-vanyatra"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRVanyatra />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr/vanyatra"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRVanyatra />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr-disbursement"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRDisbursement />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/cpr/disbursement"
+          element={
+            <Suspense fallback={<LoadingBar />}>
+              <CPRDisbursement />
             </Suspense>
           }
         />

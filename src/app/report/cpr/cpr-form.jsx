@@ -1,4 +1,7 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
+import BASE_URL from "@/config/base-url";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -10,9 +13,74 @@ import {
   ChevronDown,
   X,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import CPRPrintReport from "./cpr-print-report";
+
+const FINANCIAL_MONTHS = [
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+  "January",
+  "February",
+  "March",
+];
+
+// Helper to get current financial year
+const getCurrentFinancialYear = () => {
+  const cookieYear = Cookies.get("currentYear");
+  if (cookieYear) return cookieYear;
+  const now = new Date();
+  const calYear = now.getFullYear();
+  const calMonth = now.getMonth();
+  const startYr = calMonth < 3 ? calYear - 1 : calYear;
+  return `${startYr}-${String(startYr + 1).slice(-2)}`;
+};
+
+// Helper to get current month name (e.g. "October")
+const getCurrentMonthName = () => {
+  const now = new Date();
+  return now.toLocaleString("en-US", { month: "long" });
+};
+
+// Helper to get available months up to current month (strictly hiding future months)
+const getAvailableMonths = (selectedYear, currFY) => {
+  const currentFY = currFY || getCurrentFinancialYear();
+  if (!selectedYear || selectedYear === currentFY) {
+    const currMonth = getCurrentMonthName();
+    const currMonthIdx = FINANCIAL_MONTHS.indexOf(currMonth);
+    if (currMonthIdx !== -1) {
+      return FINANCIAL_MONTHS.slice(0, currMonthIdx + 1);
+    }
+  }
+  // If selected financial year is strictly in the future, allow no months
+  if (selectedYear > currentFY) {
+    return [];
+  }
+  // For past financial years, all 12 months are in the past
+  return FINANCIAL_MONTHS;
+};
+
+// Generate list of financial years up to current year
+const getAvailableFinancialYears = (currYear) => {
+  const match = currYear?.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return [currYear || "2026-27"];
+  const startYearNum = parseInt(match[1], 10);
+  const years = [];
+  for (let i = 4; i >= 0; i--) {
+    const y = startYearNum - i;
+    const nextYShort = String(y + 1).slice(-2);
+    years.push(`${y}-${nextYShort}`);
+  }
+  return years;
+};
 
 // Helper for Indian Currency Formatting
 const formatINR = (val) => {
@@ -21,17 +89,79 @@ const formatINR = (val) => {
   return "₹" + num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 };
 
-const CPRForm = () => {
+// Helper to get today's date formatted as YYYY-MM-DD
+const getTodayDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Helper to safely clean string/number values from API or state, ensuring null/undefined/"null" are converted to ""
+const cleanVal = (val) => {
+  if (val === null || val === undefined) return "";
+  const s = String(val).trim();
+  if (s.toLowerCase() === "null" || s.toLowerCase() === "undefined") return "";
+  return s;
+};
+
+const CPRForm = ({
+  initialMonth = "",
+  initialYear = "",
+  reportId = null,
+  isView = false,
+  isEdit = false,
+  onBack = null,
+}) => {
+  const [currentReportId, setCurrentReportId] = useState(reportId);
+
+  useEffect(() => {
+    if (reportId) {
+      setCurrentReportId(reportId);
+    }
+  }, [reportId]);
+
   // Top Header State - all cleared
+  const todayDate = useMemo(() => getTodayDateString(), []);
   const [chapterName, setChapterName] = useState("");
   const [monthIndex, setMonthIndex] = useState("");
-  const [monthName, setMonthName] = useState("");
+  const [monthName, setMonthName] = useState(initialMonth || "");
   const [cppName, setCppName] = useState("");
   const [submissionDate, setSubmissionDate] = useState("");
   const [subChapters, setSubChapters] = useState([]);
   const [newSubChapter, setNewSubChapter] = useState("");
   const [showSubChapterInput, setShowSubChapterInput] = useState(false);
+  const [financialYear, setFinancialYear] = useState(
+    initialYear || Cookies.get("currentYear") || "2026-27"
+  );
+  const currentFY = useMemo(() => getCurrentFinancialYear(), []);
+  const availableMonths = useMemo(
+    () => getAvailableMonths(financialYear, currentFY),
+    [financialYear, currentFY]
+  );
+
+  const [csrStatus, setCsrStatus] = useState("Draft");
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [savedAt, setSavedAt] = useState("");
+
+  useEffect(() => {
+    if (initialMonth && availableMonths.includes(initialMonth)) {
+      setMonthName(initialMonth);
+      const idx = FINANCIAL_MONTHS.indexOf(initialMonth);
+      if (idx !== -1) {
+        setMonthIndex(String(idx + 1));
+      }
+    }
+  }, [initialMonth, availableMonths]);
+
+  // If currently selected month is not in availableMonths (e.g. future month), clear it
+  useEffect(() => {
+    if (monthName && !availableMonths.includes(monthName)) {
+      setMonthName("");
+      setMonthIndex("");
+    }
+  }, [availableMonths, monthName]);
 
   // Section A: Membership Data - cleared
   const [memberships, setMemberships] = useState({
@@ -78,10 +208,14 @@ const CPRForm = () => {
   // Section C: OTS Details & Collection - cleared
   const [otsPRP, setOtsPRP] = useState("");
   const [otsCountDuringMonth, setOtsCountDuringMonth] = useState("");
+  const [otsAmountOverride, setOtsAmountOverride] = useState(null);
   const otsCountTillDate = otsCountDuringMonth;
-  const otsAmountDuringMonth = otsCountDuringMonth
-    ? (Number(otsCountDuringMonth) || 0) * 30000
-    : 0;
+  const otsAmountDuringMonth =
+    otsAmountOverride !== null
+      ? otsAmountOverride
+      : otsCountDuringMonth
+      ? (Number(otsCountDuringMonth) || 0) * 30000
+      : 0;
   const otsAmountTillDate = otsAmountDuringMonth;
 
   // Section D: Donation & CSR Details - cleared
@@ -191,9 +325,12 @@ const CPRForm = () => {
 
   const [selectedMonitoringAnchal, setSelectedMonitoringAnchal] = useState("Choose");
   const [monitoringAnchalsList, setMonitoringAnchalsList] = useState([]);
+  const [imageUrls, setImageUrls] = useState([]);
 
   // Sign & Submit & PDF refs
   const [signedFile, setSignedFile] = useState(null);
+  const [existingSignedCprUrl, setExistingSignedCprUrl] = useState("");
+  const [loadingReport, setLoadingReport] = useState(false);
   const fileInputRef = useRef(null);
   const printableRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -211,14 +348,693 @@ const CPRForm = () => {
     }
   };
 
-  const handleSaveDraft = () => {
-    const now = new Date();
-    const formatted =
-      now.toLocaleDateString("en-GB") +
-      ", " +
-      now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    setSavedAt(formatted);
-    toast.success("Draft saved successfully!");
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Auto-fill fields returned by POST /api/getCPRReportDetails
+  const applyReportDetails = useCallback((data) => {
+    if (!data || typeof data !== "object") return;
+    console.log("Applying auto-fill details from getCPRReportDetails:", data);
+
+    // Chapter Name & CPP Info
+    if (data.chapter_name || data.chapter?.chapter_name || data.name_of_chapter) {
+      setChapterName(data.chapter_name || data.chapter?.chapter_name || data.name_of_chapter);
+    }
+    if (data.name_of_cpp || data.cpp_name || data.chairman) {
+      setCppName(data.name_of_cpp || data.cpp_name || data.chairman);
+    }
+    if (data.submission_date) {
+      setSubmissionDate(data.submission_date);
+    }
+    if (Array.isArray(data.sub_chapters)) {
+      setSubChapters(data.sub_chapters);
+    }
+
+    // Section A: Membership Details (supports membership_DataBeforeMonth & membership_DataCurrentMonth)
+    if (Array.isArray(data.membership_DataBeforeMonth) || Array.isArray(data.membership_DataCurrentMonth)) {
+      setMemberships((prev) => {
+        const next = {
+          chapter: { ...prev.chapter },
+          yuva: { ...prev.yuva },
+          mahila: { ...prev.mahila },
+        };
+        if (Array.isArray(data.membership_DataBeforeMonth)) {
+          data.membership_DataBeforeMonth.forEach((item) => {
+            const belong = (item.indicomp_belongs_to || "").toLowerCase();
+            if (belong.includes("mahila")) next.mahila.asOnMarch = String(item.total_count ?? "");
+            else if (belong.includes("yuva")) next.yuva.asOnMarch = String(item.total_count ?? "");
+            else next.chapter.asOnMarch = String(item.total_count ?? "");
+          });
+        }
+        if (Array.isArray(data.membership_DataCurrentMonth)) {
+          data.membership_DataCurrentMonth.forEach((item) => {
+            const belong = (item.indicomp_belongs_to || "").toLowerCase();
+            if (belong.includes("mahila")) next.mahila.added = String(item.total_count ?? "");
+            else if (belong.includes("yuva")) next.yuva.added = String(item.total_count ?? "");
+            else next.chapter.added = String(item.total_count ?? "");
+          });
+        }
+        return next;
+      });
+    } else {
+      const memberData = data.membership || data.memberships;
+      if (memberData && typeof memberData === "object" && !Array.isArray(memberData)) {
+        setMemberships((prev) => ({
+          chapter: {
+            asOnMarch: cleanVal(memberData.chapter?.asOnMarch) || prev.chapter.asOnMarch,
+            added: cleanVal(memberData.chapter?.added) || prev.chapter.added,
+          },
+          yuva: {
+            asOnMarch: cleanVal(memberData.yuva?.asOnMarch) || prev.yuva.asOnMarch,
+            added: cleanVal(memberData.yuva?.added) || prev.yuva.added,
+          },
+          mahila: {
+            asOnMarch: cleanVal(memberData.mahila?.asOnMarch) || prev.mahila.asOnMarch,
+            added: cleanVal(memberData.mahila?.added) || prev.mahila.added,
+          },
+        }));
+      } else if (data.chapter_members_as_on_march !== undefined || data.as_on_march_chapter !== undefined) {
+        setMemberships((prev) => ({
+          chapter: {
+            asOnMarch: cleanVal(data.chapter_members_as_on_march ?? data.as_on_march_chapter) || prev.chapter.asOnMarch,
+            added: cleanVal(data.chapter_members_added ?? data.added_chapter) || prev.chapter.added,
+          },
+          yuva: {
+            asOnMarch: cleanVal(data.yuva_members_as_on_march ?? data.as_on_march_yuva) || prev.yuva.asOnMarch,
+            added: cleanVal(data.yuva_members_added ?? data.added_yuva) || prev.yuva.added,
+          },
+          mahila: {
+            asOnMarch: cleanVal(data.mahila_members_as_on_march ?? data.as_on_march_mahila) || prev.mahila.asOnMarch,
+            added: cleanVal(data.mahila_members_added ?? data.added_mahila) || prev.mahila.added,
+          },
+        }));
+      }
+    }
+
+    // Section B: Meetings (supports executive_committee_meeting, meetings)
+    const meetList = Array.isArray(data.executive_committee_meeting)
+      ? data.executive_committee_meeting
+      : Array.isArray(data.executive_committee_meetings)
+      ? data.executive_committee_meetings
+      : Array.isArray(data.meeting)
+      ? data.meeting
+      : Array.isArray(data.meetings)
+      ? data.meetings
+      : null;
+    if (meetList) {
+      setMeetings(
+        meetList.map((m, i) => ({
+          id: m.id || i + 1,
+          date: m.meeting_date || m.date || "",
+          type: m.meeting_type || m.type || "Executive Committee Meeting",
+          membersCount: m.total_members || m.membersCount || "",
+          invited: m.members_invited || m.invited || "",
+          attended: m.members_attended || m.attended || "",
+          agenda: m.agenda || "",
+        }))
+      );
+      if (meetList.length === 0 && data.no_meeting_held) {
+        setNoMeetingHeld(true);
+      }
+    }
+
+    // Section C: OTS (supports ots_details: { receipt_no_of_ots, receipt_total_amount })
+    if (data.ots_details && typeof data.ots_details === "object") {
+      if (data.ots_details.receipt_no_of_ots !== undefined) {
+        setOtsCountDuringMonth(cleanVal(data.ots_details.receipt_no_of_ots));
+      }
+      if (data.ots_details.receipt_total_amount !== undefined) {
+        setOtsAmountOverride(Number(data.ots_details.receipt_total_amount));
+      }
+      if (data.ots_details.prp !== undefined || data.ots_details.ots_prp !== undefined) {
+        setOtsPRP(cleanVal(data.ots_details.prp ?? data.ots_details.ots_prp));
+      }
+    } else {
+      if (data.ots_prp !== undefined || data.otsPRP !== undefined) {
+        setOtsPRP(cleanVal(data.ots_prp ?? data.otsPRP));
+      }
+      if (data.ots_count_during_month !== undefined || data.ots_during_month !== undefined || data.ots_count !== undefined) {
+        setOtsCountDuringMonth(cleanVal(data.ots_count_during_month ?? data.ots_during_month ?? data.ots_count));
+      }
+    }
+
+    // Section D: Donations (supports csr_donation_details, non_csr_donation_details, general_donation)
+    if (
+      data.csr_donation_details ||
+      data.general_donation ||
+      data.non_csr_donation_details
+    ) {
+      setDonations((prev) => ({
+        general: {
+          during:
+            data.general_donation?.receipt_total_amount !== undefined
+              ? String(data.general_donation.receipt_total_amount)
+              : prev.general.during,
+          till:
+            data.general_donation?.receipt_total_amount_till !== undefined
+              ? String(data.general_donation.receipt_total_amount_till)
+              : data.general_donation?.receipt_total_amount !== undefined
+              ? String(data.general_donation.receipt_total_amount)
+              : prev.general.till,
+        },
+        csr: {
+          during:
+            data.csr_donation_details?.receipt_total_amount !== undefined
+              ? String(data.csr_donation_details.receipt_total_amount)
+              : prev.csr.during,
+          till:
+            data.csr_donation_details?.receipt_total_amount_till !== undefined
+              ? String(data.csr_donation_details.receipt_total_amount_till)
+              : data.csr_donation_details?.receipt_total_amount !== undefined
+              ? String(data.csr_donation_details.receipt_total_amount)
+              : prev.csr.till,
+        },
+        other: {
+          during:
+            data.non_csr_donation_details?.receipt_total_amount !== undefined
+              ? String(data.non_csr_donation_details.receipt_total_amount)
+              : prev.other.during,
+          till:
+            data.non_csr_donation_details?.receipt_total_amount_till !== undefined
+              ? String(data.non_csr_donation_details.receipt_total_amount_till)
+              : data.non_csr_donation_details?.receipt_total_amount !== undefined
+              ? String(data.non_csr_donation_details.receipt_total_amount)
+              : prev.other.till,
+        },
+      }));
+    } else {
+      const donData = data.donation || data.donations;
+      if (donData && typeof donData === "object" && !Array.isArray(donData) && donData.general) {
+        setDonations((prev) => ({
+          general: {
+            during: cleanVal(donData.general?.during) || prev.general.during,
+            till: cleanVal(donData.general?.till) || prev.general.till,
+          },
+          csr: {
+            during: cleanVal(donData.csr?.during) || prev.csr.during,
+            till: cleanVal(donData.csr?.till) || prev.csr.till,
+          },
+          other: {
+            during: cleanVal(donData.other?.during) || prev.other.during,
+            till: cleanVal(donData.other?.till) || prev.other.till,
+          },
+        }));
+      } else if (data.general_donation_during !== undefined || data.csr_donation_during !== undefined) {
+        setDonations({
+          general: {
+            during: cleanVal(data.general_donation_during),
+            till: cleanVal(data.general_donation_till),
+          },
+          csr: {
+            during: cleanVal(data.csr_donation_during),
+            till: cleanVal(data.csr_donation_till),
+          },
+          other: {
+            during: cleanVal(data.other_donation_during),
+            till: cleanVal(data.other_donation_till),
+          },
+        });
+      }
+    }
+
+    // Section G: Bank Balances (supports cash_bank_balance, bank, banks, cpr_bank)
+    const bankList = Array.isArray(data.cash_bank_balance)
+      ? data.cash_bank_balance
+      : Array.isArray(data.bank)
+      ? data.bank
+      : Array.isArray(data.banks)
+      ? data.banks
+      : Array.isArray(data.bank_balances)
+      ? data.bank_balances
+      : Array.isArray(data.cpr_bank)
+      ? data.cpr_bank
+      : null;
+    if (bankList) {
+      setBankBalances(
+        bankList.map((b, i) => ({
+          id: b.id || i + 1,
+          bankName: b.bank_name || b.bankName || "",
+          balance: b.bank_balance ?? b.balance ?? "",
+        }))
+      );
+    }
+
+    // Section H: Van Yatra (supports vanyatra, vanyatras, cpr_vanyatra)
+    const yatraList = Array.isArray(data.vanyatra)
+      ? data.vanyatra
+      : Array.isArray(data.vanyatras)
+      ? data.vanyatras
+      : Array.isArray(data.cpr_vanyatra)
+      ? data.cpr_vanyatra
+      : null;
+    if (yatraList) {
+      setVanyatras(
+        yatraList.map((y, i) => ({
+          id: y.id || i + 1,
+          date: y.vanyatra_date || y.date || "",
+          yatrisCount: y.no_of_days || y.yatrisCount || "",
+          vidyalayasVisited: y.vanyatra_visited || y.vidyalayasVisited || "",
+          conductedBy: y.conducted_by || "",
+          pravasDone: y.pravas_done || y.pravasDone || "No",
+          remarks: y.remarks || "",
+          image1: y.vanyatra_image1 || "",
+          image2: y.vanyatra_image2 || "",
+        }))
+      );
+    }
+
+    // Section I: Events (supports event, events, cpr_events)
+    const evList = Array.isArray(data.event)
+      ? data.event
+      : Array.isArray(data.events)
+      ? data.events
+      : Array.isArray(data.cpr_events)
+      ? data.cpr_events
+      : null;
+    if (evList) {
+      setEvents(
+        evList.map((ev, i) => ({
+          id: ev.id || i + 1,
+          date: ev.event_date || ev.date || "",
+          type: ev.event_type || ev.type || "",
+          committee: ev.committee || "Yuva Samiti",
+          photos: ev.photos || ev.photos_count || 0,
+        }))
+      );
+    }
+
+    // Section J: Disbursements (Annexure 1 - supports disbursement, disbursements, anchals)
+    const disbList = Array.isArray(data.disbursement)
+      ? data.disbursement
+      : Array.isArray(data.disbursements)
+      ? data.disbursements
+      : Array.isArray(data.cpr_disbursement)
+      ? data.cpr_disbursement
+      : Array.isArray(data.anchals)
+      ? data.anchals
+      : null;
+    if (disbList) {
+      setAnchals(
+        disbList.map((d, i) => ({
+          id: d.id || i + 1,
+          name: d.anchal_name || d.name || "",
+          fundingAnchal: d.funding_anchal || "",
+          acharyasCount: d.no_of_acharyas || d.acharyasCount || "",
+          acharyasPaid: d.no_of_acharyas_paid || "",
+          annualTarget: d.amount || d.annualTarget || "",
+          remittanceLastMonth: d.total_remittance_last_month || d.remittanceLastMonth || "",
+          remittanceThisMonth: d.total_remittance_this_month || d.remittanceThisMonth || "",
+          remittanceDate: d.remittance_date || "",
+          upToMonthPaid: d.up_to_month_paid || "",
+          reportWhenReceived: d.report_when_received || "",
+        }))
+      );
+    }
+
+    // Image URLs base map
+    if (Array.isArray(data.image_url)) {
+      setImageUrls(data.image_url);
+    }
+
+    // Auto-fill previous CPR Details if returned (e.g. from data.cpr_details or data)
+    const cpr = data.cpr_details && typeof data.cpr_details === "object" ? data.cpr_details : data;
+
+    if (cpr.boxes_placed !== undefined && cpr.boxes_placed !== null) {
+      setCollectionBoxes((prev) => ({
+        ...prev,
+        boxesThisMonth: cleanVal(cpr.boxes_placed) || prev.boxesThisMonth,
+        boxesTillDate: cleanVal(cpr.boxes_placed) || prev.boxesTillDate,
+      }));
+    }
+    if (cpr.boxes_amount !== undefined && cpr.boxes_amount !== null) {
+      setCollectionBoxes((prev) => ({
+        ...prev,
+        amountThisMonth: cleanVal(cpr.boxes_amount) || prev.amountThisMonth,
+        amountTillDate: cleanVal(cpr.boxes_amount) || prev.amountTillDate,
+      }));
+    }
+    if (
+      cpr.fixed_deposit !== undefined ||
+      cpr.mutual_fund !== undefined ||
+      cpr.others !== undefined ||
+      cpr.other_specify !== undefined
+    ) {
+      setInvestments((prev) => ({
+        fd: cpr.fixed_deposit !== undefined && cpr.fixed_deposit !== null ? cleanVal(cpr.fixed_deposit) : prev.fd,
+        mutualFund: cpr.mutual_fund !== undefined && cpr.mutual_fund !== null ? cleanVal(cpr.mutual_fund) : prev.mutualFund,
+        others: cpr.others !== undefined && cpr.others !== null ? cleanVal(cpr.others) : prev.others,
+        othersSpecify: cpr.other_specify !== undefined && cpr.other_specify !== null ? cleanVal(cpr.other_specify) : prev.othersSpecify,
+      }));
+    }
+    if (cpr.cash_in_hand !== undefined && cpr.cash_in_hand !== null) {
+      setCashInHand(cleanVal(cpr.cash_in_hand));
+    }
+    if (cpr.csr_status && cleanVal(cpr.csr_status)) {
+      setCsrStatus(cleanVal(cpr.csr_status));
+    }
+    if (cpr.samagri_reached && cleanVal(cpr.samagri_reached)) {
+      setSamagriReached(cleanVal(cpr.samagri_reached));
+    }
+    if (cpr.samagri_reached_note !== undefined && cpr.samagri_reached_note !== null) {
+      setSamagriRemarks(cleanVal(cpr.samagri_reached_note));
+    }
+    if (
+      cpr.nonCsr_donor_boards !== undefined ||
+      cpr.nonCsr_already_sent !== undefined ||
+      cpr.nonCsr_reason !== undefined
+    ) {
+      setDonorBoard((prev) => ({
+        ...prev,
+        nonCsr: {
+          total: cpr.nonCsr_donor_boards !== undefined && cpr.nonCsr_donor_boards !== null ? cleanVal(cpr.nonCsr_donor_boards) : prev.nonCsr.total,
+          sent: cpr.nonCsr_already_sent !== undefined && cpr.nonCsr_already_sent !== null ? cleanVal(cpr.nonCsr_already_sent) : prev.nonCsr.sent,
+          remarks: cpr.nonCsr_reason !== undefined && cpr.nonCsr_reason !== null ? cleanVal(cpr.nonCsr_reason) : prev.nonCsr.remarks,
+        },
+      }));
+    }
+    if (
+      cpr.csr_donor_boards !== undefined ||
+      cpr.csr_already_sent !== undefined ||
+      cpr.csr_reason !== undefined
+    ) {
+      setDonorBoard((prev) => ({
+        ...prev,
+        csr: {
+          total: cpr.csr_donor_boards !== undefined && cpr.csr_donor_boards !== null ? cleanVal(cpr.csr_donor_boards) : prev.csr.total,
+          sent: cpr.csr_already_sent !== undefined && cpr.csr_already_sent !== null ? cleanVal(cpr.csr_already_sent) : prev.csr.sent,
+          remarks: cpr.csr_reason !== undefined && cpr.csr_reason !== null ? cleanVal(cpr.csr_reason) : prev.csr.remarks,
+        },
+      }));
+    }
+    if (cpr.school_progress_report_sent && cleanVal(cpr.school_progress_report_sent)) {
+      setSchoolProgressSent(cleanVal(cpr.school_progress_report_sent));
+    }
+    if (
+      cpr.school_progress_report_sent_reason !== undefined &&
+      cpr.school_progress_report_sent_reason !== null
+    ) {
+      setProgressRemarks(cleanVal(cpr.school_progress_report_sent_reason));
+    }
+    if (cpr.monitoring_anchal_name && cleanVal(cpr.monitoring_anchal_name)) {
+      setSelectedMonitoringAnchal(cleanVal(cpr.monitoring_anchal_name));
+    }
+    if (Array.isArray(data.monitoring_anchals) || Array.isArray(data.anchals_list)) {
+      setMonitoringAnchalsList(data.monitoring_anchals || data.anchals_list);
+    }
+  }, []);
+
+  // Fetch Auto-Fill Details: POST /api/getCPRReportDetails
+  const fetchCPRReportDetails = useCallback(
+    async (fYear, fMonth) => {
+      if (!fYear || !fMonth) return;
+      try {
+        setLoadingDetails(true);
+        const token = Cookies.get("token");
+        console.log(`Triggering POST /api/getCPRReportDetails:`, {
+          financial_year: fYear,
+          financial_month: fMonth,
+        });
+
+        const res = await axios.post(
+          `${BASE_URL}/api/getCPRReportDetails`,
+          {
+            financial_year: fYear,
+            financial_month: fMonth,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("POST /api/getCPRReportDetails response:", res.data);
+        const detailData =
+          res.data?.data ||
+          res.data?.cpr_report_details ||
+          res.data?.cpr_details ||
+          res.data?.details ||
+          res.data;
+
+        if (detailData && typeof detailData === "object") {
+          applyReportDetails(detailData);
+          toast.success(`CPR report details auto-filled for ${fMonth} ${fYear}`);
+        }
+      } catch (err) {
+        console.error("Error fetching getCPRReportDetails:", err);
+        const msg = err?.response?.data?.message || err?.message;
+        if (msg) {
+          toast(`Info: ${msg}`, { icon: "ℹ️" });
+        }
+      } finally {
+        setLoadingDetails(false);
+      }
+    },
+    [applyReportDetails]
+  );
+
+  // Fetch Single CPR Report by ID: GET /api/cpr-report/{id}
+  const fetchReportById = useCallback(
+    async (id) => {
+      if (!id) return;
+      try {
+        setLoadingReport(true);
+        const token = Cookies.get("token");
+        console.log(`Triggering GET /api/cpr-report/${id}...`);
+        const res = await axios.get(`${BASE_URL}/api/cpr-report/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log(`GET /api/cpr-report/${id} response:`, res.data);
+        const report =
+          res.data?.data ||
+          res.data?.cpr_report ||
+          res.data?.report ||
+          res.data;
+
+        if (report && typeof report === "object") {
+          if (report.financial_year) setFinancialYear(report.financial_year);
+          if (report.financial_month) {
+            setMonthName(report.financial_month);
+            const idx = FINANCIAL_MONTHS.indexOf(report.financial_month);
+            if (idx !== -1) setMonthIndex(String(idx + 1));
+          }
+          if (report.name_of_cpp) setCppName(report.name_of_cpp);
+          if (report.submission_date) setSubmissionDate(report.submission_date);
+
+          // Pre-fill manual fields
+          if (report.boxes_placed !== undefined && report.boxes_placed !== null) {
+            setCollectionBoxes((prev) => ({
+              ...prev,
+              boxesThisMonth: cleanVal(report.boxes_placed),
+              boxesTillDate: cleanVal(report.boxes_placed),
+            }));
+          }
+          if (report.boxes_amount !== undefined && report.boxes_amount !== null) {
+            setCollectionBoxes((prev) => ({
+              ...prev,
+              amountThisMonth: cleanVal(report.boxes_amount),
+              amountTillDate: cleanVal(report.boxes_amount),
+            }));
+          }
+
+          setInvestments({
+            fd: cleanVal(report.fixed_deposit),
+            mutualFund: cleanVal(report.mutual_fund),
+            others: cleanVal(report.others),
+            othersSpecify: cleanVal(report.other_specify),
+          });
+
+          if (report.cash_in_hand !== undefined && report.cash_in_hand !== null) {
+            setCashInHand(cleanVal(report.cash_in_hand));
+          }
+          if (report.csr_status && cleanVal(report.csr_status)) {
+            setCsrStatus(cleanVal(report.csr_status));
+          }
+          if (report.samagri_reached && cleanVal(report.samagri_reached)) {
+            setSamagriReached(cleanVal(report.samagri_reached));
+          }
+          if (report.samagri_reached_note !== undefined && report.samagri_reached_note !== null) {
+            setSamagriRemarks(cleanVal(report.samagri_reached_note));
+          }
+
+          setDonorBoard({
+            nonCsr: {
+              total: cleanVal(report.nonCsr_donor_boards),
+              sent: cleanVal(report.nonCsr_already_sent),
+              remarks: cleanVal(report.nonCsr_reason),
+            },
+            csr: {
+              total: cleanVal(report.csr_donor_boards),
+              sent: cleanVal(report.csr_already_sent),
+              remarks: cleanVal(report.csr_reason),
+            },
+          });
+
+          if (report.school_progress_report_sent && cleanVal(report.school_progress_report_sent)) {
+            setSchoolProgressSent(cleanVal(report.school_progress_report_sent));
+          }
+          if (
+            report.school_progress_report_sent_reason !== undefined &&
+            report.school_progress_report_sent_reason !== null
+          ) {
+            setProgressRemarks(cleanVal(report.school_progress_report_sent_reason));
+          }
+          if (report.monitoring_anchal_name && cleanVal(report.monitoring_anchal_name)) {
+            setSelectedMonitoringAnchal(cleanVal(report.monitoring_anchal_name));
+          }
+          if (report.signed_cpr && cleanVal(report.signed_cpr)) {
+            setExistingSignedCprUrl(cleanVal(report.signed_cpr));
+          }
+
+          // Trigger getCPRReportDetails if financial_year & month are present
+          const fy = report.financial_year || financialYear;
+          const fm = report.financial_month || monthName;
+          if (fy && fm) {
+            fetchCPRReportDetails(fy, fm);
+          }
+        }
+      } catch (err) {
+        console.error(`Error loading GET /api/cpr-report/${id}:`, err);
+        toast.error(
+          err?.response?.data?.message || err?.message || "Failed to load CPR report"
+        );
+      } finally {
+        setLoadingReport(false);
+      }
+    },
+    [fetchCPRReportDetails, financialYear, monthName]
+  );
+
+  useEffect(() => {
+    if (reportId) {
+      fetchReportById(reportId);
+    }
+  }, [reportId, fetchReportById]);
+
+  useEffect(() => {
+    if (!reportId && financialYear && monthName) {
+      fetchCPRReportDetails(financialYear, monthName);
+    }
+  }, [fetchCPRReportDetails, financialYear, monthName, reportId]);
+
+  // Build Payload FormData for post cpr-report
+  const buildPayloadFormData = (status) => {
+    const fd = new FormData();
+    const appendStr = (key, val) => {
+      const str = cleanVal(val);
+      if (str === "" || str === "Choose") {
+        fd.append(key, "");
+        return;
+      }
+      fd.append(key, str);
+    };
+
+    appendStr("financial_year", financialYear || "2026-27");
+    appendStr("financial_month", monthName || "April");
+    appendStr("name_of_cpp", cppName);
+    appendStr(
+      "submission_date",
+      submissionDate || new Date().toISOString().split("T")[0]
+    );
+    appendStr("boxes_placed", collectionBoxes.boxesThisMonth);
+    appendStr("boxes_amount", collectionBoxes.amountThisMonth);
+    appendStr("fixed_deposit", investments.fd);
+    appendStr("mutual_fund", investments.mutualFund);
+    appendStr("others", investments.others);
+    appendStr("other_specify", investments.othersSpecify);
+    appendStr("cash_in_hand", cashInHand);
+    appendStr("csr_status", status || "Draft");
+    appendStr("samagri_reached", samagriReached);
+    appendStr("samagri_reached_note", samagriRemarks);
+    appendStr("nonCsr_donor_boards", donorBoard.nonCsr.total);
+    appendStr("nonCsr_already_sent", donorBoard.nonCsr.sent);
+    appendStr("nonCsr_reason", donorBoard.nonCsr.remarks);
+    appendStr("csr_donor_boards", donorBoard.csr.total);
+    appendStr("csr_already_sent", donorBoard.csr.sent);
+    appendStr("csr_reason", donorBoard.csr.remarks);
+    appendStr("school_progress_report_sent", schoolProgressSent);
+    appendStr("school_progress_report_sent_reason", progressRemarks);
+    appendStr("monitoring_anchal_name", selectedMonitoringAnchal);
+
+    if (signedFile instanceof File) {
+      fd.append("signed_cpr", signedFile);
+    } else if (existingSignedCprUrl) {
+      fd.append("signed_cpr", existingSignedCprUrl);
+    } else {
+      fd.append("signed_cpr", "");
+    }
+
+    return fd;
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      setIsSavingDraft(true);
+      const token = Cookies.get("token");
+
+      console.log("Saving CPR Draft (csr_status: Draft)...");
+
+      let response;
+      const targetId = currentReportId || reportId;
+
+      const formData = buildPayloadFormData("Draft");
+      if (targetId) {
+        formData.append("_method", "PUT");
+        response = await axios.post(
+          `${BASE_URL}/api/cpr-report/${targetId}?_method=PUT`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        response = await axios.post(`${BASE_URL}/api/cpr-report`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      console.log("POST /api/cpr-report (draft) response:", response.data);
+      const createdId =
+        response.data?.id ||
+        response.data?.data?.id ||
+        response.data?.cpr_report?.id ||
+        response.data?.cpr_report_id;
+      if (createdId) {
+        setCurrentReportId(createdId);
+      }
+
+      setCsrStatus("Draft");
+      toast.success(response.data?.message || "Draft saved successfully!");
+      const now = new Date();
+      const formatted =
+        now.toLocaleDateString("en-GB") +
+        ", " +
+        now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setSavedAt(formatted);
+
+      // Return to list view so the newly saved draft is immediately visible
+      if (onBack) {
+        setTimeout(() => {
+          onBack();
+        }, 1200);
+      }
+    } catch (err) {
+      console.error("Draft save error:", err);
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to save draft"
+      );
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -414,21 +1230,86 @@ const CPRForm = () => {
   };
 
   const handleSubmit = async () => {
-    if (!chapterName) {
-      toast.error("Please select a Chapter Name first.");
+    if (!financialYear) {
+      toast.error("Please select Financial Year");
       scrollToSection("section-report-details");
       return;
     }
     if (!monthName) {
-      toast.error("Please select a Month first.");
+      toast.error("Please select a Financial Month");
       scrollToSection("section-report-details");
       return;
     }
-    toast.success("Chapter Performance Report submitted successfully!");
-    const success = await handleDownloadPDF();
-    if (success !== false) {
-      handleResetForm();
-      toast.success("Form data has been cleared for next entry.");
+    if (!cppName?.trim()) {
+      toast.error("Name of CPP is required");
+      scrollToSection("section-report-details");
+      return;
+    }
+    if (!submissionDate) {
+      toast.error("Submission Date is required");
+      scrollToSection("section-report-details");
+      return;
+    }
+    if (cashInHand === "") {
+      toast.error("Cash in Hand is required in Section G");
+      scrollToSection("section-g");
+      return;
+    }
+
+    try {
+      setIsGeneratingPdf(true);
+      const token = Cookies.get("token");
+      console.log("Submitting CPR Report (csr_status: Submitted)...");
+
+      let response;
+      const targetId = currentReportId || reportId;
+
+      const formData = buildPayloadFormData("Submitted");
+      if (targetId) {
+        formData.append("_method", "PUT");
+        response = await axios.post(
+          `${BASE_URL}/api/cpr-report/${targetId}?_method=PUT`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        response = await axios.post(`${BASE_URL}/api/cpr-report`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+
+      console.log("POST /api/cpr-report (submitted) response:", response.data);
+      setCsrStatus("Submitted");
+      toast.success(
+        response.data?.message ||
+          "Chapter Performance Report submitted successfully!"
+      );
+
+      // Download PDF
+      await handleDownloadPDF();
+
+      if (onBack) {
+        setTimeout(() => {
+          onBack();
+        }, 1200);
+      }
+    } catch (err) {
+      console.error("Submit CPR error:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to submit CPR report"
+      );
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -499,88 +1380,121 @@ const CPRForm = () => {
             id="section-report-details"
             className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6"
           >
-            <div className="border-b border-slate-100 pb-4">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Chapter Performance Report
-              </h1>
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                  Chapter Performance Report
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
+                  <span>
+                    Financial Year: <strong className="text-slate-800">{financialYear}</strong> | Month: <strong className="text-slate-800">{monthName || "Not Selected"}</strong>
+                  </span>
+                  {loadingReport && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Loading Report #{reportId}...
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchCPRReportDetails(financialYear, monthName)}
+                  disabled={loadingDetails || !monthName}
+                  className="text-xs px-3 py-1.5 border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-700 font-semibold rounded-md flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  title="Re-fetch and auto-fill report details from getCPRReportDetails API"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${
+                      loadingDetails ? "animate-spin" : ""
+                    }`}
+                  />
+                  <span>{loadingDetails ? "Fetching..." : "Refresh Auto-Fill"}</span>
+                </button>
+                {onBack && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="self-start sm:self-auto text-xs px-3.5 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer shadow-sm transition"
+                  >
+                    ← Back to Month List
+                  </button>
+                )}
+              </div>
             </div>
 
+            {/* Auto-Fill Loading Notification */}
+            {loadingDetails && (
+              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-700 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                <span>
+                  Fetching and auto-filling details from <strong>getCPRReportDetails</strong> for {monthName} ({financialYear})...
+                </span>
+              </div>
+            )}
+
             {/* Header Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* Financial Year */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Financial Year <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={financialYear}
+                  onChange={(e) => setFinancialYear(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                >
+                  {getAvailableFinancialYears(
+                    Cookies.get("currentYear") || "2026-27"
+                  ).map((yr) => (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-slate-400 mt-1 block">Active Financial Year</span>
+              </div>
+
               {/* Chapter Name */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Chapter Name <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <select
-                    value={chapterName}
-                    onChange={(e) => setChapterName(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none font-medium"
-                  >
-                    <option value="">Select Chapter</option>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Bengaluru">Bengaluru</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1 block">Set by your login</span>
+                <input
+                  type="text"
+                  value={chapterName}
+                  onChange={(e) => setChapterName(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  placeholder="e.g. Kolkata"
+                />
+                <span className="text-[11px] text-slate-400 mt-1 block">Chapter Name</span>
               </div>
 
               {/* For the Month Of */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  For the Month Of
+                  Financial Month <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="relative col-span-1">
-                    <select
-                      value={monthIndex}
-                      onChange={(e) => setMonthIndex(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none font-medium text-center"
-                    >
-                      <option value="">No.</option>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-1.5 top-3 pointer-events-none" />
-                  </div>
-                  <div className="relative col-span-2">
-                    <select
-                      value={monthName}
-                      onChange={(e) => setMonthName(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none font-medium"
-                    >
-                      <option value="">Select Month</option>
-                      {[
-                        "April",
-                        "May",
-                        "June",
-                        "July",
-                        "August",
-                        "September",
-                        "October",
-                        "November",
-                        "December",
-                        "January",
-                        "February",
-                        "March",
-                      ].map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
-                  </div>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1 block">FY 2026-27</span>
+                <select
+                  value={monthName}
+                  onChange={(e) => {
+                    const m = e.target.value;
+                    setMonthName(m);
+                    const idx = FINANCIAL_MONTHS.indexOf(m);
+                    if (idx !== -1) setMonthIndex(String(idx + 1));
+                  }}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                >
+                  <option value="">Select Month</option>
+                  {availableMonths.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-slate-400 mt-1 block">Report Month</span>
               </div>
 
               {/* Name of CPP */}
@@ -592,9 +1506,10 @@ const CPRForm = () => {
                   type="text"
                   value={cppName}
                   onChange={(e) => setCppName(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  placeholder="Enter name"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  placeholder="Enter CPP name"
                 />
+                <span className="text-[11px] text-slate-400 mt-1 block">Chairman / President</span>
               </div>
 
               {/* Submission Date */}
@@ -602,16 +1517,15 @@ const CPRForm = () => {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Submission Date <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={submissionDate}
-                    onChange={(e) => setSubmissionDate(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={submissionDate}
+                  max={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setSubmissionDate(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                />
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  {submissionDate || "DD/MM/YYYY"}
+                  {submissionDate || "No future dates allowed"}
                 </span>
               </div>
             </div>
@@ -729,7 +1643,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.chapter.asOnMarch}
+                          value={memberships?.chapter?.asOnMarch ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -745,7 +1659,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.chapter.added}
+                          value={memberships?.chapter?.added ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -760,13 +1674,13 @@ const CPRForm = () => {
                       </td>
                       <td className="p-2 border-r border-slate-200">
                         <div className="w-full text-right px-2 py-1.5 rounded border border-dashed border-blue-300 bg-blue-50/50 text-blue-900 font-semibold text-xs">
-                          {memberships.chapter.added !== "" ? memberships.chapter.added : ""}
+                          {memberships?.chapter?.added !== "" ? memberships?.chapter?.added : ""}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="w-full text-right px-2 py-1.5 rounded border border-dashed border-blue-300 bg-blue-50/50 text-blue-900 font-semibold text-xs">
-                          {memberships.chapter.added !== ""
-                            ? formatINR(Number(memberships.chapter.added) * 1000)
+                          {memberships?.chapter?.added !== ""
+                            ? formatINR(Number(memberships?.chapter?.added) * 1000)
                             : ""}
                         </div>
                       </td>
@@ -780,7 +1694,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.yuva.asOnMarch}
+                          value={memberships?.yuva?.asOnMarch ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -793,7 +1707,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.yuva.added}
+                          value={memberships?.yuva?.added ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -805,13 +1719,13 @@ const CPRForm = () => {
                       </td>
                       <td className="p-2 border-r border-slate-200">
                         <div className="w-full text-right px-2 py-1.5 rounded border border-dashed border-blue-300 bg-blue-50/50 text-blue-900 font-semibold text-xs">
-                          {memberships.yuva.added !== "" ? memberships.yuva.added : ""}
+                          {memberships?.yuva?.added !== "" ? memberships?.yuva?.added : ""}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="w-full text-right px-2 py-1.5 rounded border border-dashed border-blue-300 bg-blue-50/50 text-blue-900 font-semibold text-xs">
-                          {memberships.yuva.added !== ""
-                            ? formatINR(Number(memberships.yuva.added) * 1000)
+                          {memberships?.yuva?.added !== ""
+                            ? formatINR(Number(memberships?.yuva?.added) * 1000)
                             : ""}
                         </div>
                       </td>
@@ -825,7 +1739,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.mahila.asOnMarch}
+                          value={memberships?.mahila?.asOnMarch ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -841,7 +1755,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={memberships.mahila.added}
+                          value={memberships?.mahila?.added ?? ""}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -1027,7 +1941,7 @@ const CPRForm = () => {
                 <label className="block text-xs font-semibold text-slate-700">OTS PRP</label>
                 <input
                   type="text"
-                  value={otsPRP}
+                  value={otsPRP ?? ""}
                   onChange={(e) => setOtsPRP(e.target.value)}
                   placeholder="Enter OTS PRP"
                   className="max-w-md w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-none"
@@ -1066,8 +1980,11 @@ const CPRForm = () => {
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
-                            value={otsCountDuringMonth}
-                            onChange={(e) => setOtsCountDuringMonth(e.target.value)}
+                            value={otsCountDuringMonth ?? ""}
+                            onChange={(e) => {
+                              setOtsCountDuringMonth(e.target.value);
+                              setOtsAmountOverride(null);
+                            }}
                             className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-orange-500 focus:outline-none"
                           />
                         </td>
@@ -1142,7 +2059,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={donations.general.during}
+                          value={donations?.general?.during ?? ""}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
@@ -1155,7 +2072,7 @@ const CPRForm = () => {
                       <td className="p-2">
                         <input
                           type="number"
-                          value={donations.general.till}
+                          value={donations?.general?.till ?? ""}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
@@ -1173,7 +2090,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={donations.csr.during}
+                          value={donations?.csr?.during ?? ""}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
@@ -1186,7 +2103,7 @@ const CPRForm = () => {
                       <td className="p-2">
                         <input
                           type="number"
-                          value={donations.csr.till}
+                          value={donations?.csr?.till ?? ""}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
@@ -1250,7 +2167,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={collectionBoxes.boxesThisMonth}
+                          value={collectionBoxes?.boxesThisMonth ?? ""}
                           onChange={(e) =>
                             setCollectionBoxes({
                               ...collectionBoxes,
@@ -1274,7 +2191,7 @@ const CPRForm = () => {
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
-                          value={collectionBoxes.amountThisMonth}
+                          value={collectionBoxes?.amountThisMonth ?? ""}
                           onChange={(e) =>
                             setCollectionBoxes({
                               ...collectionBoxes,
@@ -1321,7 +2238,7 @@ const CPRForm = () => {
                   </label>
                   <input
                     type="number"
-                    value={investments.fd}
+                    value={investments?.fd ?? ""}
                     onChange={(e) =>
                       setInvestments({ ...investments, fd: e.target.value })
                     }
@@ -1334,7 +2251,7 @@ const CPRForm = () => {
                   </label>
                   <input
                     type="number"
-                    value={investments.mutualFund}
+                    value={investments?.mutualFund ?? ""}
                     onChange={(e) =>
                       setInvestments({ ...investments, mutualFund: e.target.value })
                     }
@@ -1347,7 +2264,7 @@ const CPRForm = () => {
                   </label>
                   <input
                     type="number"
-                    value={investments.others}
+                    value={investments?.others ?? ""}
                     onChange={(e) =>
                       setInvestments({ ...investments, others: e.target.value })
                     }
@@ -1360,7 +2277,7 @@ const CPRForm = () => {
                   </label>
                   <input
                     type="text"
-                    value={investments.othersSpecify}
+                    value={investments?.othersSpecify ?? ""}
                     onChange={(e) =>
                       setInvestments({ ...investments, othersSpecify: e.target.value })
                     }
@@ -1403,7 +2320,7 @@ const CPRForm = () => {
                 <input
                   type="number"
                   step="0.01"
-                  value={cashInHand}
+                  value={cashInHand ?? ""}
                   onChange={(e) => setCashInHand(e.target.value)}
                   className="max-w-xs w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none"
                 />
@@ -1475,7 +2392,7 @@ const CPRForm = () => {
                                         item.id === b.id
                                           ? { ...item, customName: e.target.value }
                                           : item
-                                      )
+                                       )
                                     )
                                   }
                                   className="w-full mt-1.5 px-2 py-1 border border-slate-300 rounded text-xs bg-slate-50 focus:outline-none"
@@ -1486,7 +2403,7 @@ const CPRForm = () => {
                               <input
                                 type="number"
                                 step="0.01"
-                                value={b.balance}
+                                value={b.balance ?? ""}
                                 onChange={(e) =>
                                   setBankBalances(
                                     bankBalances.map((item) =>
@@ -1846,7 +2763,7 @@ const CPRForm = () => {
                 </div>
                 <input
                   type="text"
-                  value={samagriRemarks}
+                  value={samagriRemarks ?? ""}
                   onChange={(e) => setSamagriRemarks(e.target.value)}
                   placeholder="Reason / Remarks"
                   className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none"
@@ -1884,7 +2801,7 @@ const CPRForm = () => {
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
-                            value={donorBoard.nonCsr.total}
+                            value={donorBoard?.nonCsr?.total ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -1897,7 +2814,7 @@ const CPRForm = () => {
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
-                            value={donorBoard.nonCsr.sent}
+                            value={donorBoard?.nonCsr?.sent ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -1921,7 +2838,7 @@ const CPRForm = () => {
                         <td className="p-2">
                           <input
                             type="text"
-                            value={donorBoard.nonCsr.remarks}
+                            value={donorBoard?.nonCsr?.remarks ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -1940,7 +2857,7 @@ const CPRForm = () => {
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
-                            value={donorBoard.csr.total}
+                            value={donorBoard?.csr?.total ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -1953,7 +2870,7 @@ const CPRForm = () => {
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
-                            value={donorBoard.csr.sent}
+                            value={donorBoard?.csr?.sent ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -1977,7 +2894,7 @@ const CPRForm = () => {
                         <td className="p-2">
                           <input
                             type="text"
-                            value={donorBoard.csr.remarks}
+                            value={donorBoard?.csr?.remarks ?? ""}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
@@ -2024,7 +2941,7 @@ const CPRForm = () => {
                 </div>
                 <input
                   type="text"
-                  value={progressRemarks}
+                  value={progressRemarks ?? ""}
                   onChange={(e) => setProgressRemarks(e.target.value)}
                   placeholder="Reason / Remarks"
                   className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none"
@@ -2184,6 +3101,21 @@ const CPRForm = () => {
                       PDF, JPG, JPEG, PNG, up to 10 MB
                     </span>
                   </div>
+                  {existingSignedCprUrl && !signedFile && (
+                    <div className="mt-2.5 p-2 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-md">
+                      <span className="text-teal-900 font-medium">
+                        Current Signed CPR Document on record
+                      </span>
+                      <a
+                        href={existingSignedCprUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-700 underline font-semibold hover:text-teal-900 ml-2"
+                      >
+                        View File
+                      </a>
+                    </div>
+                  )}
                   {signedFile && (
                     <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 font-medium">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -2290,35 +3222,68 @@ const CPRForm = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              className="px-4 py-2 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-800 hover:bg-slate-50 transition shadow-xs"
-            >
-              Save Draft
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPdf}
-              className="px-4 py-2 rounded-md border border-teal-600 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 disabled:opacity-50"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download PDF</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isGeneratingPdf}
-              className="px-4 py-2 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50"
-            >
-              {isGeneratingPdf ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              )}
-              <span>Submit CPR</span>
-            </button>
+            {isView ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-800 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+                >
+                  Back to List
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPdf}
+                  className="px-4 py-2 rounded-md border border-teal-600 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {onBack && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="px-4 py-2 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-800 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+                  >
+                    Back to List
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  disabled={isSavingDraft}
+                  className="px-4 py-2 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-800 hover:bg-slate-50 transition shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingDraft ? "Saving..." : "Save Draft"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPdf}
+                  className="px-4 py-2 rounded-md border border-teal-600 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isGeneratingPdf}
+                  className="px-4 py-2 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {isGeneratingPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>Submit CPR</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -2345,6 +3310,7 @@ const CPRForm = () => {
                 <input
                   type="date"
                   value={currentMeeting.date}
+                  max={todayDate}
                   onChange={(e) =>
                     setCurrentMeeting({ ...currentMeeting, date: e.target.value })
                   }
@@ -2458,6 +3424,7 @@ const CPRForm = () => {
                 <input
                   type="date"
                   value={newVanyatra.date}
+                  max={todayDate}
                   onChange={(e) =>
                     setNewVanyatra({ ...newVanyatra, date: e.target.value })
                   }
@@ -2560,6 +3527,7 @@ const CPRForm = () => {
                 <input
                   type="date"
                   value={currentEvent.date}
+                  max={todayDate}
                   onChange={(e) =>
                     setCurrentEvent({ ...currentEvent, date: e.target.value })
                   }
