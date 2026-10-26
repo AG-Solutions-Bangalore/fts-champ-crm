@@ -9,6 +9,8 @@ import {
   Settings2,
   ShieldCheck,
   ShoppingBag,
+  Landmark,
+  FileText,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -166,9 +168,27 @@ const NAVIGATION_CONFIG = {
     },
     CPR_REPORT: {
       title: "CPR Report",
-      url: "/cpr-report",
+      url: "#",
       isActive: false,
       icon: Package,
+      items: [
+        {
+          title: "Bank",
+          url: "/cpr-bank",
+        },
+        {
+          title: "Vanyatra",
+          url: "/cpr-vanyatra",
+        },
+        {
+          title: "Disbursement",
+          url: "/cpr-disbursement",
+        },
+        {
+          title: "Report",
+          url: "/cpr-report",
+        },
+      ],
     },
     REMAINDER: {
       title: "Remainder",
@@ -452,20 +472,18 @@ const useNavigationData = (
       }
     }
 
-    if (isTestUser) {
-      if (!navMain.some((item) => item?.title === "CPR Report")) {
-        const eventIndex = navMain.findIndex(
-          (item) => item?.title === "Event List"
-        );
-        if (eventIndex !== -1) {
-          navMain = [
-            ...navMain.slice(0, eventIndex + 1),
-            NAVIGATION_CONFIG.MODULES.CPR_REPORT,
-            ...navMain.slice(eventIndex + 1),
-          ];
-        } else {
-          navMain = [...navMain, NAVIGATION_CONFIG.MODULES.CPR_REPORT];
-        }
+    if (!navMain.some((item) => item?.title === "CPR Report")) {
+      const eventIndex = navMain.findIndex(
+        (item) => item?.title === "Event List"
+      );
+      if (eventIndex !== -1) {
+        navMain = [
+          ...navMain.slice(0, eventIndex + 1),
+          NAVIGATION_CONFIG.MODULES.CPR_REPORT,
+          ...navMain.slice(eventIndex + 1),
+        ];
+      } else {
+        navMain = [...navMain, NAVIGATION_CONFIG.MODULES.CPR_REPORT];
       }
     }
 
