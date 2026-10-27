@@ -524,6 +524,7 @@ const CPRForm = ({
   const fileInputRef = useRef(null);
   const printableRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Active section tracking for left sticky sidebar
   const [activeNav, setActiveNav] = useState("section-report-details");
@@ -1377,7 +1378,10 @@ const CPRForm = ({
     const toastId = toast.loading("Generating CPR PDF...");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
       const container = printableRef.current;
       const pages = container.querySelectorAll(".pdf-page");
       const pdf = new jsPDF("p", "mm", "a4");
@@ -1386,14 +1390,14 @@ const CPRForm = ({
         for (let i = 0; i < pages.length; i++) {
           if (i > 0) pdf.addPage();
           const canvas = await html2canvas(pages[i], {
-            scale: 2,
+            scale: 3,
             useCORS: true,
             allowTaint: true,
             logging: false,
             backgroundColor: "#ffffff",
           });
           const imgData = canvas.toDataURL("image/png");
-          pdf.addImage(imgData, "PNG", 0, 0, 210, 297, undefined, "FAST");
+          pdf.addImage(imgData, "PNG", 0, 0, 210, 297, undefined, "SLOW");
         }
       } else {
         const canvas = await html2canvas(container, {
@@ -1607,7 +1611,7 @@ const CPRForm = ({
     }
 
     try {
-      setIsGeneratingPdf(true);
+      setIsSubmitting(true);
       const token = Cookies.get("token");
       console.log("Submitting CPR Report (csr_status: Submitted)...");
 
@@ -1643,8 +1647,7 @@ const CPRForm = ({
           "Chapter Performance Report submitted successfully!"
       );
 
-      // Download PDF
-      await handleDownloadPDF();
+      // No PDF download while submitting (per user request)
 
       if (onBack) {
         setTimeout(() => {
@@ -1659,7 +1662,7 @@ const CPRForm = ({
           "Failed to submit CPR report"
       );
     } finally {
-      setIsGeneratingPdf(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -3849,19 +3852,10 @@ const CPRForm = ({
                   ) : (
                     <div className="mt-2">
                       {existingSignedCprUrl ? (
-                        <div className="p-2.5 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-md">
+                        <div className="p-2.5 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-">
                           <span className="text-teal-900 font-medium">
                             Signed CPR Document on record
-                          </span>
-                          <a
-                            href={existingSignedCprUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-teal-700 underline font-semibold hover:text-teal-900 ml-2 inline-flex items-center gap-1"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            View / Download Signed File
-                          </a>
+                          </span>                          
                         </div>
                       ) : (
                         <p className="text-xs text-slate-500 italic">
@@ -3897,19 +3891,19 @@ const CPRForm = ({
                       </p>
                       <button
                         type="button"
-                        disabled={isGeneratingPdf}
+                        disabled={isSubmitting}
                         onClick={handleSubmit}
                         className="mt-3 px-5 py-2.5 rounded bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
                       >
-                        {isGeneratingPdf ? (
+                        {isSubmitting ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Generating CPR PDF...</span>
+                            <span>Submitting CPR...</span>
                           </>
                         ) : (
                           <>
-                            <Download className="w-4 h-4" />
-                            <span>Submit CPR & Download PDF</span>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Submit CPR</span>
                           </>
                         )}
                       </button>
@@ -3926,9 +3920,12 @@ const CPRForm = ({
           position: "fixed",
           top: 0,
           left: 0,
-          zIndex: -50,
+          width: "794px",
+          zIndex: -9999,
           pointerEvents: "none",
+          visibility: isGeneratingPdf ? "visible" : "hidden",
           opacity: isGeneratingPdf ? 1 : 0,
+          backgroundColor: "#ffffff",
         }}
       >
         <CPRPrintReport
@@ -4037,15 +4034,15 @@ const CPRForm = ({
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isGeneratingPdf}
+                  disabled={isSubmitting}
                   className="px-4 py-2 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold transition shadow-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
                 >
-                  {isGeneratingPdf ? (
+                  {isSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   )}
-                  <span>Submit CPR</span>
+                  <span>{isSubmitting ? "Submitting..." : "Submit CPR"}</span>
                 </button>
               </>
             )}
