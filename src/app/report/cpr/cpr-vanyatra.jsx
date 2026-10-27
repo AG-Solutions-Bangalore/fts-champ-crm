@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
+import moment from "moment";
 import BASE_URL from "@/config/base-url";
 import { toast } from "sonner";
 import {
@@ -48,6 +50,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import {
+  getCurrentFinancialYear,
+  fetchFinancialYearsFromApi,
+} from "@/utils/financial-year";
+
 const FINANCIAL_MONTHS = [
   "April",
   "May",
@@ -62,31 +69,6 @@ const FINANCIAL_MONTHS = [
   "February",
   "March",
 ];
-
-// Helper to get current financial year
-const getCurrentFinancialYear = () => {
-  const cookieYear = Cookies.get("currentYear");
-  if (cookieYear) return cookieYear;
-  const now = new Date();
-  const calYear = now.getFullYear();
-  const calMonth = now.getMonth(); // 0 is January, 3 is April
-  const startYr = calMonth < 3 ? calYear - 1 : calYear;
-  return `${startYr}-${String(startYr + 1).slice(-2)}`;
-};
-
-// Generate list of financial years up to current year
-const getAvailableFinancialYears = (currYear) => {
-  const match = currYear?.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return [currYear || "2026-27"];
-  const startYearNum = parseInt(match[1], 10);
-  const years = [];
-  for (let i = 4; i >= 0; i--) {
-    const y = startYearNum - i;
-    const nextYShort = String(y + 1).slice(-2);
-    years.push(`${y}-${nextYShort}`);
-  }
-  return years;
-};
 
 // Helper to get current month name
 const getCurrentMonthName = () => {
@@ -134,6 +116,25 @@ const CPRVanyatra = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Financial Year list strictly from API
+  const [financialYearList, setFinancialYearList] = useState(() => {
+    const c = Cookies.get("currentYear") || currentYear;
+    return c ? [c] : ["2026-27"];
+  });
+
+  useEffect(() => {
+    if (Cookies.get("currentYear")) return;
+    fetchFinancialYearsFromApi().then((list) => {
+      if (list && list.length > 0) {
+        setFinancialYearList(list);
+        setFormData((prev) => ({
+          ...prev,
+          financial_year: list.includes(prev.financial_year) ? prev.financial_year : list[0],
+        }));
+      }
+    });
+  }, [currentYear]);
 
   // Create Modal State (POST /api/cpr-vanyatra)
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -241,9 +242,10 @@ const CPRVanyatra = () => {
       const token = Cookies.get("token");
 
       const response = await axios.get(`${BASE_URL}/api/cpr-vanyatra`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -281,6 +283,13 @@ const CPRVanyatra = () => {
   useEffect(() => {
     fetchVanyatraData();
   }, [fetchVanyatraData]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      handleOpenCreate();
+    }
+  }, [location.state]);
 
   // Open Create Modal
   const handleOpenCreate = () => {
@@ -516,9 +525,10 @@ const CPRVanyatra = () => {
     try {
       const token = Cookies.get("token");
       const res = await axios.get(`${BASE_URL}/api/cpr-vanyatra/${item.id}`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -731,10 +741,7 @@ const CPRVanyatra = () => {
     });
   }, [vanyatraList, search]);
 
-  const availableYears = useMemo(
-    () => getAvailableFinancialYears(currentYear),
-    [currentYear]
-  );
+  const availableYears = financialYearList;
 
   return (
     <div className="w-full min-h-screen bg-white p-6 md:p-8 space-y-6">
@@ -904,7 +911,11 @@ const CPRVanyatra = () => {
                     <TableCell className="py-3 px-5 text-xs text-slate-600 font-medium">
                       <span className="inline-flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {item.vanyatra_date || "—"}
+                        {item.vanyatra_date
+                          ? moment(item.vanyatra_date).isValid()
+                            ? moment(item.vanyatra_date).format("DD-MM-YYYY")
+                            : item.vanyatra_date
+                          : "—"}
                       </span>
                     </TableCell>
 
@@ -1351,6 +1362,12 @@ const CPRVanyatra = () => {
                         {yr}
                       </option>
                     ))}
+                    {editFormData.financial_year &&
+                      !availableYears.includes(editFormData.financial_year) && (
+                        <option value={editFormData.financial_year}>
+                          {editFormData.financial_year}
+                        </option>
+                      )}
                   </select>
                 </div>
                 <div>

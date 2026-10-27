@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Card } from '@/components/ui/card';
@@ -15,23 +15,9 @@ import BASE_URL from '@/config/base-url';
 
 const EventCreate = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    event_name: '',
-    event_description: '',
-    event_date: '',
-    event_time: '',
-    event_type: '',
-    event_for: '',
-    event_image: null,
-    event_status: 'Active',
-  });
-  
-  const [errors, setErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState(null);
-  const [eventForOptions, setEventForOptions] = useState([]);
 
- 
   const eventTypeOptions = [
     { value: 'Meeting', label: 'Meeting', eventForOptions: [
       { value: 'Executive Committee', label: 'Executive Committee' },
@@ -44,6 +30,41 @@ const EventCreate = () => {
       { value: 'All', label: 'All' }
     ]}
   ];
+
+  const initialEventType = location.state?.event_type || '';
+  const initialEventFor = location.state?.event_for || '';
+  const initialEventForOpts = initialEventType
+    ? eventTypeOptions.find(type => type.value === initialEventType)?.eventForOptions || []
+    : [];
+
+  const [formData, setFormData] = useState({
+    event_name: '',
+    event_description: '',
+    event_date: '',
+    event_time: '',
+    event_type: initialEventType,
+    event_for: initialEventFor,
+    event_image: null,
+    event_status: 'Active',
+  });
+  
+  const [errors, setErrors] = useState({});
+  const [imagePreview, setImagePreview] = useState(null);
+  const [eventForOptions, setEventForOptions] = useState(initialEventForOpts);
+
+  useEffect(() => {
+    if (location.state?.event_type) {
+      const selectedType = eventTypeOptions.find(type => type.value === location.state.event_type);
+      setFormData(prev => ({
+        ...prev,
+        event_type: location.state.event_type,
+        event_for: location.state.event_for || prev.event_for,
+      }));
+      if (selectedType) {
+        setEventForOptions(selectedType.eventForOptions);
+      }
+    }
+  }, [location.state]);
 
 
   const { data: existingEvents = [], isLoading: eventsLoading } = useQuery({

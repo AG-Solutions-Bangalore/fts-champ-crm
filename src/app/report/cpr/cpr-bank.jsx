@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
 import BASE_URL from "@/config/base-url";
@@ -43,6 +44,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import {
+  getCurrentFinancialYear,
+  fetchFinancialYearsFromApi,
+} from "@/utils/financial-year";
+
 const FINANCIAL_MONTHS = [
   "April",
   "May",
@@ -57,31 +63,6 @@ const FINANCIAL_MONTHS = [
   "February",
   "March",
 ];
-
-// Helper to get current financial year
-const getCurrentFinancialYear = () => {
-  const cookieYear = Cookies.get("currentYear");
-  if (cookieYear) return cookieYear;
-  const now = new Date();
-  const calYear = now.getFullYear();
-  const calMonth = now.getMonth(); // 0 is January, 3 is April
-  const startYr = calMonth < 3 ? calYear - 1 : calYear;
-  return `${startYr}-${String(startYr + 1).slice(-2)}`;
-};
-
-// Generate list of financial years up to current year (no future years allowed)
-const getAvailableFinancialYears = (currYear) => {
-  const match = currYear?.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return [currYear || "2026-27"];
-  const startYearNum = parseInt(match[1], 10);
-  const years = [];
-  for (let i = 4; i >= 0; i--) {
-    const y = startYearNum - i;
-    const nextYShort = String(y + 1).slice(-2);
-    years.push(`${y}-${nextYShort}`);
-  }
-  return years;
-};
 
 // Helper to get current month name (e.g. "October")
 const getCurrentMonthName = () => {
@@ -110,6 +91,25 @@ const CPRBank = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Financial Year list strictly from API
+  const [financialYearList, setFinancialYearList] = useState(() => {
+    const c = Cookies.get("currentYear") || currentYear;
+    return c ? [c] : ["2026-27"];
+  });
+
+  useEffect(() => {
+    if (Cookies.get("currentYear")) return;
+    fetchFinancialYearsFromApi().then((list) => {
+      if (list && list.length > 0) {
+        setFinancialYearList(list);
+        setFormData((prev) => ({
+          ...prev,
+          financial_year: list.includes(prev.financial_year) ? prev.financial_year : list[0],
+        }));
+      }
+    });
+  }, [currentYear]);
 
   // Post CPR Bank Form & Modal State
   const [openModal, setOpenModal] = useState(false);
@@ -145,9 +145,10 @@ const CPRBank = () => {
       const token = Cookies.get("token");
 
       const response = await axios.get(`${BASE_URL}/api/cpr-bank`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -186,6 +187,13 @@ const CPRBank = () => {
   useEffect(() => {
     fetchBankData();
   }, [fetchBankData]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      handleOpenModal();
+    }
+  }, [location.state]);
 
   // Open modal with current financial year and current month as default
   const handleOpenModal = () => {
@@ -306,9 +314,10 @@ const CPRBank = () => {
     try {
       const token = Cookies.get("token");
       const res = await axios.get(`${BASE_URL}/api/cpr-bank/${item.id}`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -723,7 +732,7 @@ const CPRBank = () => {
                   className="w-full h-9 border border-slate-300 rounded-md px-3 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 font-medium"
                   required
                 >
-                  {getAvailableFinancialYears(currentYear).map((y) => (
+                  {financialYearList.map((y) => (
                     <option key={y} value={y}>
                       {y}
                     </option>
@@ -893,11 +902,17 @@ const CPRBank = () => {
                     className="w-full h-9 border border-slate-300 rounded-md px-3 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 font-medium"
                     required
                   >
-                    {getAvailableFinancialYears(currentYear).map((y) => (
+                    {financialYearList.map((y) => (
                       <option key={y} value={y}>
                         {y}
                       </option>
                     ))}
+                    {editFormData.financial_year &&
+                      !financialYearList.includes(editFormData.financial_year) && (
+                        <option value={editFormData.financial_year}>
+                          {editFormData.financial_year}
+                        </option>
+                      )}
                   </select>
                 </div>
 

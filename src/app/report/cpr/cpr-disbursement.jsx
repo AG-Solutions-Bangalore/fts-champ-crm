@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
+import moment from "moment";
 import BASE_URL from "@/config/base-url";
 import { toast } from "sonner";
 import {
@@ -15,6 +17,7 @@ import {
   Building2,
   Calendar,
   IndianRupee,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +49,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import {
+  getCurrentFinancialYear,
+  fetchFinancialYearsFromApi,
+} from "@/utils/financial-year";
+
 const FINANCIAL_MONTHS = [
   "April",
   "May",
@@ -60,31 +68,6 @@ const FINANCIAL_MONTHS = [
   "February",
   "March",
 ];
-
-// Helper to get current financial year (e.g. "2026-27")
-const getCurrentFinancialYear = () => {
-  const cookieYear = Cookies.get("currentYear");
-  if (cookieYear) return cookieYear;
-  const now = new Date();
-  const calYear = now.getFullYear();
-  const calMonth = now.getMonth(); // 0 is January, 3 is April
-  const startYr = calMonth < 3 ? calYear - 1 : calYear;
-  return `${startYr}-${String(startYr + 1).slice(-2)}`;
-};
-
-// Generate list of financial years up to current year (no future years)
-const getAvailableFinancialYears = (currYear) => {
-  const match = currYear?.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return [currYear || "2026-27"];
-  const startYearNum = parseInt(match[1], 10);
-  const years = [];
-  for (let i = 4; i >= 0; i--) {
-    const y = startYearNum - i;
-    const nextYShort = String(y + 1).slice(-2);
-    years.push(`${y}-${nextYShort}`);
-  }
-  return years;
-};
 
 // Helper to get current month name (e.g. "October")
 const getCurrentMonthName = () => {
@@ -113,6 +96,21 @@ const getTodayDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+// Helper to extract clean label from anchal item
+const getAnchalLabel = (item, idx = 0) => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  return (
+    item.anchal_name ||
+    item.name ||
+    item.anchal ||
+    item.title ||
+    item.label ||
+    item.anchal_master_name ||
+    `Anchal ${idx + 1}`
+  );
+};
+
 const CPRDisbursement = () => {
   const currentYear = useMemo(() => getCurrentFinancialYear(), []);
   const currentMonth = useMemo(() => getCurrentMonthName(), []);
@@ -127,6 +125,25 @@ const CPRDisbursement = () => {
   // Anchals list from POST /api/getAnchal
   const [anchalOptions, setAnchalOptions] = useState([]);
   const [loadingAnchals, setLoadingAnchals] = useState(false);
+
+  // Financial Year list strictly from API
+  const [financialYearList, setFinancialYearList] = useState(() => {
+    const c = Cookies.get("currentYear") || currentYear;
+    return c ? [c] : ["2026-27"];
+  });
+
+  useEffect(() => {
+    if (Cookies.get("currentYear")) return;
+    fetchFinancialYearsFromApi().then((list) => {
+      if (list && list.length > 0) {
+        setFinancialYearList(list);
+        setFormData((prev) => ({
+          ...prev,
+          financial_year: list.includes(prev.financial_year) ? prev.financial_year : list[0],
+        }));
+      }
+    });
+  }, [currentYear]);
 
   // Create Modal State (POST /api/cpr-disbursement)
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -182,29 +199,62 @@ const CPRDisbursement = () => {
     try {
       setLoadingAnchals(true);
       const token = Cookies.get("token");
-      const payload = { financial_year: year || currentYear };
-      console.log("Calling POST /api/getAnchal payload:", payload);
+      const targetYear = year || currentYear;
+      console.log("Calling POST /api/getAnchal payload with year:", targetYear);
 
-      const res = await axios.post(`${BASE_URL}/api/getAnchal`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      let raw = null;
+      try {
+        const payload = { financial_year: targetYear };
+        const res = await axios.post(`${BASE_URL}/api/getAnchal`, payload, {
+          params: { financial_year: targetYear },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        console.log("POST /api/getAnchal (JSON) response:", res.data);
+        raw = res.data;
+      } catch (err) {
+        console.warn("JSON POST /api/getAnchal failed, trying FormData fallback:", err);
+        const fd = new FormData();
+        fd.append("financial_year", targetYear);
+        const res2 = await axios.post(`${BASE_URL}/api/getAnchal`, fd, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log("POST /api/getAnchal (FormData) response:", res2.data);
+        raw = res2.data;
+      }
 
-      console.log("POST /api/getAnchal response:", res.data);
-      const raw = res.data;
-      const list = Array.isArray(raw)
-        ? raw
-        : Array.isArray(raw?.data)
-        ? raw.data
-        : Array.isArray(raw?.anchals)
-        ? raw.anchals
-        : [];
+      // Extract list from all possible response shapes
+      let list = [];
+      if (Array.isArray(raw)) {
+        list = raw;
+      } else if (Array.isArray(raw?.data)) {
+        list = raw.data;
+      } else if (Array.isArray(raw?.anchal)) {
+        list = raw.anchal;
+      } else if (Array.isArray(raw?.anchals)) {
+        list = raw.anchals;
+      } else if (Array.isArray(raw?.data?.anchal)) {
+        list = raw.data.anchal;
+      } else if (Array.isArray(raw?.data?.anchals)) {
+        list = raw.data.anchals;
+      } else if (Array.isArray(raw?.anchal_list)) {
+        list = raw.anchal_list;
+      } else if (Array.isArray(raw?.data?.anchal_list)) {
+        list = raw.data.anchal_list;
+      } else if (Array.isArray(raw?.result)) {
+        list = raw.result;
+      } else if (Array.isArray(raw?.data?.result)) {
+        list = raw.data.result;
+      } else if (raw?.data && typeof raw.data === "object") {
+        list = Object.values(raw.data).filter(Boolean);
+      }
       setAnchalOptions(list);
     } catch (err) {
       console.error("Error fetching getAnchal:", err);
-      // Fail silently without blocking manual entry
     } finally {
       setLoadingAnchals(false);
     }
@@ -219,9 +269,10 @@ const CPRDisbursement = () => {
 
       console.log("Triggering GET /api/cpr-disbursement");
       const response = await axios.get(`${BASE_URL}/api/cpr-disbursement`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -258,6 +309,13 @@ const CPRDisbursement = () => {
     fetchDisbursementData();
     fetchAnchals(currentYear);
   }, [fetchDisbursementData, fetchAnchals, currentYear]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      handleOpenCreate();
+    }
+  }, [location.state]);
 
   // Open Create Modal
   const handleOpenCreate = () => {
@@ -330,17 +388,34 @@ const CPRDisbursement = () => {
   // Handle Anchal Selection for sub-row
   const handleSelectAnchalForSub = (index, anchalVal) => {
     const matched = anchalOptions.find(
-      (a) =>
-        (a.anchal_name || a.name || a.title || "") === anchalVal ||
-        String(a.id) === anchalVal
+      (a, aIdx) =>
+        getAnchalLabel(a, aIdx) === anchalVal ||
+        String(a?.id) === anchalVal
     );
+    const matchedName = matched ? getAnchalLabel(matched) : anchalVal;
     setFormData((prev) => {
       const updated = [...prev.subs];
       updated[index] = {
         ...updated[index],
-        anchal_name: matched ? (matched.anchal_name || matched.name || anchalVal) : anchalVal,
-        no_of_acharyas: matched?.no_of_acharyas || matched?.acharyas || updated[index].no_of_acharyas || "",
-        amount: matched?.amount || matched?.target || updated[index].amount || "",
+        anchal_name: matchedName,
+        funding_anchal:
+          matched?.funding_anchal ||
+          matched?.fundingAnchal ||
+          updated[index].funding_anchal ||
+          "",
+        no_of_acharyas:
+          matched?.no_of_acharyas ||
+          matched?.acharyas ||
+          matched?.acharyasCount ||
+          matched?.no_of_acharyas_paid ||
+          updated[index].no_of_acharyas ||
+          "",
+        amount:
+          matched?.amount ||
+          matched?.annualTarget ||
+          matched?.target ||
+          updated[index].amount ||
+          "",
       };
       return { ...prev, subs: updated };
     });
@@ -510,13 +585,15 @@ const CPRDisbursement = () => {
     });
     setOpenEditModal(true);
     setFetchingEdit(true);
+    fetchAnchals(finYear);
 
     try {
       const token = Cookies.get("token");
       const res = await axios.get(`${BASE_URL}/api/cpr-disbursement/${item.id}`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -735,10 +812,7 @@ const CPRDisbursement = () => {
     });
   }, [disbursementList, search]);
 
-  const availableYears = useMemo(
-    () => getAvailableFinancialYears(currentYear),
-    [currentYear]
-  );
+  const availableYears = financialYearList;
 
   return (
     <div className="w-full min-h-screen bg-white p-6 md:p-8 space-y-6">
@@ -927,7 +1001,11 @@ const CPRDisbursement = () => {
                       {item.up_to_month_paid || "—"}
                     </TableCell>
                     <TableCell className="py-3 px-3 text-xs text-slate-700">
-                      {item.remittance_date || "—"}
+                      {item.remittance_date
+                        ? moment(item.remittance_date).isValid()
+                          ? moment(item.remittance_date).format("DD-MM-YYYY")
+                          : item.remittance_date
+                        : "—"}
                     </TableCell>
                     <TableCell className="py-3 px-4 text-xs text-right font-semibold text-emerald-700">
                       {item.total_remittance_this_month !== undefined &&
@@ -1094,39 +1172,40 @@ const CPRDisbursement = () => {
                       <label className="block font-semibold text-slate-700 mb-1">
                         Anchal Name <span className="text-red-500">*</span>
                       </label>
-                      {anchalOptions.length > 0 ? (
-                        <div className="space-y-1">
-                          <select
-                            value={sub.anchal_name}
-                            onChange={(e) =>
-                              handleSelectAnchalForSub(idx, e.target.value)
-                            }
-                            className="w-full h-9 border border-slate-300 rounded-md px-3 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-                            required
-                          >
-                            <option value="">-- Select Anchal --</option>
-                            {anchalOptions.map((a, aIdx) => {
-                              const aName = a.anchal_name || a.name || a.title || `Anchal ${aIdx + 1}`;
-                              return (
-                                <option key={a.id || aIdx} value={aName}>
-                                  {aName}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-                      ) : (
-                        <Input
-                          type="text"
+                      <div className="relative">
+                        <select
                           value={sub.anchal_name}
                           onChange={(e) =>
-                            handleSubChange(idx, "anchal_name", e.target.value)
+                            handleSelectAnchalForSub(idx, e.target.value)
                           }
-                          placeholder="e.g. Purulia Anchal"
-                          className="text-xs h-9 bg-white"
+                          className="w-full h-9 border border-slate-300 rounded-md px-3 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none pr-8 font-medium"
                           required
-                        />
-                      )}
+                        >
+                          <option value="">
+                            {loadingAnchals
+                              ? "Loading Anchals..."
+                              : "-- Select Anchal --"}
+                          </option>
+                          {anchalOptions.map((a, aIdx) => {
+                            const aName = getAnchalLabel(a, aIdx);
+                            return (
+                              <option key={a?.id || aIdx} value={aName}>
+                                {aName}
+                              </option>
+                            );
+                          })}
+                          {sub.anchal_name &&
+                            !anchalOptions.some(
+                              (a, aIdx) =>
+                                getAnchalLabel(a, aIdx) === sub.anchal_name
+                            ) && (
+                              <option value={sub.anchal_name}>
+                                {sub.anchal_name}
+                              </option>
+                            )}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                      </div>
                     </div>
 
                     {/* Funding Anchal */}
@@ -1402,6 +1481,12 @@ const CPRDisbursement = () => {
                         {yr}
                       </option>
                     ))}
+                    {editFormData.financial_year &&
+                      !availableYears.includes(editFormData.financial_year) && (
+                        <option value={editFormData.financial_year}>
+                          {editFormData.financial_year}
+                        </option>
+                      )}
                   </select>
                 </div>
                 <div>
@@ -1437,18 +1522,69 @@ const CPRDisbursement = () => {
                   <label className="block font-semibold text-slate-700 mb-1">
                     Anchal Name <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    type="text"
-                    value={editFormData.anchal_name}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        anchal_name: e.target.value,
-                      })
-                    }
-                    className="text-xs h-9 bg-white"
-                    required
-                  />
+                  <div className="relative">
+                    <select
+                      value={editFormData.anchal_name}
+                      onChange={(e) => {
+                        const anchalVal = e.target.value;
+                        const matched = anchalOptions.find(
+                          (a, aIdx) =>
+                            getAnchalLabel(a, aIdx) === anchalVal ||
+                            String(a?.id) === anchalVal
+                        );
+                        const matchedName = matched
+                          ? getAnchalLabel(matched)
+                          : anchalVal;
+                        setEditFormData({
+                          ...editFormData,
+                          anchal_name: matchedName,
+                          funding_anchal:
+                            matched?.funding_anchal ||
+                            matched?.fundingAnchal ||
+                            editFormData.funding_anchal ||
+                            "",
+                          no_of_acharyas:
+                            matched?.no_of_acharyas ||
+                            matched?.acharyas ||
+                            matched?.acharyasCount ||
+                            editFormData.no_of_acharyas ||
+                            "",
+                          amount:
+                            matched?.amount ||
+                            matched?.annualTarget ||
+                            matched?.target ||
+                            editFormData.amount ||
+                            "",
+                        });
+                      }}
+                      className="w-full h-9 border border-slate-300 rounded-md px-3 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none pr-8 font-medium"
+                      required
+                    >
+                      <option value="">
+                        {loadingAnchals
+                          ? "Loading Anchals..."
+                          : "-- Select Anchal --"}
+                      </option>
+                      {anchalOptions.map((a, aIdx) => {
+                        const aName = getAnchalLabel(a, aIdx);
+                        return (
+                          <option key={a?.id || aIdx} value={aName}>
+                            {aName}
+                          </option>
+                        );
+                      })}
+                      {editFormData.anchal_name &&
+                        !anchalOptions.some(
+                          (a, aIdx) =>
+                            getAnchalLabel(a, aIdx) === editFormData.anchal_name
+                        ) && (
+                          <option value={editFormData.anchal_name}>
+                            {editFormData.anchal_name}
+                          </option>
+                        )}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                  </div>
                 </div>
 
                 {/* Funding Anchal */}

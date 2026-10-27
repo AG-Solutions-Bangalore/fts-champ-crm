@@ -31,15 +31,21 @@ const FINANCIAL_MONTHS = [
   "March",
 ];
 
-// Helper to get current financial year
-const getCurrentFinancialYear = () => {
-  const cookieYear = Cookies.get("currentYear");
-  if (cookieYear) return cookieYear;
-  const now = new Date();
-  const calYear = now.getFullYear();
-  const calMonth = now.getMonth(); // 0 = Jan, 3 = April
-  const startYr = calMonth < 3 ? calYear - 1 : calYear;
-  return `${startYr}-${String(startYr + 1).slice(-2)}`;
+import moment from "moment";
+import {
+  getCurrentFinancialYear,
+  fetchFinancialYearsFromApi,
+} from "@/utils/financial-year";
+
+// Helper for DD-MM-YYYY date formatting
+const formatDDMMYYYY = (dateVal) => {
+  if (!dateVal || dateVal === "—") return "—";
+  try {
+    const m = moment(dateVal);
+    return m.isValid() ? m.format("DD-MM-YYYY") : String(dateVal);
+  } catch {
+    return String(dateVal || "—");
+  }
 };
 
 const CPRReportList = ({ onStartOrCreate }) => {
@@ -53,20 +59,24 @@ const CPRReportList = ({ onStartOrCreate }) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Available FYs for filter
-  const availableYears = useMemo(() => {
-    const list = [currentFY];
-    const match = currentFY?.match(/^(\d{4})-(\d{2})$/);
-    if (match) {
-      const startYearNum = parseInt(match[1], 10);
-      for (let i = 1; i <= 4; i++) {
-        const y = startYearNum - i;
-        const nextYShort = String(y + 1).slice(-2);
-        list.push(`${y}-${nextYShort}`);
+  const [financialYearList, setFinancialYearList] = useState(() => {
+    const c = Cookies.get("currentYear") || currentFY;
+    return c ? [c] : ["2026-27"];
+  });
+
+  useEffect(() => {
+    if (Cookies.get("currentYear")) return;
+    fetchFinancialYearsFromApi().then((list) => {
+      if (list && list.length > 0) {
+        setFinancialYearList(list);
+        if (!selectedFY || !list.includes(selectedFY)) {
+          setSelectedFY(list[0]);
+        }
       }
-    }
-    return list;
+    });
   }, [currentFY]);
+
+  const availableYears = financialYearList;
 
   // Fetch GET /api/cpr-report
   const fetchReports = useCallback(async () => {
@@ -74,9 +84,10 @@ const CPRReportList = ({ onStartOrCreate }) => {
       setLoading(true);
       const token = Cookies.get("token");
       const res = await axios.get(`${BASE_URL}/api/cpr-report`, {
+        timeout: 10000,
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -236,13 +247,19 @@ const CPRReportList = ({ onStartOrCreate }) => {
         const query = searchTerm.toLowerCase();
         const ch = (report.chapter_name || report.name_of_cpp || report.cpp_name || "").toLowerCase();
         const m = (report.financial_month || report.month || "").toLowerCase();
-        const fy = (report.financial_year || report.year || "").toLowerCase();
-        const d = (report.submission_date || "").toLowerCase();
+        const rawD = String(
+          report.submission_date ||
+          report.submissionDate ||
+          (typeof report.created_at === "string" ? report.created_at.slice(0, 10) : report.created_at || "") ||
+          ""
+        ).toLowerCase();
+        const formattedD = rawD && rawD !== "—" ? formatDDMMYYYY(rawD).toLowerCase() : "";
         return (
           ch.includes(query) ||
           m.includes(query) ||
           fy.includes(query) ||
-          d.includes(query) ||
+          rawD.includes(query) ||
+          (formattedD && formattedD.includes(query)) ||
           statusText.includes(query)
         );
       }
@@ -434,10 +451,11 @@ const CPRReportList = ({ onStartOrCreate }) => {
                       report.financial_month ||
                       report.month ||
                       "—";
-                    const rDate =
+                    const rawDate =
                       report.submission_date ||
                       report.submissionDate ||
-                      (report.created_at ? report.created_at.slice(0, 10) : "—");
+                      (typeof report.created_at === "string" ? report.created_at.slice(0, 10) : report.created_at || "");
+                    const rDate = formatDDMMYYYY(rawDate);
 
                     return (
                       <tr

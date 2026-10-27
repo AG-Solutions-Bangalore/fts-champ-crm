@@ -1,27 +1,69 @@
 import React, { forwardRef } from "react";
-import Logo1 from "../../../assets/receipt/fts.png";
-import Logo3 from "../../../assets/receipt/ekal.png";
+
+// Helper for Indian Currency Formatting with "Rs." prefix matching the required CPR format
+const formatRs = (val, defaultValue = "") => {
+  if (val === undefined || val === null || val === "" || isNaN(val)) {
+    return defaultValue;
+  }
+  const num = Number(val);
+  return "Rs. " + num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
+// Helper for Indian Date formatting DD-MM-YYYY
+const formatDateDDMMYYYY = (dateVal) => {
+  if (!dateVal) {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, "0");
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const y = now.getFullYear();
+    return `${d}-${m}-${y}`;
+  }
+  try {
+    const dObj = new Date(dateVal);
+    if (isNaN(dObj.getTime())) return String(dateVal);
+    const d = String(dObj.getDate()).padStart(2, "0");
+    const m = String(dObj.getMonth() + 1).padStart(2, "0");
+    const y = dObj.getFullYear();
+    return `${d}-${m}-${y}`;
+  } catch {
+    return String(dateVal);
+  }
+};
+
+// Helper for Generated timestamp YYYY-MM-DD HH:mm:ss
+const getGeneratedTimestamp = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+};
 
 const CPRPrintReport = forwardRef(
   (
     {
-      chapterName,
-      monthIndex,
-      monthName,
-      cppName,
-      submissionDate,
+      chapterName = "Kolkata (CH29)",
+      monthIndex = "08",
+      monthName = "August",
+      financialYear = "2026-27",
+      cppName = "Suresh Kumar Dhanuka",
+      submissionDate = "",
       subChapters = [],
       memberships = { chapter: {}, yuva: {}, mahila: {} },
       sectionATotals = {},
       noMeetingHeld = false,
       meetings = [],
-      otsPRP = "",
-      otsCountDuringMonth = "",
-      otsCountTillDate = "",
+      otsPRP = "0",
+      otsCountDuringMonth = "0",
+      otsCountTillDate = "0",
       otsAmountDuringMonth = 0,
       otsAmountTillDate = 0,
       donations = { general: {}, csr: {}, other: {} },
       donationTotals = {},
+      csrSchoolsCount = "0",
       collectionBoxes = {},
       investments = {},
       totalInvestment = "",
@@ -30,225 +72,306 @@ const CPRPrintReport = forwardRef(
       totalBankBalance = "",
       totalCashAndBank = "",
       vanyatras = [],
+      vanyatrasCountThisMonth = 0,
+      vanyatrasCountTillDate = 0,
       events = [],
       anchals = [],
-      samagriReached = "No",
+      samagriReached = "Yes",
       samagriRemarks = "",
       donorBoard = { nonCsr: {}, csr: {} },
       schoolProgressSent = "No",
       progressRemarks = "",
-      selectedMonitoringAnchal = "Choose",
+      selectedMonitoringAnchal = "",
       monitoringAnchalsList = [],
-      signedFile = null,
-      formatINR = (v) => v,
+      reportId = "",
+      csrStatus = "For signature by the President and Secretary",
     },
     ref
   ) => {
-    const today = new Date().toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    // Current year calculation
+    const matchFY = (financialYear || "2026-27").match(/^(\d{4})/);
+    const startYear = matchFY ? matchFY[1] : "2026";
+    const reportMonthYear = `${monthName || "August"} ${startYear}`;
+    const displaySubDate = formatDateDDMMYYYY(submissionDate);
+    const generatedTimestamp = getGeneratedTimestamp();
 
-    const displaySubDate = submissionDate
-      ? new Date(submissionDate).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : today;
+    // Cumulative membership calculation (As on March + Added)
+    const cumulativeChapter =
+      (Number(memberships.chapter?.asOnMarch) || 0) +
+      (Number(memberships.chapter?.added) || 0);
+    const cumulativeYuva =
+      (Number(memberships.yuva?.asOnMarch) || 0) +
+      (Number(memberships.yuva?.added) || 0);
+    const cumulativeMahila =
+      (Number(memberships.mahila?.asOnMarch) || 0) +
+      (Number(memberships.mahila?.added) || 0);
+
+    // Section A Membership Received Amount
+    const amountChapter = (Number(memberships.chapter?.added) || 0) * 1000;
+    const amountYuva = (Number(memberships.yuva?.added) || 0) * 1000;
+    const amountMahila = (Number(memberships.mahila?.added) || 0) * 1000;
+    const amountTotal = amountChapter + amountYuva + amountMahila;
+
+    // OTS calculations
+    const otsDuringCountNum = Number(otsCountDuringMonth) || 0;
+    const otsTillCountNum = Number(otsCountTillDate || otsCountDuringMonth) || 0;
+    const otsDuringAmt = otsAmountDuringMonth || otsDuringCountNum * 30000;
+    const otsTillAmt = otsAmountTillDate || otsTillCountNum * 30000;
+
+    // Section D Donation Totals
+    const nonCsrTill = donations.other?.till ?? "";
+    const csrTill = donations.csr?.till ?? "";
+    const totalDonationTill =
+      (Number(nonCsrTill) || 0) + (Number(csrTill) || 0) || "";
+
+    // Section J Totals
+    const totalAcharyasPaid = anchals.reduce(
+      (acc, a) => acc + (Number(a.acharyasPaid) || 0),
+      0
+    );
+    const totalRemittanceTillLast = anchals.reduce(
+      (acc, a) => acc + (Number(a.remittanceLastMonth) || 0),
+      0
+    );
+    const totalRemittanceThisMonth = anchals.reduce(
+      (acc, a) => acc + (Number(a.remittanceThisMonth) || 0),
+      0
+    );
+    const totalPrpAcharyas = anchals.reduce(
+      (acc, a) => acc + (Number(a.acharyasCount) || 0),
+      0
+    );
+    const totalPrpAmount = anchals.reduce(
+      (acc, a) => acc + (Number(a.annualTarget) || 0),
+      0
+    );
+
+    // Monitoring Anchal text
+    const monitoringAnchalDisplay =
+      selectedMonitoringAnchal && selectedMonitoringAnchal !== "Choose"
+        ? selectedMonitoringAnchal
+        : monitoringAnchalsList.length > 0
+        ? monitoringAnchalsList.join(", ")
+        : "Ambasha";
+
+    // Auto-formatted Report ID
+    const formattedReportId =
+      reportId ||
+      `CH29_${financialYear || "2026-27"}_${String(monthIndex || "08").padStart(
+        2,
+        "0"
+      )}_CHAPTER`;
 
     return (
-      <div ref={ref} className="cpr-printable-root text-slate-900 bg-white font-sans">
+      <div ref={ref} className="cpr-printable-root bg-white text-slate-900">
         <style>{`
           .pdf-page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 10mm 12mm;
+            width: 794px;
+            min-height: 1123px;
+            max-height: 1123px;
+            padding: 30px 40px 32px 40px;
             box-sizing: border-box;
             background-color: #ffffff;
             color: #0f172a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             position: relative;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
           }
           .cpr-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
+            table-layout: fixed;
+            font-family: Arial, Helvetica, sans-serif;
+            margin-bottom: 3px;
           }
           .cpr-table th {
-            background-color: #f1f5f9;
+            background-color: #ffffff;
             color: #0f172a;
             font-weight: 700;
-            border: 1px solid #cbd5e1;
-            padding: 4px 6px;
-            text-align: left;
+            font-size: 8.5px;
+            line-height: 1.35;
+            border: 1px solid #475569;
+            padding: 4px 5px;
+            vertical-align: middle;
+            box-sizing: border-box;
           }
           .cpr-table td {
-            border: 1px solid #cbd5e1;
-            padding: 4px 6px;
-            color: #1e293b;
+            border: 1px solid #475569;
+            padding: 3.5px 5px;
+            font-size: 8.5px;
+            line-height: 1.35;
+            color: #0f172a;
+            vertical-align: middle;
+            box-sizing: border-box;
           }
-          .cpr-table tr:nth-child(even) td {
-            background-color: #f8fafc;
-          }
-          .cpr-section-header {
-            font-size: 11px;
+          .cpr-heading {
+            font-size: 10px;
             font-weight: 700;
-            color: #1e3a8a;
-            background-color: #e0e7ff;
-            padding: 4px 8px;
-            border-left: 4px solid #1d4ed8;
-            margin-top: 8px;
-            margin-bottom: 4px;
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-top: 6px;
+            margin-bottom: 2px;
+            line-height: 1.2;
+          }
+          .cpr-subheading {
+            font-size: 9px;
+            font-weight: 700;
+            color: #c2410c;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+          }
+          .table-header-box {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #334155;
+            font-family: Arial, Helvetica, sans-serif;
+            margin-bottom: 8px;
+          }
+          .table-header-box td {
+            border: 1px solid #334155;
+            padding: 4px 8px;
+            vertical-align: middle;
+            box-sizing: border-box;
           }
         `}</style>
 
-        {/* ================= PAGE 1 ================= */}
+        {/* ========================================================= */}
+        {/* ======================== PAGE 1 ========================= */}
+        {/* ========================================================= */}
         <div className="pdf-page">
-          <div className="flex-1 space-y-3">
-            {/* Header with Logos */}
-            <div className="flex items-center justify-between border-b-2 border-blue-900 pb-2">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <img src={Logo1} alt="FTS Logo" className="max-h-16 max-w-16 object-contain" />
-              </div>
-              <div className="text-center flex-1 px-4">
-                <h1 className="text-lg font-black tracking-wider text-blue-900 leading-tight">
-                  FRIENDS OF TRIBALS SOCIETY
-                </h1>
-                <h2 className="text-sm font-bold tracking-wide text-slate-800">
-                  CHAPTER PERFORMANCE REPORT (CPR)
-                </h2>
-                <p className="text-[10px] text-slate-500 font-medium">Financial Year: 2026-27</p>
-              </div>
-              <div className="w-16 h-16 flex items-center justify-center">
-                <img src={Logo3} alt="Ekal Logo" className="max-h-16 max-w-16 object-contain" />
-              </div>
-            </div>
+          <div className="flex-1">
+            {/* Top Header Box Table */}
+            <table className="table-header-box">
+              <tbody>
+                <tr>
+                  <td style={{ width: "35%", fontSize: "11px", fontWeight: "bold", color: "#1e293b" }}>
+                    Friends of Tribals Society
+                  </td>
+                  <td style={{ width: "65%", fontSize: "13px", fontWeight: "bold", textAlign: "center", color: "#1e3a8a", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                    CHAPTER PERFORMANCE REPORT (CPR)
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontSize: "9.5px", color: "#0f172a" }}>
+                    <span style={{ fontWeight: "bold" }}>Chapter Name</span>
+                    <span style={{ marginLeft: "18px", fontWeight: "600" }}>
+                      {chapterName || "Kolkata (CH29)"}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: "9.5px", color: "#0f172a" }}>
+                    <span style={{ fontWeight: "bold" }}>For the Month of</span>
+                    <span style={{ marginLeft: "18px", fontWeight: "600" }}>
+                      {reportMonthYear} (FY {financialYear || "2026-27"})
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ fontSize: "9.5px", color: "#0f172a" }}>
+                    <span style={{ fontWeight: "bold" }}>Name of CPP</span>
+                    <span style={{ marginLeft: "25px", fontWeight: "600" }}>
+                      {cppName || "Suresh Kumar Dhanuka"}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: "9.5px", color: "#0f172a" }}>
+                    <span style={{ fontWeight: "bold" }}>Submission Date</span>
+                    <span style={{ marginLeft: "22px", fontWeight: "600" }}>
+                      {displaySubDate}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-            {/* Top Report Info Grid */}
-            <div className="grid grid-cols-4 gap-2 bg-slate-50 border border-slate-300 rounded p-2 text-[10px]">
-              <div>
-                <span className="text-slate-500 block font-semibold">Chapter Name:</span>
-                <span className="font-bold text-blue-950 text-xs">{chapterName || "—"}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block font-semibold">Report Month:</span>
-                <span className="font-bold text-slate-900 text-xs">
-                  {monthName ? `${monthName} (No. ${monthIndex || "—"})` : "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block font-semibold">CPP Name:</span>
-                <span className="font-bold text-slate-900 text-xs">{cppName || "—"}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block font-semibold">Submission Date:</span>
-                <span className="font-bold text-slate-900 text-xs">{displaySubDate}</span>
-              </div>
-              {subChapters.length > 0 && (
-                <div className="col-span-4 border-t border-slate-200 pt-1 mt-1">
-                  <span className="text-slate-500 font-semibold mr-1">Sub Chapters:</span>
-                  <span className="font-medium text-slate-700">{subChapters.join(", ")}</span>
-                </div>
-              )}
-            </div>
-
-            {/* SECTION A: MEMBERSHIP INFORMATION */}
-            <div>
-              <div className="cpr-section-header">1. Membership Information (Section A)</div>
+            {/* A | MEMBERSHIP DETAILS */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">A | MEMBERSHIP DETAILS</div>
               <table className="cpr-table">
                 <thead>
                   <tr>
-                    <th>Category</th>
-                    <th className="text-center">As on 31 March 2026</th>
-                    <th className="text-center">Added During Month</th>
-                    <th className="text-center">Cumulative Till Date</th>
-                    <th className="text-right">Amount Received (@ ₹1,000)</th>
+                    <th style={{ width: "24%", textAlign: "left" }}>
+                      Particulars
+                    </th>
+                    <th style={{ width: "19%", textAlign: "right" }}>
+                      Members as on 31<br />March {startYear}
+                    </th>
+                    <th style={{ width: "19%", textAlign: "right" }}>
+                      Membership Added<br />During the Month
+                    </th>
+                    <th style={{ width: "19%", textAlign: "right" }}>
+                      Cumulative Membership Till<br />Date (up to {monthName || "August"} {startYear})
+                    </th>
+                    <th style={{ width: "19%", textAlign: "right" }}>
+                      Membership Amount Received<br />(Rs.) @ Rs. 1,000 per member
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="font-semibold">Chapter</td>
-                    <td className="text-center">{memberships.chapter?.asOnMarch || "0"}</td>
-                    <td className="text-center">{memberships.chapter?.added || "0"}</td>
-                    <td className="text-center">{memberships.chapter?.added || "0"}</td>
-                    <td className="text-right">
-                      {memberships.chapter?.added
-                        ? formatINR(Number(memberships.chapter.added) * 1000)
-                        : "₹0"}
-                    </td>
+                    <td style={{ textAlign: "left" }}>Chapter</td>
+                    <td style={{ textAlign: "right" }}>{memberships.chapter?.asOnMarch || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{memberships.chapter?.added || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{cumulativeChapter}</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(amountChapter, "Rs. 0")}</td>
                   </tr>
                   <tr>
-                    <td className="font-semibold">FTS Yuva</td>
-                    <td className="text-center">{memberships.yuva?.asOnMarch || "0"}</td>
-                    <td className="text-center">{memberships.yuva?.added || "0"}</td>
-                    <td className="text-center">{memberships.yuva?.added || "0"}</td>
-                    <td className="text-right">
-                      {memberships.yuva?.added
-                        ? formatINR(Number(memberships.yuva.added) * 1000)
-                        : "₹0"}
-                    </td>
+                    <td style={{ textAlign: "left" }}>FTS Yuva</td>
+                    <td style={{ textAlign: "right" }}>{memberships.yuva?.asOnMarch || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{memberships.yuva?.added || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{cumulativeYuva}</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(amountYuva, "Rs. 0")}</td>
                   </tr>
                   <tr>
-                    <td className="font-semibold">Mahila Samiti</td>
-                    <td className="text-center">{memberships.mahila?.asOnMarch || "0"}</td>
-                    <td className="text-center">{memberships.mahila?.added || "0"}</td>
-                    <td className="text-center">{memberships.mahila?.added || "0"}</td>
-                    <td className="text-right">
-                      {memberships.mahila?.added
-                        ? formatINR(Number(memberships.mahila.added) * 1000)
-                        : "₹0"}
-                    </td>
+                    <td style={{ textAlign: "left" }}>Mahila Samiti</td>
+                    <td style={{ textAlign: "right" }}>{memberships.mahila?.asOnMarch || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{memberships.mahila?.added || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{cumulativeMahila}</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(amountMahila, "Rs. 0")}</td>
                   </tr>
-                  <tr className="bg-blue-50/70 font-bold">
-                    <td>Total</td>
-                    <td className="text-center">{sectionATotals.asOnMarch || "0"}</td>
-                    <td className="text-center">{sectionATotals.added || "0"}</td>
-                    <td className="text-center">{sectionATotals.cumulative || "0"}</td>
-                    <td className="text-right text-blue-900">{sectionATotals.amount || "₹0"}</td>
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>TOTAL</td>
+                    <td style={{ textAlign: "right" }}>{sectionATotals.asOnMarch || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{sectionATotals.added || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{sectionATotals.cumulative || "0"}</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(amountTotal, "Rs. 0")}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* SECTION B: EXECUTIVE COMMITTEE MEETINGS */}
-            <div>
-              <div className="cpr-section-header">2. Executive Committee Meetings (Section B)</div>
-              {noMeetingHeld ? (
-                <div className="p-2 border border-amber-200 bg-amber-50 text-amber-900 text-[10px] rounded italic">
-                  No Executive Committee Meeting Held During the Month
-                </div>
-              ) : meetings.length === 0 ? (
-                <div className="p-2 border border-slate-200 bg-slate-50 text-slate-500 text-[10px] rounded">
-                  No meetings recorded for this month.
+            {/* B | EXECUTIVE COMMITTEE MEETING DETAILS */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">B | EXECUTIVE COMMITTEE MEETING DETAILS</div>
+              {noMeetingHeld || meetings.length === 0 ? (
+                <div style={{ fontSize: "9.5px", color: "#0f172a", fontWeight: "500", padding: "2px 0" }}>
+                  No Executive Committee meeting was held this month. Reason: none
                 </div>
               ) : (
                 <table className="cpr-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "14%" }}>Date</th>
-                      <th style={{ width: "24%" }}>Type</th>
-                      <th className="text-center" style={{ width: "10%" }}>Total EC</th>
-                      <th className="text-center" style={{ width: "10%" }}>Invited</th>
-                      <th className="text-center" style={{ width: "10%" }}>Attended</th>
-                      <th>Agenda / Points Discussed</th>
+                      <th style={{ width: "15%", textAlign: "left" }}>Date</th>
+                      <th style={{ width: "25%", textAlign: "left" }}>Meeting Type</th>
+                      <th style={{ width: "10%", textAlign: "center" }}>Members</th>
+                      <th style={{ width: "10%", textAlign: "center" }}>Invited</th>
+                      <th style={{ width: "10%", textAlign: "center" }}>Attended</th>
+                      <th style={{ textAlign: "left" }}>Agenda</th>
                     </tr>
                   </thead>
                   <tbody>
                     {meetings.map((m, idx) => (
                       <tr key={idx}>
-                        <td>{m.date || "—"}</td>
-                        <td className="font-medium">{m.type || "Executive Committee Meeting"}</td>
-                        <td className="text-center">{m.membersCount || "—"}</td>
-                        <td className="text-center">{m.invited || "—"}</td>
-                        <td className="text-center">{m.attended || "—"}</td>
-                        <td className="text-[9px]">{m.agenda || "—"}</td>
+                        <td style={{ textAlign: "left" }}>{m.date || "—"}</td>
+                        <td style={{ textAlign: "left" }}>{m.type || "Executive Committee Meeting"}</td>
+                        <td style={{ textAlign: "center" }}>{m.membersCount || "—"}</td>
+                        <td style={{ textAlign: "center" }}>{m.invited || "—"}</td>
+                        <td style={{ textAlign: "center" }}>{m.attended || "—"}</td>
+                        <td style={{ textAlign: "left" }}>{m.agenda || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -256,428 +379,544 @@ const CPRPrintReport = forwardRef(
               )}
             </div>
 
-            {/* SECTION C: OTS COLLECTION */}
-            <div>
-              <div className="cpr-section-header">3. One Teacher School (OTS) Collection (Section C)</div>
+            {/* C | OTS DETAILS & COLLECTION */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">C | OTS DETAILS & COLLECTION</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "4px" }}>
+                <span className="cpr-subheading">OTS DETAILS</span>
+                <table style={{ borderCollapse: "collapse", border: "1px solid #475569", width: "110px", textAlign: "center", fontSize: "8.5px" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#ffffff" }}>
+                      <th style={{ border: "1px solid #475569", padding: "3px 4px", fontWeight: "bold" }}>OTS PRP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ border: "1px solid #475569", padding: "3px 4px" }}>{otsPRP || "0"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="cpr-subheading" style={{ marginBottom: "2px" }}>OTS COLLECTION</div>
               <table className="cpr-table">
                 <thead>
                   <tr>
-                    <th>PRP of This Year</th>
-                    <th className="text-center">OTS Count (This Month)</th>
-                    <th className="text-center">OTS Count (Till Date)</th>
-                    <th className="text-right">Amount (This Month @ ₹30k)</th>
-                    <th className="text-right">Total Amount (Till Date)</th>
+                    <th style={{ width: "42%", textAlign: "left" }}>
+                      Particulars
+                    </th>
+                    <th style={{ width: "29%", textAlign: "right" }}>
+                      During the Month
+                    </th>
+                    <th style={{ width: "29%", textAlign: "right" }}>
+                      Till Date (up to {monthName || "August"} {startYear})
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="font-semibold text-blue-900">{otsPRP ? formatINR(otsPRP) : "₹0"}</td>
-                    <td className="text-center font-bold">{otsCountDuringMonth || "0"}</td>
-                    <td className="text-center font-bold">{otsCountTillDate || "0"}</td>
-                    <td className="text-right font-semibold text-emerald-800">
-                      {otsAmountDuringMonth ? formatINR(otsAmountDuringMonth) : "₹0"}
+                    <td style={{ textAlign: "left" }}>Total Number of OTS</td>
+                    <td style={{ textAlign: "right" }}>{otsDuringCountNum}</td>
+                    <td style={{ textAlign: "right" }}>{otsTillCountNum}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>OTS Amount (Rs.) @ Rs. 30,000 per OTS</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(otsDuringAmt, "Rs. 0")}</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(otsTillAmt, "Rs. 0")}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* D | DONATION & CSR DETAILS */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">D | DONATION & CSR DETAILS</div>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "25%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "20%", textAlign: "center" }}>Number of Donors</th>
+                    <th style={{ width: "27.5%", textAlign: "right" }}>Fund Received – This Month (Rs.)</th>
+                    <th style={{ width: "27.5%", textAlign: "right" }}>Fund Received – Till Date (Rs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Non-CSR</td>
+                    <td style={{ textAlign: "center" }}>{donations.other?.donors || ""}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.other?.during ? formatRs(donations.other.during) : ""}
                     </td>
-                    <td className="text-right font-bold text-emerald-900">
-                      {otsAmountTillDate ? formatINR(otsAmountTillDate) : "₹0"}
+                    <td style={{ textAlign: "right" }}>
+                      {nonCsrTill ? formatRs(nonCsrTill) : "Rs. 0"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>CSR</td>
+                    <td style={{ textAlign: "center" }}>{donations.csr?.donors || ""}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.csr?.during ? formatRs(donations.csr.during) : ""}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {csrTill ? formatRs(csrTill) : "Rs. 0"}
+                    </td>
+                  </tr>
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>Total</td>
+                    <td style={{ textAlign: "center" }}></td>
+                    <td style={{ textAlign: "right" }}>
+                      {donationTotals.duringRaw ? formatRs(donationTotals.duringRaw) : ""}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {totalDonationTill ? formatRs(totalDonationTill) : "Rs. 0"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Number of CSR Schools box directly underneath */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "3px", marginBottom: "3px" }}>
+                <table style={{ borderCollapse: "collapse", border: "1px solid #475569", width: "140px", textAlign: "center", fontSize: "8.5px" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#ffffff" }}>
+                      <th style={{ border: "1px solid #475569", padding: "3px 4px", fontWeight: "bold" }}>
+                        Number of CSR Schools
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ border: "1px solid #475569", padding: "3px 4px", fontWeight: "600" }}>
+                        {csrSchoolsCount || "0"}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* OTHER DONATION DETAIL */}
+              <div className="cpr-subheading" style={{ marginBottom: "2px" }}>OTHER DONATION DETAIL</div>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "42%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "29%", textAlign: "right" }}>This Month (Rs.)</th>
+                    <th style={{ width: "29%", textAlign: "right" }}>Till Date (Rs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>General Donation</td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.general?.during ? formatRs(donations.general.during) : ""}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.general?.till ? formatRs(donations.general.till) : ""}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Each One Teach One (EOTO)</td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.eoto?.during ? formatRs(donations.eoto.during) : ""}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {donations.eoto?.till ? formatRs(donations.eoto.till) : ""}
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* SECTION D: DONATION & CSR DETAILS */}
-            <div>
-              <div className="cpr-section-header">4. Donation & CSR Details (Section D)</div>
+            {/* E | COLLECTION BOXES */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">E | COLLECTION BOXES</div>
               <table className="cpr-table">
                 <thead>
                   <tr>
-                    <th>Donation Category</th>
-                    <th className="text-right">Collected During Month</th>
-                    <th className="text-right">Total Collected Till Date</th>
+                    <th style={{ width: "42%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "29%", textAlign: "right" }}>This Month</th>
+                    <th style={{ width: "29%", textAlign: "right" }}>Till Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>General Donation</td>
-                    <td className="text-right">
-                      {donations.general?.during ? formatINR(donations.general.during) : "₹0"}
-                    </td>
-                    <td className="text-right">
-                      {donations.general?.till ? formatINR(donations.general.till) : "₹0"}
-                    </td>
+                    <td style={{ textAlign: "left" }}>Boxes Placed</td>
+                    <td style={{ textAlign: "right" }}>{collectionBoxes.boxesThisMonth || ""}</td>
+                    <td style={{ textAlign: "right" }}>{collectionBoxes.boxesTillDate || ""}</td>
                   </tr>
                   <tr>
-                    <td>CSR Donation</td>
-                    <td className="text-right">
-                      {donations.csr?.during ? formatINR(donations.csr.during) : "₹0"}
+                    <td style={{ textAlign: "left" }}>Amount Collected (Rs.)</td>
+                    <td style={{ textAlign: "right" }}>
+                      {collectionBoxes.amountThisMonth ? formatRs(collectionBoxes.amountThisMonth) : ""}
                     </td>
-                    <td className="text-right">
-                      {donations.csr?.till ? formatINR(donations.csr.till) : "₹0"}
+                    <td style={{ textAlign: "right" }}>
+                      {collectionBoxes.amountTillDate ? formatRs(collectionBoxes.amountTillDate) : ""}
                     </td>
-                  </tr>
-                  <tr>
-                    <td>Other Collections</td>
-                    <td className="text-right">
-                      {donations.other?.during ? formatINR(donations.other.during) : "₹0"}
-                    </td>
-                    <td className="text-right">
-                      {donations.other?.till ? formatINR(donations.other.till) : "₹0"}
-                    </td>
-                  </tr>
-                  <tr className="bg-blue-50/70 font-bold">
-                    <td>Total Donation & CSR</td>
-                    <td className="text-right text-blue-900">{donationTotals.during || "₹0"}</td>
-                    <td className="text-right text-blue-900">{donationTotals.till || "₹0"}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
 
-          {/* Page 1 Footer */}
-          <div className="border-t border-slate-300 pt-1 text-[9px] text-slate-500 flex justify-between">
-            <span>Friends of Tribals Society • Chapter Performance Report</span>
-            <span>Page 1 of 3</span>
+            {/* F | INVESTMENT (AS ON DATE) */}
+            <div style={{ marginBottom: "6px" }}>
+              <div className="cpr-heading">F | INVESTMENT (AS ON DATE)</div>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "50%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "50%", textAlign: "right" }}>Amount Invested (Rs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Fixed Deposit (FD)</td>
+                    <td style={{ textAlign: "right" }}>
+                      {investments.fd ? formatRs(investments.fd) : ""}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Mutual Fund</td>
+                    <td style={{ textAlign: "right" }}>
+                      {investments.mutualFund ? formatRs(investments.mutualFund) : ""}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Others (Please Specify)</td>
+                    <td style={{ textAlign: "right" }}>
+                      {investments.others ? formatRs(investments.others) : ""}
+                    </td>
+                  </tr>
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>TOTAL</td>
+                    <td style={{ textAlign: "right" }}>
+                      {totalInvestment ? formatRs(totalInvestment) : ""}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        {/* ================= PAGE 2 ================= */}
+        {/* ========================================================= */}
+        {/* ======================== PAGE 2 ========================= */}
+        {/* ========================================================= */}
         <div className="pdf-page">
-          <div className="flex-1 space-y-3">
-            {/* Page 2 Mini Header */}
-            <div className="flex justify-between items-center border-b border-blue-900 pb-1">
-              <span className="font-bold text-xs text-blue-900">
-                FRIENDS OF TRIBALS SOCIETY • CHAPTER PERFORMANCE REPORT
-              </span>
-              <span className="text-[10px] text-slate-600">
-                Chapter: <strong>{chapterName || "—"}</strong> | Month: <strong>{monthName || "—"}</strong>
-              </span>
-            </div>
-
-            {/* SECTION E: COLLECTION BOXES */}
-            <div>
-              <div className="cpr-section-header">5. Collection Boxes (Section E)</div>
-              <table className="cpr-table">
-                <thead>
-                  <tr>
-                    <th className="text-center">Boxes Placed (This Month)</th>
-                    <th className="text-center">Boxes Placed (Till Date)</th>
-                    <th className="text-right">Amount Collected (This Month)</th>
-                    <th className="text-right">Amount Collected (Till Date)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="text-center font-semibold">{collectionBoxes.boxesThisMonth || "0"}</td>
-                    <td className="text-center font-semibold">{collectionBoxes.boxesTillDate || "0"}</td>
-                    <td className="text-right">
-                      {collectionBoxes.amountThisMonth ? formatINR(collectionBoxes.amountThisMonth) : "₹0"}
-                    </td>
-                    <td className="text-right font-semibold text-emerald-800">
-                      {collectionBoxes.amountTillDate ? formatINR(collectionBoxes.amountTillDate) : "₹0"}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* SECTION F: INVESTMENT (AS ON DATE) */}
-            <div>
-              <div className="cpr-section-header">6. Investment (As on Date) (Section F)</div>
-              <table className="cpr-table">
-                <thead>
-                  <tr>
-                    <th>Fixed Deposits (FD)</th>
-                    <th>Mutual Funds</th>
-                    <th>Others {investments.othersSpecify ? `(${investments.othersSpecify})` : ""}</th>
-                    <th className="text-right">Total Investment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{investments.fd ? formatINR(investments.fd) : "₹0"}</td>
-                    <td>{investments.mutualFund ? formatINR(investments.mutualFund) : "₹0"}</td>
-                    <td>{investments.others ? formatINR(investments.others) : "₹0"}</td>
-                    <td className="text-right font-bold text-blue-900">{totalInvestment || "₹0"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* SECTION G: CASH & BANK BALANCE */}
-            <div>
-              <div className="cpr-section-header">7. Cash & Bank Balance (Section G)</div>
-              <div className="mb-1 text-[10px]">
-                <span className="font-semibold text-slate-700">Cash in Hand: </span>
-                <span className="font-bold text-slate-900">{cashInHand ? formatINR(cashInHand) : "₹0"}</span>
+          <div className="flex-1">
+            {/* G | CASH & BANK BALANCE */}
+            <div style={{ marginBottom: "8px" }}>
+              <div className="cpr-heading">G | CASH & BANK BALANCE</div>
+              <div style={{ fontSize: "9px", color: "#475569", marginBottom: "3px" }}>
+                As on {monthName || "July"} {startYear}
               </div>
-              {bankBalances.length === 0 ? (
-                <div className="p-2 border border-slate-200 bg-slate-50 text-slate-500 text-[10px] rounded">
-                  No bank balance accounts listed.
-                </div>
-              ) : (
-                <table className="cpr-table">
-                  <thead>
-                    <tr>
-                      <th>Bank Name</th>
-                      <th>Branch</th>
-                      <th>Account Number</th>
-                      <th className="text-right">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bankBalances.map((b, idx) => (
-                      <tr key={idx}>
-                        <td className="font-medium">{b.bankName || "—"}</td>
-                        <td>{b.branch || "—"}</td>
-                        <td>{b.accountNo || "—"}</td>
-                        <td className="text-right font-semibold">{b.balance ? formatINR(b.balance) : "₹0"}</td>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "65%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "35%", textAlign: "right" }}>Amount (Rs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Cash in Hand</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(cashInHand, "Rs. 0")}</td>
+                  </tr>
+                  {bankBalances.length === 0 ? (
+                    <>
+                      <tr>
+                        <td style={{ textAlign: "left" }}>Bank: Bandhan Bank</td>
+                        <td style={{ textAlign: "right" }}>Rs. 0</td>
                       </tr>
-                    ))}
-                    <tr className="bg-blue-50/70 font-bold">
-                      <td colSpan={3}>Total Bank Balance</td>
-                      <td className="text-right text-blue-900">{totalBankBalance || "₹0"}</td>
-                    </tr>
-                    <tr className="bg-blue-100 font-bold">
-                      <td colSpan={3}>Total Cash & Bank Balance</td>
-                      <td className="text-right text-blue-950">{totalCashAndBank || "₹0"}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              )}
+                      <tr>
+                        <td style={{ textAlign: "left" }}>Bank: ICICI Bank</td>
+                        <td style={{ textAlign: "right" }}>Rs. 0</td>
+                      </tr>
+                      <tr>
+                        <td style={{ textAlign: "left" }}>Bank: Kotak Mahindra Bank</td>
+                        <td style={{ textAlign: "right" }}>Rs. 0</td>
+                      </tr>
+                      <tr>
+                        <td style={{ textAlign: "left" }}>Bank: Standard Chartered Bank</td>
+                        <td style={{ textAlign: "right" }}>Rs. 0</td>
+                      </tr>
+                    </>
+                  ) : (
+                    bankBalances.map((b, idx) => (
+                      <tr key={idx}>
+                        <td style={{ textAlign: "left" }}>Bank: {b.bankName || `Account #${idx + 1}`}</td>
+                        <td style={{ textAlign: "right" }}>{formatRs(b.balance, "Rs. 0")}</td>
+                      </tr>
+                    ))
+                  )}
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>Total Bank Balance</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(totalBankBalance, "Rs. 0")}</td>
+                  </tr>
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>TOTAL CASH &amp; BANK BALANCE</td>
+                    <td style={{ textAlign: "right" }}>{formatRs(totalCashAndBank, "Rs. 0")}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            {/* SECTION H: VAN YATRA */}
-            <div>
-              <div className="cpr-section-header">8. Van Yatra (Section H)</div>
-              {vanyatras.length === 0 ? (
-                <div className="p-2 border border-slate-200 bg-slate-50 text-slate-500 text-[10px] rounded">
-                  No Van Yatra recorded for this month.
-                </div>
-              ) : (
-                <table className="cpr-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "15%" }}>Date</th>
-                      <th className="text-center" style={{ width: "12%" }}>No. of Yatris</th>
-                      <th style={{ width: "28%" }}>Vidyalayas Visited</th>
-                      <th className="text-center" style={{ width: "15%" }}>Pravas Done</th>
-                      <th>Remarks / Observations</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vanyatras.map((v, idx) => (
-                      <tr key={idx}>
-                        <td>{v.date || "—"}</td>
-                        <td className="text-center font-semibold">{v.yatrisCount || "—"}</td>
-                        <td>{v.vidyalayasVisited || "—"}</td>
-                        <td className="text-center">{v.pravasDone || "No"}</td>
-                        <td className="text-[9px]">{v.remarks || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            {/* H | VAN YATRA */}
+            <div style={{ marginBottom: "8px" }}>
+              <div className="cpr-heading">H | VAN YATRA</div>
+              <table className="cpr-table" style={{ marginBottom: "4px" }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: "50%", textAlign: "left" }}>
+                      Number of Vanyatra – This Month
+                    </th>
+                    <th style={{ width: "50%", textAlign: "left" }}>
+                      Number of Vanyatra – Till Date (up to {monthName || "July"} {startYear})
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>{vanyatrasCountThisMonth}</td>
+                    <td style={{ textAlign: "left" }}>{vanyatrasCountTillDate}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style={{ fontSize: "9px", color: "#334155", fontStyle: "italic", padding: "2px 0" }}>
+                {vanyatras.length === 0
+                  ? "No Vanyatra this month."
+                  : `${vanyatras.length} Vanyatra recorded.`}
+              </div>
             </div>
 
-            {/* SECTION I: EVENTS DURING THE MONTH */}
-            <div>
-              <div className="cpr-section-header">9. Events During the Month (Section I)</div>
+            {/* I | EVENTS DURING THE MONTH */}
+            <div style={{ marginBottom: "8px" }}>
+              <div className="cpr-heading">I | EVENTS DURING THE MONTH</div>
               {events.length === 0 ? (
-                <div className="p-2 border border-slate-200 bg-slate-50 text-slate-500 text-[10px] rounded">
-                  No events recorded for this month.
+                <div style={{ fontSize: "9px", color: "#334155", fontStyle: "italic", padding: "2px 0" }}>
+                  No events reported.
                 </div>
               ) : (
-                <table className="cpr-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "18%" }}>Date</th>
-                      <th style={{ width: "40%" }}>Event Name / Type</th>
-                      <th style={{ width: "27%" }}>Committee</th>
-                      <th className="text-center" style={{ width: "15%" }}>Photos Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {events.map((e, idx) => (
-                      <tr key={idx}>
-                        <td>{e.date || "—"}</td>
-                        <td className="font-semibold text-slate-800">{e.type || "—"}</td>
-                        <td>{e.committee || "—"}</td>
-                        <td className="text-center">{e.photos || "0"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
-          {/* Page 2 Footer */}
-          <div className="border-t border-slate-300 pt-1 text-[9px] text-slate-500 flex justify-between">
-            <span>Friends of Tribals Society • Chapter Performance Report</span>
-            <span>Page 2 of 3</span>
-          </div>
-        </div>
-
-        {/* ================= PAGE 3 ================= */}
-        <div className="pdf-page">
-          <div className="flex-1 space-y-3">
-            {/* Page 3 Mini Header */}
-            <div className="flex justify-between items-center border-b border-blue-900 pb-1">
-              <span className="font-bold text-xs text-blue-900">
-                FRIENDS OF TRIBALS SOCIETY • CPR ANNEXURES & SIGNATURES
-              </span>
-              <span className="text-[10px] text-slate-600">
-                Chapter: <strong>{chapterName || "—"}</strong> | Month: <strong>{monthName || "—"}</strong>
-              </span>
-            </div>
-
-            {/* SECTION J: ANNEXURE 1 – DISBURSEMENT TO ANCHAL */}
-            <div>
-              <div className="cpr-section-header">10. Annexure 1 – Disbursement to Anchal (Section J)</div>
-              {anchals.length === 0 ? (
-                <div className="p-2 border border-slate-200 bg-slate-50 text-slate-500 text-[10px] rounded">
-                  No Anchal disbursements recorded.
+                <div style={{ fontSize: "8.5px", color: "#0f172a", marginTop: "3px" }}>
+                  {events.map((ev, eIdx) => (
+                    <div
+                      key={eIdx}
+                      style={{
+                        padding: "2px 0",
+                        borderBottom: eIdx < events.length - 1 ? "1px dashed #cbd5e1" : "none",
+                      }}
+                    >
+                      <strong>Event {eIdx + 1}:</strong>{" "}
+                      {ev.name ? `${ev.name} — ` : ""}
+                      {ev.date || "Date not set"}
+                      {ev.time ? ` at ${ev.time}` : ""} |{" "}
+                      {ev.eventFor || ev.committee || "Youth"} |{" "}
+                      {ev.type || "Public Event"}
+                      {ev.description ? (
+                        <div style={{ color: "#475569", fontSize: "8px", marginLeft: "8px" }}>
+                          {ev.description}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <table className="cpr-table">
-                  <thead>
-                    <tr>
-                      <th>Anchal Name</th>
-                      <th className="text-center">Acharyas Paid</th>
-                      <th className="text-right">Annual Target</th>
-                      <th className="text-right">Remittance Last Month</th>
-                      <th className="text-right">Remittance This Month</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {anchals.map((a, idx) => (
-                      <tr key={idx}>
-                        <td className="font-semibold">{a.name || "—"}</td>
-                        <td className="text-center">{a.acharyasCount || "—"}</td>
-                        <td className="text-right">{a.annualTarget ? formatINR(a.annualTarget) : "₹0"}</td>
-                        <td className="text-right">{a.remittanceLastMonth ? formatINR(a.remittanceLastMonth) : "₹0"}</td>
-                        <td className="text-right font-bold text-blue-900">
-                          {a.remittanceThisMonth ? formatINR(a.remittanceThisMonth) : "₹0"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               )}
             </div>
 
-            {/* SECTION K: ANNEXURE 2 – MONTHLY SUMMARY / CHECK POINTS */}
-            <div>
-              <div className="cpr-section-header">11. Annexure 2 – Monthly Summary / Check Points (Section K)</div>
-              <table className="cpr-table">
+            {/* J | ANNEXURE 1 – DISBURSEMENT TO ANCHAL */}
+            <div style={{ marginBottom: "8px" }}>
+              <div className="cpr-heading">J | ANNEXURE 1 – DISBURSEMENT TO ANCHAL</div>
+              <table className="cpr-table" style={{ fontSize: "7.8px" }}>
                 <thead>
                   <tr>
-                    <th style={{ width: "35%" }}>Checkpoint Item</th>
-                    <th style={{ width: "15%" }} className="text-center">Status</th>
-                    <th>Details / Remarks</th>
+                    <th style={{ width: "14%", textAlign: "left" }}>Funding<br />Anchal<br />Name</th>
+                    <th style={{ width: "8.5%", textAlign: "center" }}>No. of<br />Acharyas<br />Paid this<br />Month</th>
+                    <th style={{ width: "8.5%", textAlign: "center" }}>Up to<br />Which<br />Month<br />Paid</th>
+                    <th style={{ width: "9%", textAlign: "center" }}>Report<br />When<br />Received</th>
+                    <th style={{ width: "9%", textAlign: "center" }}>Remittance<br />Date</th>
+                    <th style={{ width: "12%", textAlign: "right" }}>Total<br />Remittance<br />till Last<br />Date</th>
+                    <th style={{ width: "11%", textAlign: "right" }}>Remittance<br />This Month</th>
+                    <th style={{ width: "12%", textAlign: "left" }}>PRP: Anchal<br />Name</th>
+                    <th style={{ width: "6%", textAlign: "center" }}>PRP: No.<br />of<br />Acharyas</th>
+                    <th style={{ width: "10%", textAlign: "right" }}>PRP:<br />Amount<br />(Rs.)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="font-medium">Monthly Samagri Reached Anchal</td>
-                    <td className="text-center font-bold">
-                      <span className={samagriReached === "Yes" ? "text-emerald-700" : "text-amber-700"}>
-                        {samagriReached}
-                      </span>
+                  {anchals.map((a, idx) => (
+                    <tr key={idx}>
+                      <td style={{ textAlign: "left", fontWeight: "600", textTransform: "uppercase", fontSize: "7.5px" }}>
+                        {a.fundingAnchal || a.name || `Anchal ${idx + 1}`}
+                      </td>
+                      <td style={{ textAlign: "center" }}>{a.acharyasPaid || ""}</td>
+                      <td style={{ textAlign: "center" }}>{a.upToMonthPaid || ""}</td>
+                      <td style={{ textAlign: "center", fontSize: "7px" }}>{a.reportWhenReceived || ""}</td>
+                      <td style={{ textAlign: "center", fontSize: "7px" }}>{a.remittanceDate || ""}</td>
+                      <td style={{ textAlign: "right" }}>
+                        {a.remittanceLastMonth ? formatRs(a.remittanceLastMonth) : ""}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        {a.remittanceThisMonth ? formatRs(a.remittanceThisMonth) : ""}
+                      </td>
+                      <td style={{ textAlign: "left", fontWeight: "500", textTransform: "uppercase", fontSize: "7.5px" }}>
+                        {a.name || a.fundingAnchal || "—"}
+                      </td>
+                      <td style={{ textAlign: "center" }}>{a.acharyasCount || ""}</td>
+                      <td style={{ textAlign: "right" }}>
+                        {a.annualTarget ? formatRs(a.annualTarget) : ""}
+                      </td>
+                    </tr>
+                  ))}
+                  {/* TOTAL ROW */}
+                  <tr style={{ fontWeight: "bold" }}>
+                    <td style={{ textAlign: "left" }}>TOTAL</td>
+                    <td style={{ textAlign: "center" }}>{totalAcharyasPaid}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td style={{ textAlign: "right" }}>
+                      {formatRs(totalRemittanceTillLast, "Rs. 0")}
                     </td>
-                    <td>{samagriRemarks || "—"}</td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">Donor Board Status (Non-CSR)</td>
-                    <td className="text-center">
-                      Sent: <strong>{donorBoard.nonCsr?.sent || "0"}</strong> / {donorBoard.nonCsr?.total || "0"}
+                    <td style={{ textAlign: "right" }}>
+                      {formatRs(totalRemittanceThisMonth, "Rs. 0")}
                     </td>
-                    <td>{donorBoard.nonCsr?.remarks || "—"}</td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">Donor Board Status (CSR)</td>
-                    <td className="text-center">
-                      Sent: <strong>{donorBoard.csr?.sent || "0"}</strong> / {donorBoard.csr?.total || "0"}
-                    </td>
-                    <td>{donorBoard.csr?.remarks || "—"}</td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">School Progress Reports Sent</td>
-                    <td className="text-center font-bold">
-                      <span className={schoolProgressSent === "Yes" ? "text-emerald-700" : "text-amber-700"}>
-                        {schoolProgressSent}
-                      </span>
-                    </td>
-                    <td>{progressRemarks || "—"}</td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">Anchal Monitoring Status</td>
-                    <td className="text-center font-semibold text-blue-900">
-                      {selectedMonitoringAnchal || "—"}
-                    </td>
-                    <td>
-                      {monitoringAnchalsList.length > 0
-                        ? `Monitoring Anchals: ${monitoringAnchalsList.join(", ")}`
-                        : "No specific monitoring anchals added"}
+                    <td></td>
+                    <td style={{ textAlign: "center" }}>{totalPrpAcharyas || ""}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {formatRs(totalPrpAmount, "Rs. 0")}
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
 
-            {/* VERIFICATION & OFFICIAL SIGNATURE BLOCK */}
-            <div className="mt-4 pt-3 border-t-2 border-slate-300">
-              <div className="text-[11px] font-bold uppercase text-slate-800 mb-2">
-                12. Chapter Verification & Signatures
+        {/* ========================================================= */}
+        {/* ======================== PAGE 3 ========================= */}
+        {/* ========================================================= */}
+        <div className="pdf-page">
+          <div className="flex-1">
+            {/* K | ANNEXURE 2 – MONTHLY SUMMARY / CHECK POINTS */}
+            <div style={{ marginBottom: "8px" }}>
+              <div className="cpr-heading">K | ANNEXURE 2 – MONTHLY SUMMARY / CHECK POINTS</div>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "45%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "15%", textAlign: "center" }}>Yes / No</th>
+                    <th style={{ width: "40%", textAlign: "left" }}>Reason / Remarks (if No)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left", fontWeight: "500" }}>
+                      Samagri reached to all schools
+                    </td>
+                    <td style={{ textAlign: "center", fontWeight: "600" }}>
+                      {samagriReached || "Yes"}
+                    </td>
+                    <td style={{ textAlign: "left" }}>{samagriRemarks || ""}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Donor Board Details */}
+            <div style={{ marginBottom: "12px" }}>
+              <div className="cpr-subheading" style={{ marginBottom: "3px" }}>Donor Board Details</div>
+              <table className="cpr-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "38%", textAlign: "left" }}>Particulars</th>
+                    <th style={{ width: "15%", textAlign: "center" }}>Total Donor Boards</th>
+                    <th style={{ width: "15%", textAlign: "center" }}>Already Sent</th>
+                    <th style={{ width: "14%", textAlign: "center" }}>Pending</th>
+                    <th style={{ width: "18%", textAlign: "left" }}>Reason / Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>Non-CSR Donor Board reached to all schools</td>
+                    <td style={{ textAlign: "center" }}>{donorBoard.nonCsr?.total || ""}</td>
+                    <td style={{ textAlign: "center" }}>{donorBoard.nonCsr?.sent || ""}</td>
+                    <td style={{ textAlign: "center" }}>
+                      {donorBoard.nonCsr?.total && donorBoard.nonCsr?.sent
+                        ? Number(donorBoard.nonCsr.total) - Number(donorBoard.nonCsr.sent)
+                        : ""}
+                    </td>
+                    <td style={{ textAlign: "left" }}>{donorBoard.nonCsr?.remarks || ""}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>CSR Donor Board reached to all schools</td>
+                    <td style={{ textAlign: "center" }}>{donorBoard.csr?.total || ""}</td>
+                    <td style={{ textAlign: "center" }}>{donorBoard.csr?.sent || ""}</td>
+                    <td style={{ textAlign: "center" }}>
+                      {donorBoard.csr?.total && donorBoard.csr?.sent
+                        ? Number(donorBoard.csr.total) - Number(donorBoard.csr.sent)
+                        : ""}
+                    </td>
+                    <td style={{ textAlign: "left" }}>{donorBoard.csr?.remarks || ""}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ textAlign: "left" }}>School Progress Report sent to CSR Donors</td>
+                    <td style={{ textAlign: "center" }}></td>
+                    <td style={{ textAlign: "center" }}>
+                      {schoolProgressSent === "Yes" ? "Yes" : schoolProgressSent || ""}
+                    </td>
+                    <td style={{ textAlign: "center" }}></td>
+                    <td style={{ textAlign: "left" }}>{progressRemarks || ""}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Sub Chapters and Monitoring Anchal text */}
+            <div style={{ fontSize: "9.5px", lineHeight: "1.6", margin: "14px 0", color: "#0f172a" }}>
+              <div>
+                <p style={{ fontWeight: "bold", margin: "0 0 2px 0" }}>Details of Sub Chapter</p>
+                <p style={{ margin: "0 0 8px 0" }}>{subChapters.length > 0 ? subChapters.join(", ") : "None."}</p>
               </div>
-              <div className="bg-slate-50 border border-slate-300 rounded p-3 space-y-4">
-                <div className="text-[10px] text-slate-600 flex justify-between items-center">
-                  <span>
-                    Report Submission Status: <strong className="text-emerald-700">SUBMITTED & VERIFIED</strong>
-                  </span>
-                  <span>
-                    Date of Generation: <strong>{today}</strong>
-                  </span>
+              <div>
+                <span style={{ fontWeight: "bold" }}>Monitoring Anchal Name: </span>
+                <span>{monitoringAnchalDisplay}</span>
+              </div>
+            </div>
+
+            {/* Certification statement */}
+            <div style={{ fontSize: "9.5px", color: "#0f172a", margin: "16px 0 10px 0" }}>
+              We certify that the information given in this report is correct.
+            </div>
+
+            {/* Horizontal Line and Signatures Block */}
+            <div style={{ marginTop: "10px" }}>
+              <div style={{ borderTop: "1.5px solid #0f172a", margin: "0 0 12px 0" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "24px", fontSize: "9.5px", color: "#0f172a" }}>
+                {/* Column 1: CPP */}
+                <div>
+                  <p style={{ fontWeight: "bold", margin: "0 0 2px 0" }}>Name of CPP</p>
+                  <p style={{ margin: "0 0 14px 0", color: "#1e293b" }}>{cppName || "Suresh Kumar Dhanuka"}</p>
+                  <p style={{ margin: "0", color: "#334155" }}>Signature &amp; Date</p>
                 </div>
 
-                {signedFile && (
-                  <div className="p-2 border border-emerald-300 bg-emerald-50 rounded text-[10px] text-emerald-900 flex items-center justify-between">
-                    <span>
-                      ✓ Signed Copy Uploaded: <strong>{signedFile.name}</strong>
-                    </span>
-                    <span>Verified</span>
-                  </div>
-                )}
+                {/* Column 2: Secretary */}
+                <div>
+                  <p style={{ fontWeight: "bold", margin: "0 0 2px 0" }}>Secretary</p>
+                  <p style={{ margin: "0 0 14px 0", color: "#1e293b" }}>Name:</p>
+                  <p style={{ margin: "0", color: "#334155" }}>Signature &amp; Date</p>
+                </div>
 
-                <div className="grid grid-cols-3 gap-6 pt-6">
-                  {/* President */}
-                  <div className="text-center border-t border-slate-400 pt-1">
-                    <p className="font-bold text-xs text-slate-900">Chapter President</p>
-                    <p className="text-[9px] text-slate-500">Signature & Date</p>
-                  </div>
-
-                  {/* Secretary */}
-                  <div className="text-center border-t border-slate-400 pt-1">
-                    <p className="font-bold text-xs text-slate-900">Chapter Secretary</p>
-                    <p className="text-[9px] text-slate-500">Signature & Date</p>
-                  </div>
-
-                  {/* CPP / Treasurer */}
-                  <div className="text-center border-t border-slate-400 pt-1">
-                    <p className="font-bold text-xs text-slate-900">CPP / Treasurer</p>
-                    <p className="text-[9px] text-slate-700 font-semibold">{cppName || "—"}</p>
-                    <p className="text-[9px] text-slate-500">Signature & Date</p>
-                  </div>
+                {/* Column 3: President */}
+                <div>
+                  <p style={{ fontWeight: "bold", margin: "0 0 2px 0" }}>President</p>
+                  <p style={{ margin: "0 0 14px 0", color: "#1e293b" }}>Name:</p>
+                  <p style={{ margin: "0", color: "#334155" }}>Signature &amp; Date</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Page 3 Footer */}
-          <div className="border-t border-slate-300 pt-1 text-[9px] text-slate-500 flex justify-between">
-            <span>Friends of Tribals Society • Chapter Performance Report</span>
-            <span>Page 3 of 3</span>
+          {/* Bottom Footer Line on Page 3 */}
+          <div style={{ borderTop: "1px solid #cbd5e1", paddingTop: "8px", fontSize: "8.5px", color: "#64748b" }}>
+            Report ID: {formattedReportId} | Status: {csrStatus || "For signature by the President and Secretary"} | Generated: {generatedTimestamp}
           </div>
         </div>
       </div>
