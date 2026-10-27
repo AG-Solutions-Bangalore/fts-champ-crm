@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
+import moment from "moment";
 import BASE_URL from "@/config/base-url";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -16,7 +17,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import CPRPrintReport from "./cpr-print-report";
+import { fetchFinancialYearsFromApi } from "@/utils/financial-year";
 
 const FINANCIAL_MONTHS = [
   "April",
@@ -68,18 +71,9 @@ const getAvailableMonths = (selectedYear, currFY) => {
   return FINANCIAL_MONTHS;
 };
 
-// Generate list of financial years up to current year
+// Return financial year coming from API / active config
 const getAvailableFinancialYears = (currYear) => {
-  const match = currYear?.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return [currYear || "2026-27"];
-  const startYearNum = parseInt(match[1], 10);
-  const years = [];
-  for (let i = 4; i >= 0; i--) {
-    const y = startYearNum - i;
-    const nextYShort = String(y + 1).slice(-2);
-    years.push(`${y}-${nextYShort}`);
-  }
-  return years;
+  return currYear ? [currYear] : ["2026-27"];
 };
 
 // Helper for Indian Currency Formatting
@@ -106,14 +100,30 @@ const cleanVal = (val) => {
   return s;
 };
 
+// Helper to extract clean label from anchal item
+const getAnchalLabel = (item, idx = 0) => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  return (
+    item.anchal_name ||
+    item.name ||
+    item.anchal ||
+    item.title ||
+    item.label ||
+    item.anchal_master_name ||
+    `Anchal ${idx + 1}`
+  );
+};
+
 const CPRForm = ({
   initialMonth = "",
   initialYear = "",
   reportId = null,
-  isView = false,
+  isView: initialIsView = false,
   isEdit = false,
   onBack = null,
 }) => {
+  const navigate = useNavigate();
   const [currentReportId, setCurrentReportId] = useState(reportId);
 
   useEffect(() => {
@@ -135,6 +145,47 @@ const CPRForm = ({
   const [financialYear, setFinancialYear] = useState(
     initialYear || Cookies.get("currentYear") || "2026-27"
   );
+  const [financialYearList, setFinancialYearList] = useState(() => {
+    const active = initialYear || Cookies.get("currentYear") || "2026-27";
+    return [active];
+  });
+
+  // Track which fields/sections were auto-filled from DB
+  const [dbAutoFilled, setDbAutoFilled] = useState({
+    header: false,
+    membership: false,
+    meetings: false,
+    ots: false,
+    otsPrp: false,
+    donations: false,
+    events: false,
+    banks: false,
+    vanyatras: false,
+    disbursements: false,
+    boxes: false,
+    investments: false,
+    cashInHand: false,
+    samagri: false,
+    donorBoards: false,
+    schoolProgress: false,
+  });
+
+  useEffect(() => {
+    if (Cookies.get("currentYear")) return;
+    fetchFinancialYearsFromApi().then((list) => {
+      if (list && list.length > 0) {
+        const finalYears =
+          initialYear && !list.includes(initialYear)
+            ? [...list, initialYear]
+            : list;
+        setFinancialYearList(finalYears);
+        if (!financialYear || !finalYears.includes(financialYear)) {
+          setFinancialYear(finalYears[0]);
+        }
+      }
+    });
+  }, [initialYear]);
+
   const currentFY = useMemo(() => getCurrentFinancialYear(), []);
   const availableMonths = useMemo(
     () => getAvailableMonths(financialYear, currentFY),
@@ -144,6 +195,14 @@ const CPRForm = ({
   const [csrStatus, setCsrStatus] = useState("Draft");
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [savedAt, setSavedAt] = useState("");
+
+  const isSubmittedReport =
+    String(csrStatus || "").toLowerCase() === "submitted" ||
+    String(csrStatus || "").toLowerCase() === "completed" ||
+    String(csrStatus || "").toLowerCase() === "active" ||
+    String(csrStatus || "") === "1";
+
+  const isView = Boolean(initialIsView || isSubmittedReport);
 
   useEffect(() => {
     if (initialMonth && availableMonths.includes(initialMonth)) {
@@ -204,6 +263,39 @@ const CPRForm = ({
     attended: "",
     agenda: "",
   });
+
+  const handleAddMeeting = () => {
+    setMeetings((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        meetingOf: "Choose",
+        type: "Executive Committee Meeting",
+        date: "",
+        membersCount: "",
+        invited: "",
+        attended: "",
+        agenda: "",
+        outcome: "",
+      },
+    ]);
+  };
+
+  const handleRemoveMeeting = (index) => {
+    setMeetings((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateMeeting = (index, field, value) => {
+    setMeetings((prev) =>
+      prev.map((m, i) => {
+        if (i !== index) return m;
+        const updated = { ...m, [field]: value };
+        if (field === "meetingOf") updated.type = value;
+        if (field === "type") updated.meetingOf = value;
+        return updated;
+      })
+    );
+  };
 
   // Section C: OTS Details & Collection - cleared
   const [otsPRP, setOtsPRP] = useState("");
@@ -291,18 +383,56 @@ const CPRForm = ({
   });
 
   // Section I: Events During the Month - cleared
+  const [noEventHeld, setNoEventHeld] = useState(false);
   const [events, setEvents] = useState([]);
   const [showEventModal, setShowEventModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState({
     date: "",
     type: "",
-    committee: "Yuva Samiti",
+    committee: "Youth",
     photos: 0,
   });
+
+  const handleAddEvent = () => {
+    setEvents((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name: "",
+        description: "",
+        date: "",
+        time: "",
+        type: "Public Event",
+        eventFor: "Youth",
+        committee: "Youth",
+        image: null,
+        subs: [],
+        photos: 0,
+      },
+    ]);
+  };
+
+  const handleRemoveEvent = (index) => {
+    setEvents((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateEvent = (index, field, value) => {
+    setEvents((prev) =>
+      prev.map((ev, i) => {
+        if (i !== index) return ev;
+        const updated = { ...ev, [field]: value };
+        if (field === "eventFor") updated.committee = value;
+        if (field === "committee") updated.eventFor = value;
+        return updated;
+      })
+    );
+  };
 
   // Section J: Annexure 1 - Disbursement to Anchal - cleared
   const [anchals, setAnchals] = useState([]);
   const [showAnchalModal, setShowAnchalModal] = useState(false);
+  const [anchalOptions, setAnchalOptions] = useState([]);
+  const [loadingAnchals, setLoadingAnchals] = useState(false);
   const [newAnchal, setNewAnchal] = useState({
     name: "",
     acharyasCount: "",
@@ -310,6 +440,53 @@ const CPRForm = ({
     remittanceLastMonth: "",
     remittanceThisMonth: "",
   });
+
+  // Fetch Anchals for Financial Year: POST /api/getAnchal
+  const fetchAnchals = useCallback(async (year) => {
+    try {
+      setLoadingAnchals(true);
+      const token = Cookies.get("token");
+      const targetYear = year || financialYear;
+      let raw = null;
+      try {
+        const payload = { financial_year: targetYear };
+        const res = await axios.post(`${BASE_URL}/api/getAnchal`, payload, {
+          params: { financial_year: targetYear },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        raw = res.data;
+      } catch (err) {
+        const fd = new FormData();
+        fd.append("financial_year", targetYear);
+        const res2 = await axios.post(`${BASE_URL}/api/getAnchal`, fd, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        raw = res2.data;
+      }
+      let list = [];
+      if (Array.isArray(raw)) list = raw;
+      else if (Array.isArray(raw?.data)) list = raw.data;
+      else if (Array.isArray(raw?.anchal)) list = raw.anchal;
+      else if (Array.isArray(raw?.anchals)) list = raw.anchals;
+      else if (Array.isArray(raw?.data?.anchal)) list = raw.data.anchal;
+      else if (Array.isArray(raw?.data?.anchals)) list = raw.data.anchals;
+      else if (Array.isArray(raw?.anchal_list)) list = raw.anchal_list;
+      else if (Array.isArray(raw?.data?.anchal_list)) list = raw.data.anchal_list;
+      else if (raw?.data && typeof raw.data === "object") list = Object.values(raw.data).filter(Boolean);
+      setAnchalOptions(list);
+    } catch (err) {
+      console.error("Error fetching getAnchal in CPRForm:", err);
+    } finally {
+      setLoadingAnchals(false);
+    }
+  }, [financialYear]);
+
+  useEffect(() => {
+    fetchAnchals(financialYear);
+  }, [fetchAnchals, financialYear]);
 
   // Section K: Annexure 2 - Monthly Summary / Check Points - cleared
   const [samagriReached, setSamagriReached] = useState("No");
@@ -326,6 +503,19 @@ const CPRForm = ({
   const [selectedMonitoringAnchal, setSelectedMonitoringAnchal] = useState("Choose");
   const [monitoringAnchalsList, setMonitoringAnchalsList] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
+
+  const getImageUrl = (imageFor, filename) => {
+    if (!filename) return null;
+    if (filename.startsWith("http://") || filename.startsWith("https://")) return filename;
+    const entry = imageUrls.find(
+      (u) => (u.image_for || "").toLowerCase() === (imageFor || "").toLowerCase()
+    );
+    if (entry && entry.image_url) {
+      const base = entry.image_url.endsWith("/") ? entry.image_url : entry.image_url + "/";
+      return base + filename;
+    }
+    return `${BASE_URL}/storage/${filename}`;
+  };
 
   // Sign & Submit & PDF refs
   const [signedFile, setSignedFile] = useState(null);
@@ -355,16 +545,51 @@ const CPRForm = ({
     if (!data || typeof data !== "object") return;
     console.log("Applying auto-fill details from getCPRReportDetails:", data);
 
+    const cpr =
+      data.cpr_details && typeof data.cpr_details === "object"
+        ? data.cpr_details
+        : data;
+
+    // Report ID
+    if (cpr.id) {
+      setCurrentReportId(cpr.id);
+    }
+
+    // Financial Year from API
+    const fy = data.financial_year || cpr.financial_year;
+    if (fy) {
+      setFinancialYear(fy);
+      setFinancialYearList((prev) =>
+        prev.includes(fy) ? prev : [...prev, fy]
+      );
+    }
+
     // Chapter Name & CPP Info
-    if (data.chapter_name || data.chapter?.chapter_name || data.name_of_chapter) {
-      setChapterName(data.chapter_name || data.chapter?.chapter_name || data.name_of_chapter);
+    const chName =
+      data.chapter_name ||
+      cpr.chapter?.chapter_name ||
+      cpr.chapter_name ||
+      data.chapter?.chapter_name ||
+      data.name_of_chapter;
+    if (chName) {
+      setChapterName(chName);
     }
-    if (data.name_of_cpp || data.cpp_name || data.chairman) {
-      setCppName(data.name_of_cpp || data.cpp_name || data.chairman);
+
+    const cpName =
+      data.cpp_name ||
+      cpr.name_of_cpp ||
+      cpr.cpp_name ||
+      data.name_of_cpp ||
+      data.chairman;
+    if (cpName) {
+      setCppName(cpName);
     }
-    if (data.submission_date) {
-      setSubmissionDate(data.submission_date);
+
+    const subDate = data.submission_date || cpr.submission_date;
+    if (subDate) {
+      setSubmissionDate(subDate);
     }
+
     if (Array.isArray(data.sub_chapters)) {
       setSubChapters(data.sub_chapters);
     }
@@ -444,16 +669,41 @@ const CPRForm = ({
       setMeetings(
         meetList.map((m, i) => ({
           id: m.id || i + 1,
-          date: m.meeting_date || m.date || "",
-          type: m.meeting_type || m.type || "Executive Committee Meeting",
-          membersCount: m.total_members || m.membersCount || "",
+          isFromDb: true,
+          name: m.event_name || m.name || "",
+          date: m.event_date || m.meeting_date || m.date || "",
+          time: m.event_time || m.time || "",
+          type: m.event_type || m.meeting_type || m.type || "Meeting",
+          meetingOf:
+            m.event_for ||
+            m.meeting_of ||
+            m.meetingOf ||
+            m.event_type ||
+            m.meeting_type ||
+            m.type ||
+            "Executive Committee",
+          membersCount:
+            m.total_members ||
+            m.membersCount ||
+            m.expected_members ||
+            m.members_expected ||
+            "",
           invited: m.members_invited || m.invited || "",
           attended: m.members_attended || m.attended || "",
-          agenda: m.agenda || "",
+          agenda:
+            m.event_description ||
+            m.agenda ||
+            m.key_agenda ||
+            m.key_agenda_points ||
+            "",
+          description: m.event_description || m.description || "",
+          outcome: m.outcome || "",
         }))
       );
       if (meetList.length === 0 && data.no_meeting_held) {
         setNoMeetingHeld(true);
+      } else if (meetList.length > 0) {
+        setNoMeetingHeld(false);
       }
     }
 
@@ -572,6 +822,7 @@ const CPRForm = ({
       setBankBalances(
         bankList.map((b, i) => ({
           id: b.id || i + 1,
+          isFromDb: true,
           bankName: b.bank_name || b.bankName || "",
           balance: b.bank_balance ?? b.balance ?? "",
         }))
@@ -590,6 +841,7 @@ const CPRForm = ({
       setVanyatras(
         yatraList.map((y, i) => ({
           id: y.id || i + 1,
+          isFromDb: true,
           date: y.vanyatra_date || y.date || "",
           yatrisCount: y.no_of_days || y.yatrisCount || "",
           vidyalayasVisited: y.vanyatra_visited || y.vidyalayasVisited || "",
@@ -611,13 +863,28 @@ const CPRForm = ({
       ? data.cpr_events
       : null;
     if (evList) {
+      if (evList.length > 0) {
+        setNoEventHeld(false);
+      } else if (data.no_event_held) {
+        setNoEventHeld(true);
+      }
       setEvents(
         evList.map((ev, i) => ({
           id: ev.id || i + 1,
+          isFromDb: true,
+          name: ev.event_name || ev.name || "",
+          description: ev.event_description || ev.description || "",
           date: ev.event_date || ev.date || "",
-          type: ev.event_type || ev.type || "",
-          committee: ev.committee || "Yuva Samiti",
-          photos: ev.photos || ev.photos_count || 0,
+          time: ev.event_time || ev.time || "",
+          type: ev.event_type || ev.type || "Public Event",
+          committee: ev.event_for || ev.committee || "Youth",
+          eventFor: ev.event_for || ev.committee || "Youth",
+          image: ev.event_image || null,
+          subs: Array.isArray(ev.subs) ? ev.subs : [],
+          photos:
+            ev.photos ||
+            ev.photos_count ||
+            (Array.isArray(ev.subs) ? ev.subs.length : (ev.event_image ? 1 : 0)),
         }))
       );
     }
@@ -636,6 +903,7 @@ const CPRForm = ({
       setAnchals(
         disbList.map((d, i) => ({
           id: d.id || i + 1,
+          isFromDb: true,
           name: d.anchal_name || d.name || "",
           fundingAnchal: d.funding_anchal || "",
           acharyasCount: d.no_of_acharyas || d.acharyasCount || "",
@@ -655,8 +923,7 @@ const CPRForm = ({
       setImageUrls(data.image_url);
     }
 
-    // Auto-fill previous CPR Details if returned (e.g. from data.cpr_details or data)
-    const cpr = data.cpr_details && typeof data.cpr_details === "object" ? data.cpr_details : data;
+    // Auto-fill previous CPR Details if returned (e.g. from cpr)
 
     if (cpr.boxes_placed !== undefined && cpr.boxes_placed !== null) {
       setCollectionBoxes((prev) => ({
@@ -740,12 +1007,74 @@ const CPRForm = ({
     if (Array.isArray(data.monitoring_anchals) || Array.isArray(data.anchals_list)) {
       setMonitoringAnchalsList(data.monitoring_anchals || data.anchals_list);
     }
+
+    setDbAutoFilled({
+      header: Boolean(
+        cpr.name_of_cpp ||
+        data.cpp_name ||
+        cpr.submission_date ||
+        cpr.chapter?.chapter_name
+      ),
+      membership: Boolean(
+        (Array.isArray(data.membership_DataBeforeMonth) && data.membership_DataBeforeMonth.length > 0) ||
+        (Array.isArray(data.membership_DataCurrentMonth) && data.membership_DataCurrentMonth.length > 0) ||
+        data.membership ||
+        data.memberships ||
+        data.chapter_members_as_on_march !== undefined
+      ),
+      meetings: Boolean(meetList && meetList.length > 0),
+      ots: Boolean(
+        (data.ots_details && (data.ots_details.receipt_no_of_ots !== undefined || data.ots_details.receipt_total_amount !== undefined)) ||
+        data.ots_count_during_month !== undefined ||
+        data.ots_during_month !== undefined
+      ),
+      otsPrp: Boolean(
+        (data.ots_details && (data.ots_details.prp !== undefined || data.ots_details.ots_prp !== undefined)) ||
+        data.ots_prp !== undefined ||
+        data.otsPRP !== undefined
+      ),
+      donations: Boolean(
+        data.csr_donation_details ||
+        data.general_donation ||
+        data.non_csr_donation_details ||
+        data.donation ||
+        data.donations ||
+        data.general_donation_during !== undefined
+      ),
+      events: Boolean(evList && evList.length > 0),
+      banks: Boolean(bankList && bankList.length > 0),
+      vanyatras: Boolean(yatraList && yatraList.length > 0),
+      disbursements: Boolean(disbList && disbList.length > 0),
+      boxes: Boolean(cpr.boxes_placed !== undefined && cpr.boxes_placed !== null),
+      investments: Boolean(
+        cpr.fixed_deposit != null ||
+        cpr.mutual_fund != null ||
+        cpr.others != null
+      ),
+      cashInHand: Boolean(cpr.cash_in_hand !== undefined && cpr.cash_in_hand !== null),
+      samagri: Boolean(cpr.samagri_reached && cleanVal(cpr.samagri_reached)),
+      donorBoards: Boolean(
+        cpr.nonCsr_donor_boards != null ||
+        cpr.csr_donor_boards != null
+      ),
+      schoolProgress: Boolean(
+        cpr.school_progress_report_sent && cleanVal(cpr.school_progress_report_sent)
+      ),
+    });
   }, []);
+
+  // Ref to track last fetched key to prevent duplicate API calls and double toasts
+  const lastFetchedKeyRef = useRef("");
 
   // Fetch Auto-Fill Details: POST /api/getCPRReportDetails
   const fetchCPRReportDetails = useCallback(
-    async (fYear, fMonth) => {
+    async (fYear, fMonth, force = false) => {
       if (!fYear || !fMonth) return;
+      const key = `${fYear}_${fMonth}`;
+      if (!force && lastFetchedKeyRef.current === key) {
+        return;
+      }
+      lastFetchedKeyRef.current = key;
       try {
         setLoadingDetails(true);
         const token = Cookies.get("token");
@@ -778,13 +1107,15 @@ const CPRForm = ({
 
         if (detailData && typeof detailData === "object") {
           applyReportDetails(detailData);
-          toast.success(`CPR report details auto-filled for ${fMonth} ${fYear}`);
+          toast.success(`CPR report details auto-filled for ${fMonth} ${fYear}`, {
+            id: "cpr-autofill-toast",
+          });
         }
       } catch (err) {
         console.error("Error fetching getCPRReportDetails:", err);
         const msg = err?.response?.data?.message || err?.message;
         if (msg) {
-          toast(`Info: ${msg}`, { icon: "ℹ️" });
+          toast(`Info: ${msg}`, { id: "cpr-autofill-info", icon: "ℹ️" });
         }
       } finally {
         setLoadingDetails(false);
@@ -1046,6 +1377,7 @@ const CPRForm = ({
     const toastId = toast.loading("Generating CPR PDF...");
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       const container = printableRef.current;
       const pages = container.querySelectorAll(".pdf-page");
       const pdf = new jsPDF("p", "mm", "a4");
@@ -1190,11 +1522,12 @@ const CPRForm = ({
     });
 
     // Section I
+    setNoEventHeld(false);
     setEvents([]);
     setCurrentEvent({
       date: "",
       type: "",
-      committee: "Yuva Samiti",
+      committee: "Youth",
       photos: 0,
     });
 
@@ -1253,6 +1586,23 @@ const CPRForm = ({
     if (cashInHand === "") {
       toast.error("Cash in Hand is required in Section G");
       scrollToSection("section-g");
+      return;
+    }
+
+    const hasExistingSignedCpr = Boolean(
+      existingSignedCprUrl &&
+      typeof existingSignedCprUrl === "string" &&
+      existingSignedCprUrl.trim() !== "" &&
+      existingSignedCprUrl.trim().toLowerCase() !== "null" &&
+      existingSignedCprUrl.trim().toLowerCase() !== "undefined"
+    );
+    const hasNewSignedFile = Boolean(signedFile instanceof File);
+
+    if (!hasNewSignedFile && !hasExistingSignedCpr) {
+      toast.error(
+        "Upload the signed CPR is required before submitting. Please download the filled CPR, get it signed, and upload it."
+      );
+      scrollToSection("section-submit");
       return;
     }
 
@@ -1400,7 +1750,7 @@ const CPRForm = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => fetchCPRReportDetails(financialYear, monthName)}
+                  onClick={() => fetchCPRReportDetails(financialYear, monthName, true)}
                   disabled={loadingDetails || !monthName}
                   className="text-xs px-3 py-1.5 border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-700 font-semibold rounded-md flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                   title="Re-fetch and auto-fill report details from getCPRReportDetails API"
@@ -1418,7 +1768,7 @@ const CPRForm = ({
                     onClick={onBack}
                     className="self-start sm:self-auto text-xs px-3.5 py-1.5 border border-slate-300 rounded-md hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer shadow-sm transition"
                   >
-                    ← Back to Month List
+                    ← Back to List
                   </button>
                 )}
               </div>
@@ -1443,18 +1793,16 @@ const CPRForm = ({
                 </label>
                 <select
                   value={financialYear}
+                  disabled={isView}
                   onChange={(e) => setFinancialYear(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                 >
-                  {getAvailableFinancialYears(
-                    Cookies.get("currentYear") || "2026-27"
-                  ).map((yr) => (
+                  {financialYearList.map((yr) => (
                     <option key={yr} value={yr}>
                       {yr}
                     </option>
                   ))}
                 </select>
-                <span className="text-[11px] text-slate-400 mt-1 block">Active Financial Year</span>
               </div>
 
               {/* Chapter Name */}
@@ -1465,11 +1813,12 @@ const CPRForm = ({
                 <input
                   type="text"
                   value={chapterName}
+                  disabled={Boolean(chapterName) || isView}
+                  readOnly={Boolean(chapterName) || isView}
                   onChange={(e) => setChapterName(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   placeholder="e.g. Kolkata"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">Chapter Name</span>
               </div>
 
               {/* For the Month Of */}
@@ -1479,13 +1828,14 @@ const CPRForm = ({
                 </label>
                 <select
                   value={monthName}
+                  disabled={isView}
                   onChange={(e) => {
                     const m = e.target.value;
                     setMonthName(m);
                     const idx = FINANCIAL_MONTHS.indexOf(m);
                     if (idx !== -1) setMonthIndex(String(idx + 1));
                   }}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Month</option>
                   {availableMonths.map((name) => (
@@ -1494,7 +1844,6 @@ const CPRForm = ({
                     </option>
                   ))}
                 </select>
-                <span className="text-[11px] text-slate-400 mt-1 block">Report Month</span>
               </div>
 
               {/* Name of CPP */}
@@ -1505,11 +1854,12 @@ const CPRForm = ({
                 <input
                   type="text"
                   value={cppName}
+                  disabled={Boolean(dbAutoFilled.header && cppName) || isView}
+                  readOnly={Boolean(dbAutoFilled.header && cppName) || isView}
                   onChange={(e) => setCppName(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   placeholder="Enter CPP name"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">Chairman / President</span>
               </div>
 
               {/* Submission Date */}
@@ -1520,18 +1870,17 @@ const CPRForm = ({
                 <input
                   type="date"
                   value={submissionDate}
+                  disabled={Boolean(dbAutoFilled.header && submissionDate) || isView}
+                  readOnly={Boolean(dbAutoFilled.header && submissionDate) || isView}
                   max={new Date().toISOString().split("T")[0]}
                   onChange={(e) => setSubmissionDate(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  {submissionDate || "No future dates allowed"}
-                </span>
               </div>
             </div>
 
             {/* Sub Chapters of this Chapter */}
-            <div className="pt-2 border-t border-slate-100">
+            {/* <div className="pt-2 border-t border-slate-100">
               <h3 className="text-xs font-bold text-slate-800 mb-1">
                 Sub Chapters of this Chapter
               </h3>
@@ -1599,7 +1948,7 @@ const CPRForm = ({
                   Add Sub Chapter
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* ================= SECTION A: MEMBERSHIP DATA ================= */}
@@ -1607,11 +1956,13 @@ const CPRForm = ({
             id="section-a"
             className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden"
           >
-            <div className="bg-[#1e40af] text-white px-5 py-3 flex items-center gap-3">
-              <span className="w-6 h-6 rounded-full bg-white text-[#1e40af] font-bold text-xs flex items-center justify-center">
-                A
-              </span>
-              <h2 className="text-sm font-bold tracking-wide uppercase">Membership Data</h2>
+            <div className="bg-[#1e40af] text-white px-5 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-white text-[#1e40af] font-bold text-xs flex items-center justify-center">
+                  A
+                </span>
+                <h2 className="text-sm font-bold tracking-wide uppercase">Membership Data</h2>
+              </div>
             </div>
 
             <div className="p-5 space-y-3">
@@ -1621,13 +1972,13 @@ const CPRForm = ({
                     <tr className="bg-blue-50 text-slate-800 font-semibold border-b border-slate-200">
                       <th className="p-3 border-r border-slate-200 w-1/4">Particulars</th>
                       <th className="p-3 border-r border-slate-200 text-center w-1/5">
-                        Members as on 31 March 2026
+                        Members as on 31st March
                       </th>
                       <th className="p-3 border-r border-slate-200 text-center w-1/5">
                         Membership Added During the Month <span className="text-red-500">*</span>
                       </th>
                       <th className="p-3 border-r border-slate-200 text-center w-1/5">
-                        Cumulative Membership Till Date (up to April 2026)
+                        Cumulative Membership Till Date
                       </th>
                       <th className="p-3 text-right w-1/5">
                         Membership Amount Received (₹) @ ₹1,000 per member
@@ -1644,6 +1995,8 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={memberships?.chapter?.asOnMarch ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -1653,13 +2006,15 @@ const CPRForm = ({
                               },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
                           value={memberships?.chapter?.added ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -1669,7 +2024,7 @@ const CPRForm = ({
                               },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
@@ -1695,26 +2050,30 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={memberships?.yuva?.asOnMarch ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
                               yuva: { ...memberships.yuva, asOnMarch: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
                           value={memberships?.yuva?.added ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
                               yuva: { ...memberships.yuva, added: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
@@ -1740,6 +2099,8 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={memberships?.mahila?.asOnMarch ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -1749,13 +2110,15 @@ const CPRForm = ({
                               },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
                         <input
                           type="number"
                           value={memberships?.mahila?.added ?? ""}
+                          disabled={Boolean(dbAutoFilled.membership) || isView}
+                          readOnly={Boolean(dbAutoFilled.membership) || isView}
                           onChange={(e) =>
                             setMemberships({
                               ...memberships,
@@ -1765,7 +2128,7 @@ const CPRForm = ({
                               },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2 border-r border-slate-200">
@@ -1809,12 +2172,6 @@ const CPRForm = ({
                   </tbody>
                 </table>
               </div>
-
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                Members as on 31 March 2026 is entered once and then stays fixed (only the National
-                Office can change it). Enter 0 where no members were added. Cumulative Membership Till
-                Date and Membership Amount (members added × ₹1,000) fill themselves.
-              </p>
             </div>
           </section>
 
@@ -1837,82 +2194,224 @@ const CPRForm = ({
                 <input
                   type="checkbox"
                   checked={noMeetingHeld}
+                  disabled={(meetings.length > 0 && meetings.some((m) => m.isFromDb)) || isView}
                   onChange={(e) => setNoMeetingHeld(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                  className="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <span>No Executive Committee Meeting was held this month</span>
               </label>
 
               {!noMeetingHeld && (
-                <div className="space-y-3 pt-2">
+                <div className="space-y-4 pt-2">
                   {meetings.length === 0 ? (
                     <p className="text-xs text-slate-500">
-                      No meeting added yet. Click "Add Meeting".
+                      No meeting added yet. Click "+ Add Meeting".
                     </p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {meetings.map((m, idx) => (
                         <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 rounded border border-slate-200 bg-slate-50 text-xs"
+                          key={m.id || idx}
+                          className={`border rounded-md p-4 space-y-4 ${
+                            m.isFromDb ? "border-emerald-200 bg-slate-50/70" : "border-slate-300 bg-white"
+                          }`}
                         >
-                          <div>
-                            <span className="font-bold text-slate-800">
-                              Meeting {idx + 1}: {m.date || "Date not set"}
-                            </span>
-                            <span className="text-slate-500 ml-2">({m.type})</span>
-                            <div className="text-slate-500 text-[11px] mt-0.5">
-                              Attendees: {m.attended || 0} / {m.membersCount || 0}
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-800 text-sm">
+                                Meeting {idx + 1}
+                              </span>
+                            </div>
+                            {!m.isFromDb && !isView && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMeeting(idx)}
+                                className="text-xs text-slate-500 hover:text-red-600 transition cursor-pointer font-medium"
+                              >
+                                Remove meeting
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Meeting of <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={m.meetingOf || m.type || "Executive Committee"}
+                                disabled={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "meetingOf", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              >
+                                <option value="Choose">Choose</option>
+                                <option value="Executive Committee">Executive Committee</option>
+                                <option value="Executive Committee Meeting">
+                                  Executive Committee Meeting
+                                </option>
+                                <option value="Mahila Samiti">Mahila Samiti</option>
+                                <option value="Mahila Samiti Meeting">
+                                  Mahila Samiti Meeting
+                                </option>
+                                <option value="Yuva Samiti">Yuva Samiti</option>
+                                <option value="Yuva Samiti Meeting">
+                                  Yuva Samiti Meeting
+                                </option>
+                                <option value="General Meeting">General Meeting</option>
+                                <option value="Meeting">Meeting</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Executive Committee Meeting Date <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="date"
+                                value={m.date || ""}
+                                disabled={m.isFromDb || isView}
+                                readOnly={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "date", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Expected Members <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="number"
+                                placeholder="e.g. 20"
+                                value={m.membersCount || ""}
+                                disabled={m.isFromDb || isView}
+                                readOnly={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "membersCount", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Members Attended <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="number"
+                                placeholder="e.g. 15"
+                                value={m.attended || ""}
+                                disabled={m.isFromDb || isView}
+                                readOnly={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "attended", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCurrentMeeting(m);
-                                setMeetings(meetings.filter((_, i) => i !== idx));
-                                setShowMeetingModal(true);
-                              }}
-                              className="px-2 py-1 text-xs border rounded bg-white hover:bg-slate-100"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setMeetings(meetings.filter((_, i) => i !== idx))}
-                              className="px-2 py-1 text-xs border rounded bg-white text-red-600 hover:bg-red-50"
-                            >
-                              Remove
-                            </button>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Meeting Name / Title
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Executive Committee"
+                                value={m.name || ""}
+                                disabled={m.isFromDb || isView}
+                                readOnly={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "name", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Meeting Time
+                              </label>
+                              <input
+                                type="time"
+                                value={m.time || ""}
+                                disabled={m.isFromDb || isView}
+                                readOnly={m.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateMeeting(idx, "time", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="text-xs">
+                            <label className="block font-medium text-slate-700 mb-1">
+                              Key Agenda Points Discussed
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="Key agenda points discussed during the meeting..."
+                              value={m.agenda || ""}
+                              disabled={m.isFromDb || isView}
+                              readOnly={m.isFromDb || isView}
+                              onChange={(e) =>
+                                handleUpdateMeeting(idx, "agenda", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 resize-y disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                            />
+                          </div>
+
+                          <div className="text-xs">
+                            <label className="block font-medium text-slate-700 mb-1">
+                              Outcome (If Any)
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="Key outcomes or decisions taken..."
+                              value={m.outcome || ""}
+                              disabled={m.isFromDb || isView}
+                              readOnly={m.isFromDb || isView}
+                              onChange={(e) =>
+                                handleUpdateMeeting(idx, "outcome", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-green-600 resize-y disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                            />
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCurrentMeeting({
-                        date: "",
-                        type: "Executive Committee Meeting",
-                        membersCount: "",
-                        invited: "",
-                        attended: "",
-                        agenda: "",
-                      });
-                      setShowMeetingModal(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Meeting
-                  </button>
+                  {!isView && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate("/event-create", {
+                            state: {
+                              event_type: "Meeting",
+                              event_for: "Executive Committee",
+                            },
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Meeting
+                      </button>
 
-                  <p className="text-[11px] text-slate-400">
-                    Held more than one meeting this month? Click "Add Meeting" again. Each meeting
-                    has its own details.
-                  </p>
+                      <p className="text-[11px] text-slate-400">
+                        Held more than one meeting this month? Click "Add Meeting" to create in Event Creation. Each meeting
+                        has its own details.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1923,13 +2422,15 @@ const CPRForm = ({
             id="section-c"
             className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden"
           >
-            <div className="bg-[#c2410c] text-white px-5 py-3 flex items-center gap-3">
-              <span className="w-6 h-6 rounded-full bg-white text-[#c2410c] font-bold text-xs flex items-center justify-center">
-                C
-              </span>
-              <h2 className="text-sm font-bold tracking-wide uppercase">
-                OTS Details & Collection
-              </h2>
+            <div className="bg-[#c2410c] text-white px-5 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-white text-[#c2410c] font-bold text-xs flex items-center justify-center">
+                  C
+                </span>
+                <h2 className="text-sm font-bold tracking-wide uppercase">
+                  OTS Details & Collection
+                </h2>
+              </div>
             </div>
 
             <div className="p-5 space-y-6">
@@ -1942,9 +2443,11 @@ const CPRForm = ({
                 <input
                   type="text"
                   value={otsPRP ?? ""}
+                  disabled={Boolean(dbAutoFilled.otsPrp) || isView}
+                  readOnly={Boolean(dbAutoFilled.otsPrp) || isView}
                   onChange={(e) => setOtsPRP(e.target.value)}
                   placeholder="Enter OTS PRP"
-                  className="max-w-md w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  className="max-w-md w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
                 <p className="text-[11px] text-slate-400">
                   OTS PRP is filled only once. After you save it, it is locked in every later month's
@@ -1957,9 +2460,6 @@ const CPRForm = ({
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#c2410c] border-l-2 border-[#c2410c] pl-2">
                   OTS Collection
                 </h3>
-                <span className="text-[11px] text-slate-400 block">
-                  Till Date means up to April 2026.
-                </span>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border border-slate-200 border-collapse">
@@ -1969,7 +2469,7 @@ const CPRForm = ({
                         <th className="p-3 border-r border-slate-200 text-center w-1/4">
                           During the Month <span className="text-red-500">*</span>
                         </th>
-                        <th className="p-3 text-right w-1/4">Till Date (up to April 2026)</th>
+                        <th className="p-3 text-right w-1/4">Till Date</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1981,11 +2481,13 @@ const CPRForm = ({
                           <input
                             type="number"
                             value={otsCountDuringMonth ?? ""}
+                            disabled={Boolean(dbAutoFilled.ots) || isView}
+                            readOnly={Boolean(dbAutoFilled.ots) || isView}
                             onChange={(e) => {
                               setOtsCountDuringMonth(e.target.value);
                               setOtsAmountOverride(null);
                             }}
-                            className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                            className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                         <td className="p-2">
@@ -2026,13 +2528,15 @@ const CPRForm = ({
             id="section-d"
             className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden"
           >
-            <div className="bg-[#9f1239] text-white px-5 py-3 flex items-center gap-3">
-              <span className="w-6 h-6 rounded-full bg-white text-[#9f1239] font-bold text-xs flex items-center justify-center">
-                D
-              </span>
-              <h2 className="text-sm font-bold tracking-wide uppercase">
-                Donation & CSR Details
-              </h2>
+            <div className="bg-[#9f1239] text-white px-5 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-white text-[#9f1239] font-bold text-xs flex items-center justify-center">
+                  D
+                </span>
+                <h2 className="text-sm font-bold tracking-wide uppercase">
+                  Donation & CSR Details
+                </h2>
+              </div>
             </div>
 
             <div className="p-5 space-y-3">
@@ -2048,7 +2552,7 @@ const CPRForm = ({
                       <th className="p-3 border-r border-slate-200 text-center w-1/4">
                         During the Month <span className="text-red-500">*</span>
                       </th>
-                      <th className="p-3 text-right w-1/4">Till Date (up to April 2026)</th>
+                      <th className="p-3 text-right w-1/4">Till Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2060,26 +2564,30 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={donations?.general?.during ?? ""}
+                          disabled={Boolean(dbAutoFilled.donations) || isView}
+                          readOnly={Boolean(dbAutoFilled.donations) || isView}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
                               general: { ...donations.general, during: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2">
                         <input
                           type="number"
                           value={donations?.general?.till ?? ""}
+                          disabled={Boolean(dbAutoFilled.donations) || isView}
+                          readOnly={Boolean(dbAutoFilled.donations) || isView}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
                               general: { ...donations.general, till: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                     </tr>
@@ -2091,26 +2599,30 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={donations?.csr?.during ?? ""}
+                          disabled={Boolean(dbAutoFilled.donations) || isView}
+                          readOnly={Boolean(dbAutoFilled.donations) || isView}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
                               csr: { ...donations.csr, during: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2">
                         <input
                           type="number"
                           value={donations?.csr?.till ?? ""}
+                          disabled={Boolean(dbAutoFilled.donations) || isView}
+                          readOnly={Boolean(dbAutoFilled.donations) || isView}
                           onChange={(e) =>
                             setDonations({
                               ...donations,
                               csr: { ...donations.csr, till: e.target.value },
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                     </tr>
@@ -2168,6 +2680,8 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={collectionBoxes?.boxesThisMonth ?? ""}
+                          disabled={Boolean(dbAutoFilled.boxes) || isView}
+                          readOnly={Boolean(dbAutoFilled.boxes) || isView}
                           onChange={(e) =>
                             setCollectionBoxes({
                               ...collectionBoxes,
@@ -2175,7 +2689,7 @@ const CPRForm = ({
                               boxesTillDate: e.target.value,
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-purple-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-purple-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2">
@@ -2192,6 +2706,8 @@ const CPRForm = ({
                         <input
                           type="number"
                           value={collectionBoxes?.amountThisMonth ?? ""}
+                          disabled={Boolean(dbAutoFilled.boxes) || isView}
+                          readOnly={Boolean(dbAutoFilled.boxes) || isView}
                           onChange={(e) =>
                             setCollectionBoxes({
                               ...collectionBoxes,
@@ -2199,7 +2715,7 @@ const CPRForm = ({
                               amountTillDate: e.target.value,
                             })
                           }
-                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-purple-500 focus:outline-none"
+                          className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-purple-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                         />
                       </td>
                       <td className="p-2">
@@ -2239,10 +2755,12 @@ const CPRForm = ({
                   <input
                     type="number"
                     value={investments?.fd ?? ""}
+                    disabled={Boolean(dbAutoFilled.investments) || isView}
+                    readOnly={Boolean(dbAutoFilled.investments) || isView}
                     onChange={(e) =>
                       setInvestments({ ...investments, fd: e.target.value })
                     }
-                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   />
                 </div>
                 <div>
@@ -2252,10 +2770,12 @@ const CPRForm = ({
                   <input
                     type="number"
                     value={investments?.mutualFund ?? ""}
+                    disabled={Boolean(dbAutoFilled.investments) || isView}
+                    readOnly={Boolean(dbAutoFilled.investments) || isView}
                     onChange={(e) =>
                       setInvestments({ ...investments, mutualFund: e.target.value })
                     }
-                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   />
                 </div>
                 <div>
@@ -2265,10 +2785,12 @@ const CPRForm = ({
                   <input
                     type="number"
                     value={investments?.others ?? ""}
+                    disabled={Boolean(dbAutoFilled.investments) || isView}
+                    readOnly={Boolean(dbAutoFilled.investments) || isView}
                     onChange={(e) =>
                       setInvestments({ ...investments, others: e.target.value })
                     }
-                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                    className="w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   />
                 </div>
                 <div>
@@ -2278,11 +2800,13 @@ const CPRForm = ({
                   <input
                     type="text"
                     value={investments?.othersSpecify ?? ""}
+                    disabled={Boolean(dbAutoFilled.investments) || isView}
+                    readOnly={Boolean(dbAutoFilled.investments) || isView}
                     onChange={(e) =>
                       setInvestments({ ...investments, othersSpecify: e.target.value })
                     }
                     placeholder="Details"
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-teal-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                   />
                 </div>
               </div>
@@ -2308,7 +2832,7 @@ const CPRForm = ({
                 G
               </span>
               <h2 className="text-sm font-bold tracking-wide uppercase">
-                Cash & Bank Balance as on April 2026
+                Cash & Bank Balance
               </h2>
             </div>
 
@@ -2321,8 +2845,10 @@ const CPRForm = ({
                   type="number"
                   step="0.01"
                   value={cashInHand ?? ""}
+                  disabled={Boolean(dbAutoFilled.cashInHand) || isView}
+                  readOnly={Boolean(dbAutoFilled.cashInHand) || isView}
                   onChange={(e) => setCashInHand(e.target.value)}
-                  className="max-w-xs w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                  className="max-w-xs w-full text-right px-2.5 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
               </div>
 
@@ -2355,6 +2881,7 @@ const CPRForm = ({
                             <td className="p-2 border-r border-slate-200">
                               <select
                                 value={b.bankName}
+                                disabled={b.isFromDb || isView}
                                 onChange={(e) => {
                                   const isOther = e.target.value === "Other";
                                   setBankBalances(
@@ -2365,7 +2892,7 @@ const CPRForm = ({
                                     )
                                   );
                                 }}
-                                className="w-full px-2 py-1.5 border border-slate-300 rounded bg-white text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none font-medium"
+                                className="w-full px-2 py-1.5 border border-slate-300 rounded bg-white text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                               >
                                 <option value="Bandhan Bank">Bandhan Bank</option>
                                 <option value="ICICI Bank">ICICI Bank</option>
@@ -2386,16 +2913,18 @@ const CPRForm = ({
                                   type="text"
                                   placeholder="Specify Bank Name"
                                   value={b.customName || ""}
+                                  disabled={b.isFromDb || isView}
+                                  readOnly={b.isFromDb || isView}
                                   onChange={(e) =>
                                     setBankBalances(
                                       bankBalances.map((item) =>
                                         item.id === b.id
                                           ? { ...item, customName: e.target.value }
                                           : item
-                                       )
+                                      )
                                     )
                                   }
-                                  className="w-full mt-1.5 px-2 py-1 border border-slate-300 rounded text-xs bg-slate-50 focus:outline-none"
+                                  className="w-full mt-1.5 px-2 py-1 border border-slate-300 rounded text-xs bg-slate-50 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                                 />
                               )}
                             </td>
@@ -2404,6 +2933,8 @@ const CPRForm = ({
                                 type="number"
                                 step="0.01"
                                 value={b.balance ?? ""}
+                                disabled={b.isFromDb || isView}
+                                readOnly={b.isFromDb || isView}
                                 onChange={(e) =>
                                   setBankBalances(
                                     bankBalances.map((item) =>
@@ -2413,21 +2944,23 @@ const CPRForm = ({
                                     )
                                   )
                                 }
-                                className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                                className="w-full text-right px-2 py-1.5 border border-slate-300 rounded bg-white text-xs font-medium focus:ring-1 focus:ring-sky-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                               />
                             </td>
                             <td className="p-2 text-center">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setBankBalances(
-                                    bankBalances.filter((item) => item.id !== b.id)
-                                  )
-                                }
-                                className="text-xs text-red-600 hover:text-red-700 font-medium"
-                              >
-                                Remove
-                              </button>
+                              {!b.isFromDb && !isView ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setBankBalances(
+                                      bankBalances.filter((item) => item.id !== b.id)
+                                    )
+                                  }
+                                  className="text-xs text-red-600 hover:text-red-700 font-medium cursor-pointer"
+                                >
+                                  Remove
+                                </button>
+                              ) : null}
                             </td>
                           </tr>
                         ))}
@@ -2436,25 +2969,16 @@ const CPRForm = ({
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setBankBalances([
-                      ...bankBalances,
-                      {
-                        id: Date.now(),
-                        bankName: "HDFC Bank",
-                        balance: "",
-                        isOther: false,
-                        customName: "",
-                      },
-                    ])
-                  }
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Bank
-                </button>
+                {!isView && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/cpr-bank", { state: { openCreate: true } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Bank
+                  </button>
+                )}
               </div>
 
               {/* Total Cards */}
@@ -2506,7 +3030,7 @@ const CPRForm = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Number of Vanyatra – Till Date (up to April 2026)
+                    Number of Vanyatra – Till Date
                   </label>
                   <div className="px-3 py-2 rounded border border-dashed border-orange-300 bg-orange-50/40 text-orange-950 font-bold text-sm text-center">
                     {vanyatras.length || ""}
@@ -2532,7 +3056,7 @@ const CPRForm = ({
                       >
                         <div>
                           <span className="font-bold text-slate-800">
-                            Vanyatra {i + 1}: {v.date || "Date not set"}
+                            Vanyatra {i + 1}: {v.date ? (moment(v.date).isValid() ? moment(v.date).format("DD-MM-YYYY") : v.date) : "Date not set"}
                           </span>
                           <span className="text-slate-500 ml-2">
                             ({v.yatrisCount || 0} Yatris)
@@ -2541,28 +3065,32 @@ const CPRForm = ({
                             Visited: {v.vidyalayasVisited || "None"}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setVanyatras(vanyatras.filter((_, idx) => idx !== i))
-                          }
-                          className="px-2 py-1 text-xs border rounded bg-white text-red-600 hover:bg-red-50"
-                        >
-                          Remove
-                        </button>
+                        {!v.isFromDb && !isView ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVanyatras(vanyatras.filter((_, idx) => idx !== i))
+                            }
+                            className="px-2 py-1 text-xs border rounded bg-white text-red-600 hover:bg-red-50 cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setShowVanyatraModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Vanyatra
-                </button>
+                {!isView && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/cpr-vanyatra", { state: { openCreate: true } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Vanyatra
+                  </button>
+                )}
               </div>
             </div>
           </section>
@@ -2581,79 +3109,222 @@ const CPRForm = ({
               </h2>
             </div>
 
-            <div className="p-5 space-y-3">
-              {events.length === 0 ? (
-                <p className="text-xs text-slate-500 mb-2">
-                  No events added yet. Click "+ Add Event".
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {events.map((ev, index) => (
-                    <div
-                      key={ev.id}
-                      className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50/50 transition shadow-xs text-xs"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-slate-800">Event {index + 1}</span>
-                        <span className="text-slate-600">
-                          {ev.date} · {ev.type} · {ev.committee} · {ev.photos} photos
-                        </span>
-                        {ev.detailsMissing && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                            Details missing
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCurrentEvent(ev);
-                            setEvents(events.filter((item) => item.id !== ev.id));
-                            setShowEventModal(true);
-                          }}
-                          className="px-2.5 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-slate-100 font-medium"
+            <div className="p-5 space-y-4">
+              <label className="flex items-center gap-2.5 text-xs font-medium text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={noEventHeld}
+                  disabled={(events.length > 0 && events.some((ev) => ev.isFromDb)) || isView}
+                  onChange={(e) => setNoEventHeld(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <span>No Event was held this month</span>
+              </label>
+
+              {!noEventHeld && (
+                <div className="space-y-4 pt-2">
+                  {events.length === 0 ? (
+                    <p className="text-xs text-slate-500">
+                      No events added yet. Click "+ Add Event".
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {events.map((ev, index) => (
+                        <div
+                          key={ev.id || index}
+                          className={`border rounded-md p-4 space-y-4 ${
+                            ev.isFromDb ? "border-indigo-200 bg-slate-50/70" : "border-slate-300 bg-white"
+                          }`}
                         >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEvents(events.filter((item) => item.id !== ev.id))
-                          }
-                          className="px-2.5 py-1 text-xs border border-slate-300 rounded bg-white hover:bg-red-50 text-slate-700 font-medium"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-800 text-sm">
+                                Event {index + 1}
+                              </span>
+
+                            </div>
+                            {!ev.isFromDb && !isView && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEvent(index)}
+                                className="text-xs text-slate-500 hover:text-red-600 transition cursor-pointer font-medium"
+                              >
+                                Remove event
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Event For <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={ev.eventFor || ev.committee || "Youth"}
+                                disabled={ev.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateEvent(index, "eventFor", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              >
+                                <option value="Youth">Youth</option>
+                                <option value="Mahila">Mahila</option>
+                                <option value="Yuva Samiti">Yuva Samiti</option>
+                                <option value="Mahila Samiti">Mahila Samiti</option>
+                                <option value="Executive Committee">Executive Committee</option>
+                                <option value="General">General</option>
+                                <option value="Public Event">Public Event</option>
+                                <option value="Other">Other</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Event Date <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="date"
+                                value={ev.date || ""}
+                                disabled={ev.isFromDb || isView}
+                                readOnly={ev.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateEvent(index, "date", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Event Time
+                              </label>
+                              <input
+                                type="time"
+                                value={ev.time || ""}
+                                disabled={ev.isFromDb || isView}
+                                readOnly={ev.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateEvent(index, "time", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block font-medium text-slate-700 mb-1">
+                                Event Type <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Public Event"
+                                value={ev.type || ""}
+                                disabled={ev.isFromDb || isView}
+                                readOnly={ev.isFromDb || isView}
+                                onChange={(e) =>
+                                  handleUpdateEvent(index, "type", e.target.value)
+                                }
+                                className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="text-xs">
+                            <label className="block font-medium text-slate-700 mb-1">
+                              Event Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Annual Meet / Cultural Program"
+                              value={ev.name || ""}
+                              disabled={ev.isFromDb || isView}
+                              readOnly={ev.isFromDb || isView}
+                              onChange={(e) =>
+                                handleUpdateEvent(index, "name", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                            />
+                          </div>
+
+                          <div className="text-xs">
+                            <label className="block font-medium text-slate-700 mb-1">
+                              Key Agenda Points Discussed / Description
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="Key agenda points or event details..."
+                              value={ev.description || ""}
+                              disabled={ev.isFromDb || isView}
+                              readOnly={ev.isFromDb || isView}
+                              onChange={(e) =>
+                                handleUpdateEvent(index, "description", e.target.value)
+                              }
+                              className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none disabled:border-slate-200"
+                            />
+                          </div>
+
+                          {/* Photos / Attachments */}
+                          {(ev.image || (ev.subs && ev.subs.length > 0) || ev.photos > 0) && (
+                            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
+                              <span className="font-semibold text-slate-700">Photographs:</span>
+                              <span>
+                                {ev.photos || (ev.subs ? ev.subs.length : 1)} photo(s) recorded
+                              </span>
+                              {ev.image && (
+                                <a
+                                  href={getImageUrl("Event", ev.image)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-indigo-600 hover:text-indigo-800 underline font-medium"
+                                >
+                                  View Image
+                                </a>
+                              )}
+                              {Array.isArray(ev.subs) &&
+                                ev.subs.map((s, sIdx) => {
+                                  const subImg = s.event_sub_image || s.image || s.url;
+                                  if (!subImg) return null;
+                                  return (
+                                    <a
+                                      key={sIdx}
+                                      href={getImageUrl("Event", subImg)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-indigo-600 hover:text-indigo-800 underline font-medium"
+                                    >
+                                      Photo {sIdx + 1}
+                                    </a>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {!isView && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate("/event-create", {
+                            state: {
+                              event_type: "Public Event",
+                            },
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Event
+                      </button>
+                      <p className="text-[11px] text-slate-400">
+                        Held more than one event this month? Click "Add Event" to create in Event Creation. Each event has its own details.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentEvent({
-                      id: Date.now(),
-                      date: "",
-                      type: "",
-                      committee: "Yuva Samiti",
-                      photos: 0,
-                    });
-                    setShowEventModal(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Event
-                </button>
-                <p className="text-[11px] text-slate-400 mt-2">
-                  Upload 2–4 photographs for each event (JPG, PNG or WEBP). Save the draft once,
-                  then add photographs.
-                </p>
-              </div>
             </div>
           </section>
 
@@ -2690,30 +3361,36 @@ const CPRForm = ({
                           {formatINR(a.remittanceThisMonth)})
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setAnchals(anchals.filter((_, idx) => idx !== i))}
-                        className="px-2 py-1 text-xs border rounded bg-white text-red-600 hover:bg-red-50"
-                      >
-                        Remove
-                      </button>
+                      {!a.isFromDb && !isView ? (
+                        <button
+                          type="button"
+                          onClick={() => setAnchals(anchals.filter((_, idx) => idx !== i))}
+                          className="px-2 py-1 text-xs border rounded bg-white text-red-600 hover:bg-red-50 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => setShowAnchalModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Anchal
-              </button>
-              <p className="text-[11px] text-slate-400">
-                Choose Anchal names from the list. "Total Remittance till Last Date" is filled
-                from last month's CPR.
-              </p>
+              {!isView && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/cpr-disbursement", { state: { openCreate: true } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Anchal
+                  </button>
+                  <p className="text-[11px] text-slate-400">
+                    Choose Anchal names from the list. "Total Remittance till Last Date" is filled
+                    from last month's CPR.
+                  </p>
+                </>
+              )}
             </div>
           </section>
 
@@ -2740,23 +3417,25 @@ const CPRForm = ({
                 <div className="inline-flex rounded-md shadow-xs" role="group">
                   <button
                     type="button"
+                    disabled={Boolean(dbAutoFilled.samagri) || isView}
                     onClick={() => setSamagriReached("Yes")}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-l-md border ${
                       samagriReached === "Yes"
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                    }`}
+                    } ${dbAutoFilled.samagri ? "cursor-not-allowed opacity-90 pointer-events-none" : ""}`}
                   >
                     Yes
                   </button>
                   <button
                     type="button"
+                    disabled={Boolean(dbAutoFilled.samagri) || isView}
                     onClick={() => setSamagriReached("No")}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-r-md border-t border-b border-r ${
                       samagriReached === "No"
                         ? "bg-[#b91c1c] text-white border-[#b91c1c]"
                         : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                    }`}
+                    } ${dbAutoFilled.samagri ? "cursor-not-allowed opacity-90 pointer-events-none" : ""}`}
                   >
                     No
                   </button>
@@ -2764,17 +3443,22 @@ const CPRForm = ({
                 <input
                   type="text"
                   value={samagriRemarks ?? ""}
+                  disabled={Boolean(dbAutoFilled.samagri) || isView}
+                  readOnly={Boolean(dbAutoFilled.samagri) || isView}
                   onChange={(e) => setSamagriRemarks(e.target.value)}
                   placeholder="Reason / Remarks"
-                  className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none"
+                  className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
               </div>
 
               {/* Donor Board Details */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-l-2 border-slate-700 pl-2">
-                  Donor Board Details
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-l-2 border-slate-700 pl-2">
+                    Donor Board Details
+                  </h3>
+
+                </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border border-slate-200 border-collapse">
@@ -2802,26 +3486,30 @@ const CPRForm = ({
                           <input
                             type="number"
                             value={donorBoard?.nonCsr?.total ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 nonCsr: { ...donorBoard.nonCsr, total: e.target.value },
                               })
                             }
-                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
                             value={donorBoard?.nonCsr?.sent ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 nonCsr: { ...donorBoard.nonCsr, sent: e.target.value },
                               })
                             }
-                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                         <td className="p-2 border-r border-slate-200">
@@ -2839,13 +3527,15 @@ const CPRForm = ({
                           <input
                             type="text"
                             value={donorBoard?.nonCsr?.remarks ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 nonCsr: { ...donorBoard.nonCsr, remarks: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                       </tr>
@@ -2858,26 +3548,30 @@ const CPRForm = ({
                           <input
                             type="number"
                             value={donorBoard?.csr?.total ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 csr: { ...donorBoard.csr, total: e.target.value },
                               })
                             }
-                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                         <td className="p-2 border-r border-slate-200">
                           <input
                             type="number"
                             value={donorBoard?.csr?.sent ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 csr: { ...donorBoard.csr, sent: e.target.value },
                               })
                             }
-                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full text-right px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                         <td className="p-2 border-r border-slate-200">
@@ -2895,13 +3589,15 @@ const CPRForm = ({
                           <input
                             type="text"
                             value={donorBoard?.csr?.remarks ?? ""}
+                            disabled={Boolean(dbAutoFilled.donorBoards) || isView}
+                            readOnly={Boolean(dbAutoFilled.donorBoards) || isView}
                             onChange={(e) =>
                               setDonorBoard({
                                 ...donorBoard,
                                 csr: { ...donorBoard.csr, remarks: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1 border border-slate-300 rounded text-xs"
+                            className="w-full px-2 py-1 border border-slate-300 rounded text-xs disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                           />
                         </td>
                       </tr>
@@ -2918,23 +3614,25 @@ const CPRForm = ({
                 <div className="inline-flex rounded-md shadow-xs" role="group">
                   <button
                     type="button"
+                    disabled={Boolean(dbAutoFilled.schoolProgress) || isView}
                     onClick={() => setSchoolProgressSent("Yes")}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-l-md border ${
                       schoolProgressSent === "Yes"
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                    }`}
+                    } ${dbAutoFilled.schoolProgress ? "cursor-not-allowed opacity-90 pointer-events-none" : ""}`}
                   >
                     Yes
                   </button>
                   <button
                     type="button"
+                    disabled={Boolean(dbAutoFilled.schoolProgress) || isView}
                     onClick={() => setSchoolProgressSent("No")}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-r-md border-t border-b border-r ${
                       schoolProgressSent === "No"
                         ? "bg-[#b91c1c] text-white border-[#b91c1c]"
                         : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                    }`}
+                    } ${dbAutoFilled.schoolProgress ? "cursor-not-allowed opacity-90 pointer-events-none" : ""}`}
                   >
                     No
                   </button>
@@ -2942,9 +3640,11 @@ const CPRForm = ({
                 <input
                   type="text"
                   value={progressRemarks ?? ""}
+                  disabled={Boolean(dbAutoFilled.schoolProgress) || isView}
+                  readOnly={Boolean(dbAutoFilled.schoolProgress) || isView}
                   onChange={(e) => setProgressRemarks(e.target.value)}
                   placeholder="Reason / Remarks"
-                  className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none"
+                  className="flex-1 min-w-[200px] px-3 py-1.5 border border-slate-300 rounded text-xs bg-white focus:outline-none disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
               </div>
 
@@ -2956,37 +3656,54 @@ const CPRForm = ({
                 <div className="relative max-w-sm">
                   <select
                     value={selectedMonitoringAnchal}
+                    disabled={isView}
                     onChange={(e) => setSelectedMonitoringAnchal(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:ring-1 focus:ring-slate-500 appearance-none font-medium"
+                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-xs focus:ring-1 focus:ring-slate-500 appearance-none font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                   >
                     <option value="Choose">Choose</option>
-                    <option value="Anchal Purulia">Anchal Purulia</option>
-                    <option value="Anchal Bankura">Anchal Bankura</option>
-                    <option value="Anchal Ranchi">Anchal Ranchi</option>
-                    <option value="Anchal Dhanbad">Anchal Dhanbad</option>
+                    {anchalOptions.map((a, aIdx) => {
+                      const aName = getAnchalLabel(a, aIdx);
+                      return (
+                        <option key={a?.id || aIdx} value={aName}>
+                          {aName}
+                        </option>
+                      );
+                    })}
+                    {selectedMonitoringAnchal &&
+                      selectedMonitoringAnchal !== "Choose" &&
+                      !anchalOptions.some(
+                        (a, aIdx) =>
+                          getAnchalLabel(a, aIdx) === selectedMonitoringAnchal
+                      ) && (
+                        <option value={selectedMonitoringAnchal}>
+                          {selectedMonitoringAnchal}
+                        </option>
+                      )}
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      selectedMonitoringAnchal !== "Choose" &&
-                      !monitoringAnchalsList.includes(selectedMonitoringAnchal)
-                    ) {
-                      setMonitoringAnchalsList([
-                        ...monitoringAnchalsList,
-                        selectedMonitoringAnchal,
-                      ]);
-                      setSelectedMonitoringAnchal("Choose");
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Monitoring Anchal
-                </button>
+                {!isView && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        selectedMonitoringAnchal !== "Choose" &&
+                        !monitoringAnchalsList.includes(selectedMonitoringAnchal)
+                      ) {
+                        setMonitoringAnchalsList([
+                          ...monitoringAnchalsList,
+                          selectedMonitoringAnchal,
+                        ]);
+                        setSelectedMonitoringAnchal("Choose");
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Monitoring Anchal
+                  </button>
+                )}
 
                 {monitoringAnchalsList.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
@@ -2996,17 +3713,19 @@ const CPRForm = ({
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-200 text-xs font-medium text-slate-800"
                       >
                         {item}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMonitoringAnchalsList(
-                              monitoringAnchalsList.filter((_, i) => i !== idx)
-                            )
-                          }
-                          className="hover:text-red-500"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                        {!isView && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setMonitoringAnchalsList(
+                                monitoringAnchalsList.filter((_, i) => i !== idx)
+                              )
+                            }
+                            className="hover:text-red-500"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -3047,14 +3766,14 @@ const CPRForm = ({
                       type="button"
                       disabled={isGeneratingPdf}
                       onClick={handleDownloadPDF}
-                      className="mt-3 px-4 py-2 rounded bg-[#0f3d4c] hover:bg-[#092934] text-white text-xs font-semibold shadow-xs inline-flex items-center gap-2 transition disabled:opacity-50"
+                      className="mt-3 px-4 py-2 rounded bg-[#0f3d4c] hover:bg-[#092934] text-white text-xs font-semibold shadow-xs inline-flex items-center gap-2 transition disabled:opacity-50 cursor-pointer"
                     >
                       {isGeneratingPdf ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
-                      <span>Download CPR for signature</span>
+                      <span>Download the filled CPR</span>
                     </button>
                   </div>
                 </div>
@@ -3081,47 +3800,74 @@ const CPRForm = ({
                 </span>
                 <div className="flex-1">
                   <h3 className="text-xs font-bold text-slate-900">Upload the signed CPR</h3>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      accept=".pdf,image/png,image/jpeg,image/webp"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold inline-flex items-center gap-2 transition"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      Upload signed CPR
-                    </button>
-                    <span className="text-[11px] text-slate-400">
-                      PDF, JPG, JPEG, PNG, up to 10 MB
-                    </span>
-                  </div>
-                  {existingSignedCprUrl && !signedFile && (
-                    <div className="mt-2.5 p-2 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-md">
-                      <span className="text-teal-900 font-medium">
-                        Current Signed CPR Document on record
-                      </span>
-                      <a
-                        href={existingSignedCprUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-teal-700 underline font-semibold hover:text-teal-900 ml-2"
-                      >
-                        View File
-                      </a>
-                    </div>
-                  )}
-                  {signedFile && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 font-medium">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>
-                        {signedFile.name} ({(signedFile.size / 1024).toFixed(1)} KB)
-                      </span>
+                  {!isView ? (
+                    <>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          accept=".pdf,image/png,image/jpeg,image/webp"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-4 py-2 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold inline-flex items-center gap-2 transition cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload signed CPR
+                        </button>
+                        <span className="text-[11px] text-slate-400">
+                          PDF, JPG, JPEG, PNG, up to 10 MB
+                        </span>
+                      </div>
+                      {existingSignedCprUrl && !signedFile && (
+                        <div className="mt-2.5 p-2 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-md">
+                          <span className="text-teal-900 font-medium">
+                            Current Signed CPR Document on record
+                          </span>
+                          <a
+                            href={existingSignedCprUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-teal-700 underline font-semibold hover:text-teal-900 ml-2"
+                          >
+                            View File
+                          </a>
+                        </div>
+                      )}
+                      {signedFile && (
+                        <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 font-medium">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>
+                            {signedFile.name} ({(signedFile.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="mt-2">
+                      {existingSignedCprUrl ? (
+                        <div className="p-2.5 rounded border border-teal-200 bg-teal-50/70 flex items-center justify-between text-xs max-w-md">
+                          <span className="text-teal-900 font-medium">
+                            Signed CPR Document on record
+                          </span>
+                          <a
+                            href={existingSignedCprUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-teal-700 underline font-semibold hover:text-teal-900 ml-2 inline-flex items-center gap-1"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            View / Download Signed File
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 italic">
+                          No signed CPR document was uploaded.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -3134,27 +3880,41 @@ const CPRForm = ({
                 </span>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900">Submit the CPR</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Opens after the signed copy is uploaded.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={isGeneratingPdf}
-                    onClick={handleSubmit}
-                    className="mt-3 px-5 py-2.5 rounded bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
-                  >
-                    {isGeneratingPdf ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Generating CPR PDF...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        <span>Submit CPR & Download PDF</span>
-                      </>
-                    )}
-                  </button>
+                  {isView ? (
+                    <div className="mt-2 space-y-2">
+                      <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Report Submitted</span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        This CPR report has already been submitted and cannot be edited or deleted.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Upload the signed CPR copy before submitting.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={isGeneratingPdf}
+                        onClick={handleSubmit}
+                        className="mt-3 px-5 py-2.5 rounded bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm"
+                      >
+                        {isGeneratingPdf ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating CPR PDF...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4" />
+                            <span>Submit CPR & Download PDF</span>
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -3176,6 +3936,9 @@ const CPRForm = ({
           chapterName={chapterName}
           monthIndex={monthIndex}
           monthName={monthName}
+          financialYear={financialYear}
+          reportId={currentReportId}
+          csrStatus={csrStatus}
           cppName={cppName}
           submissionDate={submissionDate}
           subChapters={subChapters}
@@ -3198,6 +3961,8 @@ const CPRForm = ({
           totalBankBalance={totalBankBalance}
           totalCashAndBank={totalCashAndBank}
           vanyatras={vanyatras}
+          vanyatrasCountThisMonth={vanyatras.length}
+          vanyatrasCountTillDate={vanyatras.length}
           events={events}
           anchals={anchals}
           samagriReached={samagriReached}
@@ -3610,16 +4375,63 @@ const CPRForm = ({
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Anchal Name</label>
-                <input
-                  type="text"
-                  value={newAnchal.name}
-                  onChange={(e) =>
-                    setNewAnchal({ ...newAnchal, name: e.target.value })
-                  }
-                  placeholder="e.g. Anchal Purulia"
-                  className="w-full border border-slate-300 rounded px-3 py-2 text-xs"
-                />
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Anchal Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={newAnchal.name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const matched = anchalOptions.find(
+                        (a, idx) =>
+                          getAnchalLabel(a, idx) === val ||
+                          String(a?.id) === val
+                      );
+                      const matchedName = matched ? getAnchalLabel(matched) : val;
+                      setNewAnchal({
+                        ...newAnchal,
+                        name: matchedName,
+                        acharyasCount:
+                          matched?.no_of_acharyas ||
+                          matched?.acharyas ||
+                          matched?.acharyasCount ||
+                          newAnchal.acharyasCount,
+                        annualTarget:
+                          matched?.amount ||
+                          matched?.annualTarget ||
+                          matched?.target ||
+                          newAnchal.annualTarget,
+                      });
+                    }}
+                    className="w-full border border-slate-300 rounded px-3 py-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#0e7490] appearance-none pr-8 font-medium"
+                    required
+                  >
+                    <option value="">
+                      {loadingAnchals
+                        ? "Loading Anchals..."
+                        : "-- Select Anchal --"}
+                    </option>
+                    {anchalOptions.map((a, aIdx) => {
+                      const aName = getAnchalLabel(a, aIdx);
+                      return (
+                        <option key={a?.id || aIdx} value={aName}>
+                          {aName}
+                        </option>
+                      );
+                    })}
+                    {newAnchal.name &&
+                      !anchalOptions.some(
+                        (a, aIdx) =>
+                          getAnchalLabel(a, aIdx) === newAnchal.name
+                      ) && (
+                        <option value={newAnchal.name}>
+                          {newAnchal.name}
+                        </option>
+                      )}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
