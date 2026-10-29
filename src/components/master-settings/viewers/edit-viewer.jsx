@@ -68,9 +68,9 @@ const EditViewer = () => {
   });
 
   const { data: userTypes = [], isLoading: userTypesLoading } = useQuery({
-    queryKey: ['user-types'],
+    queryKey: ['s'],
     queryFn: async () => {
-      const response = await axios.get(`${BASE_URL}/api/fetch-user-type`, {
+      const response = await axios.get(`${BASE_URL}/api/fetch-`, {
         headers: { Authorization: `Bearer ${Cookies.get('token')}` },
       });
       return response.data.data || [];
