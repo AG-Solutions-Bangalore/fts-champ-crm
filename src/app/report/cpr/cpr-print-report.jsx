@@ -9,6 +9,7 @@ const formatRs = (val, defaultValue = "") => {
   return "Rs. " + num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 };
 
+
 // Helper for Indian Date formatting DD/MM/YYYY matching the attached CPR format
 const formatDateDDMMYYYY = (dateVal) => {
   if (!dateVal) {

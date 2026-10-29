@@ -55,7 +55,7 @@ const CreateViewer = () => {
 
   const { data: userTypes = [], isLoading: userTypesLoading } = useQuery({
     queryKey: ['user-types'],
-    queryFn: async () => {
+    queryFn: async () => {a
       const response = await axios.get(`${BASE_URL}/api/fetch-user-type`, {
         headers: { Authorization: `Bearer ${Cookies.get('token')}` },
       });

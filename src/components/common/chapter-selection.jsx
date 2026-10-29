@@ -162,10 +162,9 @@ const ChapterSelection = () => {
           className={`
             w-full h-8 rounded-md px-2 relative transition-all duration-200 shadow-lg hover:shadow-xl
             flex items-center justify-center
-            ${
-              isExpanded
-                ? "bg-amber-500 scale-110"
-                : "bg-gradient-to-br from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500"
+            ${isExpanded
+              ? "bg-amber-500 scale-110"
+              : "bg-gradient-to-br from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500"
             }
           `}
         >
@@ -284,14 +283,13 @@ const ChapterSelection = () => {
                               <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
                             ) : (
                               <Star
-                                className={`h-4 w-4 transition-all ${
-                                  favorites.some(
-                                    (f) =>
-                                      f.chapter_code === chapter.chapter_code
-                                  )
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
-                                }`}
+                                className={`h-4 w-4 transition-all ${favorites.some(
+                                  (f) =>
+                                    f.chapter_code === chapter.chapter_code
+                                )
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
+                                  }`}
                                 onClick={(e) => toggleFavorite(chapter, e)}
                               />
                             )}
@@ -334,22 +332,19 @@ const ChapterSelection = () => {
                           disabled={isActive}
                           className={`
                             w-full flex items-center gap-1.5 p-1.5 rounded text-xs transition-all group border
-                            ${
-                              isActive
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 cursor-default"
-                                : "hover:bg-amber-100 dark:hover:bg-amber-900/30 border-transparent hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer"
+                            ${isActive
+                              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 cursor-default"
+                              : "hover:bg-amber-100 dark:hover:bg-amber-900/30 border-transparent hover:border-amber-200 dark:hover:border-amber-800 cursor-pointer"
                             }
-                            ${
-                              selectChapterMutation.isLoading
-                                ? "opacity-50 pointer-events-none"
-                                : ""
+                            ${selectChapterMutation.isLoading
+                              ? "opacity-50 pointer-events-none"
+                              : ""
                             }
                           `}
                         >
                           <Building
-                            className={`h-3 w-3 flex-shrink-0 ${
-                              isActive ? "text-green-600" : "text-amber-500"
-                            }`}
+                            className={`h-3 w-3 flex-shrink-0 ${isActive ? "text-green-600" : "text-amber-500"
+                              }`}
                           />
 
                           <span className="truncate flex-1 text-left text-amber-900 dark:text-amber-100">
@@ -361,11 +356,10 @@ const ChapterSelection = () => {
                               <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
                             ) : (
                               <Star
-                                className={`h-4 w-4 transition-all ${
-                                  isFavorite
-                                    ? "fill-amber-400 text-amber-400 opacity-100"
-                                    : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
-                                }`}
+                                className={`h-4 w-4 transition-all ${isFavorite
+                                  ? "fill-amber-400 text-amber-400 opacity-100"
+                                  : "text-amber-300 opacity-0 group-hover:opacity-100 hover:text-amber-400"
+                                  }`}
                                 onClick={(e) => toggleFavorite(chapter, e)}
                               />
                             )}
