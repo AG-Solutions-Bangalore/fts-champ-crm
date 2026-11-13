@@ -22,6 +22,7 @@ import { DONOR_COMPANY_CREATE_SUMBIT } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import InputMask from "react-input-mask";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import {
@@ -131,6 +132,8 @@ const DonorCompanyCreate = () => {
         "Promoter not in list",
     }));
   };
+  // PAN verification related state - commented out
+  /*
   const [panVerificationStatus, setPanVerificationStatus] = useState("idle"); // 'idle' | 'loading' | 'success_message' | 'success_data' | 'error'
   const [panResponseData, setPanResponseData] = useState(null);
   const [verifiedPanName, setVerifiedPanName] = useState("");
@@ -272,6 +275,7 @@ const DonorCompanyCreate = () => {
     panVerificationStatus === "success_message";
 
   const isNameFieldDisabled = isPanVerified || isPanNameLocked;
+  */
 
   const validateOnlyDigits = (inputtxt) => {
     const phoneno = /^\d+$/;
@@ -280,9 +284,9 @@ const DonorCompanyCreate = () => {
 
   const onInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "indicomp_full_name" && isNameFieldDisabled) {
-      return;
-    }
+    // if (name === "indicomp_full_name" && isNameFieldDisabled) {
+    //   return;
+    // }
 
     const digitFields = [
       "indicomp_mobile_phone",
@@ -307,9 +311,10 @@ const DonorCompanyCreate = () => {
   };
 
   const onChangePanNumber = (e) => {
-    if (isPanFieldDisabled) return;
+    // if (isPanFieldDisabled) return;
     const panValue = (e.target.value || "").toUpperCase().replace(/\s/g, "");
     setDonor((prev) => ({ ...prev, indicomp_pan_no: panValue }));
+    /*
     // Reset verification status when PAN changes
     setPanVerificationStatus("idle");
     setPanResponseData(null);
@@ -318,8 +323,10 @@ const DonorCompanyCreate = () => {
     setPanErrorMsg("");
     setIsPanNameLocked(false);
     setUserAcceptedMismatch(false);
+    */
   };
 
+  /*
   const handleAcceptPanName = () => {
     const targetName = panResponseData?.full_name || verifiedPanName;
     if (targetName) {
@@ -439,6 +446,7 @@ const DonorCompanyCreate = () => {
       toast.error(errMsg);
     }
   };
+  */
 
   const checkDuplicateDonor = async () => {
     if (
@@ -643,6 +651,7 @@ const DonorCompanyCreate = () => {
 
   const isCreateDisabled = useMemo(() => {
     if (isButtonDisabled || createDonorMutation.isPending) return true;
+    /*
     if (panVerificationStatus === "loading") return true;
     if (panVerificationStatus === "error") return true;
     if (
@@ -653,14 +662,17 @@ const DonorCompanyCreate = () => {
     ) {
       return true;
     }
+    */
     return false;
   }, [
     isButtonDisabled,
     createDonorMutation.isPending,
+    /*
     panVerificationStatus,
     isNameMatched,
     userAcceptedMismatch,
     isPanNameLocked,
+    */
   ]);
 
   const handleSubmit = async (e) => {
@@ -774,6 +786,7 @@ const DonorCompanyCreate = () => {
       formData.append("indicomp_donor_type", donor.indicomp_donor_type || "");
       formData.append("indicomp_csr", donor.indicomp_csr || "");
 
+      /*
       const finalIsVerifiedPanNo =
         panVerificationStatus === "success_message" ||
         (panVerificationStatus === "success_data" &&
@@ -790,6 +803,7 @@ const DonorCompanyCreate = () => {
 
       formData.append("isverified_pan_no", finalIsVerifiedPanNo);
       formData.append("ispan_no", finalIsPanNo);
+      */
 
       setIsButtonDisabled(true);
       createDonorMutation.mutate(formData);
@@ -882,11 +896,11 @@ const DonorCompanyCreate = () => {
                     name="indicomp_full_name"
                     value={donor.indicomp_full_name}
                     onChange={onInputChange}
-                    disabled={isNameFieldDisabled}
-                    readOnly={isNameFieldDisabled}
+                    // disabled={isNameFieldDisabled}
+                    // readOnly={isNameFieldDisabled}
                     className={cn(
                       isDuplicate && "border-red-500",
-                      isNameFieldDisabled && "bg-muted cursor-not-allowed opacity-80"
+                      // isNameFieldDisabled && "bg-muted cursor-not-allowed opacity-80"
                     )}
                     placeholder="Company name (don't add title)"
                   />
@@ -1061,45 +1075,30 @@ const DonorCompanyCreate = () => {
                   >
                     PAN Number *
                   </Label>
-                  <div className="flex gap-2 items-center">
-                    <div className="flex-1">
-                      <Input
-                        type="text"
-                        id="indicomp_pan_no"
-                        name="indicomp_pan_no"
-                        maxLength={10}
-                        value={donor.indicomp_pan_no}
-                        onChange={(e) => onChangePanNumber(e)}
-                        disabled={isPanFieldDisabled}
-                        readOnly={isPanFieldDisabled}
-                        placeholder="Enter PAN number"
-                        className={cn(
-                          "uppercase font-mono tracking-wider",
-                          isPanFieldDisabled && "bg-muted cursor-not-allowed opacity-80"
-                        )}
-                      />
-                    </div>
-                    {isPanValid && !isPanVerified && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={panVerificationStatus === "loading"}
-                          onClick={handleVerifyPan}
-                          className="h-9 px-3 text-xs font-medium shrink-0 gap-1.5 bg-[var(--team-color)] hover:bg-[var(--team-color)]/90 text-white"
-                        >
-                          {panVerificationStatus === "loading" ? (
-                            <>
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              <span>Verifying...</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShieldCheck className="h-3.5 w-3.5" />
-                              <span>Verify</span>
-                            </>
-                          )}
-                        </Button>
+                  <div className="">
+                    <InputMask
+                      mask="aaaaa9999a"
+                      value={donor.indicomp_pan_no}
+                      onChange={(e) => onChangePanNumber(e)}
+                      formatChars={{
+                        9: "[0-9]",
+                        a: "[A-Za-z]",
+                      }}
+                      beforeMaskedValueChange={(newState) => ({
+                        ...newState,
+                        value: (newState.value || "").toUpperCase(),
+                      })}
+                    >
+                      {() => (
+                        <Input
+                          type="text"
+                          id="indicomp_pan_no"
+                          name="indicomp_pan_no"
+                          placeholder="Enter PAN number"
+                          className="uppercase font-mono tracking-wider"
+                        />
                       )}
+                    </InputMask>
                   </div>
 
                   {errors?.indicomp_pan_no && (
@@ -1174,8 +1173,8 @@ const DonorCompanyCreate = () => {
                   </Select>
                 </div>
 
-                {/* PAN Verification Details Strip (Spans full width across 1 single row) */}
-                {panVerificationStatus === "success_data" && panResponseData && (
+                {/* PAN Verification Details Strip (Spans full width across 1 single row) - Commented out */}
+                {/* {panVerificationStatus === "success_data" && panResponseData && (
                   <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
                     <div
                       className={`px-3 py-2 rounded-md border text-xs flex flex-wrap items-center justify-between gap-2.5 transition-colors ${
@@ -1186,7 +1185,6 @@ const DonorCompanyCreate = () => {
                           : "bg-amber-50/80 border-amber-300 text-amber-950"
                       }`}
                     >
-                      {/* Left: PAN Details with Full Name */}
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         <span className="font-semibold flex items-center gap-1.5 text-foreground">
                           <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -1200,7 +1198,6 @@ const DonorCompanyCreate = () => {
                         </div>
                       </div>
 
-                      {/* Right: Status badge & Action buttons */}
                       <div className="flex flex-wrap items-center gap-2">
                         {isNameMatched || isPanNameLocked ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -1221,7 +1218,6 @@ const DonorCompanyCreate = () => {
                               </span>
                             )}
 
-                            {/* Button 1: Update to PAN Name */}
                             <Button
                               type="button"
                               size="sm"
@@ -1232,7 +1228,6 @@ const DonorCompanyCreate = () => {
                               <span>Update to PAN Name</span>
                             </Button>
 
-                            {/* Button 2: Don't Change (Keep Typed Name) */}
                             {donor.indicomp_full_name?.trim() && (
                               <Button
                                 type="button"
@@ -1249,9 +1244,9 @@ const DonorCompanyCreate = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
 
-                {panVerificationStatus === "error" && panErrorMsg && (
+                {/* {panVerificationStatus === "error" && panErrorMsg && (
                   <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
                     <div className="px-3 py-2 rounded-md border border-red-300 bg-red-50/80 text-red-950 text-xs flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
@@ -1269,9 +1264,9 @@ const DonorCompanyCreate = () => {
                       </Button>
                     </div>
                   </div>
-                )}
+                )} */}
 
-                {panVerificationStatus === "success_message" && (
+                {/* {panVerificationStatus === "success_message" && (
                   <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
                     <div className="px-3 py-2 rounded-md border border-emerald-300 bg-emerald-50/80 text-emerald-950 text-xs flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -1312,7 +1307,7 @@ const DonorCompanyCreate = () => {
                       )}
                     </div>
                   </div>
-                )}
+                )} */}
 
                 <div className="flex flex-col justify-between">
                   <Label
